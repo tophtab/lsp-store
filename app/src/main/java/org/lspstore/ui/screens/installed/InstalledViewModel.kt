@@ -47,6 +47,7 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
     private var installed: List<InstalledModule> = emptyList()
     private var hidden: Set<String> = emptySet()
     private var skipped: Map<String, Long> = emptyMap()
+    private var links: Map<String, String> = emptyMap()
 
     init {
         viewModelScope.launch {
@@ -60,6 +61,9 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
         }
         viewModelScope.launch {
             libraryRepository.skippedUpdates.collect { value -> skipped = value; recompute() }
+        }
+        viewModelScope.launch {
+            libraryRepository.links.collect { value -> links = value; recompute() }
         }
         load(force = false)
     }
@@ -145,7 +149,7 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
         if (index.isEmpty() && installed.isEmpty()) return
         val byPackage = index.associateBy { it.packageName }
         val xposed = installed.filter { it.isXposedModule }
-        val updates = UpdateChecker.findUpdates(installed, index, _state.value.channel, skipped, hidden)
+        val updates = UpdateChecker.findUpdates(installed, index, _state.value.channel, skipped, hidden, links)
         val updating = updates.map { it.module.packageName }.toSet()
 
         val upToDate = xposed.filter { module ->
@@ -153,7 +157,9 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
                 module.packageName !in updating &&
                 module.packageName !in hidden
         }
-        val unknown = xposed.filter { it.packageName !in byPackage }
+        val unknown = xposed.filter {
+            it.packageName !in byPackage && links[it.packageName]?.let { link -> link in byPackage } != true
+        }
 
         _state.update {
             it.copy(

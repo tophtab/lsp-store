@@ -109,6 +109,40 @@ class VersionLogicTest {
     }
 
     @Test
+    fun updateCheckerResolvesLinkedModules() {
+        val module = Module(
+            packageName = "repo.pkg",
+            title = "T",
+            summary = null,
+            url = null,
+            homepageUrl = null,
+            sourceUrl = null,
+            updatedAt = null,
+            stars = 0,
+            contributor = null,
+            contributorAvatarUrl = null,
+            latestRelease = ModuleVersion.parse("10-1.0"),
+            latestBetaRelease = null,
+            latestSnapshotRelease = null,
+            latestReleaseTime = null,
+        )
+        val installed = InstalledModule("com.vendor.alias", 9, "0.9", "T", true, null)
+
+        assertTrue(
+            UpdateChecker.findUpdates(listOf(installed), listOf(module), UpdateChannel.STABLE).isEmpty(),
+        )
+
+        val linked = UpdateChecker.findUpdates(
+            listOf(installed),
+            listOf(module),
+            UpdateChannel.STABLE,
+            links = mapOf("com.vendor.alias" to "repo.pkg"),
+        )
+        assertEquals(1, linked.size)
+        assertEquals("repo.pkg", linked.first().module.packageName)
+    }
+
+    @Test
     fun libraryBackupRoundTrips() {
         val json = kotlinx.serialization.json.Json { ignoreUnknownKeys = true }
         val backup = LibraryBackup(
@@ -116,6 +150,7 @@ class VersionLogicTest {
             recentlyViewed = listOf("c.d"),
             hidden = listOf("e.f"),
             skipped = mapOf("a.b" to 12L),
+            links = mapOf("com.example.alias" to "a.b"),
         )
         val text = json.encodeToString(LibraryBackup.serializer(), backup)
         val decoded = json.decodeFromString(LibraryBackup.serializer(), text)

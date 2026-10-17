@@ -6,6 +6,7 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.lspstore.data.remote.LsposedRepoApi
+import org.lspstore.data.remote.ProxyState
 import org.lspstore.data.remote.createHttpClient
 import org.lspstore.data.remote.createJson
 import org.lspstore.data.remote.toDetail
@@ -18,7 +19,7 @@ class LiveRepoTest {
 
     @Test
     fun fetchesIndexAndModuleDetail() = runBlocking {
-        val client = createHttpClient(createJson())
+        val client = createHttpClient(createJson(), ProxyState())
         try {
             val api = LsposedRepoApi(client)
 

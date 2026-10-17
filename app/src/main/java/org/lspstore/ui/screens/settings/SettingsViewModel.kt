@@ -13,8 +13,10 @@ import org.lspstore.R
 import org.lspstore.data.repository.SettingsRepositoryImpl
 import org.lspstore.data.work.UpdateScheduler
 import org.lspstore.di.AppContainer
+import org.lspstore.domain.model.ProxyConfig
 import org.lspstore.domain.model.SortOrder
 import org.lspstore.domain.model.ThemeMode
+import org.lspstore.domain.model.TranslationSettings
 import org.lspstore.domain.model.UpdateChannel
 
 data class SettingsUiState(
@@ -28,6 +30,9 @@ data class SettingsUiState(
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     val amoled: Boolean = false,
     val dynamicColor: Boolean = true,
+    val proxy: ProxyConfig = ProxyConfig(),
+    val translation: TranslationSettings = TranslationSettings(),
+    val proxyTesting: Boolean = false,
     val downloadsSize: Long = 0,
     val message: String? = null,
 )
@@ -73,6 +78,49 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
         }
         viewModelScope.launch {
             settingsRepository.dynamicColor.collect { enabled -> _state.update { it.copy(dynamicColor = enabled) } }
+        }
+        viewModelScope.launch {
+            settingsRepository.proxyConfig.collect { config -> _state.update { it.copy(proxy = config) } }
+        }
+        viewModelScope.launch {
+            settingsRepository.translationSettings.collect { settings ->
+                _state.update { it.copy(translation = settings) }
+            }
+        }
+    }
+
+    fun saveTranslation(settings: TranslationSettings) {
+        viewModelScope.launch { settingsRepository.setTranslationSettings(settings) }
+    }
+
+    fun saveProxy(config: ProxyConfig) {
+        viewModelScope.launch { settingsRepository.setProxyConfig(config) }
+    }
+
+    fun testProxy() {
+        if (_state.value.proxyTesting) return
+        viewModelScope.launch {
+            _state.update { it.copy(proxyTesting = true) }
+            container.proxyTester.test()
+                .onSuccess { millis ->
+                    _state.update {
+                        it.copy(
+                            proxyTesting = false,
+                            message = appContext.getString(R.string.settings_proxy_ok, millis.toInt()),
+                        )
+                    }
+                }
+                .onFailure { error ->
+                    _state.update {
+                        it.copy(
+                            proxyTesting = false,
+                            message = appContext.getString(
+                                R.string.settings_proxy_failed,
+                                error.message ?: error::class.simpleName.orEmpty(),
+                            ),
+                        )
+                    }
+                }
         }
     }
 

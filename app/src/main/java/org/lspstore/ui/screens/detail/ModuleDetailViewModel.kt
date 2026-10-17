@@ -9,12 +9,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.lspstore.R
 import org.lspstore.data.install.InstallOutcome
 import org.lspstore.data.repository.InstalledModulesRepositoryImpl
 import org.lspstore.data.repository.LibraryRepositoryImpl
 import org.lspstore.data.repository.ModuleRepositoryImpl
 import org.lspstore.data.repository.SettingsRepositoryImpl
-import org.lspstore.R
 import org.lspstore.di.AppContainer
 import org.lspstore.domain.model.ApkVerification
 import org.lspstore.domain.model.InstalledModule
@@ -36,6 +36,8 @@ data class ModuleDetailUiState(
     val downloadProgress: Float? = null,
     val message: String? = null,
     val pendingMismatch: ApkVerification.Mismatch? = null,
+    val translatedSummary: String? = null,
+    val isTranslating: Boolean = false,
 ) {
     val latestVersionCode: Long?
         get() = detail?.module?.latestFor(channel)?.versionCode
@@ -61,6 +63,7 @@ class ModuleDetailViewModel(
     private val settingsRepository: SettingsRepositoryImpl = container.settingsRepository
     private val libraryRepository: LibraryRepositoryImpl = container.libraryRepository
     private val installer = container.installer
+    private val translationRepository = container.translationRepository
 
     private val _state = MutableStateFlow(ModuleDetailUiState())
     val state = _state.asStateFlow()
@@ -93,7 +96,7 @@ class ModuleDetailViewModel(
 
     fun load() {
         viewModelScope.launch {
-            _state.update { it.copy(isLoading = it.detail == null, error = null) }
+            _state.update { it.copy(isLoading = it.detail == null, error = null, translatedSummary = null) }
             runCatching {
                 val detail = moduleRepository.getDetail(packageName)
                 val installed = installedRepository.getInstalledModule(packageName)
@@ -144,6 +147,30 @@ class ModuleDetailViewModel(
 
     fun clearMessage() {
         _state.update { it.copy(message = null) }
+    }
+
+    fun translateSummary() {
+        val summary = _state.value.detail?.module?.summary ?: return
+        if (summary.isBlank() || _state.value.isTranslating) return
+        viewModelScope.launch {
+            _state.update { it.copy(isTranslating = true, message = null) }
+            translationRepository.translate(summary)
+                .onSuccess { translated ->
+                    _state.update { it.copy(isTranslating = false, translatedSummary = translated) }
+                }
+                .onFailure { error ->
+                    val message = if (error.message?.contains("disabled", ignoreCase = true) == true) {
+                        container.appContext.getString(R.string.detail_translation_disabled)
+                    } else {
+                        container.appContext.getString(R.string.detail_translate_failed)
+                    }
+                    _state.update { it.copy(isTranslating = false, message = message) }
+                }
+        }
+    }
+
+    fun clearTranslation() {
+        _state.update { it.copy(translatedSummary = null) }
     }
 
     private fun latestAsset(): ReleaseAsset? =

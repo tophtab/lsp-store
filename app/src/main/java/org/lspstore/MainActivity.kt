@@ -50,6 +50,7 @@ import org.lspstore.ui.navigation.Routes
 import org.lspstore.ui.screens.about.AboutScreen
 import org.lspstore.ui.screens.detail.ModuleDetailScreen
 import org.lspstore.ui.screens.home.HomeScreen
+import org.lspstore.ui.screens.imports.ExternalImportScreen
 import org.lspstore.ui.screens.installed.InstalledScreen
 import org.lspstore.ui.screens.library.LibraryKind
 import org.lspstore.ui.screens.library.LibraryListScreen
@@ -169,7 +170,10 @@ private fun MainContent() {
                 SearchScreen(onOpenModule = { navController.navigate(Routes.detail(it)) })
             }
             composable(Routes.INSTALLED) {
-                InstalledScreen(onOpenModule = { navController.navigate(Routes.detail(it)) })
+                InstalledScreen(
+                    onOpenModule = { navController.navigate(Routes.detail(it)) },
+                    onOpenImports = { navController.navigate(Routes.IMPORTS) },
+                )
             }
             composable(Routes.SETTINGS) {
                 SettingsScreen(
@@ -178,7 +182,11 @@ private fun MainContent() {
                     onOpenHidden = { navController.navigate(Routes.HIDDEN) },
                     onOpenSkipped = { navController.navigate(Routes.SKIPPED) },
                     onOpenAbout = { navController.navigate(Routes.ABOUT) },
+                    onOpenImports = { navController.navigate(Routes.IMPORTS) },
                 )
+            }
+            composable(Routes.IMPORTS) {
+                ExternalImportScreen(onBack = { navController.popBackStack() })
             }
             composable(Routes.FAVOURITES) {
                 LibraryListScreen(

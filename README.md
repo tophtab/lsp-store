@@ -55,6 +55,14 @@ the remote `versionCode` is higher, or equal with a different `versionName`
 - Backup: export/import favourites, recently viewed, hidden and skipped updates as
   versioned JSON through the Storage Access Framework.
 - Localization: English and Simplified Chinese (`values-zh-rCN`).
+- Proxy: HTTP or SOCKS with optional credentials, applied live to every request
+  (index, details, APK downloads) through an OkHttp proxy selector, plus a
+  connection test.
+- Translation: translate a module description with Google (keyless), LibreTranslate,
+  DeepL or Microsoft, with a small in-memory cache.
+- External import: installed LSPosed modules that are not in the repository can be
+  linked to a repository module so update checks still work; links are part of the
+  JSON backup.
 - Background checks: a WorkManager periodic job (default 12h, configurable) refreshes
   the index, finds updates and posts a notification; with root it can update silently.
   Rescheduled on boot via `BootReceiver`.
@@ -66,7 +74,8 @@ the remote `versionCode` is higher, or equal with a different `versionName`
 - Install: system `PackageInstaller` by default, optional silent install via `su`.
 - Appearance: system / light / dark, AMOLED black, Material You dynamic color.
 - Settings: appearance, update channel, sort order, background-check toggle and
-  interval, auto-update, root install, library shortcuts, cache, about.
+  interval, auto-update, root install, proxy, translation, library shortcuts,
+  backup, cache, about.
 
 ## Architecture
 
@@ -82,6 +91,7 @@ app/src/main/java/org/lspstore/
                    SettingsRepositoryImpl, LibraryRepositoryImpl
     install/       ApkInstaller (download, mirror fallback, system installer, su),
                    ApkVerifier (signatures)
+    translation/   TranslationRepository (Google / LibreTranslate / DeepL / Microsoft)
     work/          UpdateCheckWorker, UpdateScheduler, UpdateNotifier, BootReceiver
   domain/
     model/         Module, ModuleDetail, Release, ModuleVersion, InstalledModule,
@@ -90,7 +100,8 @@ app/src/main/java/org/lspstore/
   ui/
     components/    shared Compose components
     navigation/    route constants
-    screens/       home, search, installed, detail, library, settings, onboarding, about
+    screens/       home, search, installed, detail, library, imports, settings,
+                   onboarding, about
   di/              AppContainer
 
 Strings live in `res/values/strings.xml` (English) with translations under
@@ -130,4 +141,6 @@ dialog; the user can still choose to install after uninstalling the old app.
 - Batch update launches one system-installer dialog per module when not rooted.
 - Background auto-update requires root; without it the worker only notifies.
 - Only English and Simplified Chinese are translated so far.
+- Translation only covers the module description; the readme and release notes are
+  not translated.
 - No curated collections or announcements feed.

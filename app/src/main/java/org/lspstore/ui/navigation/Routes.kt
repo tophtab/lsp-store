@@ -10,6 +10,7 @@ object Routes {
     const val RECENTLY_VIEWED = "library/recent"
     const val HIDDEN = "library/hidden"
     const val SKIPPED = "library/skipped"
+    const val IMPORTS = "library/imports"
     const val ABOUT = "about"
 
     const val DETAIL_ARG = "packageName"

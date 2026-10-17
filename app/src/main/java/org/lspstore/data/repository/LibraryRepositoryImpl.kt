@@ -25,6 +25,7 @@ class LibraryRepositoryImpl(private val context: Context) {
         val HIDDEN = stringPreferencesKey("hidden")
         val SKIPPED = stringPreferencesKey("skipped")
         val SEARCH_HISTORY = stringPreferencesKey("search_history")
+        val LINKS = stringPreferencesKey("manual_links")
     }
 
     private val json = Json {
@@ -47,6 +48,10 @@ class LibraryRepositoryImpl(private val context: Context) {
 
     val searchHistory: Flow<List<String>> = context.libraryDataStore.data
         .map { decodeList(it[Keys.SEARCH_HISTORY]) }
+
+    /** installed package name -> repository module package name */
+    val links: Flow<Map<String, String>> = context.libraryDataStore.data
+        .map { decodeLinks(it[Keys.LINKS]) }
 
     suspend fun toggleFavourite(packageName: String) {
         context.libraryDataStore.edit { prefs ->
@@ -113,6 +118,22 @@ class LibraryRepositoryImpl(private val context: Context) {
         context.libraryDataStore.edit { it[Keys.SEARCH_HISTORY] = "" }
     }
 
+    suspend fun linkModule(installedPackage: String, repoPackage: String) {
+        context.libraryDataStore.edit { prefs ->
+            val current = decodeLinks(prefs[Keys.LINKS]).toMutableMap()
+            current[installedPackage] = repoPackage
+            prefs[Keys.LINKS] = encodeLinks(current)
+        }
+    }
+
+    suspend fun unlinkModule(installedPackage: String) {
+        context.libraryDataStore.edit { prefs ->
+            val current = decodeLinks(prefs[Keys.LINKS]).toMutableMap()
+            current.remove(installedPackage)
+            prefs[Keys.LINKS] = encodeLinks(current)
+        }
+    }
+
     suspend fun exportJson(): String {
         val prefs = context.libraryDataStore.data.first()
         val backup = LibraryBackup(
@@ -120,6 +141,7 @@ class LibraryRepositoryImpl(private val context: Context) {
             recentlyViewed = decodeList(prefs[Keys.RECENTLY_VIEWED]),
             hidden = decodeList(prefs[Keys.HIDDEN]),
             skipped = decodeSkipped(prefs[Keys.SKIPPED]),
+            links = decodeLinks(prefs[Keys.LINKS]),
         )
         return json.encodeToString(LibraryBackup.serializer(), backup)
     }
@@ -146,6 +168,10 @@ class LibraryRepositoryImpl(private val context: Context) {
             val skipped = decodeSkipped(prefs[Keys.SKIPPED]).toMutableMap()
             backup.skipped.forEach { (packageName, versionCode) -> skipped[packageName] = versionCode }
             prefs[Keys.SKIPPED] = skipped.entries.joinToString("\n") { "${it.key}:${it.value}" }
+
+            val links = decodeLinks(prefs[Keys.LINKS]).toMutableMap()
+            links.putAll(backup.links)
+            prefs[Keys.LINKS] = encodeLinks(links)
         }
 
         return LibraryImportResult(
@@ -153,6 +179,7 @@ class LibraryRepositoryImpl(private val context: Context) {
             recentlyViewed = backup.recentlyViewed.size,
             hidden = backup.hidden.size,
             skipped = backup.skipped.size,
+            links = backup.links.size,
         )
     }
 
@@ -172,6 +199,19 @@ class LibraryRepositoryImpl(private val context: Context) {
             ?.toMap()
             ?: emptyMap()
 
+    private fun decodeLinks(raw: String?): Map<String, String> =
+        raw?.split('\n')
+            ?.mapNotNull { line ->
+                val index = line.indexOf('=')
+                if (index <= 0) return@mapNotNull null
+                line.substring(0, index) to line.substring(index + 1)
+            }
+            ?.toMap()
+            ?: emptyMap()
+
+    private fun encodeLinks(links: Map<String, String>): String =
+        links.entries.joinToString("\n") { "${it.key}=${it.value}" }
+
     private companion object {
         const val MAX_RECENT = 30
         const val MAX_SEARCH_HISTORY = 15
@@ -185,6 +225,7 @@ data class LibraryBackup(
     val recentlyViewed: List<String> = emptyList(),
     val hidden: List<String> = emptyList(),
     val skipped: Map<String, Long> = emptyMap(),
+    val links: Map<String, String> = emptyMap(),
 )
 
 data class LibraryImportResult(
@@ -192,5 +233,6 @@ data class LibraryImportResult(
     val recentlyViewed: Int = 0,
     val hidden: Int = 0,
     val skipped: Int = 0,
+    val links: Int = 0,
     val error: String? = null,
 )

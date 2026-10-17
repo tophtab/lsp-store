@@ -54,7 +54,7 @@ import org.lspstore.ui.components.LoadingBox
 import org.lspstore.ui.components.ModuleAvatar
 
 @Composable
-fun InstalledScreen(onOpenModule: (String) -> Unit) {
+fun InstalledScreen(onOpenModule: (String) -> Unit, onOpenImports: () -> Unit) {
     val container = LocalAppContainer.current
     val viewModel: InstalledViewModel = viewModel(factory = InstalledViewModel.factory(container))
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -122,7 +122,12 @@ fun InstalledScreen(onOpenModule: (String) -> Unit) {
                         }
                     }
                     if (state.unknown.isNotEmpty()) {
-                        item { SectionHeader(title = stringResource(R.string.installed_section_unknown, state.unknown.size)) }
+                        item {
+                            SectionHeader(
+                                title = stringResource(R.string.installed_section_unknown, state.unknown.size),
+                                action = stringResource(R.string.import_link) to onOpenImports,
+                            )
+                        }
                         items(state.unknown, key = { "x:${it.packageName}" }) { module ->
                             InstalledRow(module = module, onClick = null)
                         }

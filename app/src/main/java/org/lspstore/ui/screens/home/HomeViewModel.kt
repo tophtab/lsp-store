@@ -46,6 +46,7 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
     private var favourites: List<String> = emptyList()
     private var recentlyViewed: List<String> = emptyList()
     private var skipped: Map<String, Long> = emptyMap()
+    private var links: Map<String, String> = emptyMap()
     private var channel: UpdateChannel = UpdateChannel.STABLE
 
     init {
@@ -63,6 +64,9 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
         }
         viewModelScope.launch {
             libraryRepository.skippedUpdates.collect { skipped = it; rebuild() }
+        }
+        viewModelScope.launch {
+            libraryRepository.links.collect { links = it; rebuild() }
         }
         load(force = false)
     }
@@ -104,7 +108,7 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
         val visible = index.filterNot { it.packageName in hidden }
         val byPackage = visible.associateBy { it.packageName }
         val installedPackages = installed.filter { it.isXposedModule }.map { it.packageName }.toSet()
-        val updates = UpdateChecker.findUpdates(installed, index, channel, skipped, hidden)
+        val updates = UpdateChecker.findUpdates(installed, index, channel, skipped, hidden, links)
 
         val recentlyUpdated = visible
             .sortedByDescending { it.updatedAt ?: Instant.EPOCH }

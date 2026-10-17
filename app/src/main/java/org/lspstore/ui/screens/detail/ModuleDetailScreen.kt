@@ -207,6 +207,8 @@ fun ModuleDetailScreen(packageName: String, onBack: () -> Unit) {
                 onInstallLatest = viewModel::installLatest,
                 onInstallAsset = viewModel::installAsset,
                 onToggleFavourite = viewModel::toggleFavourite,
+                onTranslate = viewModel::translateSummary,
+                onClearTranslation = viewModel::clearTranslation,
                 modifier = Modifier.padding(innerPadding),
             )
         }
@@ -262,6 +264,8 @@ private fun DetailContent(
     onInstallLatest: () -> Unit,
     onInstallAsset: (ReleaseAsset) -> Unit,
     onToggleFavourite: () -> Unit,
+    onTranslate: () -> Unit,
+    onClearTranslation: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
@@ -272,6 +276,8 @@ private fun DetailContent(
             detail = detail,
             onInstallLatest = onInstallLatest,
             onToggleFavourite = onToggleFavourite,
+            onTranslate = onTranslate,
+            onClearTranslation = onClearTranslation,
         )
         TabRow(selectedTabIndex = selectedTab) {
             Tab(
@@ -306,6 +312,8 @@ private fun DetailHeader(
     detail: ModuleDetail,
     onInstallLatest: () -> Unit,
     onToggleFavourite: () -> Unit,
+    onTranslate: () -> Unit,
+    onClearTranslation: () -> Unit,
 ) {
     val module = detail.module
     val uriHandler = LocalUriHandler.current
@@ -349,7 +357,27 @@ private fun DetailHeader(
 
         module.summary?.let {
             Spacer(Modifier.height(10.dp))
-            Text(it, style = MaterialTheme.typography.bodyMedium)
+            Text(
+                text = state.translatedSummary ?: it,
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            Spacer(Modifier.height(4.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (state.translatedSummary != null) {
+                    Text(
+                        text = stringResource(R.string.detail_translated),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                    TextButton(onClick = onClearTranslation) {
+                        Text(stringResource(R.string.detail_clear_translation))
+                    }
+                } else {
+                    TextButton(onClick = onTranslate, enabled = !state.isTranslating) {
+                        Text(stringResource(R.string.detail_translate))
+                    }
+                }
+            }
         }
 
         Spacer(Modifier.height(10.dp))

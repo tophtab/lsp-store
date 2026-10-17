@@ -19,6 +19,15 @@ class LspStoreApp : Application() {
         container = AppContainer(this)
         UpdateNotifier.ensureChannel(this)
         applySchedule()
+        applyProxy()
+    }
+
+    private fun applyProxy() {
+        CoroutineScope(Dispatchers.IO).launch {
+            container.settingsRepository.proxyConfig.collect { config ->
+                container.proxyState.current = config
+            }
+        }
     }
 
     private fun applySchedule() {

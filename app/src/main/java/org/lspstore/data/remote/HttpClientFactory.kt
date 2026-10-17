@@ -17,7 +17,14 @@ fun createJson(): Json = Json {
     coerceInputValues = true
 }
 
-fun createHttpClient(json: Json): HttpClient = HttpClient(OkHttp) {
+fun createHttpClient(json: Json, proxyState: ProxyState): HttpClient = HttpClient(OkHttp) {
+    engine {
+        config {
+            proxySelector(DynamicProxySelector(proxyState))
+            proxyAuthenticator(ProxyAuthenticator(proxyState))
+        }
+    }
+
     expectSuccess = true
 
     install(ContentNegotiation) {

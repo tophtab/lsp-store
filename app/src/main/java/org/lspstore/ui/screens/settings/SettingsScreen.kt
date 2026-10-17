@@ -13,15 +13,18 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -31,17 +34,25 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import org.lspstore.R
+import org.lspstore.domain.model.ProxyConfig
+import org.lspstore.domain.model.ProxyType
 import org.lspstore.domain.model.SortOrder
 import org.lspstore.domain.model.ThemeMode
+import org.lspstore.domain.model.TranslationProvider
+import org.lspstore.domain.model.TranslationSettings
 import org.lspstore.domain.model.UpdateChannel
 import org.lspstore.ui.LocalAppContainer
 import org.lspstore.ui.labelRes
@@ -52,6 +63,7 @@ fun SettingsScreen(
     onOpenRecentlyViewed: () -> Unit,
     onOpenHidden: () -> Unit,
     onOpenSkipped: () -> Unit,
+    onOpenImports: () -> Unit,
     onOpenAbout: () -> Unit,
 ) {
     val container = LocalAppContainer.current
@@ -178,11 +190,199 @@ fun SettingsScreen(
 
             HorizontalDivider()
 
+            SectionTitle(stringResource(R.string.settings_proxy))
+            var proxyEnabled by remember(state.proxy.enabled) { mutableStateOf(state.proxy.enabled) }
+            var proxyType by remember(state.proxy.type) { mutableStateOf(state.proxy.type) }
+            var proxyHost by remember(state.proxy.host) { mutableStateOf(state.proxy.host) }
+            var proxyPort by remember(state.proxy.port) {
+                mutableStateOf(if (state.proxy.port == 0) "" else state.proxy.port.toString())
+            }
+            var proxyUser by remember(state.proxy.username) { mutableStateOf(state.proxy.username) }
+            var proxyPass by remember(state.proxy.password) { mutableStateOf(state.proxy.password) }
+
+            SwitchRow(
+                title = stringResource(R.string.settings_proxy_enable),
+                subtitle = stringResource(R.string.settings_proxy_desc),
+                checked = proxyEnabled,
+                onCheckedChange = { enabled ->
+                    proxyEnabled = enabled
+                    viewModel.saveProxy(
+                        ProxyConfig(enabled, proxyType, proxyHost, proxyPort.toIntOrNull() ?: 0, proxyUser, proxyPass),
+                    )
+                },
+            )
+            if (proxyEnabled) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    ProxyType.entries.forEach { type ->
+                        FilterChip(
+                            selected = proxyType == type,
+                            onClick = { proxyType = type },
+                            label = { Text(stringResource(type.labelRes())) },
+                        )
+                    }
+                }
+                OutlinedTextField(
+                    value = proxyHost,
+                    onValueChange = { proxyHost = it },
+                    label = { Text(stringResource(R.string.settings_proxy_host)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                OutlinedTextField(
+                    value = proxyPort,
+                    onValueChange = { proxyPort = it.filter(Char::isDigit) },
+                    label = { Text(stringResource(R.string.settings_proxy_port)) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                OutlinedTextField(
+                    value = proxyUser,
+                    onValueChange = { proxyUser = it },
+                    label = { Text(stringResource(R.string.settings_proxy_user)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                OutlinedTextField(
+                    value = proxyPass,
+                    onValueChange = { proxyPass = it },
+                    label = { Text(stringResource(R.string.settings_proxy_pass)) },
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                val portValue = proxyPort.toIntOrNull() ?: 0
+                val proxyValid = proxyHost.isNotBlank() && portValue in 1..65535
+                Button(
+                    onClick = {
+                        viewModel.saveProxy(
+                            ProxyConfig(true, proxyType, proxyHost, portValue, proxyUser, proxyPass),
+                        )
+                    },
+                    enabled = proxyValid,
+                ) {
+                    Text(stringResource(R.string.action_save))
+                }
+                OutlinedButton(onClick = viewModel::testProxy, enabled = !state.proxyTesting) {
+                    Text(
+                        stringResource(
+                            if (state.proxyTesting) R.string.settings_proxy_testing
+                            else R.string.settings_proxy_test,
+                        ),
+                    )
+                }
+                if (!proxyValid) {
+                    Text(
+                        text = stringResource(R.string.settings_proxy_invalid),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+            }
+
+            HorizontalDivider()
+
+            SectionTitle(stringResource(R.string.settings_translation))
+            var provider by remember(state.translation.provider) { mutableStateOf(state.translation.provider) }
+            var targetLang by remember(state.translation.targetLang) { mutableStateOf(state.translation.targetLang) }
+            var deeplKey by remember(state.translation.deeplKey) { mutableStateOf(state.translation.deeplKey) }
+            var libreUrl by remember(state.translation.libreUrl) { mutableStateOf(state.translation.libreUrl) }
+            var libreKey by remember(state.translation.libreKey) { mutableStateOf(state.translation.libreKey) }
+            var msKey by remember(state.translation.microsoftKey) { mutableStateOf(state.translation.microsoftKey) }
+            var msRegion by remember(state.translation.microsoftRegion) { mutableStateOf(state.translation.microsoftRegion) }
+
+            fun save() = viewModel.saveTranslation(
+                TranslationSettings(
+                    provider = provider,
+                    targetLang = targetLang,
+                    deeplKey = deeplKey,
+                    libreUrl = libreUrl,
+                    libreKey = libreKey,
+                    microsoftKey = msKey,
+                    microsoftRegion = msRegion,
+                ),
+            )
+
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                TranslationProvider.entries.forEach { entry ->
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        FilterChip(
+                            selected = provider == entry,
+                            onClick = {
+                                provider = entry
+                                save()
+                            },
+                            label = { Text(stringResource(entry.labelRes())) },
+                        )
+                    }
+                }
+            }
+            OutlinedTextField(
+                value = targetLang,
+                onValueChange = { targetLang = it.take(5) },
+                label = { Text(stringResource(R.string.settings_translation_target)) },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            when (provider) {
+                TranslationProvider.GOOGLE -> Text(
+                    text = stringResource(R.string.settings_translation_note),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                TranslationProvider.DEEPL -> OutlinedTextField(
+                    value = deeplKey,
+                    onValueChange = { deeplKey = it },
+                    label = { Text(stringResource(R.string.settings_translation_deepl_key)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                TranslationProvider.LIBRE_TRANSLATE -> {
+                    OutlinedTextField(
+                        value = libreUrl,
+                        onValueChange = { libreUrl = it },
+                        label = { Text(stringResource(R.string.settings_translation_libre_url)) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    OutlinedTextField(
+                        value = libreKey,
+                        onValueChange = { libreKey = it },
+                        label = { Text(stringResource(R.string.settings_translation_libre_key)) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+                TranslationProvider.MICROSOFT -> {
+                    OutlinedTextField(
+                        value = msKey,
+                        onValueChange = { msKey = it },
+                        label = { Text(stringResource(R.string.settings_translation_ms_key)) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    OutlinedTextField(
+                        value = msRegion,
+                        onValueChange = { msRegion = it },
+                        label = { Text(stringResource(R.string.settings_translation_ms_region)) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+                TranslationProvider.DISABLED -> Unit
+            }
+            if (provider != TranslationProvider.DISABLED) {
+                Button(onClick = { save() }) { Text(stringResource(R.string.action_save)) }
+            }
+
+            HorizontalDivider()
+
             SectionTitle(stringResource(R.string.settings_library))
             NavRow(stringResource(R.string.library_favourites), onOpenFavourites)
             NavRow(stringResource(R.string.library_recently_viewed), onOpenRecentlyViewed)
             NavRow(stringResource(R.string.library_hidden), onOpenHidden)
             NavRow(stringResource(R.string.library_skipped), onOpenSkipped)
+            NavRow(stringResource(R.string.import_title), onOpenImports)
 
             HorizontalDivider()
 

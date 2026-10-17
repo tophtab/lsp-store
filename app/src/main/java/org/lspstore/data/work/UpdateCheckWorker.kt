@@ -21,7 +21,8 @@ class UpdateCheckWorker(
             val installed = container.installedRepository.getInstalledModules()
             val skipped = container.libraryRepository.skippedUpdates.first()
             val hidden = container.libraryRepository.hidden.first()
-            val updates = UpdateChecker.findUpdates(installed, index, channel, skipped, hidden)
+            val links = container.libraryRepository.links.first()
+            val updates = UpdateChecker.findUpdates(installed, index, channel, skipped, hidden, links)
 
             if (updates.isEmpty()) {
                 return Result.success()
