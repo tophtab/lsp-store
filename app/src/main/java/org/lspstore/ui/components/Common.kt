@@ -181,6 +181,57 @@ fun ModuleCard(
 }
 
 @Composable
+fun ModuleCardCompact(
+    module: Module,
+    installed: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Card(
+        onClick = onClick,
+        modifier = modifier.width(172.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            ModuleAvatar(module, size = 40)
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = module.title,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                text = module.packageName,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Spacer(Modifier.height(6.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                module.latestRelease?.let {
+                    VersionChip(
+                        text = it.versionName,
+                        container = MaterialTheme.colorScheme.primaryContainer,
+                        content = MaterialTheme.colorScheme.onPrimaryContainer,
+                    )
+                }
+                if (installed) {
+                    Spacer(Modifier.width(4.dp))
+                    VersionChip(
+                        text = "Installed",
+                        container = MaterialTheme.colorScheme.secondaryContainer,
+                        content = MaterialTheme.colorScheme.onSecondaryContainer,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
 fun ModuleAvatar(module: Module, size: Int = 48) {
     val avatar = module.contributorAvatarUrl
     if (!avatar.isNullOrBlank()) {

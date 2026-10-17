@@ -40,20 +40,28 @@ the remote `versionCode` is higher, or equal with a different `versionName`
 
 ## Features
 
-- Discover: search, sort (updated / stars / name), channel filter, favourites.
+- Home: updates banner plus horizontal shelves (recently updated, most starred,
+  beta builds, favourites, recently viewed).
+- Search: live filtering, sort (updated / stars / name), channel filter,
+  favourites-only filter, recent-search history.
+- Installed: every installed LSPosed module grouped into updates / up to date /
+  not in repository, with single and batch update.
 - Module detail: readme (WebView), release list with per-asset download, links,
-  install / update / reinstall.
-- Updates: installed LSPosed modules cross-referenced with the index, single and
-  batch update.
+  install / update / reinstall, share, hide, skip this version, open app,
+  app info, uninstall.
+- Library: favourites, recently viewed, hidden modules, skipped updates.
 - Background checks: a WorkManager periodic job (default 12h, configurable) refreshes
   the index, finds updates and posts a notification; with root it can update silently.
   Rescheduled on boot via `BootReceiver`.
 - APK signature verification: every downloaded APK is checked before install. The
   signer must match the installed module's signing history; mismatches are blocked
   with a dialog that shows both fingerprints and allows an explicit override.
+- Download mirror: falls back from assets.lsposed.org to the original GitHub asset
+  URL if the CDN fails.
 - Install: system `PackageInstaller` by default, optional silent install via `su`.
-- Settings: update channel, sort order, background-check toggle and interval,
-  auto-update, root install, cache.
+- Appearance: system / light / dark, AMOLED black, Material You dynamic color.
+- Settings: appearance, update channel, sort order, background-check toggle and
+  interval, auto-update, root install, library shortcuts, cache, about.
 
 ## Architecture
 
@@ -65,16 +73,19 @@ packages. Manual DI through `AppContainer`, exposed to Compose via
 app/src/main/java/org/lspstore/
   data/
     remote/        LsposedRepoApi, Ktor client factory, DTOs, mappers
-    repository/    ModuleRepositoryImpl (index cache), InstalledModulesRepositoryImpl, SettingsRepositoryImpl (DataStore)
-    install/       ApkInstaller (download, system installer, su), ApkVerifier (signatures)
+    repository/    ModuleRepositoryImpl (index cache), InstalledModulesRepositoryImpl,
+                   SettingsRepositoryImpl, LibraryRepositoryImpl
+    install/       ApkInstaller (download, mirror fallback, system installer, su),
+                   ApkVerifier (signatures)
     work/          UpdateCheckWorker, UpdateScheduler, UpdateNotifier, BootReceiver
   domain/
-    model/         Module, ModuleDetail, Release, ModuleVersion, InstalledModule, UpdateInfo, channels
-    usecase/       UpdateChecker
+    model/         Module, ModuleDetail, Release, ModuleVersion, InstalledModule,
+                   UpdateInfo, channels, sort, theme, ApkVerification
+    usecase/       UpdateChecker (channel + skipped + hidden aware)
   ui/
     components/    shared Compose components
     navigation/    route constants
-    screens/       discover, detail, updates, settings (ViewModel + Screen each)
+    screens/       home, search, installed, detail, library, settings, about
   di/              AppContainer
 ```
 
@@ -110,3 +121,5 @@ dialog; the user can still choose to install after uninstalling the old app.
 
 - Batch update launches one system-installer dialog per module when not rooted.
 - Background auto-update requires root; without it the worker only notifies.
+- English only; strings are not yet externalised for translation.
+- No onboarding, curated collections or announcements feed.

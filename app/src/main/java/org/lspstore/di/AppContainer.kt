@@ -8,6 +8,7 @@ import org.lspstore.data.remote.LsposedRepoApi
 import org.lspstore.data.remote.createHttpClient
 import org.lspstore.data.remote.createJson
 import org.lspstore.data.repository.InstalledModulesRepositoryImpl
+import org.lspstore.data.repository.LibraryRepositoryImpl
 import org.lspstore.data.repository.ModuleRepositoryImpl
 import org.lspstore.data.repository.SettingsRepositoryImpl
 
@@ -19,5 +20,6 @@ class AppContainer(context: Context) {
     val moduleRepository: ModuleRepositoryImpl = ModuleRepositoryImpl(context, LsposedRepoApi(httpClient), json)
     val installedRepository: InstalledModulesRepositoryImpl = InstalledModulesRepositoryImpl(context)
     val settingsRepository: SettingsRepositoryImpl = SettingsRepositoryImpl(context)
+    val libraryRepository: LibraryRepositoryImpl = LibraryRepositoryImpl(context)
     val installer: ApkInstaller = ApkInstaller(context, httpClient)
 }

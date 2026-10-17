@@ -16,6 +16,17 @@ private val DarkColorScheme = darkColorScheme(
     tertiary = Pink80,
 )
 
+private val AmoledColorScheme = darkColorScheme(
+    primary = Purple80,
+    secondary = PurpleGrey80,
+    tertiary = Pink80,
+    background = androidx.compose.ui.graphics.Color.Black,
+    surface = androidx.compose.ui.graphics.Color.Black,
+    surfaceContainerLow = androidx.compose.ui.graphics.Color(0xFF0A0A0A),
+    surfaceContainer = androidx.compose.ui.graphics.Color(0xFF0A0A0A),
+    surfaceContainerHigh = androidx.compose.ui.graphics.Color(0xFF111111),
+)
+
 private val LightColorScheme = lightColorScheme(
     primary = Purple40,
     secondary = PurpleGrey40,
@@ -26,6 +37,7 @@ private val LightColorScheme = lightColorScheme(
 fun LspStoreTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     dynamicColor: Boolean = true,
+    amoled: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     val colorScheme = when {
@@ -33,6 +45,7 @@ fun LspStoreTheme(
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
+        darkTheme && amoled -> AmoledColorScheme
         darkTheme -> DarkColorScheme
         else -> LightColorScheme
     }

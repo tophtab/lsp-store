@@ -9,11 +9,13 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Explore
+import androidx.compose.material.icons.filled.Apps
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -27,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -34,12 +37,19 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import org.lspstore.di.AppContainer
+import org.lspstore.domain.model.ThemeMode
 import org.lspstore.ui.LocalAppContainer
 import org.lspstore.ui.navigation.Routes
+import org.lspstore.ui.screens.about.AboutScreen
 import org.lspstore.ui.screens.detail.ModuleDetailScreen
-import org.lspstore.ui.screens.discover.DiscoverScreen
+import org.lspstore.ui.screens.home.HomeScreen
+import org.lspstore.ui.screens.installed.InstalledScreen
+import org.lspstore.ui.screens.library.LibraryKind
+import org.lspstore.ui.screens.library.LibraryListScreen
+import org.lspstore.ui.screens.library.SkippedUpdatesScreen
+import org.lspstore.ui.screens.search.SearchScreen
 import org.lspstore.ui.screens.settings.SettingsScreen
-import org.lspstore.ui.screens.updates.UpdatesScreen
 import org.lspstore.ui.theme.LspStoreTheme
 
 class MainActivity : ComponentActivity() {
@@ -48,7 +58,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         val container = (application as LspStoreApp).container
         setContent {
-            LspStoreTheme {
+            AppTheme(container) {
                 CompositionLocalProvider(LocalAppContainer provides container) {
                     AppRoot()
                 }
@@ -57,11 +67,30 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@Composable
+private fun AppTheme(container: AppContainer, content: @Composable () -> Unit) {
+    val mode by container.settingsRepository.themeMode
+        .collectAsStateWithLifecycle(initialValue = ThemeMode.SYSTEM)
+    val amoled by container.settingsRepository.amoled
+        .collectAsStateWithLifecycle(initialValue = false)
+    val dynamicColor by container.settingsRepository.dynamicColor
+        .collectAsStateWithLifecycle(initialValue = true)
+    val darkTheme = when (mode) {
+        ThemeMode.SYSTEM -> isSystemInDarkTheme()
+        ThemeMode.LIGHT -> false
+        ThemeMode.DARK -> true
+    }
+    LspStoreTheme(darkTheme = darkTheme, dynamicColor = dynamicColor, amoled = amoled) {
+        content()
+    }
+}
+
 private data class BottomItem(val route: String, val label: String, val icon: ImageVector)
 
 private val bottomItems = listOf(
-    BottomItem(Routes.DISCOVER, "Discover", Icons.Filled.Explore),
-    BottomItem(Routes.UPDATES, "Updates", Icons.Filled.SystemUpdate),
+    BottomItem(Routes.HOME, "Home", Icons.Filled.Home),
+    BottomItem(Routes.SEARCH, "Search", Icons.Filled.Search),
+    BottomItem(Routes.INSTALLED, "Installed", Icons.Filled.Apps),
     BottomItem(Routes.SETTINGS, "Settings", Icons.Filled.Settings),
 )
 
@@ -100,17 +129,63 @@ private fun AppRoot() {
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = Routes.DISCOVER,
+            startDestination = Routes.HOME,
             modifier = Modifier.padding(innerPadding),
         ) {
-            composable(Routes.DISCOVER) {
-                DiscoverScreen(onOpenModule = { navController.navigate(Routes.detail(it)) })
+            composable(Routes.HOME) {
+                HomeScreen(
+                    onOpenModule = { navController.navigate(Routes.detail(it)) },
+                    onOpenUpdates = {
+                        navController.navigate(Routes.INSTALLED) { launchSingleTop = true }
+                    },
+                    onOpenSearch = {
+                        navController.navigate(Routes.SEARCH) { launchSingleTop = true }
+                    },
+                    onOpenFavourites = { navController.navigate(Routes.FAVOURITES) },
+                    onOpenRecentlyViewed = { navController.navigate(Routes.RECENTLY_VIEWED) },
+                )
             }
-            composable(Routes.UPDATES) {
-                UpdatesScreen(onOpenModule = { navController.navigate(Routes.detail(it)) })
+            composable(Routes.SEARCH) {
+                SearchScreen(onOpenModule = { navController.navigate(Routes.detail(it)) })
+            }
+            composable(Routes.INSTALLED) {
+                InstalledScreen(onOpenModule = { navController.navigate(Routes.detail(it)) })
             }
             composable(Routes.SETTINGS) {
-                SettingsScreen()
+                SettingsScreen(
+                    onOpenFavourites = { navController.navigate(Routes.FAVOURITES) },
+                    onOpenRecentlyViewed = { navController.navigate(Routes.RECENTLY_VIEWED) },
+                    onOpenHidden = { navController.navigate(Routes.HIDDEN) },
+                    onOpenSkipped = { navController.navigate(Routes.SKIPPED) },
+                    onOpenAbout = { navController.navigate(Routes.ABOUT) },
+                )
+            }
+            composable(Routes.FAVOURITES) {
+                LibraryListScreen(
+                    kind = LibraryKind.FAVOURITES,
+                    onBack = { navController.popBackStack() },
+                    onOpenModule = { navController.navigate(Routes.detail(it)) },
+                )
+            }
+            composable(Routes.RECENTLY_VIEWED) {
+                LibraryListScreen(
+                    kind = LibraryKind.RECENTLY_VIEWED,
+                    onBack = { navController.popBackStack() },
+                    onOpenModule = { navController.navigate(Routes.detail(it)) },
+                )
+            }
+            composable(Routes.HIDDEN) {
+                LibraryListScreen(
+                    kind = LibraryKind.HIDDEN,
+                    onBack = { navController.popBackStack() },
+                    onOpenModule = { navController.navigate(Routes.detail(it)) },
+                )
+            }
+            composable(Routes.SKIPPED) {
+                SkippedUpdatesScreen(onBack = { navController.popBackStack() })
+            }
+            composable(Routes.ABOUT) {
+                AboutScreen(onBack = { navController.popBackStack() })
             }
             composable(
                 route = Routes.DETAIL,

@@ -70,4 +70,40 @@ class VersionLogicTest {
         assertTrue(UpdateChecker.findUpdates(listOf(current), listOf(module), UpdateChannel.BETA).isEmpty())
         assertTrue(UpdateChecker.findUpdates(listOf(notAModule), listOf(module), UpdateChannel.STABLE).isEmpty())
     }
+
+    @Test
+    fun updateCheckerRespectsSkippedAndHidden() {
+        val module = Module(
+            packageName = "a.b",
+            title = "T",
+            summary = null,
+            url = null,
+            homepageUrl = null,
+            sourceUrl = null,
+            updatedAt = null,
+            stars = 0,
+            contributor = null,
+            contributorAvatarUrl = null,
+            latestRelease = ModuleVersion.parse("10-1.0"),
+            latestBetaRelease = null,
+            latestSnapshotRelease = null,
+            latestReleaseTime = null,
+        )
+        val installed = InstalledModule("a.b", 9, "0.9", "T", true, null)
+
+        val skippedCurrent = UpdateChecker.findUpdates(
+            listOf(installed), listOf(module), UpdateChannel.STABLE, skipped = mapOf("a.b" to 10L),
+        )
+        assertTrue(skippedCurrent.isEmpty())
+
+        val skippedOlder = UpdateChecker.findUpdates(
+            listOf(installed), listOf(module), UpdateChannel.STABLE, skipped = mapOf("a.b" to 9L),
+        )
+        assertEquals(1, skippedOlder.size)
+
+        val hidden = UpdateChecker.findUpdates(
+            listOf(installed), listOf(module), UpdateChannel.STABLE, hidden = setOf("a.b"),
+        )
+        assertTrue(hidden.isEmpty())
+    }
 }

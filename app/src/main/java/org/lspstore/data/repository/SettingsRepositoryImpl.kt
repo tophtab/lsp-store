@@ -5,11 +5,11 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import org.lspstore.domain.model.SortOrder
+import org.lspstore.domain.model.ThemeMode
 import org.lspstore.domain.model.UpdateChannel
 
 private val Context.settingsDataStore by preferencesDataStore(name = "settings")
@@ -24,7 +24,9 @@ class SettingsRepositoryImpl(private val context: Context) {
         val UPDATE_INTERVAL_HOURS = longPreferencesKey("background_check_interval_hours")
         val AUTO_UPDATE = booleanPreferencesKey("auto_update")
         val ROOT_INSTALL = booleanPreferencesKey("root_install")
-        val FAVOURITES = stringSetPreferencesKey("favourites")
+        val THEME_MODE = stringPreferencesKey("theme_mode")
+        val AMOLED = booleanPreferencesKey("amoled")
+        val DYNAMIC_COLOR = booleanPreferencesKey("dynamic_color")
     }
 
     val updateChannel: Flow<UpdateChannel> = context.settingsDataStore.data
@@ -48,8 +50,14 @@ class SettingsRepositoryImpl(private val context: Context) {
     val rootInstall: Flow<Boolean> = context.settingsDataStore.data
         .map { it[Keys.ROOT_INSTALL] ?: false }
 
-    val favourites: Flow<Set<String>> = context.settingsDataStore.data
-        .map { it[Keys.FAVOURITES] ?: emptySet() }
+    val themeMode: Flow<ThemeMode> = context.settingsDataStore.data
+        .map { prefs -> ThemeMode.entries.firstOrNull { it.name == prefs[Keys.THEME_MODE] } ?: ThemeMode.SYSTEM }
+
+    val amoled: Flow<Boolean> = context.settingsDataStore.data
+        .map { it[Keys.AMOLED] ?: false }
+
+    val dynamicColor: Flow<Boolean> = context.settingsDataStore.data
+        .map { it[Keys.DYNAMIC_COLOR] ?: true }
 
     suspend fun setUpdateChannel(channel: UpdateChannel) {
         context.settingsDataStore.edit { it[Keys.CHANNEL] = channel.key }
@@ -79,11 +87,16 @@ class SettingsRepositoryImpl(private val context: Context) {
         context.settingsDataStore.edit { it[Keys.ROOT_INSTALL] = enabled }
     }
 
-    suspend fun toggleFavourite(packageName: String) {
-        context.settingsDataStore.edit { prefs ->
-            val current = prefs[Keys.FAVOURITES] ?: emptySet()
-            prefs[Keys.FAVOURITES] = if (packageName in current) current - packageName else current + packageName
-        }
+    suspend fun setThemeMode(mode: ThemeMode) {
+        context.settingsDataStore.edit { it[Keys.THEME_MODE] = mode.name }
+    }
+
+    suspend fun setAmoled(enabled: Boolean) {
+        context.settingsDataStore.edit { it[Keys.AMOLED] = enabled }
+    }
+
+    suspend fun setDynamicColor(enabled: Boolean) {
+        context.settingsDataStore.edit { it[Keys.DYNAMIC_COLOR] = enabled }
     }
 
     companion object {

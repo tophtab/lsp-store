@@ -12,6 +12,7 @@ import org.lspstore.data.repository.SettingsRepositoryImpl
 import org.lspstore.data.work.UpdateScheduler
 import org.lspstore.di.AppContainer
 import org.lspstore.domain.model.SortOrder
+import org.lspstore.domain.model.ThemeMode
 import org.lspstore.domain.model.UpdateChannel
 
 data class SettingsUiState(
@@ -22,6 +23,9 @@ data class SettingsUiState(
     val autoUpdate: Boolean = false,
     val rootInstall: Boolean = false,
     val rootAvailable: Boolean? = null,
+    val themeMode: ThemeMode = ThemeMode.SYSTEM,
+    val amoled: Boolean = false,
+    val dynamicColor: Boolean = true,
     val downloadsSize: Long = 0,
     val message: String? = null,
 )
@@ -59,6 +63,27 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
         viewModelScope.launch {
             settingsRepository.rootInstall.collect { enabled -> _state.update { it.copy(rootInstall = enabled) } }
         }
+        viewModelScope.launch {
+            settingsRepository.themeMode.collect { mode -> _state.update { it.copy(themeMode = mode) } }
+        }
+        viewModelScope.launch {
+            settingsRepository.amoled.collect { enabled -> _state.update { it.copy(amoled = enabled) } }
+        }
+        viewModelScope.launch {
+            settingsRepository.dynamicColor.collect { enabled -> _state.update { it.copy(dynamicColor = enabled) } }
+        }
+    }
+
+    fun setThemeMode(mode: ThemeMode) {
+        viewModelScope.launch { settingsRepository.setThemeMode(mode) }
+    }
+
+    fun setAmoled(enabled: Boolean) {
+        viewModelScope.launch { settingsRepository.setAmoled(enabled) }
+    }
+
+    fun setDynamicColor(enabled: Boolean) {
+        viewModelScope.launch { settingsRepository.setDynamicColor(enabled) }
     }
 
     fun setChannel(channel: UpdateChannel) {

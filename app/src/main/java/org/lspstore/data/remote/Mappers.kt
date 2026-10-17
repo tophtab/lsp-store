@@ -78,6 +78,7 @@ fun ReleaseDto.toRelease(): Release = Release(
 private fun ReleaseAssetDto.toAsset(): ReleaseAsset = ReleaseAsset(
     name = name.orEmpty(),
     downloadUrl = downloadUrl.orEmpty(),
+    fallbackUrl = originalDownloadUrl?.takeIf { it.isNotBlank() },
     size = size,
     downloadCount = downloadCount,
     contentType = contentType,

@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.lspstore.data.install.InstallOutcome
 import org.lspstore.data.repository.InstalledModulesRepositoryImpl
+import org.lspstore.data.repository.LibraryRepositoryImpl
 import org.lspstore.data.repository.ModuleRepositoryImpl
 import org.lspstore.data.repository.SettingsRepositoryImpl
 import org.lspstore.di.AppContainer
@@ -28,17 +29,25 @@ data class ModuleDetailUiState(
     val installed: InstalledModule? = null,
     val channel: UpdateChannel = UpdateChannel.STABLE,
     val isFavourite: Boolean = false,
+    val isHidden: Boolean = false,
+    val skippedVersionCode: Long? = null,
     val isBusy: Boolean = false,
     val downloadProgress: Float? = null,
     val message: String? = null,
     val pendingMismatch: ApkVerification.Mismatch? = null,
 ) {
+    val latestVersionCode: Long?
+        get() = detail?.module?.latestFor(channel)?.versionCode
+
     val updateAvailable: Boolean
         get() {
             val installed = installed ?: return false
             val latest = detail?.module?.latestFor(channel) ?: return false
             return latest.isNewerThan(installed.versionCode, installed.versionName)
         }
+
+    val isUpdateSkipped: Boolean
+        get() = skippedVersionCode != null && skippedVersionCode == latestVersionCode
 }
 
 class ModuleDetailViewModel(
@@ -49,6 +58,7 @@ class ModuleDetailViewModel(
     private val moduleRepository: ModuleRepositoryImpl = container.moduleRepository
     private val installedRepository: InstalledModulesRepositoryImpl = container.installedRepository
     private val settingsRepository: SettingsRepositoryImpl = container.settingsRepository
+    private val libraryRepository: LibraryRepositoryImpl = container.libraryRepository
     private val installer = container.installer
 
     private val _state = MutableStateFlow(ModuleDetailUiState())
@@ -63,8 +73,18 @@ class ModuleDetailViewModel(
             }
         }
         viewModelScope.launch {
-            settingsRepository.favourites.collect { favourites ->
+            libraryRepository.favourites.collect { favourites ->
                 _state.update { it.copy(isFavourite = packageName in favourites) }
+            }
+        }
+        viewModelScope.launch {
+            libraryRepository.hidden.collect { hidden ->
+                _state.update { it.copy(isHidden = packageName in hidden) }
+            }
+        }
+        viewModelScope.launch {
+            libraryRepository.skippedUpdates.collect { skipped ->
+                _state.update { it.copy(skippedVersionCode = skipped[packageName]) }
             }
         }
         load()
@@ -79,6 +99,7 @@ class ModuleDetailViewModel(
                 detail to installed
             }.onSuccess { (detail, installed) ->
                 _state.update { it.copy(isLoading = false, detail = detail, installed = installed) }
+                libraryRepository.addRecentlyViewed(packageName)
             }.onFailure { error ->
                 _state.update { it.copy(isLoading = false, error = error.message ?: "Failed to load module") }
             }
@@ -86,7 +107,20 @@ class ModuleDetailViewModel(
     }
 
     fun toggleFavourite() {
-        viewModelScope.launch { settingsRepository.toggleFavourite(packageName) }
+        viewModelScope.launch { libraryRepository.toggleFavourite(packageName) }
+    }
+
+    fun toggleHidden() {
+        viewModelScope.launch { libraryRepository.toggleHidden(packageName) }
+    }
+
+    fun skipThisVersion() {
+        val versionCode = _state.value.latestVersionCode ?: return
+        viewModelScope.launch { libraryRepository.skipUpdate(packageName, versionCode) }
+    }
+
+    fun unskipVersion() {
+        viewModelScope.launch { libraryRepository.unskipUpdate(packageName) }
     }
 
     fun installLatest() {

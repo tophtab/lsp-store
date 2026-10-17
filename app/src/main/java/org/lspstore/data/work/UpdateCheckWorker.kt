@@ -19,7 +19,9 @@ class UpdateCheckWorker(
             val channel = container.settingsRepository.updateChannel.first()
             val index = container.moduleRepository.getIndex(force = true)
             val installed = container.installedRepository.getInstalledModules()
-            val updates = UpdateChecker.findUpdates(installed, index, channel)
+            val skipped = container.libraryRepository.skippedUpdates.first()
+            val hidden = container.libraryRepository.hidden.first()
+            val updates = UpdateChecker.findUpdates(installed, index, channel, skipped, hidden)
 
             if (updates.isEmpty()) {
                 return Result.success()

@@ -12,6 +12,7 @@ import org.lspstore.domain.model.ApkVerification
 import org.lspstore.domain.model.ReleaseAsset
 import java.io.File
 import java.io.FileOutputStream
+import java.io.IOException
 
 sealed interface InstallOutcome {
     data object SilentSuccess : InstallOutcome
@@ -35,10 +36,22 @@ class ApkInstaller(
         val target = File(directory, asset.name.ifBlank { "module.apk" })
 
         onProgress(0, asset.size)
-        val bytes: ByteArray = client.get(asset.downloadUrl).body()
-        FileOutputStream(target).use { it.write(bytes) }
-        onProgress(bytes.size.toLong(), bytes.size.toLong())
-        target
+        val urls = listOfNotNull(
+            asset.downloadUrl.takeIf { it.isNotBlank() },
+            asset.fallbackUrl,
+        ).distinct()
+        var lastError: Throwable? = null
+        for (url in urls) {
+            try {
+                val bytes: ByteArray = client.get(url).body()
+                FileOutputStream(target).use { it.write(bytes) }
+                onProgress(bytes.size.toLong(), bytes.size.toLong())
+                return@withContext target
+            } catch (t: Throwable) {
+                lastError = t
+            }
+        }
+        throw lastError ?: IOException("No download URL available for ${asset.name}")
     }
 
     suspend fun isRootAvailable(): Boolean = withContext(Dispatchers.IO) {

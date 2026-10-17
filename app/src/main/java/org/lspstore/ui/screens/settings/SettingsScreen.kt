@@ -2,19 +2,22 @@
 
 package org.lspstore.ui.screens.settings
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -34,11 +37,18 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import org.lspstore.domain.model.SortOrder
+import org.lspstore.domain.model.ThemeMode
 import org.lspstore.domain.model.UpdateChannel
 import org.lspstore.ui.LocalAppContainer
 
 @Composable
-fun SettingsScreen() {
+fun SettingsScreen(
+    onOpenFavourites: () -> Unit,
+    onOpenRecentlyViewed: () -> Unit,
+    onOpenHidden: () -> Unit,
+    onOpenSkipped: () -> Unit,
+    onOpenAbout: () -> Unit,
+) {
     val container = LocalAppContainer.current
     val viewModel: SettingsViewModel = viewModel(factory = SettingsViewModel.factory(container))
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -63,6 +73,31 @@ fun SettingsScreen() {
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            SectionTitle("Appearance")
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                ThemeMode.entries.forEach { mode ->
+                    FilterChip(
+                        selected = state.themeMode == mode,
+                        onClick = { viewModel.setThemeMode(mode) },
+                        label = { Text(mode.label) },
+                    )
+                }
+            }
+            SwitchRow(
+                title = "AMOLED black",
+                subtitle = "Use pure black surfaces in dark mode",
+                checked = state.amoled,
+                onCheckedChange = viewModel::setAmoled,
+            )
+            SwitchRow(
+                title = "Dynamic color",
+                subtitle = "Use Material You colors from the wallpaper",
+                checked = state.dynamicColor,
+                onCheckedChange = viewModel::setDynamicColor,
+            )
+
+            HorizontalDivider()
+
             SectionTitle("Update channel")
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 UpdateChannel.entries.forEach { channel ->
@@ -119,7 +154,6 @@ fun SettingsScreen() {
                 checked = state.autoUpdate,
                 onCheckedChange = viewModel::setAutoUpdate,
             )
-
             SwitchRow(
                 title = "Root silent install",
                 subtitle = when (state.rootAvailable) {
@@ -133,6 +167,14 @@ fun SettingsScreen() {
 
             HorizontalDivider()
 
+            SectionTitle("Library")
+            NavRow("Favourites", onOpenFavourites)
+            NavRow("Recently viewed", onOpenRecentlyViewed)
+            NavRow("Hidden modules", onOpenHidden)
+            NavRow("Skipped updates", onOpenSkipped)
+
+            HorizontalDivider()
+
             SectionTitle("Storage")
             Text(
                 text = "Downloaded APKs: ${formatBytes(state.downloadsSize)}",
@@ -142,13 +184,7 @@ fun SettingsScreen() {
 
             HorizontalDivider()
 
-            SectionTitle("About")
-            Text("LSPosed Store 0.1.0", style = MaterialTheme.typography.bodyMedium)
-            Text(
-                text = "Module data is sourced from modules.lsposed.org (GitHub Xposed-Modules-Repo).",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            NavRow("About", onOpenAbout)
         }
     }
 }
@@ -160,6 +196,20 @@ private fun SectionTitle(text: String) {
         style = MaterialTheme.typography.titleMedium,
         fontWeight = FontWeight.SemiBold,
     )
+}
+
+@Composable
+private fun NavRow(title: String, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(title, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null)
+    }
 }
 
 @Composable
@@ -181,7 +231,7 @@ private fun SwitchRow(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        Spacer(Modifier.height(0.dp))
+        Spacer(Modifier.padding(0.dp))
         Switch(checked = checked, onCheckedChange = onCheckedChange)
     }
 }

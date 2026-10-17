@@ -1,7 +1,8 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 
-package org.lspstore.ui.screens.discover
+package org.lspstore.ui.screens.search
 
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,7 +13,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Refresh
@@ -28,13 +32,16 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -48,16 +55,16 @@ import org.lspstore.ui.components.LoadingBox
 import org.lspstore.ui.components.ModuleCard
 
 @Composable
-fun DiscoverScreen(onOpenModule: (String) -> Unit) {
+fun SearchScreen(onOpenModule: (String) -> Unit) {
     val container = LocalAppContainer.current
-    val viewModel: DiscoverViewModel = viewModel(factory = DiscoverViewModel.factory(container))
+    val viewModel: SearchViewModel = viewModel(factory = SearchViewModel.factory(container))
     val state by viewModel.state.collectAsStateWithLifecycle()
     var sortMenuOpen by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("LSPosed Store") },
+                title = { Text("Search") },
                 actions = {
                     IconButton(onClick = viewModel::refresh) {
                         Icon(Icons.Filled.Refresh, contentDescription = "Refresh")
@@ -101,6 +108,8 @@ fun DiscoverScreen(onOpenModule: (String) -> Unit) {
                 },
                 singleLine = true,
                 shape = RoundedCornerShape(28.dp),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                keyboardActions = KeyboardActions(onSearch = { viewModel.recordQuery() }),
             )
 
             Row(
@@ -119,6 +128,36 @@ fun DiscoverScreen(onOpenModule: (String) -> Unit) {
                     onClick = viewModel::toggleFavouritesOnly,
                     label = { Text("Favourites") },
                 )
+            }
+
+            if (state.query.isBlank() && state.history.isNotEmpty()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = "Recent searches",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.weight(1f),
+                    )
+                    TextButton(onClick = viewModel::clearHistory) { Text("Clear") }
+                }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState())
+                        .padding(horizontal = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    state.history.forEach { entry ->
+                        FilterChip(
+                            selected = false,
+                            onClick = { viewModel.onQueryChange(entry) },
+                            label = { Text(entry) },
+                        )
+                    }
+                }
             }
 
             when {

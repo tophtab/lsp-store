@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 
-package org.lspstore.ui.screens.updates
+package org.lspstore.ui.screens.installed
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -9,15 +9,15 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Extension
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.SystemUpdate
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -28,7 +28,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -41,6 +43,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import org.lspstore.domain.model.InstalledModule
 import org.lspstore.domain.model.UpdateInfo
 import org.lspstore.ui.LocalAppContainer
 import org.lspstore.ui.components.EmptyBox
@@ -49,9 +52,9 @@ import org.lspstore.ui.components.LoadingBox
 import org.lspstore.ui.components.ModuleAvatar
 
 @Composable
-fun UpdatesScreen(onOpenModule: (String) -> Unit) {
+fun InstalledScreen(onOpenModule: (String) -> Unit) {
     val container = LocalAppContainer.current
-    val viewModel: UpdatesViewModel = viewModel(factory = UpdatesViewModel.factory(container))
+    val viewModel: InstalledViewModel = viewModel(factory = InstalledViewModel.factory(container))
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -65,7 +68,7 @@ fun UpdatesScreen(onOpenModule: (String) -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Updates") },
+                title = { Text("Installed") },
                 actions = {
                     IconButton(onClick = viewModel::refresh) {
                         Icon(Icons.Filled.Refresh, contentDescription = "Refresh")
@@ -87,46 +90,65 @@ fun UpdatesScreen(onOpenModule: (String) -> Unit) {
             when {
                 state.isLoading -> LoadingBox()
                 state.error != null -> ErrorBox(state.error!!, viewModel::refresh)
-                state.updates.isEmpty() -> EmptyBox(
-                    if (state.installedCount == 0) {
-                        "No LSPosed modules detected on this device"
-                    } else {
-                        "All ${state.installedCount} installed modules are up to date"
-                    },
-                )
+                state.installedCount == 0 -> EmptyBox("No LSPosed modules detected on this device")
                 else -> LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(12.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    item {
-                        Row(
-                            modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Text(
-                                text = "${state.updates.size} update(s) available",
-                                style = MaterialTheme.typography.titleMedium,
-                                modifier = Modifier.weight(1f),
-                            )
-                            Button(
-                                onClick = viewModel::updateAll,
+                    if (state.updates.isNotEmpty()) {
+                        item {
+                            SectionHeader(
+                                title = "Updates (${state.updates.size})",
+                                action = "Update all" to viewModel::updateAll,
                                 enabled = state.batchProgress == null && state.busyPackage == null,
-                            ) {
-                                Text("Update all")
-                            }
+                            )
+                        }
+                        items(state.updates, key = { "u:${it.module.packageName}" }) { info ->
+                            UpdateRow(
+                                info = info,
+                                busy = state.busyPackage == info.module.packageName,
+                                onOpen = { onOpenModule(info.module.packageName) },
+                                onUpdate = { viewModel.update(info) },
+                            )
                         }
                     }
-                    items(state.updates, key = { it.module.packageName }) { info ->
-                        UpdateRow(
-                            info = info,
-                            busy = state.busyPackage == info.module.packageName,
-                            onOpen = { onOpenModule(info.module.packageName) },
-                            onUpdate = { viewModel.update(info) },
-                        )
+                    if (state.upToDate.isNotEmpty()) {
+                        item { SectionHeader(title = "Up to date (${state.upToDate.size})") }
+                        items(state.upToDate, key = { "c:${it.packageName}" }) { module ->
+                            InstalledRow(module = module, onClick = { onOpenModule(module.packageName) })
+                        }
+                    }
+                    if (state.unknown.isNotEmpty()) {
+                        item { SectionHeader(title = "Not in repository (${state.unknown.size})") }
+                        items(state.unknown, key = { "x:${it.packageName}" }) { module ->
+                            InstalledRow(module = module, onClick = null)
+                        }
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun SectionHeader(
+    title: String,
+    action: Pair<String, () -> Unit>? = null,
+    enabled: Boolean = true,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.weight(1f),
+        )
+        action?.let { (label, onClick) ->
+            TextButton(onClick = onClick, enabled = enabled) { Text(label) }
         }
     }
 }
@@ -143,10 +165,7 @@ private fun UpdateRow(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         modifier = Modifier.fillMaxWidth(),
     ) {
-        Row(
-            modifier = Modifier.padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
+        Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
             ModuleAvatar(info.module, size = 44)
             Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
@@ -162,13 +181,6 @@ private fun UpdateRow(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.primary,
                 )
-                Text(
-                    text = info.module.packageName,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
             }
             Spacer(Modifier.width(8.dp))
             if (busy) {
@@ -178,6 +190,50 @@ private fun UpdateRow(
                     Icon(Icons.Filled.SystemUpdate, contentDescription = "Update")
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun InstalledRow(module: InstalledModule, onClick: (() -> Unit)?) {
+    Card(
+        onClick = { onClick?.invoke() },
+        enabled = onClick != null,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Surface(
+                modifier = Modifier.size(44.dp),
+                shape = MaterialTheme.shapes.medium,
+                color = MaterialTheme.colorScheme.surfaceVariant,
+            ) {
+                Column(verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(Icons.Filled.Extension, contentDescription = null)
+                }
+            }
+            Spacer(Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = module.label,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    text = module.packageName,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            Text(
+                text = module.versionName ?: "?",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }

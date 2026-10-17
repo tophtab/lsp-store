@@ -19,6 +19,12 @@ enum class SortOrder(val label: String) {
     NAME("Name"),
 }
 
+enum class ThemeMode(val label: String) {
+    SYSTEM("System"),
+    LIGHT("Light"),
+    DARK("Dark"),
+}
+
 data class ModuleVersion(
     val versionCode: Long,
     val versionName: String,
@@ -117,6 +123,7 @@ data class Release(
 data class ReleaseAsset(
     val name: String,
     val downloadUrl: String,
+    val fallbackUrl: String?,
     val size: Long,
     val downloadCount: Int,
     val contentType: String?,

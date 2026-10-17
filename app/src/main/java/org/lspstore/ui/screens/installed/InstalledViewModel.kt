@@ -1,4 +1,4 @@
-package org.lspstore.ui.screens.updates
+package org.lspstore.ui.screens.installed
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -10,9 +10,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.lspstore.data.install.InstallOutcome
-import org.lspstore.data.repository.InstalledModulesRepositoryImpl
-import org.lspstore.data.repository.ModuleRepositoryImpl
-import org.lspstore.data.repository.SettingsRepositoryImpl
 import org.lspstore.di.AppContainer
 import org.lspstore.domain.model.InstalledModule
 import org.lspstore.domain.model.Module
@@ -20,11 +17,13 @@ import org.lspstore.domain.model.UpdateChannel
 import org.lspstore.domain.model.UpdateInfo
 import org.lspstore.domain.usecase.UpdateChecker
 
-data class UpdatesUiState(
+data class InstalledUiState(
     val isLoading: Boolean = true,
     val isRefreshing: Boolean = false,
     val error: String? = null,
     val updates: List<UpdateInfo> = emptyList(),
+    val upToDate: List<InstalledModule> = emptyList(),
+    val unknown: List<InstalledModule> = emptyList(),
     val installedCount: Int = 0,
     val channel: UpdateChannel = UpdateChannel.STABLE,
     val busyPackage: String? = null,
@@ -32,18 +31,21 @@ data class UpdatesUiState(
     val message: String? = null,
 )
 
-class UpdatesViewModel(private val container: AppContainer) : ViewModel() {
+class InstalledViewModel(private val container: AppContainer) : ViewModel() {
 
-    private val moduleRepository: ModuleRepositoryImpl = container.moduleRepository
-    private val installedRepository: InstalledModulesRepositoryImpl = container.installedRepository
-    private val settingsRepository: SettingsRepositoryImpl = container.settingsRepository
+    private val moduleRepository = container.moduleRepository
+    private val installedRepository = container.installedRepository
+    private val settingsRepository = container.settingsRepository
+    private val libraryRepository = container.libraryRepository
     private val installer = container.installer
 
-    private val _state = MutableStateFlow(UpdatesUiState())
+    private val _state = MutableStateFlow(InstalledUiState())
     val state = _state.asStateFlow()
 
     private var index: List<Module> = emptyList()
     private var installed: List<InstalledModule> = emptyList()
+    private var hidden: Set<String> = emptySet()
+    private var skipped: Map<String, Long> = emptyMap()
 
     init {
         viewModelScope.launch {
@@ -51,6 +53,12 @@ class UpdatesViewModel(private val container: AppContainer) : ViewModel() {
                 _state.update { it.copy(channel = channel) }
                 recompute()
             }
+        }
+        viewModelScope.launch {
+            libraryRepository.hidden.collect { value -> hidden = value; recompute() }
+        }
+        viewModelScope.launch {
+            libraryRepository.skippedUpdates.collect { value -> skipped = value; recompute() }
         }
         load(force = false)
     }
@@ -66,9 +74,8 @@ class UpdatesViewModel(private val container: AppContainer) : ViewModel() {
         viewModelScope.launch {
             _state.update { it.copy(busyPackage = info.module.packageName, message = null) }
             val outcome = performInstall(info)
-            val message = describe(outcome, info)
             reloadInstalled()
-            _state.update { it.copy(busyPackage = null, message = message) }
+            _state.update { it.copy(busyPackage = null, message = describe(outcome, info)) }
         }
     }
 
@@ -79,8 +86,7 @@ class UpdatesViewModel(private val container: AppContainer) : ViewModel() {
             var failures = 0
             targets.forEachIndexed { i, info ->
                 _state.update { it.copy(batchProgress = "${i + 1}/${targets.size}: ${info.module.title}") }
-                val outcome = performInstall(info)
-                if (outcome is InstallOutcome.Failure) failures++
+                if (performInstall(info) !is InstallOutcome.SilentSuccess) failures++
             }
             reloadInstalled()
             val message = if (failures == 0) {
@@ -114,8 +120,27 @@ class UpdatesViewModel(private val container: AppContainer) : ViewModel() {
     }
 
     private fun recompute() {
-        val updates = UpdateChecker.findUpdates(installed, index, _state.value.channel)
-        _state.update { it.copy(updates = updates, installedCount = installed.count { module -> module.isXposedModule }) }
+        if (index.isEmpty() && installed.isEmpty()) return
+        val byPackage = index.associateBy { it.packageName }
+        val xposed = installed.filter { it.isXposedModule }
+        val updates = UpdateChecker.findUpdates(installed, index, _state.value.channel, skipped, hidden)
+        val updating = updates.map { it.module.packageName }.toSet()
+
+        val upToDate = xposed.filter { module ->
+            module.packageName in byPackage &&
+                module.packageName !in updating &&
+                module.packageName !in hidden
+        }
+        val unknown = xposed.filter { it.packageName !in byPackage }
+
+        _state.update {
+            it.copy(
+                updates = updates,
+                upToDate = upToDate,
+                unknown = unknown,
+                installedCount = xposed.size,
+            )
+        }
     }
 
     private fun load(force: Boolean) {
@@ -150,7 +175,7 @@ class UpdatesViewModel(private val container: AppContainer) : ViewModel() {
 
     companion object {
         fun factory(container: AppContainer) = viewModelFactory {
-            initializer { UpdatesViewModel(container) }
+            initializer { InstalledViewModel(container) }
         }
     }
 }
