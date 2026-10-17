@@ -27,6 +27,7 @@ class SettingsRepositoryImpl(private val context: Context) {
         val THEME_MODE = stringPreferencesKey("theme_mode")
         val AMOLED = booleanPreferencesKey("amoled")
         val DYNAMIC_COLOR = booleanPreferencesKey("dynamic_color")
+        val ONBOARDING_DONE = booleanPreferencesKey("onboarding_done")
     }
 
     val updateChannel: Flow<UpdateChannel> = context.settingsDataStore.data
@@ -58,6 +59,9 @@ class SettingsRepositoryImpl(private val context: Context) {
 
     val dynamicColor: Flow<Boolean> = context.settingsDataStore.data
         .map { it[Keys.DYNAMIC_COLOR] ?: true }
+
+    val onboardingComplete: Flow<Boolean> = context.settingsDataStore.data
+        .map { it[Keys.ONBOARDING_DONE] ?: false }
 
     suspend fun setUpdateChannel(channel: UpdateChannel) {
         context.settingsDataStore.edit { it[Keys.CHANNEL] = channel.key }
@@ -97,6 +101,10 @@ class SettingsRepositoryImpl(private val context: Context) {
 
     suspend fun setDynamicColor(enabled: Boolean) {
         context.settingsDataStore.edit { it[Keys.DYNAMIC_COLOR] = enabled }
+    }
+
+    suspend fun setOnboardingComplete(complete: Boolean) {
+        context.settingsDataStore.edit { it[Keys.ONBOARDING_DONE] = complete }
     }
 
     companion object {

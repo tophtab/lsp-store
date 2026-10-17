@@ -10,6 +10,8 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Apps
@@ -25,6 +27,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
@@ -48,6 +51,7 @@ import org.lspstore.ui.screens.installed.InstalledScreen
 import org.lspstore.ui.screens.library.LibraryKind
 import org.lspstore.ui.screens.library.LibraryListScreen
 import org.lspstore.ui.screens.library.SkippedUpdatesScreen
+import org.lspstore.ui.screens.onboarding.OnboardingScreen
 import org.lspstore.ui.screens.search.SearchScreen
 import org.lspstore.ui.screens.settings.SettingsScreen
 import org.lspstore.ui.theme.LspStoreTheme
@@ -96,6 +100,19 @@ private val bottomItems = listOf(
 
 @Composable
 private fun AppRoot() {
+    val container = LocalAppContainer.current
+    val onboardingComplete by produceState<Boolean?>(initialValue = null, container) {
+        container.settingsRepository.onboardingComplete.collect { value = it }
+    }
+    when (onboardingComplete) {
+        null -> Box(Modifier.fillMaxSize())
+        false -> OnboardingScreen()
+        true -> MainContent()
+    }
+}
+
+@Composable
+private fun MainContent() {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route

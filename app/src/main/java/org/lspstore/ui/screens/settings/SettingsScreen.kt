@@ -2,6 +2,8 @@
 
 package org.lspstore.ui.screens.settings
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -53,6 +55,12 @@ fun SettingsScreen(
     val viewModel: SettingsViewModel = viewModel(factory = SettingsViewModel.factory(container))
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    val exportLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/json"),
+    ) { uri -> uri?.let(viewModel::exportTo) }
+    val importLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument(),
+    ) { uri -> uri?.let(viewModel::importFrom) }
 
     LaunchedEffect(state.message) {
         state.message?.let {
@@ -172,6 +180,25 @@ fun SettingsScreen(
             NavRow("Recently viewed", onOpenRecentlyViewed)
             NavRow("Hidden modules", onOpenHidden)
             NavRow("Skipped updates", onOpenSkipped)
+
+            HorizontalDivider()
+
+            SectionTitle("Backup")
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(onClick = { exportLauncher.launch("lspstore-library.json") }) {
+                    Text("Export")
+                }
+                OutlinedButton(
+                    onClick = { importLauncher.launch(arrayOf("application/json", "text/plain", "*/*")) },
+                ) {
+                    Text("Import")
+                }
+            }
+            Text(
+                text = "Favourites, hidden modules and skipped updates are exported as JSON.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
 
             HorizontalDivider()
 

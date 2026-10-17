@@ -5,7 +5,10 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 
 private val Context.libraryDataStore by preferencesDataStore(name = "library")
 
@@ -22,6 +25,12 @@ class LibraryRepositoryImpl(private val context: Context) {
         val HIDDEN = stringPreferencesKey("hidden")
         val SKIPPED = stringPreferencesKey("skipped")
         val SEARCH_HISTORY = stringPreferencesKey("search_history")
+    }
+
+    private val json = Json {
+        prettyPrint = true
+        ignoreUnknownKeys = true
+        encodeDefaults = true
     }
 
     val favourites: Flow<List<String>> = context.libraryDataStore.data
@@ -104,6 +113,49 @@ class LibraryRepositoryImpl(private val context: Context) {
         context.libraryDataStore.edit { it[Keys.SEARCH_HISTORY] = "" }
     }
 
+    suspend fun exportJson(): String {
+        val prefs = context.libraryDataStore.data.first()
+        val backup = LibraryBackup(
+            favourites = decodeList(prefs[Keys.FAVOURITES]),
+            recentlyViewed = decodeList(prefs[Keys.RECENTLY_VIEWED]),
+            hidden = decodeList(prefs[Keys.HIDDEN]),
+            skipped = decodeSkipped(prefs[Keys.SKIPPED]),
+        )
+        return json.encodeToString(LibraryBackup.serializer(), backup)
+    }
+
+    suspend fun importJson(raw: String): LibraryImportResult {
+        val backup = runCatching {
+            json.decodeFromString(LibraryBackup.serializer(), raw)
+        }.getOrElse { error ->
+            return LibraryImportResult(error = error.message ?: "Invalid backup file")
+        }
+
+        context.libraryDataStore.edit { prefs ->
+            val favourites = (backup.favourites + decodeList(prefs[Keys.FAVOURITES])).distinct()
+            prefs[Keys.FAVOURITES] = encodeList(favourites)
+
+            val recent = (backup.recentlyViewed + decodeList(prefs[Keys.RECENTLY_VIEWED]))
+                .distinct()
+                .take(MAX_RECENT)
+            prefs[Keys.RECENTLY_VIEWED] = encodeList(recent)
+
+            val hidden = (backup.hidden + decodeList(prefs[Keys.HIDDEN])).distinct()
+            prefs[Keys.HIDDEN] = encodeList(hidden)
+
+            val skipped = decodeSkipped(prefs[Keys.SKIPPED]).toMutableMap()
+            backup.skipped.forEach { (packageName, versionCode) -> skipped[packageName] = versionCode }
+            prefs[Keys.SKIPPED] = skipped.entries.joinToString("\n") { "${it.key}:${it.value}" }
+        }
+
+        return LibraryImportResult(
+            favourites = backup.favourites.size,
+            recentlyViewed = backup.recentlyViewed.size,
+            hidden = backup.hidden.size,
+            skipped = backup.skipped.size,
+        )
+    }
+
     private fun decodeList(raw: String?): List<String> =
         raw?.split('\n')?.map { it.trim() }?.filter { it.isNotBlank() } ?: emptyList()
 
@@ -125,3 +177,20 @@ class LibraryRepositoryImpl(private val context: Context) {
         const val MAX_SEARCH_HISTORY = 15
     }
 }
+
+@Serializable
+data class LibraryBackup(
+    val version: Int = 1,
+    val favourites: List<String> = emptyList(),
+    val recentlyViewed: List<String> = emptyList(),
+    val hidden: List<String> = emptyList(),
+    val skipped: Map<String, Long> = emptyMap(),
+)
+
+data class LibraryImportResult(
+    val favourites: Int = 0,
+    val recentlyViewed: Int = 0,
+    val hidden: Int = 0,
+    val skipped: Int = 0,
+    val error: String? = null,
+)

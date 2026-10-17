@@ -1,5 +1,6 @@
 package org.lspstore.ui.screens.settings
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
@@ -154,6 +155,41 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
 
     fun clearMessage() {
         _state.update { it.copy(message = null) }
+    }
+
+    fun exportTo(uri: Uri) {
+        viewModelScope.launch {
+            runCatching {
+                val payload = container.libraryRepository.exportJson()
+                appContext.contentResolver.openOutputStream(uri)?.use { stream ->
+                    stream.write(payload.toByteArray(Charsets.UTF_8))
+                } ?: error("Cannot open the selected file")
+            }.onSuccess {
+                _state.update { it.copy(message = "Library exported") }
+            }.onFailure { error ->
+                _state.update { it.copy(message = error.message ?: "Export failed") }
+            }
+        }
+    }
+
+    fun importFrom(uri: Uri) {
+        viewModelScope.launch {
+            runCatching {
+                val text = appContext.contentResolver.openInputStream(uri)
+                    ?.bufferedReader()
+                    ?.use { it.readText() }
+                    ?: error("Cannot open the selected file")
+                container.libraryRepository.importJson(text)
+            }.onSuccess { result ->
+                val message = result.error ?: (
+                    "Imported ${result.favourites} favourites, " +
+                        "${result.hidden} hidden, ${result.skipped} skipped"
+                    )
+                _state.update { it.copy(message = message) }
+            }.onFailure { error ->
+                _state.update { it.copy(message = error.message ?: "Import failed") }
+            }
+        }
     }
 
     companion object {
