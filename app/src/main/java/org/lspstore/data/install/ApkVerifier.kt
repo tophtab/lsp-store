@@ -5,6 +5,7 @@ import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.content.pm.Signature
 import android.os.Build
+import org.lspstore.R
 import org.lspstore.domain.model.ApkVerification
 import org.lspstore.domain.model.SignerInfo
 import java.io.ByteArrayInputStream
@@ -23,10 +24,10 @@ class ApkVerifier(private val context: Context) {
     fun verify(apkFile: File, packageName: String): ApkVerification {
         val archiveInfo = runCatching {
             context.packageManager.getPackageArchiveInfo(apkFile.absolutePath, signatureFlags())
-        }.getOrNull() ?: return ApkVerification.Invalid("Not a valid APK")
+        }.getOrNull() ?: return ApkVerification.Invalid(context.getString(R.string.verifier_invalid_apk))
 
         val apkSigners = archiveInfo.readSigners()
-        if (apkSigners.isEmpty()) return ApkVerification.Invalid("APK is not signed")
+        if (apkSigners.isEmpty()) return ApkVerification.Invalid(context.getString(R.string.verifier_unsigned_apk))
 
         val installedInfo = runCatching {
             context.packageManager.getPackageInfo(packageName, signatureFlags())

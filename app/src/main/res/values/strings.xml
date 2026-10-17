@@ -1,3 +1,204 @@
 <resources>
     <string name="app_name">LSPosed Store</string>
+
+    <!-- Common actions -->
+    <string name="action_retry">Retry</string>
+    <string name="action_back">Back</string>
+    <string name="action_more">More</string>
+    <string name="action_clear">Clear</string>
+    <string name="action_refresh">Refresh</string>
+    <string name="action_sort">Sort</string>
+    <string name="action_share">Share</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_download">Download</string>
+    <string name="action_update">Update</string>
+    <string name="action_unskip">Unskip</string>
+    <string name="action_unhide">Unhide</string>
+    <string name="action_hide">Hide</string>
+    <string name="action_export">Export</string>
+    <string name="action_import">Import</string>
+    <string name="label_installed">Installed</string>
+    <string name="label_beta">beta</string>
+
+    <!-- Enum labels -->
+    <string name="theme_system">System</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="sort_updated">Recently updated</string>
+    <string name="sort_stars">Most starred</string>
+    <string name="sort_name">Name</string>
+    <string name="channel_stable">Stable</string>
+    <string name="channel_beta">Beta</string>
+    <string name="channel_nightly">Nightly</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_search">Search</string>
+    <string name="nav_installed">Installed</string>
+    <string name="nav_settings">Settings</string>
+
+    <!-- Module card -->
+    <string name="module_updated_relative">Updated %1$s</string>
+    <string name="module_favourite">Favourite</string>
+
+    <!-- Home -->
+    <string name="home_no_modules">No modules available</string>
+    <string name="home_section_recently_updated">Recently updated</string>
+    <string name="home_section_most_starred">Most starred</string>
+    <string name="home_section_beta">Beta builds</string>
+    <string name="home_section_favourites">Favourites</string>
+    <string name="home_section_recently_viewed">Recently viewed</string>
+    <string name="home_see_all">See all</string>
+    <string name="home_browse_all">Browse all modules</string>
+    <string name="home_updates_banner">%1$d module update(s) available</string>
+    <string name="home_updates_banner_hint">Tap to review and update</string>
+    <string name="home_load_failed">Failed to load modules</string>
+
+    <!-- Search -->
+    <string name="search_placeholder">Search %1$d modules</string>
+    <string name="search_favourites">Favourites</string>
+    <string name="search_recent">Recent searches</string>
+    <string name="search_empty">No modules match your search</string>
+    <string name="search_count">%1$d modules</string>
+
+    <!-- Installed -->
+    <string name="installed_empty">No LSPosed modules detected on this device</string>
+    <string name="installed_section_updates">Updates (%1$d)</string>
+    <string name="installed_section_up_to_date">Up to date (%1$d)</string>
+    <string name="installed_section_unknown">Not in repository (%1$d)</string>
+    <string name="installed_update_all">Update all</string>
+    <string name="installed_version_arrow">%1$s -&gt; %2$s</string>
+    <string name="installed_batch_progress">%1$d/%2$d: %3$s</string>
+    <string name="installed_updated_count">Updated %1$d modules</string>
+    <string name="installed_finished_failures">Finished with %1$d failure(s)</string>
+    <string name="installed_updated_one">Updated %1$s to %2$s</string>
+    <string name="installed_confirm_one">Confirm the update for %1$s</string>
+    <string name="installed_signature_skipped">Signature mismatch for %1$s, update skipped</string>
+    <string name="installed_check_failed">Failed to check updates</string>
+
+    <!-- Detail -->
+    <string name="detail_readme">Readme</string>
+    <string name="detail_releases">Releases</string>
+    <string name="detail_installed_version">Installed: %1$s (%2$d)</string>
+    <string name="detail_update_available">Update available: %1$s (%2$d)</string>
+    <string name="detail_no_release">No release for this channel</string>
+    <string name="detail_update_to">Update to %1$s</string>
+    <string name="detail_reinstall">Reinstall %1$s</string>
+    <string name="detail_install">Install %1$s</string>
+    <string name="detail_working">Working...</string>
+    <string name="detail_source">Source</string>
+    <string name="detail_website">Website</string>
+    <string name="detail_repo">Repo</string>
+    <string name="detail_no_releases">No releases</string>
+    <string name="detail_downloads">%1$s - %2$d downloads</string>
+    <string name="detail_no_apk">No APK assets</string>
+    <string name="detail_no_readme">No readme</string>
+    <string name="detail_share_module">Share module</string>
+    <string name="detail_skip_version">Skip this version</string>
+    <string name="detail_unskip_version">Unskip this version</string>
+    <string name="detail_open_app">Open app</string>
+    <string name="detail_app_info">App info</string>
+    <string name="detail_uninstall">Uninstall</string>
+    <string name="detail_open_source">Open source</string>
+    <string name="detail_signature_mismatch">Signature mismatch</string>
+    <string name="detail_signature_mismatch_body">The downloaded APK is signed with a different certificate than the installed module. Android will refuse this update unless the old app is uninstalled first.</string>
+    <string name="detail_installed_signer">Installed signer</string>
+    <string name="detail_downloaded_signer">Downloaded signer</string>
+    <string name="detail_install_anyway">Install anyway</string>
+    <string name="detail_installed_apk">Installed %1$s</string>
+    <string name="detail_confirm_install">Confirm the installation in the system dialog</string>
+    <string name="detail_download_failed">Download failed</string>
+    <string name="detail_load_failed">Failed to load module</string>
+
+    <!-- Library -->
+    <string name="library_favourites">Favourites</string>
+    <string name="library_recently_viewed">Recently viewed</string>
+    <string name="library_hidden">Hidden modules</string>
+    <string name="library_skipped">Skipped updates</string>
+    <string name="library_empty_favourites">No favourites yet</string>
+    <string name="library_empty_recent">Nothing viewed yet</string>
+    <string name="library_empty_hidden">No hidden modules</string>
+    <string name="library_empty_skipped">No skipped updates</string>
+    <string name="library_remove_favourite">Remove from favourites</string>
+    <string name="library_skipped_version">Skipped version code %1$d</string>
+    <string name="library_skipped_latest">, latest %1$d</string>
+    <string name="library_load_failed">Failed to load</string>
+
+    <!-- Settings -->
+    <string name="settings_appearance">Appearance</string>
+    <string name="settings_amoled">AMOLED black</string>
+    <string name="settings_amoled_desc">Use pure black surfaces in dark mode</string>
+    <string name="settings_dynamic">Dynamic color</string>
+    <string name="settings_dynamic_desc">Use Material You colors from the wallpaper</string>
+    <string name="settings_update_channel">Update channel</string>
+    <string name="settings_update_channel_desc">Stable follows normal releases, Beta follows pre-releases, Nightly follows CI snapshot builds.</string>
+    <string name="settings_sort">Sort modules by</string>
+    <string name="settings_background">Background checks</string>
+    <string name="settings_background_toggle">Check for updates in the background</string>
+    <string name="settings_background_desc">Periodically refresh the module index and notify about updates</string>
+    <string name="settings_interval">Check interval</string>
+    <string name="settings_interval_hours">%1$dh</string>
+    <string name="settings_auto_update">Auto-update when rooted</string>
+    <string name="settings_auto_update_desc">Silently install updates in the background using su</string>
+    <string name="settings_root">Root silent install</string>
+    <string name="settings_root_detected">su detected, APKs install silently</string>
+    <string name="settings_root_unavailable">su not available on this device</string>
+    <string name="settings_root_desc">Install and update APKs silently via su</string>
+    <string name="settings_library">Library</string>
+    <string name="settings_backup">Backup</string>
+    <string name="settings_backup_desc">Favourites, hidden modules and skipped updates are exported as JSON.</string>
+    <string name="settings_storage">Storage</string>
+    <string name="settings_downloaded">Downloaded APKs: %1$s</string>
+    <string name="settings_clear_cache">Clear cached index and APKs</string>
+    <string name="settings_about">About</string>
+    <string name="settings_auto_update_needs_root">Auto-update needs root (su)</string>
+    <string name="settings_root_unavailable_msg">Root (su) is not available on this device</string>
+    <string name="settings_cache_cleared">Cache cleared</string>
+    <string name="settings_exported">Library exported</string>
+    <string name="settings_export_failed">Export failed</string>
+    <string name="settings_imported">Imported %1$d favourites, %2$d hidden, %3$d skipped</string>
+    <string name="settings_import_failed">Import failed</string>
+    <string name="settings_cannot_open">Cannot open the selected file</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_welcome_title">Welcome to LSPosed Store</string>
+    <string name="onboarding_welcome_body">Browse the LSPosed module repository, install modules and keep the ones already on your device up to date. Everything is open source and module data comes from modules.lsposed.org.</string>
+    <string name="onboarding_appearance_title">Pick your look</string>
+    <string name="onboarding_appearance_subtitle">You can change all of this later in Settings.</string>
+    <string name="onboarding_permissions_title">Two quick prompts</string>
+    <string name="onboarding_permissions_subtitle">Both are optional. You can change them later in Settings.</string>
+    <string name="onboarding_notifications">Notifications</string>
+    <string name="onboarding_notifications_desc">Update alerts and install progress</string>
+    <string name="onboarding_install">Install unknown apps</string>
+    <string name="onboarding_install_desc">Required to install APKs outside the Play Store</string>
+    <string name="onboarding_granted">Granted</string>
+    <string name="onboarding_allow">Allow</string>
+    <string name="onboarding_skip">Skip</string>
+    <string name="onboarding_next">Next</string>
+    <string name="onboarding_get_started">Get started</string>
+
+    <!-- About -->
+    <string name="about_version">Version %1$s</string>
+    <string name="about_body">An open-source browser and updater for LSPosed modules. Module data is sourced from modules.lsposed.org, which aggregates repositories under the Xposed-Modules-Repo GitHub organisation.</string>
+    <string name="about_open_site">Open modules.lsposed.org</string>
+    <string name="about_open_repo">Open Xposed-Modules-Repo on GitHub</string>
+    <string name="about_disclaimer">Not affiliated with the LSPosed project.</string>
+
+    <!-- Installer -->
+    <string name="error_no_apk_asset">No APK asset found</string>
+    <string name="error_install_failed">Install failed</string>
+    <string name="installer_apk_rejected">APK rejected: %1$s</string>
+    <string name="installer_no_url">No download URL available for %1$s</string>
+    <string name="installer_launch_failed">Unable to launch installer</string>
+    <string name="verifier_invalid_apk">Not a valid APK</string>
+    <string name="verifier_unsigned_apk">APK is not signed</string>
+
+    <!-- Notifications -->
+    <string name="notifier_channel_name">Module updates</string>
+    <string name="notifier_channel_desc">LSPosed module updates found by the background check</string>
+    <string name="notifier_single_update">%1$s update available</string>
+    <string name="notifier_multi_updates">%1$d module updates available</string>
+    <string name="notifier_auto_title">Auto-update finished</string>
+    <string name="notifier_auto_updated">%1$d module(s) updated</string>
+    <string name="notifier_auto_failed">, %1$d failed</string>
 </resources>

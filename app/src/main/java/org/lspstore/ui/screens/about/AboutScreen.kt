@@ -19,8 +19,12 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+
+import org.lspstore.BuildConfig
+import org.lspstore.R
 
 @Composable
 fun AboutScreen(onBack: () -> Unit) {
@@ -28,10 +32,10 @@ fun AboutScreen(onBack: () -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("About") },
+                title = { Text(stringResource(R.string.settings_about)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
                 },
             )
@@ -41,22 +45,20 @@ fun AboutScreen(onBack: () -> Unit) {
             modifier = Modifier.fillMaxSize().padding(innerPadding).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text("LSPosed Store", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-            Text("Version 0.1.0", style = MaterialTheme.typography.bodyMedium)
+            Text(stringResource(R.string.app_name), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.about_version, BuildConfig.VERSION_NAME), style = MaterialTheme.typography.bodyMedium)
             Text(
-                text = "An open-source browser and updater for LSPosed modules. " +
-                    "Module data is sourced from modules.lsposed.org, which aggregates " +
-                    "repositories under the Xposed-Modules-Repo GitHub organisation.",
+                text = stringResource(R.string.about_body),
                 style = MaterialTheme.typography.bodyMedium,
             )
             TextButton(onClick = { uriHandler.openUri("https://modules.lsposed.org/") }) {
-                Text("Open modules.lsposed.org")
+                Text(stringResource(R.string.about_open_site))
             }
             TextButton(onClick = { uriHandler.openUri("https://github.com/Xposed-Modules-Repo") }) {
-                Text("Open Xposed-Modules-Repo on GitHub")
+                Text(stringResource(R.string.about_open_repo))
             }
             Text(
-                text = "Not affiliated with the LSPosed project.",
+                text = stringResource(R.string.about_disclaimer),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

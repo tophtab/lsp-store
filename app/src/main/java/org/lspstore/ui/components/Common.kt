@@ -34,10 +34,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import org.lspstore.R
 import org.lspstore.domain.model.Module
 import java.time.Instant
 
@@ -57,7 +59,7 @@ fun ErrorBox(message: String, onRetry: () -> Unit, modifier: Modifier = Modifier
     ) {
         Text(message, style = MaterialTheme.typography.bodyLarge)
         Spacer(Modifier.height(16.dp))
-        Button(onClick = onRetry) { Text("Retry") }
+        Button(onClick = onRetry) { Text(stringResource(R.string.action_retry)) }
     }
 }
 
@@ -140,7 +142,7 @@ fun ModuleCard(
                     if (installed) {
                         Spacer(Modifier.width(6.dp))
                         VersionChip(
-                            text = "Installed",
+                            text = stringResource(R.string.label_installed),
                             container = MaterialTheme.colorScheme.secondaryContainer,
                             content = MaterialTheme.colorScheme.onSecondaryContainer,
                         )
@@ -163,7 +165,7 @@ fun ModuleCard(
                 val relative = formatRelativeTime(module.updatedAt)
                 if (relative.isNotBlank()) {
                     Text(
-                        text = "Updated $relative",
+                        text = stringResource(R.string.module_updated_relative, relative),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -172,7 +174,7 @@ fun ModuleCard(
             IconButton(onClick = onToggleFavourite) {
                 Icon(
                     imageVector = if (isFavourite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
-                    contentDescription = "Favourite",
+                    contentDescription = stringResource(R.string.module_favourite),
                     tint = if (isFavourite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
@@ -221,7 +223,7 @@ fun ModuleCardCompact(
                 if (installed) {
                     Spacer(Modifier.width(4.dp))
                     VersionChip(
-                        text = "Installed",
+                        text = stringResource(R.string.label_installed),
                         container = MaterialTheme.colorScheme.secondaryContainer,
                         content = MaterialTheme.colorScheme.onSecondaryContainer,
                     )

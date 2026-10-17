@@ -30,7 +30,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.annotation.StringRes
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -40,6 +42,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import org.lspstore.R
 import org.lspstore.di.AppContainer
 import org.lspstore.domain.model.ThemeMode
 import org.lspstore.ui.LocalAppContainer
@@ -89,13 +92,13 @@ private fun AppTheme(container: AppContainer, content: @Composable () -> Unit) {
     }
 }
 
-private data class BottomItem(val route: String, val label: String, val icon: ImageVector)
+private data class BottomItem(val route: String, @StringRes val labelRes: Int, val icon: ImageVector)
 
 private val bottomItems = listOf(
-    BottomItem(Routes.HOME, "Home", Icons.Filled.Home),
-    BottomItem(Routes.SEARCH, "Search", Icons.Filled.Search),
-    BottomItem(Routes.INSTALLED, "Installed", Icons.Filled.Apps),
-    BottomItem(Routes.SETTINGS, "Settings", Icons.Filled.Settings),
+    BottomItem(Routes.HOME, R.string.nav_home, Icons.Filled.Home),
+    BottomItem(Routes.SEARCH, R.string.nav_search, Icons.Filled.Search),
+    BottomItem(Routes.INSTALLED, R.string.nav_installed, Icons.Filled.Apps),
+    BottomItem(Routes.SETTINGS, R.string.nav_settings, Icons.Filled.Settings),
 )
 
 @Composable
@@ -136,8 +139,8 @@ private fun MainContent() {
                                     restoreState = true
                                 }
                             },
-                            icon = { Icon(item.icon, contentDescription = item.label) },
-                            label = { Text(item.label) },
+                            icon = { Icon(item.icon, contentDescription = stringResource(item.labelRes)) },
+                            label = { Text(stringResource(item.labelRes)) },
                         )
                     }
                 }

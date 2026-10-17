@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.lspstore.data.install.InstallOutcome
+import org.lspstore.R
 import org.lspstore.di.AppContainer
 import org.lspstore.domain.model.InstalledModule
 import org.lspstore.domain.model.Module
@@ -85,14 +86,23 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
         viewModelScope.launch {
             var failures = 0
             targets.forEachIndexed { i, info ->
-                _state.update { it.copy(batchProgress = "${i + 1}/${targets.size}: ${info.module.title}") }
+                _state.update {
+                    it.copy(
+                        batchProgress = container.appContext.getString(
+                            R.string.installed_batch_progress,
+                            i + 1,
+                            targets.size,
+                            info.module.title,
+                        ),
+                    )
+                }
                 if (performInstall(info) !is InstallOutcome.SilentSuccess) failures++
             }
             reloadInstalled()
             val message = if (failures == 0) {
-                "Updated ${targets.size} modules"
+                container.appContext.getString(R.string.installed_updated_count, targets.size)
             } else {
-                "Finished with $failures failure(s)"
+                container.appContext.getString(R.string.installed_finished_failures, failures)
             }
             _state.update { it.copy(batchProgress = null, message = message) }
         }
@@ -101,16 +111,28 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
     private suspend fun performInstall(info: UpdateInfo): InstallOutcome = runCatching {
         val detail = moduleRepository.getDetail(info.module.packageName)
         val asset = detail.latestAssetFor(_state.value.channel)
-            ?: return InstallOutcome.Failure("No APK asset found")
+            ?: return InstallOutcome.Failure(container.appContext.getString(R.string.error_no_apk_asset))
         val file = installer.download(asset)
         val useRoot = settingsRepository.rootInstall.first()
         installer.install(file, info.module.packageName, useRoot)
-    }.getOrElse { InstallOutcome.Failure(it.message ?: "Install failed") }
+    }.getOrElse {
+        InstallOutcome.Failure(it.message ?: container.appContext.getString(R.string.error_install_failed))
+    }
 
     private fun describe(outcome: InstallOutcome, info: UpdateInfo): String = when (outcome) {
-        InstallOutcome.SilentSuccess -> "Updated ${info.module.title} to ${info.latest.versionName}"
-        InstallOutcome.SystemInstallerLaunched -> "Confirm the update for ${info.module.title}"
-        is InstallOutcome.SignatureMismatch -> "Signature mismatch for ${info.module.title}, update skipped"
+        InstallOutcome.SilentSuccess -> container.appContext.getString(
+            R.string.installed_updated_one,
+            info.module.title,
+            info.latest.versionName,
+        )
+        InstallOutcome.SystemInstallerLaunched -> container.appContext.getString(
+            R.string.installed_confirm_one,
+            info.module.title,
+        )
+        is InstallOutcome.SignatureMismatch -> container.appContext.getString(
+            R.string.installed_signature_skipped,
+            info.module.title,
+        )
         is InstallOutcome.Failure -> outcome.message
     }
 
@@ -166,7 +188,7 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
                     it.copy(
                         isLoading = false,
                         isRefreshing = false,
-                        error = error.message ?: "Failed to check updates",
+                        error = error.message ?: container.appContext.getString(R.string.installed_check_failed),
                     )
                 }
             }

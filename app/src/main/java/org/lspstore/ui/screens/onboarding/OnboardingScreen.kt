@@ -50,6 +50,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -59,8 +60,10 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import org.lspstore.R
 import org.lspstore.domain.model.ThemeMode
 import org.lspstore.ui.LocalAppContainer
+import org.lspstore.ui.labelRes
 
 @Composable
 fun OnboardingScreen() {
@@ -131,16 +134,14 @@ private fun WelcomeStep() {
         }
         Spacer(Modifier.height(24.dp))
         Text(
-            text = "Welcome to LSPosed Store",
+            text = stringResource(R.string.onboarding_welcome_title),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center,
         )
         Spacer(Modifier.height(12.dp))
         Text(
-            text = "Browse the LSPosed module repository, install modules and keep the " +
-                "ones already on your device up to date. Everything is open source and " +
-                "module data comes from modules.lsposed.org.",
+            text = stringResource(R.string.onboarding_welcome_body),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
@@ -152,12 +153,12 @@ private fun WelcomeStep() {
 private fun AppearanceStep(state: OnboardingUiState, viewModel: OnboardingViewModel) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Text(
-            text = "Pick your look",
+            text = stringResource(R.string.onboarding_appearance_title),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
         )
         Text(
-            text = "You can change all of this later in Settings.",
+            text = stringResource(R.string.onboarding_appearance_subtitle),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -166,19 +167,19 @@ private fun AppearanceStep(state: OnboardingUiState, viewModel: OnboardingViewMo
                 FilterChip(
                     selected = state.themeMode == mode,
                     onClick = { viewModel.setThemeMode(mode) },
-                    label = { Text(mode.label) },
+                    label = { Text(stringResource(mode.labelRes())) },
                 )
             }
         }
         SwitchRow(
-            title = "AMOLED black",
-            subtitle = "Use pure black surfaces in dark mode",
+            title = stringResource(R.string.settings_amoled),
+            subtitle = stringResource(R.string.settings_amoled_desc),
             checked = state.amoled,
             onCheckedChange = viewModel::setAmoled,
         )
         SwitchRow(
-            title = "Dynamic color",
-            subtitle = "Use Material You colors from the wallpaper",
+            title = stringResource(R.string.settings_dynamic),
+            subtitle = stringResource(R.string.settings_dynamic_desc),
             checked = state.dynamicColor,
             onCheckedChange = viewModel::setDynamicColor,
         )
@@ -189,26 +190,26 @@ private fun AppearanceStep(state: OnboardingUiState, viewModel: OnboardingViewMo
 private fun PermissionsStep(permissions: OnboardingPermissions) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Text(
-            text = "Two quick prompts",
+            text = stringResource(R.string.onboarding_permissions_title),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
         )
         Text(
-            text = "Both are optional. You can change them later in Settings.",
+            text = stringResource(R.string.onboarding_permissions_subtitle),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         PermissionRow(
             icon = { Icon(Icons.Outlined.Notifications, contentDescription = null) },
-            title = "Notifications",
-            description = "Update alerts and install progress",
+            title = stringResource(R.string.onboarding_notifications),
+            description = stringResource(R.string.onboarding_notifications_desc),
             granted = permissions.notificationsGranted,
             onRequest = permissions.requestNotifications,
         )
         PermissionRow(
             icon = { Icon(Icons.Outlined.Download, contentDescription = null) },
-            title = "Install unknown apps",
-            description = "Required to install APKs outside the Play Store",
+            title = stringResource(R.string.onboarding_install),
+            description = stringResource(R.string.onboarding_install_desc),
             granted = permissions.installSourcesGranted,
             onRequest = permissions.requestInstallSources,
         )
@@ -249,10 +250,10 @@ private fun PermissionRow(
                     tint = MaterialTheme.colorScheme.primary,
                 )
                 Spacer(Modifier.width(4.dp))
-                Text("Granted", style = MaterialTheme.typography.labelMedium)
+                Text(stringResource(R.string.onboarding_granted), style = MaterialTheme.typography.labelMedium)
             }
         } else {
-            OutlinedButton(onClick = onRequest) { Text("Allow") }
+            OutlinedButton(onClick = onRequest) { Text(stringResource(R.string.onboarding_allow)) }
         }
     }
 }
@@ -289,15 +290,15 @@ private fun ActionRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (!state.isFirst) {
-            TextButton(onClick = onBack) { Text("Back") }
+            TextButton(onClick = onBack) { Text(stringResource(R.string.action_back)) }
         }
         Spacer(Modifier.weight(1f))
         if (!state.isLast) {
-            TextButton(onClick = onSkip) { Text("Skip") }
+            TextButton(onClick = onSkip) { Text(stringResource(R.string.onboarding_skip)) }
         }
         Spacer(Modifier.width(8.dp))
         Button(onClick = onNext) {
-            Text(if (state.isLast) "Get started" else "Next")
+            Text(stringResource(if (state.isLast) R.string.onboarding_get_started else R.string.onboarding_next))
         }
     }
 }

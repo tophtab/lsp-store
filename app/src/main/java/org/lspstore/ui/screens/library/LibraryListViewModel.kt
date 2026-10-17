@@ -1,5 +1,6 @@
 package org.lspstore.ui.screens.library
 
+import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
@@ -8,13 +9,17 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.lspstore.R
 import org.lspstore.di.AppContainer
 import org.lspstore.domain.model.Module
 
-enum class LibraryKind(val title: String) {
-    FAVOURITES("Favourites"),
-    RECENTLY_VIEWED("Recently viewed"),
-    HIDDEN("Hidden modules"),
+enum class LibraryKind(
+    @StringRes val titleRes: Int,
+    @StringRes val emptyRes: Int,
+) {
+    FAVOURITES(R.string.library_favourites, R.string.library_empty_favourites),
+    RECENTLY_VIEWED(R.string.library_recently_viewed, R.string.library_empty_recent),
+    HIDDEN(R.string.library_hidden, R.string.library_empty_hidden),
 }
 
 data class LibraryUiState(
@@ -87,7 +92,7 @@ class LibraryListViewModel(
                 _state.update { it.copy(isLoading = false, installedPackages = installed) }
                 rebuild()
             }.onFailure { error ->
-                _state.update { it.copy(isLoading = false, error = error.message ?: "Failed to load") }
+                _state.update { it.copy(isLoading = false, error = error.message ?: container.appContext.getString(R.string.library_load_failed)) }
             }
         }
     }

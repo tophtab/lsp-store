@@ -57,12 +57,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import org.lspstore.R
 import org.lspstore.domain.model.ApkVerification
 import org.lspstore.domain.model.ModuleDetail
 import org.lspstore.domain.model.Release
@@ -85,6 +87,7 @@ fun ModuleDetailScreen(packageName: String, onBack: () -> Unit) {
     val context = LocalContext.current
     val uriHandler = LocalUriHandler.current
     var menuOpen by remember { mutableStateOf(false) }
+    val shareTitle = stringResource(R.string.detail_share_module)
 
     LaunchedEffect(state.message) {
         state.message?.let {
@@ -105,16 +108,16 @@ fun ModuleDetailScreen(packageName: String, onBack: () -> Unit) {
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
                 },
                 actions = {
                     IconButton(onClick = { menuOpen = true }) {
-                        Icon(Icons.Filled.MoreVert, contentDescription = "More")
+                        Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.action_more))
                     }
                     DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
                         DropdownMenuItem(
-                            text = { Text("Share") },
+                            text = { Text(stringResource(R.string.action_share)) },
                             onClick = {
                                 menuOpen = false
                                 state.detail?.module?.let { module ->
@@ -128,32 +131,32 @@ fun ModuleDetailScreen(packageName: String, onBack: () -> Unit) {
                                                     "${module.title}\n${module.url ?: module.packageName}",
                                                 )
                                             },
-                                            "Share module",
+                                            shareTitle,
                                         ),
                                     )
                                 }
                             },
                         )
                         DropdownMenuItem(
-                            text = { Text(if (state.isHidden) "Unhide" else "Hide") },
+                            text = { Text(stringResource(if (state.isHidden) R.string.action_unhide else R.string.action_hide)) },
                             onClick = { menuOpen = false; viewModel.toggleHidden() },
                         )
                         if (state.latestVersionCode != null) {
                             if (state.isUpdateSkipped) {
                                 DropdownMenuItem(
-                                    text = { Text("Unskip this version") },
+                                    text = { Text(stringResource(R.string.detail_unskip_version)) },
                                     onClick = { menuOpen = false; viewModel.unskipVersion() },
                                 )
                             } else {
                                 DropdownMenuItem(
-                                    text = { Text("Skip this version") },
+                                    text = { Text(stringResource(R.string.detail_skip_version)) },
                                     onClick = { menuOpen = false; viewModel.skipThisVersion() },
                                 )
                             }
                         }
                         state.installed?.let {
                             DropdownMenuItem(
-                                text = { Text("Open app") },
+                                text = { Text(stringResource(R.string.detail_open_app)) },
                                 onClick = {
                                     menuOpen = false
                                     context.packageManager.getLaunchIntentForPackage(packageName)
@@ -161,7 +164,7 @@ fun ModuleDetailScreen(packageName: String, onBack: () -> Unit) {
                                 },
                             )
                             DropdownMenuItem(
-                                text = { Text("App info") },
+                                text = { Text(stringResource(R.string.detail_app_info)) },
                                 onClick = {
                                     menuOpen = false
                                     context.startActivity(
@@ -173,7 +176,7 @@ fun ModuleDetailScreen(packageName: String, onBack: () -> Unit) {
                                 },
                             )
                             DropdownMenuItem(
-                                text = { Text("Uninstall") },
+                                text = { Text(stringResource(R.string.detail_uninstall)) },
                                 onClick = {
                                     menuOpen = false
                                     context.startActivity(
@@ -184,7 +187,7 @@ fun ModuleDetailScreen(packageName: String, onBack: () -> Unit) {
                         }
                         state.detail?.sourceUrl?.let { url ->
                             DropdownMenuItem(
-                                text = { Text("Open source") },
+                                text = { Text(stringResource(R.string.detail_open_source)) },
                                 onClick = { menuOpen = false; uriHandler.openUri(url) },
                             )
                         }
@@ -226,26 +229,23 @@ private fun SignatureMismatchDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Signature mismatch") },
+        title = { Text(stringResource(R.string.detail_signature_mismatch)) },
         text = {
             Column {
-                Text(
-                    "The downloaded APK is signed with a different certificate than the installed module. " +
-                        "Android will refuse this update unless the old app is uninstalled first.",
-                )
+                Text(stringResource(R.string.detail_signature_mismatch_body))
                 Spacer(Modifier.height(12.dp))
-                Text("Installed signer", style = MaterialTheme.typography.labelMedium)
+                Text(stringResource(R.string.detail_installed_signer), style = MaterialTheme.typography.labelMedium)
                 mismatch.installedSigners.forEach { Text(signerLabel(it.sha256, it.subject), style = MaterialTheme.typography.bodySmall) }
                 Spacer(Modifier.height(8.dp))
-                Text("Downloaded signer", style = MaterialTheme.typography.labelMedium)
+                Text(stringResource(R.string.detail_downloaded_signer), style = MaterialTheme.typography.labelMedium)
                 mismatch.signers.forEach { Text(signerLabel(it.sha256, it.subject), style = MaterialTheme.typography.bodySmall) }
             }
         },
         confirmButton = {
-            TextButton(onClick = onInstallAnyway) { Text("Install anyway") }
+            TextButton(onClick = onInstallAnyway) { Text(stringResource(R.string.detail_install_anyway)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
         },
     )
 }
@@ -277,12 +277,12 @@ private fun DetailContent(
             Tab(
                 selected = selectedTab == 0,
                 onClick = { selectedTab = 0 },
-                text = { Text("Readme") },
+                text = { Text(stringResource(R.string.detail_readme)) },
             )
             Tab(
                 selected = selectedTab == 1,
                 onClick = { selectedTab = 1 },
-                text = { Text("Releases") },
+                text = { Text(stringResource(R.string.detail_releases)) },
             )
         }
         Box(modifier = Modifier.weight(1f)) {
@@ -341,7 +341,7 @@ private fun DetailHeader(
             IconButton(onClick = onToggleFavourite) {
                 Icon(
                     imageVector = if (state.isFavourite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
-                    contentDescription = "Favourite",
+                    contentDescription = stringResource(R.string.module_favourite),
                     tint = if (state.isFavourite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
@@ -365,13 +365,21 @@ private fun DetailHeader(
         Spacer(Modifier.height(12.dp))
         state.installed?.let { installed ->
             Text(
-                text = "Installed: ${installed.versionName ?: "?"} (${installed.versionCode})",
+                text = stringResource(
+                    R.string.detail_installed_version,
+                    installed.versionName ?: "?",
+                    installed.versionCode,
+                ),
                 style = MaterialTheme.typography.bodySmall,
             )
         }
         if (state.updateAvailable && latest != null) {
             Text(
-                text = "Update available: ${latest.versionName} (${latest.versionCode})",
+                text = stringResource(
+                    R.string.detail_update_available,
+                    latest.versionName,
+                    latest.versionCode,
+                ),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.primary,
             )
@@ -379,10 +387,10 @@ private fun DetailHeader(
 
         Spacer(Modifier.height(12.dp))
         val buttonLabel = when {
-            latest == null -> "No release for this channel"
-            state.updateAvailable -> "Update to ${latest.versionName}"
-            state.installed != null -> "Reinstall ${latest.versionName}"
-            else -> "Install ${latest.versionName}"
+            latest == null -> stringResource(R.string.detail_no_release)
+            state.updateAvailable -> stringResource(R.string.detail_update_to, latest.versionName)
+            state.installed != null -> stringResource(R.string.detail_reinstall, latest.versionName)
+            else -> stringResource(R.string.detail_install, latest.versionName)
         }
         Button(
             onClick = onInstallLatest,
@@ -392,7 +400,7 @@ private fun DetailHeader(
             if (state.isBusy) {
                 CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
                 Spacer(Modifier.width(8.dp))
-                Text("Working...")
+                Text(stringResource(R.string.detail_working))
             } else {
                 Icon(Icons.Filled.Download, null, Modifier.size(18.dp))
                 Spacer(Modifier.width(8.dp))
@@ -410,13 +418,13 @@ private fun DetailHeader(
         Spacer(Modifier.height(8.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             detail.sourceUrl?.let { url ->
-                TextButton(onClick = { uriHandler.openUri(url) }) { Text("Source") }
+                TextButton(onClick = { uriHandler.openUri(url) }) { Text(stringResource(R.string.detail_source)) }
             }
             detail.homepageUrl?.let { url ->
-                TextButton(onClick = { uriHandler.openUri(url) }) { Text("Website") }
+                TextButton(onClick = { uriHandler.openUri(url) }) { Text(stringResource(R.string.detail_website)) }
             }
             module.url?.let { url ->
-                TextButton(onClick = { uriHandler.openUri(url) }) { Text("Repo") }
+                TextButton(onClick = { uriHandler.openUri(url) }) { Text(stringResource(R.string.detail_repo)) }
             }
         }
     }
@@ -429,7 +437,7 @@ private fun ReleasesList(
 ) {
     if (releases.isEmpty()) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("No releases", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(stringResource(R.string.detail_no_releases), color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         return
     }
@@ -448,7 +456,7 @@ private fun ReleasesList(
                     )
                     if (release.isPrerelease) {
                         Spacer(Modifier.width(6.dp))
-                        VersionChip("beta", MaterialTheme.colorScheme.tertiaryContainer, MaterialTheme.colorScheme.onTertiaryContainer)
+                        VersionChip(stringResource(R.string.label_beta), MaterialTheme.colorScheme.tertiaryContainer, MaterialTheme.colorScheme.onTertiaryContainer)
                     }
                     Spacer(Modifier.weight(1f))
                     Text(
@@ -466,19 +474,23 @@ private fun ReleasesList(
                         Column(modifier = Modifier.weight(1f)) {
                             Text(asset.name, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
                             Text(
-                                text = "${formatSize(asset.size)} - ${asset.downloadCount} downloads",
+                                text = stringResource(
+                                    R.string.detail_downloads,
+                                    formatSize(asset.size),
+                                    asset.downloadCount,
+                                ),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
                         IconButton(onClick = { onInstallAsset(asset) }) {
-                            Icon(Icons.Filled.Download, contentDescription = "Download")
+                            Icon(Icons.Filled.Download, contentDescription = stringResource(R.string.action_download))
                         }
                     }
                 }
                 if (release.apkAssets.isEmpty()) {
                     Text(
-                        text = "No APK assets",
+                        text = stringResource(R.string.detail_no_apk),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -494,7 +506,7 @@ private fun ReleasesList(
 private fun ReadmeView(html: String?, baseUrl: String?) {
     if (html.isNullOrBlank()) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("No readme", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(stringResource(R.string.detail_no_readme), color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         return
     }

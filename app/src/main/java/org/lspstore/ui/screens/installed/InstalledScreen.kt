@@ -38,11 +38,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import org.lspstore.R
 import org.lspstore.domain.model.InstalledModule
 import org.lspstore.domain.model.UpdateInfo
 import org.lspstore.ui.LocalAppContainer
@@ -68,10 +70,10 @@ fun InstalledScreen(onOpenModule: (String) -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Installed") },
+                title = { Text(stringResource(R.string.nav_installed)) },
                 actions = {
                     IconButton(onClick = viewModel::refresh) {
-                        Icon(Icons.Filled.Refresh, contentDescription = "Refresh")
+                        Icon(Icons.Filled.Refresh, contentDescription = stringResource(R.string.action_refresh))
                     }
                 },
             )
@@ -90,7 +92,7 @@ fun InstalledScreen(onOpenModule: (String) -> Unit) {
             when {
                 state.isLoading -> LoadingBox()
                 state.error != null -> ErrorBox(state.error!!, viewModel::refresh)
-                state.installedCount == 0 -> EmptyBox("No LSPosed modules detected on this device")
+                state.installedCount == 0 -> EmptyBox(stringResource(R.string.installed_empty))
                 else -> LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(12.dp),
@@ -99,8 +101,8 @@ fun InstalledScreen(onOpenModule: (String) -> Unit) {
                     if (state.updates.isNotEmpty()) {
                         item {
                             SectionHeader(
-                                title = "Updates (${state.updates.size})",
-                                action = "Update all" to viewModel::updateAll,
+                                title = stringResource(R.string.installed_section_updates, state.updates.size),
+                                action = stringResource(R.string.installed_update_all) to viewModel::updateAll,
                                 enabled = state.batchProgress == null && state.busyPackage == null,
                             )
                         }
@@ -114,13 +116,13 @@ fun InstalledScreen(onOpenModule: (String) -> Unit) {
                         }
                     }
                     if (state.upToDate.isNotEmpty()) {
-                        item { SectionHeader(title = "Up to date (${state.upToDate.size})") }
+                        item { SectionHeader(title = stringResource(R.string.installed_section_up_to_date, state.upToDate.size)) }
                         items(state.upToDate, key = { "c:${it.packageName}" }) { module ->
                             InstalledRow(module = module, onClick = { onOpenModule(module.packageName) })
                         }
                     }
                     if (state.unknown.isNotEmpty()) {
-                        item { SectionHeader(title = "Not in repository (${state.unknown.size})") }
+                        item { SectionHeader(title = stringResource(R.string.installed_section_unknown, state.unknown.size)) }
                         items(state.unknown, key = { "x:${it.packageName}" }) { module ->
                             InstalledRow(module = module, onClick = null)
                         }
@@ -177,7 +179,11 @@ private fun UpdateRow(
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
-                    text = "${info.installed.versionName ?: "?"} -> ${info.latest.versionName}",
+                    text = stringResource(
+                        R.string.installed_version_arrow,
+                        info.installed.versionName ?: "?",
+                        info.latest.versionName,
+                    ),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.primary,
                 )
@@ -187,7 +193,7 @@ private fun UpdateRow(
                 LinearProgressIndicator(modifier = Modifier.width(48.dp))
             } else {
                 IconButton(onClick = onUpdate) {
-                    Icon(Icons.Filled.SystemUpdate, contentDescription = "Update")
+                    Icon(Icons.Filled.SystemUpdate, contentDescription = stringResource(R.string.action_update))
                 }
             }
         }

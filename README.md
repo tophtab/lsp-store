@@ -50,6 +50,11 @@ the remote `versionCode` is higher, or equal with a different `versionName`
   install / update / reinstall, share, hide, skip this version, open app,
   app info, uninstall.
 - Library: favourites, recently viewed, hidden modules, skipped updates.
+- Onboarding: first-run welcome, appearance and permission setup (notifications and
+  install-unknown-apps), with a persisted completion flag.
+- Backup: export/import favourites, recently viewed, hidden and skipped updates as
+  versioned JSON through the Storage Access Framework.
+- Localization: English and Simplified Chinese (`values-zh-rCN`).
 - Background checks: a WorkManager periodic job (default 12h, configurable) refreshes
   the index, finds updates and posts a notification; with root it can update silently.
   Rescheduled on boot via `BootReceiver`.
@@ -85,8 +90,11 @@ app/src/main/java/org/lspstore/
   ui/
     components/    shared Compose components
     navigation/    route constants
-    screens/       home, search, installed, detail, library, settings, about
+    screens/       home, search, installed, detail, library, settings, onboarding, about
   di/              AppContainer
+
+Strings live in `res/values/strings.xml` (English) with translations under
+`res/values-<locale>/`. Enum labels are mapped to resources in `ui/Labels.kt`.
 ```
 
 The index is fetched once (39 pages, six concurrent requests), cached in memory
@@ -121,5 +129,5 @@ dialog; the user can still choose to install after uninstalling the old app.
 
 - Batch update launches one system-installer dialog per module when not rooted.
 - Background auto-update requires root; without it the worker only notifies.
-- English only; strings are not yet externalised for translation.
-- No onboarding, curated collections or announcements feed.
+- Only English and Simplified Chinese are translated so far.
+- No curated collections or announcements feed.

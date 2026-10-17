@@ -14,6 +14,7 @@ import org.lspstore.data.repository.InstalledModulesRepositoryImpl
 import org.lspstore.data.repository.LibraryRepositoryImpl
 import org.lspstore.data.repository.ModuleRepositoryImpl
 import org.lspstore.data.repository.SettingsRepositoryImpl
+import org.lspstore.R
 import org.lspstore.di.AppContainer
 import org.lspstore.domain.model.ApkVerification
 import org.lspstore.domain.model.InstalledModule
@@ -101,7 +102,7 @@ class ModuleDetailViewModel(
                 _state.update { it.copy(isLoading = false, detail = detail, installed = installed) }
                 libraryRepository.addRecentlyViewed(packageName)
             }.onFailure { error ->
-                _state.update { it.copy(isLoading = false, error = error.message ?: "Failed to load module") }
+                _state.update { it.copy(isLoading = false, error = error.message ?: container.appContext.getString(R.string.detail_load_failed)) }
             }
         }
     }
@@ -168,11 +169,11 @@ class ModuleDetailViewModel(
                 when (outcome) {
                     InstallOutcome.SilentSuccess -> {
                         pendingInstall = null
-                        finishInstall("Installed ${asset.name}")
+                        finishInstall(container.appContext.getString(R.string.detail_installed_apk, asset.name))
                     }
                     InstallOutcome.SystemInstallerLaunched -> {
                         pendingInstall = null
-                        finishInstall("Confirm the installation in the system dialog")
+                        finishInstall(container.appContext.getString(R.string.detail_confirm_install))
                     }
                     is InstallOutcome.SignatureMismatch -> {
                         _state.update {
@@ -186,7 +187,7 @@ class ModuleDetailViewModel(
                 }
             }.onFailure { error ->
                 pendingInstall = null
-                finishInstall(error.message ?: "Download failed")
+                finishInstall(error.message ?: container.appContext.getString(R.string.detail_download_failed))
             }
         }
     }

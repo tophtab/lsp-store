@@ -41,14 +41,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import org.lspstore.R
 import org.lspstore.domain.model.SortOrder
 import org.lspstore.domain.model.UpdateChannel
 import org.lspstore.ui.LocalAppContainer
+import org.lspstore.ui.labelRes
 import org.lspstore.ui.components.EmptyBox
 import org.lspstore.ui.components.ErrorBox
 import org.lspstore.ui.components.LoadingBox
@@ -64,14 +67,14 @@ fun SearchScreen(onOpenModule: (String) -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Search") },
+                title = { Text(stringResource(R.string.nav_search)) },
                 actions = {
                     IconButton(onClick = viewModel::refresh) {
-                        Icon(Icons.Filled.Refresh, contentDescription = "Refresh")
+                        Icon(Icons.Filled.Refresh, contentDescription = stringResource(R.string.action_refresh))
                     }
                     Box {
                         IconButton(onClick = { sortMenuOpen = true }) {
-                            Icon(Icons.Filled.Sort, contentDescription = "Sort")
+                            Icon(Icons.Filled.Sort, contentDescription = stringResource(R.string.action_sort))
                         }
                         DropdownMenu(
                             expanded = sortMenuOpen,
@@ -79,7 +82,7 @@ fun SearchScreen(onOpenModule: (String) -> Unit) {
                         ) {
                             SortOrder.entries.forEach { order ->
                                 DropdownMenuItem(
-                                    text = { Text(order.label) },
+                                    text = { Text(stringResource(order.labelRes())) },
                                     onClick = {
                                         viewModel.onSortChange(order)
                                         sortMenuOpen = false
@@ -97,12 +100,12 @@ fun SearchScreen(onOpenModule: (String) -> Unit) {
                 value = state.query,
                 onValueChange = viewModel::onQueryChange,
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
-                placeholder = { Text("Search ${state.totalCount} modules") },
+                placeholder = { Text(stringResource(R.string.search_placeholder, state.totalCount)) },
                 leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
                 trailingIcon = {
                     if (state.query.isNotEmpty()) {
                         IconButton(onClick = { viewModel.onQueryChange("") }) {
-                            Icon(Icons.Filled.Clear, contentDescription = "Clear")
+                            Icon(Icons.Filled.Clear, contentDescription = stringResource(R.string.action_clear))
                         }
                     }
                 },
@@ -120,13 +123,13 @@ fun SearchScreen(onOpenModule: (String) -> Unit) {
                     FilterChip(
                         selected = state.selectedChannel == channel,
                         onClick = { viewModel.onChannelChange(channel) },
-                        label = { Text(channel.label) },
+                        label = { Text(stringResource(channel.labelRes())) },
                     )
                 }
                 FilterChip(
                     selected = state.showFavouritesOnly,
                     onClick = viewModel::toggleFavouritesOnly,
-                    label = { Text("Favourites") },
+                    label = { Text(stringResource(R.string.search_favourites)) },
                 )
             }
 
@@ -136,12 +139,14 @@ fun SearchScreen(onOpenModule: (String) -> Unit) {
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        text = "Recent searches",
+                        text = stringResource(R.string.search_recent),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.weight(1f),
                     )
-                    TextButton(onClick = viewModel::clearHistory) { Text("Clear") }
+                    TextButton(onClick = viewModel::clearHistory) {
+                        Text(stringResource(R.string.action_clear))
+                    }
                 }
                 Row(
                     modifier = Modifier
@@ -163,10 +168,10 @@ fun SearchScreen(onOpenModule: (String) -> Unit) {
             when {
                 state.isLoading -> LoadingBox()
                 state.error != null -> ErrorBox(message = state.error!!, onRetry = viewModel::refresh)
-                state.modules.isEmpty() -> EmptyBox("No modules match your search")
+                state.modules.isEmpty() -> EmptyBox(stringResource(R.string.search_empty))
                 else -> {
                     Text(
-                        text = "${state.modules.size} modules",
+                        text = stringResource(R.string.search_count, state.modules.size),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,

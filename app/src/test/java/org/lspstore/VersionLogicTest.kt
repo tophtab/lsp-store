@@ -5,6 +5,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.lspstore.data.repository.LibraryBackup
 import org.lspstore.domain.model.InstalledModule
 import org.lspstore.domain.model.Module
 import org.lspstore.domain.model.ModuleVersion
@@ -105,5 +106,19 @@ class VersionLogicTest {
             listOf(installed), listOf(module), UpdateChannel.STABLE, hidden = setOf("a.b"),
         )
         assertTrue(hidden.isEmpty())
+    }
+
+    @Test
+    fun libraryBackupRoundTrips() {
+        val json = kotlinx.serialization.json.Json { ignoreUnknownKeys = true }
+        val backup = LibraryBackup(
+            favourites = listOf("a.b", "c.d"),
+            recentlyViewed = listOf("c.d"),
+            hidden = listOf("e.f"),
+            skipped = mapOf("a.b" to 12L),
+        )
+        val text = json.encodeToString(LibraryBackup.serializer(), backup)
+        val decoded = json.decodeFromString(LibraryBackup.serializer(), text)
+        assertEquals(backup, decoded)
     }
 }

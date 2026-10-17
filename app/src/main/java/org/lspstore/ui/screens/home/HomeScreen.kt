@@ -35,10 +35,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import org.lspstore.R
 import org.lspstore.domain.model.Module
 import org.lspstore.ui.LocalAppContainer
 import org.lspstore.ui.components.EmptyBox
@@ -61,13 +63,13 @@ fun HomeScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("LSPosed Store") },
+                title = { Text(stringResource(R.string.app_name)) },
                 actions = {
                     IconButton(onClick = onOpenSearch) {
-                        Icon(Icons.Filled.Search, contentDescription = "Search")
+                        Icon(Icons.Filled.Search, contentDescription = stringResource(R.string.nav_search))
                     }
                     IconButton(onClick = viewModel::refresh) {
-                        Icon(Icons.Filled.Refresh, contentDescription = "Refresh")
+                        Icon(Icons.Filled.Refresh, contentDescription = stringResource(R.string.action_refresh))
                     }
                 },
             )
@@ -76,7 +78,7 @@ fun HomeScreen(
         when {
             state.isLoading -> LoadingBox(Modifier.padding(innerPadding))
             state.error != null -> ErrorBox(state.error!!, viewModel::refresh, Modifier.padding(innerPadding))
-            state.recentlyUpdated.isEmpty() -> EmptyBox("No modules available", Modifier.padding(innerPadding))
+            state.recentlyUpdated.isEmpty() -> EmptyBox(stringResource(R.string.home_no_modules), Modifier.padding(innerPadding))
             else -> LazyColumn(
                 modifier = Modifier.fillMaxSize().padding(innerPadding),
                 contentPadding = PaddingValues(bottom = 24.dp),
@@ -88,7 +90,7 @@ fun HomeScreen(
                 }
                 item {
                     Section(
-                        title = "Recently updated",
+                        title = stringResource(R.string.home_section_recently_updated),
                         modules = state.recentlyUpdated,
                         installed = state.installedPackages,
                         onOpenModule = onOpenModule,
@@ -96,7 +98,7 @@ fun HomeScreen(
                 }
                 item {
                     Section(
-                        title = "Most starred",
+                        title = stringResource(R.string.home_section_most_starred),
                         modules = state.mostStarred,
                         installed = state.installedPackages,
                         onOpenModule = onOpenModule,
@@ -104,7 +106,7 @@ fun HomeScreen(
                 }
                 item {
                     Section(
-                        title = "Beta builds",
+                        title = stringResource(R.string.home_section_beta),
                         modules = state.betaBuilds,
                         installed = state.installedPackages,
                         onOpenModule = onOpenModule,
@@ -113,22 +115,22 @@ fun HomeScreen(
                 if (state.favourites.isNotEmpty()) {
                     item {
                         Section(
-                            title = "Favourites",
+                            title = stringResource(R.string.home_section_favourites),
                             modules = state.favourites,
                             installed = state.installedPackages,
                             onOpenModule = onOpenModule,
-                            action = "See all" to onOpenFavourites,
+                            action = stringResource(R.string.home_see_all) to onOpenFavourites,
                         )
                     }
                 }
                 if (state.recentlyViewed.isNotEmpty()) {
                     item {
                         Section(
-                            title = "Recently viewed",
+                            title = stringResource(R.string.home_section_recently_viewed),
                             modules = state.recentlyViewed,
                             installed = state.installedPackages,
                             onOpenModule = onOpenModule,
-                            action = "See all" to onOpenRecentlyViewed,
+                            action = stringResource(R.string.home_see_all) to onOpenRecentlyViewed,
                         )
                     }
                 }
@@ -137,7 +139,7 @@ fun HomeScreen(
                         onClick = onOpenSearch,
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
                     ) {
-                        Text("Browse all modules")
+                        Text(stringResource(R.string.home_browse_all))
                     }
                 }
             }
@@ -161,13 +163,13 @@ private fun UpdatesBanner(count: Int, onClick: () -> Unit) {
             Spacer(Modifier.width(12.dp))
             Column {
                 Text(
-                    text = "$count module update(s) available",
+                    text = stringResource(R.string.home_updates_banner, count),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
                 )
                 Text(
-                    text = "Tap to review and update",
+                    text = stringResource(R.string.home_updates_banner_hint),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
                 )

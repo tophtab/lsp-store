@@ -8,6 +8,7 @@ import io.ktor.client.call.body
 import io.ktor.client.request.get
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.lspstore.R
 import org.lspstore.domain.model.ApkVerification
 import org.lspstore.domain.model.ReleaseAsset
 import java.io.File
@@ -51,7 +52,7 @@ class ApkInstaller(
                 lastError = t
             }
         }
-        throw lastError ?: IOException("No download URL available for ${asset.name}")
+        throw lastError ?: IOException(context.getString(R.string.installer_no_url, asset.name))
     }
 
     suspend fun isRootAvailable(): Boolean = withContext(Dispatchers.IO) {
@@ -73,7 +74,7 @@ class ApkInstaller(
     ): InstallOutcome {
         when (val verification = verifier.verify(file, packageName)) {
             is ApkVerification.Invalid ->
-                return InstallOutcome.Failure("APK rejected: ${verification.reason}")
+                return InstallOutcome.Failure(context.getString(R.string.installer_apk_rejected, verification.reason))
             is ApkVerification.Mismatch ->
                 if (!allowSignatureMismatch) return InstallOutcome.SignatureMismatch(verification)
             is ApkVerification.Trusted, is ApkVerification.NewInstall -> Unit
@@ -86,7 +87,7 @@ class ApkInstaller(
         return runCatching {
             launchSystemInstaller(file)
             InstallOutcome.SystemInstallerLaunched
-        }.getOrElse { InstallOutcome.Failure(it.message ?: "Unable to launch installer") }
+        }.getOrElse { InstallOutcome.Failure(it.message ?: context.getString(R.string.installer_launch_failed)) }
     }
 
     private suspend fun installSilently(file: File): Boolean = withContext(Dispatchers.IO) {

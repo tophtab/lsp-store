@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.lspstore.R
 import org.lspstore.di.AppContainer
 import org.lspstore.domain.model.InstalledModule
 import org.lspstore.domain.model.Module
@@ -91,7 +92,7 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
                     it.copy(
                         isLoading = false,
                         isRefreshing = false,
-                        error = error.message ?: "Failed to load modules",
+                        error = error.message ?: container.appContext.getString(R.string.home_load_failed),
                     )
                 }
             }

@@ -31,11 +31,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import org.lspstore.R
 import org.lspstore.domain.model.Module
 import org.lspstore.ui.LocalAppContainer
 import org.lspstore.ui.components.EmptyBox
@@ -60,15 +62,15 @@ fun LibraryListScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(kind.title) },
+                title = { Text(stringResource(kind.titleRes)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
                 },
                 actions = {
                     if (kind == LibraryKind.RECENTLY_VIEWED && state.modules.isNotEmpty()) {
-                        TextButton(onClick = viewModel::clearAll) { Text("Clear") }
+                        TextButton(onClick = viewModel::clearAll) { Text(stringResource(R.string.action_clear)) }
                     }
                 },
             )
@@ -77,7 +79,7 @@ fun LibraryListScreen(
         when {
             state.isLoading -> LoadingBox(Modifier.padding(innerPadding))
             state.error != null -> ErrorBox(state.error!!, viewModel::refresh, Modifier.padding(innerPadding))
-            state.modules.isEmpty() -> EmptyBox(emptyMessage(kind), Modifier.padding(innerPadding))
+            state.modules.isEmpty() -> EmptyBox(stringResource(kind.emptyRes), Modifier.padding(innerPadding))
             else -> LazyColumn(
                 modifier = Modifier.fillMaxSize().padding(innerPadding),
                 contentPadding = PaddingValues(12.dp),
@@ -138,7 +140,7 @@ private fun LibraryRow(
                 }
                 if (installed) {
                     VersionChip(
-                        text = "Installed",
+                        text = stringResource(R.string.label_installed),
                         container = MaterialTheme.colorScheme.secondaryContainer,
                         content = MaterialTheme.colorScheme.onSecondaryContainer,
                     )
@@ -146,10 +148,10 @@ private fun LibraryRow(
             }
             when (kind) {
                 LibraryKind.FAVOURITES -> IconButton(onClick = onRemove) {
-                    Icon(Icons.Filled.Favorite, contentDescription = "Remove from favourites")
+                    Icon(Icons.Filled.Favorite, contentDescription = stringResource(R.string.library_remove_favourite))
                 }
                 LibraryKind.HIDDEN -> IconButton(onClick = onRemove) {
-                    Icon(Icons.Filled.Visibility, contentDescription = "Unhide")
+                    Icon(Icons.Filled.Visibility, contentDescription = stringResource(R.string.action_unhide))
                 }
                 LibraryKind.RECENTLY_VIEWED -> Unit
             }
@@ -166,15 +168,15 @@ fun SkippedUpdatesScreen(onBack: () -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Skipped updates") },
+                title = { Text(stringResource(R.string.library_skipped)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
                 },
                 actions = {
                     if (state.items.isNotEmpty()) {
-                        TextButton(onClick = viewModel::clearAll) { Text("Clear") }
+                        TextButton(onClick = viewModel::clearAll) { Text(stringResource(R.string.action_clear)) }
                     }
                 },
             )
@@ -183,7 +185,7 @@ fun SkippedUpdatesScreen(onBack: () -> Unit) {
         when {
             state.isLoading -> LoadingBox(Modifier.padding(innerPadding))
             state.error != null -> ErrorBox(state.error!!, viewModel::refresh, Modifier.padding(innerPadding))
-            state.items.isEmpty() -> EmptyBox("No skipped updates", Modifier.padding(innerPadding))
+            state.items.isEmpty() -> EmptyBox(stringResource(R.string.library_empty_skipped), Modifier.padding(innerPadding))
             else -> LazyColumn(
                 modifier = Modifier.fillMaxSize().padding(innerPadding),
                 contentPadding = PaddingValues(12.dp),
@@ -211,12 +213,16 @@ fun SkippedUpdatesScreen(onBack: () -> Unit) {
                                     overflow = TextOverflow.Ellipsis,
                                 )
                                 Text(
-                                    text = "Skipped version code ${item.skippedVersionCode}" +
-                                        (item.latestVersionCode?.let { ", latest $it" } ?: ""),
+                                    text = stringResource(R.string.library_skipped_version, item.skippedVersionCode) +
+                                        (item.latestVersionCode?.let {
+                                            stringResource(R.string.library_skipped_latest, it)
+                                        } ?: ""),
                                     style = MaterialTheme.typography.bodySmall,
                                 )
                             }
-                            TextButton(onClick = { viewModel.unskip(item.packageName) }) { Text("Unskip") }
+                            TextButton(onClick = { viewModel.unskip(item.packageName) }) {
+                                Text(stringResource(R.string.action_unskip))
+                            }
                         }
                     }
                 }
@@ -225,8 +231,3 @@ fun SkippedUpdatesScreen(onBack: () -> Unit) {
     }
 }
 
-private fun emptyMessage(kind: LibraryKind): String = when (kind) {
-    LibraryKind.FAVOURITES -> "No favourites yet"
-    LibraryKind.RECENTLY_VIEWED -> "Nothing viewed yet"
-    LibraryKind.HIDDEN -> "No hidden modules"
-}

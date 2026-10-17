@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.lspstore.R
 import org.lspstore.data.repository.SettingsRepositoryImpl
 import org.lspstore.data.work.UpdateScheduler
 import org.lspstore.di.AppContainer
@@ -121,7 +122,7 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
                 val available = installer.isRootAvailable()
                 _state.update { it.copy(rootAvailable = available) }
                 if (!available) {
-                    _state.update { it.copy(message = "Auto-update needs root (su)") }
+                    _state.update { it.copy(message = appContext.getString(R.string.settings_auto_update_needs_root)) }
                     return@launch
                 }
             }
@@ -135,7 +136,7 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
                 val available = installer.isRootAvailable()
                 _state.update { it.copy(rootAvailable = available) }
                 if (!available) {
-                    _state.update { it.copy(message = "Root (su) is not available on this device") }
+                    _state.update { it.copy(message = appContext.getString(R.string.settings_root_unavailable_msg)) }
                     return@launch
                 }
             }
@@ -148,7 +149,7 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
             moduleRepository.clearCache()
             installer.clearDownloads()
             _state.update {
-                it.copy(downloadsSize = installer.downloadsSizeBytes(), message = "Cache cleared")
+                it.copy(downloadsSize = installer.downloadsSizeBytes(), message = appContext.getString(R.string.settings_cache_cleared))
             }
         }
     }
@@ -163,11 +164,11 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
                 val payload = container.libraryRepository.exportJson()
                 appContext.contentResolver.openOutputStream(uri)?.use { stream ->
                     stream.write(payload.toByteArray(Charsets.UTF_8))
-                } ?: error("Cannot open the selected file")
+                } ?: error(appContext.getString(R.string.settings_cannot_open))
             }.onSuccess {
-                _state.update { it.copy(message = "Library exported") }
+                _state.update { it.copy(message = appContext.getString(R.string.settings_exported)) }
             }.onFailure { error ->
-                _state.update { it.copy(message = error.message ?: "Export failed") }
+                _state.update { it.copy(message = error.message ?: appContext.getString(R.string.settings_export_failed)) }
             }
         }
     }
@@ -178,16 +179,18 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
                 val text = appContext.contentResolver.openInputStream(uri)
                     ?.bufferedReader()
                     ?.use { it.readText() }
-                    ?: error("Cannot open the selected file")
+                    ?: error(appContext.getString(R.string.settings_cannot_open))
                 container.libraryRepository.importJson(text)
             }.onSuccess { result ->
-                val message = result.error ?: (
-                    "Imported ${result.favourites} favourites, " +
-                        "${result.hidden} hidden, ${result.skipped} skipped"
-                    )
+                val message = result.error ?: appContext.getString(
+                    R.string.settings_imported,
+                    result.favourites,
+                    result.hidden,
+                    result.skipped,
+                )
                 _state.update { it.copy(message = message) }
             }.onFailure { error ->
-                _state.update { it.copy(message = error.message ?: "Import failed") }
+                _state.update { it.copy(message = error.message ?: appContext.getString(R.string.settings_import_failed)) }
             }
         }
     }

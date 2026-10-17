@@ -13,6 +13,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import org.lspstore.MainActivity
+import org.lspstore.R
 import org.lspstore.domain.model.UpdateInfo
 
 object UpdateNotifier {
@@ -25,10 +26,10 @@ object UpdateNotifier {
         if (manager.getNotificationChannel(CHANNEL_ID) != null) return
         val channel = NotificationChannel(
             CHANNEL_ID,
-            "Module updates",
+            context.getString(R.string.notifier_channel_name),
             NotificationManager.IMPORTANCE_DEFAULT,
         ).apply {
-            description = "LSPosed module updates found by the background check"
+            description = context.getString(R.string.notifier_channel_desc)
         }
         manager.createNotificationChannel(channel)
     }
@@ -37,13 +38,17 @@ object UpdateNotifier {
         if (updates.isEmpty() || !canNotify(context)) return
         ensureChannel(context)
         val title = if (updates.size == 1) {
-            "${updates.first().module.title} update available"
+            context.getString(R.string.notifier_single_update, updates.first().module.title)
         } else {
-            "${updates.size} module updates available"
+            context.getString(R.string.notifier_multi_updates, updates.size)
         }
         val text = if (updates.size == 1) {
             val update = updates.first()
-            "${update.installed.versionName ?: "?"} -> ${update.latest.versionName}"
+            context.getString(
+                R.string.installed_version_arrow,
+                update.installed.versionName ?: "?",
+                update.latest.versionName,
+            )
         } else {
             updates.take(6).joinToString(", ") { it.module.title }
         }
@@ -54,10 +59,10 @@ object UpdateNotifier {
         if ((succeeded == 0 && failed == 0) || !canNotify(context)) return
         ensureChannel(context)
         val text = buildString {
-            append("$succeeded module(s) updated")
-            if (failed > 0) append(", $failed failed")
+            append(context.getString(R.string.notifier_auto_updated, succeeded))
+            if (failed > 0) append(context.getString(R.string.notifier_auto_failed, failed))
         }
-        post(context, "Auto-update finished", text)
+        post(context, context.getString(R.string.notifier_auto_title), text)
     }
 
     @SuppressLint("MissingPermission")

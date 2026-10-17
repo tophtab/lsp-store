@@ -2,10 +2,10 @@ package org.lspstore.domain.model
 
 import java.time.Instant
 
-enum class UpdateChannel(val key: String, val label: String) {
-    STABLE("CHANNEL_STABLE", "Stable"),
-    BETA("CHANNEL_BETA", "Beta"),
-    NIGHTLY("CHANNEL_NIGHTLY", "Nightly");
+enum class UpdateChannel(val key: String) {
+    STABLE("CHANNEL_STABLE"),
+    BETA("CHANNEL_BETA"),
+    NIGHTLY("CHANNEL_NIGHTLY");
 
     companion object {
         fun fromKey(key: String?): UpdateChannel =
@@ -13,16 +13,16 @@ enum class UpdateChannel(val key: String, val label: String) {
     }
 }
 
-enum class SortOrder(val label: String) {
-    UPDATED("Recently updated"),
-    STARS("Most starred"),
-    NAME("Name"),
+enum class SortOrder {
+    UPDATED,
+    STARS,
+    NAME,
 }
 
-enum class ThemeMode(val label: String) {
-    SYSTEM("System"),
-    LIGHT("Light"),
-    DARK("Dark"),
+enum class ThemeMode {
+    SYSTEM,
+    LIGHT,
+    DARK,
 }
 
 data class ModuleVersion(

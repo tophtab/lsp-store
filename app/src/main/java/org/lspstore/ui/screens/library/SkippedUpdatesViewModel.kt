@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.lspstore.R
 import org.lspstore.di.AppContainer
 import org.lspstore.domain.model.Module
 
@@ -62,7 +63,7 @@ class SkippedUpdatesViewModel(private val container: AppContainer) : ViewModel()
                     rebuild()
                 }
                 .onFailure { error ->
-                    _state.update { it.copy(isLoading = false, error = error.message ?: "Failed to load") }
+                    _state.update { it.copy(isLoading = false, error = error.message ?: container.appContext.getString(R.string.library_load_failed)) }
                 }
         }
     }

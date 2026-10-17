@@ -34,14 +34,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import org.lspstore.R
 import org.lspstore.domain.model.SortOrder
 import org.lspstore.domain.model.ThemeMode
 import org.lspstore.domain.model.UpdateChannel
 import org.lspstore.ui.LocalAppContainer
+import org.lspstore.ui.labelRes
 
 @Composable
 fun SettingsScreen(
@@ -70,7 +73,7 @@ fun SettingsScreen(
     }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Settings") }) },
+        topBar = { TopAppBar(title = { Text(stringResource(R.string.nav_settings)) }) },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { innerPadding ->
         Column(
@@ -81,93 +84,93 @@ fun SettingsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            SectionTitle("Appearance")
+            SectionTitle(stringResource(R.string.settings_appearance))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 ThemeMode.entries.forEach { mode ->
                     FilterChip(
                         selected = state.themeMode == mode,
                         onClick = { viewModel.setThemeMode(mode) },
-                        label = { Text(mode.label) },
+                        label = { Text(stringResource(mode.labelRes())) },
                     )
                 }
             }
             SwitchRow(
-                title = "AMOLED black",
-                subtitle = "Use pure black surfaces in dark mode",
+                title = stringResource(R.string.settings_amoled),
+                subtitle = stringResource(R.string.settings_amoled_desc),
                 checked = state.amoled,
                 onCheckedChange = viewModel::setAmoled,
             )
             SwitchRow(
-                title = "Dynamic color",
-                subtitle = "Use Material You colors from the wallpaper",
+                title = stringResource(R.string.settings_dynamic),
+                subtitle = stringResource(R.string.settings_dynamic_desc),
                 checked = state.dynamicColor,
                 onCheckedChange = viewModel::setDynamicColor,
             )
 
             HorizontalDivider()
 
-            SectionTitle("Update channel")
+            SectionTitle(stringResource(R.string.settings_update_channel))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 UpdateChannel.entries.forEach { channel ->
                     FilterChip(
                         selected = state.channel == channel,
                         onClick = { viewModel.setChannel(channel) },
-                        label = { Text(channel.label) },
+                        label = { Text(stringResource(channel.labelRes())) },
                     )
                 }
             }
             Text(
-                text = "Stable follows normal releases, Beta follows pre-releases, Nightly follows CI snapshot builds.",
+                text = stringResource(R.string.settings_update_channel_desc),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
             HorizontalDivider()
 
-            SectionTitle("Sort modules by")
+            SectionTitle(stringResource(R.string.settings_sort))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 SortOrder.entries.forEach { order ->
                     FilterChip(
                         selected = state.sortOrder == order,
                         onClick = { viewModel.setSortOrder(order) },
-                        label = { Text(order.label) },
+                        label = { Text(stringResource(order.labelRes())) },
                     )
                 }
             }
 
             HorizontalDivider()
 
-            SectionTitle("Background checks")
+            SectionTitle(stringResource(R.string.settings_background))
             SwitchRow(
-                title = "Check for updates in the background",
-                subtitle = "Periodically refresh the module index and notify about updates",
+                title = stringResource(R.string.settings_background_toggle),
+                subtitle = stringResource(R.string.settings_background_desc),
                 checked = state.backgroundCheck,
                 onCheckedChange = viewModel::setBackgroundCheck,
             )
             if (state.backgroundCheck) {
-                Text("Check interval", style = MaterialTheme.typography.bodyMedium)
+                Text(stringResource(R.string.settings_interval), style = MaterialTheme.typography.bodyMedium)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     listOf(6L, 12L, 24L, 48L).forEach { hours ->
                         FilterChip(
                             selected = state.intervalHours == hours,
                             onClick = { viewModel.setIntervalHours(hours) },
-                            label = { Text("${hours}h") },
+                            label = { Text(stringResource(R.string.settings_interval_hours, hours)) },
                         )
                     }
                 }
             }
             SwitchRow(
-                title = "Auto-update when rooted",
-                subtitle = "Silently install updates in the background using su",
+                title = stringResource(R.string.settings_auto_update),
+                subtitle = stringResource(R.string.settings_auto_update_desc),
                 checked = state.autoUpdate,
                 onCheckedChange = viewModel::setAutoUpdate,
             )
             SwitchRow(
-                title = "Root silent install",
+                title = stringResource(R.string.settings_root),
                 subtitle = when (state.rootAvailable) {
-                    true -> "su detected, APKs install silently"
-                    false -> "su not available on this device"
-                    null -> "Install and update APKs silently via su"
+                    true -> stringResource(R.string.settings_root_detected)
+                    false -> stringResource(R.string.settings_root_unavailable)
+                    null -> stringResource(R.string.settings_root_desc)
                 },
                 checked = state.rootInstall,
                 onCheckedChange = viewModel::setRootInstall,
@@ -175,43 +178,45 @@ fun SettingsScreen(
 
             HorizontalDivider()
 
-            SectionTitle("Library")
-            NavRow("Favourites", onOpenFavourites)
-            NavRow("Recently viewed", onOpenRecentlyViewed)
-            NavRow("Hidden modules", onOpenHidden)
-            NavRow("Skipped updates", onOpenSkipped)
+            SectionTitle(stringResource(R.string.settings_library))
+            NavRow(stringResource(R.string.library_favourites), onOpenFavourites)
+            NavRow(stringResource(R.string.library_recently_viewed), onOpenRecentlyViewed)
+            NavRow(stringResource(R.string.library_hidden), onOpenHidden)
+            NavRow(stringResource(R.string.library_skipped), onOpenSkipped)
 
             HorizontalDivider()
 
-            SectionTitle("Backup")
+            SectionTitle(stringResource(R.string.settings_backup))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(onClick = { exportLauncher.launch("lspstore-library.json") }) {
-                    Text("Export")
+                    Text(stringResource(R.string.action_export))
                 }
                 OutlinedButton(
                     onClick = { importLauncher.launch(arrayOf("application/json", "text/plain", "*/*")) },
                 ) {
-                    Text("Import")
+                    Text(stringResource(R.string.action_import))
                 }
             }
             Text(
-                text = "Favourites, hidden modules and skipped updates are exported as JSON.",
+                text = stringResource(R.string.settings_backup_desc),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
             HorizontalDivider()
 
-            SectionTitle("Storage")
+            SectionTitle(stringResource(R.string.settings_storage))
             Text(
-                text = "Downloaded APKs: ${formatBytes(state.downloadsSize)}",
+                text = stringResource(R.string.settings_downloaded, formatBytes(state.downloadsSize)),
                 style = MaterialTheme.typography.bodyMedium,
             )
-            OutlinedButton(onClick = viewModel::clearCache) { Text("Clear cached index and APKs") }
+            OutlinedButton(onClick = viewModel::clearCache) {
+                Text(stringResource(R.string.settings_clear_cache))
+            }
 
             HorizontalDivider()
 
-            NavRow("About", onOpenAbout)
+            NavRow(stringResource(R.string.settings_about), onOpenAbout)
         }
     }
 }
