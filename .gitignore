@@ -1,0 +1,14 @@
+# Build output
+*.iml
+.gradle/
+build/
+app/build/
+local.properties
+.idea/
+.DS_Store
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Reference clone used while designing this project
+komi-store/
