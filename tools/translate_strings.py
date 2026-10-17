@@ -16,6 +16,8 @@ import time
 import urllib.parse
 import urllib.request
 
+from manual_overrides import OVERRIDES
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 EN = os.path.join(ROOT, "app/src/main/res/values/strings.xml")
 CACHE = "/tmp/lspstore_i18n_cache.json"
@@ -128,6 +130,12 @@ def main():
                     results[name] = value
 
         lines = ["<resources>"]
+        todo_names = {n for n, _ in todo}
+        over = {n: v for n, v in OVERRIDES.get(lang, {}).items() if n in todo_names}
+        for name, value in over.items():
+            results[name] = value
+        if over:
+            print(f"  {lang}: {len(over)} hand-checked overrides applied", flush=True)
         for name, _ in todo:
             if name in results:
                 lines.append(f'    <string name="{name}">{escape(results[name])}</string>')
