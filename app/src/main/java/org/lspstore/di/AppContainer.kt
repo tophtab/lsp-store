@@ -6,6 +6,8 @@ import kotlinx.serialization.json.Json
 import org.lspstore.data.install.ApkInstaller
 import org.lspstore.data.install.DownloadManager
 import org.lspstore.data.remote.LsposedRepoApi
+import org.lspstore.data.remote.MirrorState
+import org.lspstore.data.remote.MirrorTester
 import org.lspstore.data.remote.ProxyState
 import org.lspstore.data.remote.createHttpClient
 import org.lspstore.data.remote.createJson
@@ -20,9 +22,11 @@ class AppContainer(context: Context) {
     val appContext: Context = context.applicationContext
     val json: Json = createJson()
     val proxyState: ProxyState = ProxyState()
+    val mirrorState: MirrorState = MirrorState()
     val httpClient: HttpClient = createHttpClient(json, proxyState)
 
-    val moduleRepository: ModuleRepositoryImpl = ModuleRepositoryImpl(context, LsposedRepoApi(httpClient), json)
+    val moduleRepository: ModuleRepositoryImpl =
+        ModuleRepositoryImpl(context, LsposedRepoApi(httpClient, mirrorState), json)
     val installedRepository: InstalledModulesRepositoryImpl = InstalledModulesRepositoryImpl(context)
     val settingsRepository: SettingsRepositoryImpl = SettingsRepositoryImpl(context)
     val libraryRepository: LibraryRepositoryImpl = LibraryRepositoryImpl(context)
@@ -30,4 +34,5 @@ class AppContainer(context: Context) {
     val installer: ApkInstaller = ApkInstaller(context, downloadManager)
     val translationRepository: TranslationRepository = TranslationRepository(httpClient, settingsRepository)
     val proxyTester: ProxyTester = ProxyTester(httpClient)
+    val mirrorTester: MirrorTester = MirrorTester(httpClient)
 }

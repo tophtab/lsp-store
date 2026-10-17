@@ -40,12 +40,13 @@ class SettingsRepositoryImpl(private val context: Context) {
         val PROXY_USER = stringPreferencesKey("proxy_user")
         val PROXY_PASS = stringPreferencesKey("proxy_pass")
         val TRANSLATION_PROVIDER = stringPreferencesKey("translation_provider")
-        val TRANSLATION_TARGET = stringPreferencesKey("translation_target")
         val DEEPL_KEY = stringPreferencesKey("deepl_key")
         val LIBRE_URL = stringPreferencesKey("libre_url")
         val LIBRE_KEY = stringPreferencesKey("libre_key")
         val MICROSOFT_KEY = stringPreferencesKey("microsoft_key")
         val MICROSOFT_REGION = stringPreferencesKey("microsoft_region")
+        val PREFERRED_MIRROR = stringPreferencesKey("preferred_mirror")
+        val TRANSLATION_TARGET = stringPreferencesKey("translation_target")
     }
 
     val updateChannel: Flow<UpdateChannel> = context.settingsDataStore.data
@@ -91,6 +92,9 @@ class SettingsRepositoryImpl(private val context: Context) {
             password = prefs[Keys.PROXY_PASS] ?: "",
         )
     }
+
+    val preferredMirror: Flow<String> = context.settingsDataStore.data
+        .map { it[Keys.PREFERRED_MIRROR] ?: "" }
 
     val translationSettings: Flow<TranslationSettings> = context.settingsDataStore.data.map { prefs ->
         TranslationSettings(
@@ -172,6 +176,10 @@ class SettingsRepositoryImpl(private val context: Context) {
             it[Keys.MICROSOFT_KEY] = settings.microsoftKey.trim()
             it[Keys.MICROSOFT_REGION] = settings.microsoftRegion.trim()
         }
+    }
+
+    suspend fun setPreferredMirror(host: String) {
+        context.settingsDataStore.edit { it[Keys.PREFERRED_MIRROR] = host }
     }
 
     companion object {

@@ -205,6 +205,17 @@
     <string name="settings_proxy_testing">测试中…</string>
     <string name="settings_proxy_ok">代理可用（%1$d 毫秒）</string>
     <string name="settings_proxy_failed">代理测试失败：%1$s</string>
+
+    <!-- Mirrors -->
+    <string name="mirror_title">模块来源</string>
+    <string name="mirror_desc">某个镜像失败时应用会自动回退到其他镜像。可指定首选镜像，或保持自动。</string>
+    <string name="mirror_auto">自动</string>
+    <string name="mirror_auto_desc">优先官方源，然后依次尝试镜像</string>
+    <string name="mirror_saved">镜像偏好已保存</string>
+    <string name="mirror_test_all">测试所有镜像</string>
+    <string name="mirror_testing">测试中…</string>
+    <string name="mirror_unreachable">无法访问</string>
+    <string name="mirror_latency">%1$d 毫秒</string>
     <string name="proxy_type_http">HTTP</string>
     <string name="proxy_type_socks">SOCKS</string>
     <string name="settings_translation">翻译</string>

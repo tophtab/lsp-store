@@ -14,12 +14,13 @@ import kotlin.coroutines.cancellation.CancellationException
  */
 class LsposedRepoApi(
     private val client: HttpClient,
-    private val hosts: List<String> = DEFAULT_HOSTS,
+    private val mirrorState: MirrorState = MirrorState(),
 ) {
     @Volatile
     private var hostIndex = 0
 
     private suspend fun <T> fetch(path: String, request: suspend (String) -> T): T {
+        val hosts = mirrorState.orderedHosts()
         var last: Throwable? = null
         for (offset in hosts.indices) {
             val index = (hostIndex + offset) % hosts.size
@@ -43,10 +44,6 @@ class LsposedRepoApi(
         fetch("module/$packageName.json") { url -> client.get(url).body() }
 
     companion object {
-        val DEFAULT_HOSTS = listOf(
-            "https://modules.lsposed.org/",
-            "https://modules-blogcdn.lsposed.org/",
-            "https://modules-cloudflare.lsposed.org/",
-        )
+        val DEFAULT_HOSTS = MIRRORS.map { it.host }
     }
 }

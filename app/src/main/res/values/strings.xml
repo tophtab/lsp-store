@@ -205,6 +205,17 @@
     <string name="settings_proxy_testing">Testing…</string>
     <string name="settings_proxy_ok">Proxy works (%1$d ms)</string>
     <string name="settings_proxy_failed">Proxy test failed: %1$s</string>
+
+    <!-- Mirrors -->
+    <string name="mirror_title">Module source</string>
+    <string name="mirror_desc">The app falls back to the other mirrors automatically when one fails. Pick a preferred mirror or leave it automatic.</string>
+    <string name="mirror_auto">Automatic</string>
+    <string name="mirror_auto_desc">Try the official host first, then the mirrors</string>
+    <string name="mirror_saved">Mirror preference saved</string>
+    <string name="mirror_test_all">Test all mirrors</string>
+    <string name="mirror_testing">Testing…</string>
+    <string name="mirror_unreachable">Unreachable</string>
+    <string name="mirror_latency">%1$d ms</string>
     <string name="proxy_type_http">HTTP</string>
     <string name="proxy_type_socks">SOCKS</string>
     <string name="settings_translation">Translation</string>

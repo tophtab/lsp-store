@@ -14,6 +14,7 @@ object Routes {
     const val ABOUT = "about"
     const val DIAGNOSTICS = "diagnostics"
     const val LICENSES = "licenses"
+    const val MIRRORS = "mirrors"
     const val AUTHOR_ARG = "author"
     const val AUTHOR = "author/{$AUTHOR_ARG}"
 

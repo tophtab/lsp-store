@@ -66,6 +66,7 @@ fun SettingsScreen(
     onOpenImports: () -> Unit,
     onOpenAbout: () -> Unit,
     onOpenDiagnostics: () -> Unit,
+    onOpenMirrors: () -> Unit,
 ) {
     val container = LocalAppContainer.current
     val viewModel: SettingsViewModel = viewModel(factory = SettingsViewModel.factory(container))
@@ -427,6 +428,7 @@ fun SettingsScreen(
             HorizontalDivider()
 
             SectionTitle(stringResource(R.string.settings_advanced))
+            NavRow(stringResource(R.string.mirror_title), onOpenMirrors)
             NavRow(stringResource(R.string.diagnostics_title), onOpenDiagnostics)
             NavRow(stringResource(R.string.settings_about), onOpenAbout)
         }

@@ -205,6 +205,17 @@
     <string name="settings_proxy_testing">測試中…</string>
     <string name="settings_proxy_ok">代理可用（%1$d 毫秒）</string>
     <string name="settings_proxy_failed">代理測試失敗：%1$s</string>
+
+    <!-- Mirrors -->
+    <string name="mirror_title">模組來源</string>
+    <string name="mirror_desc">某個映象失敗時應用會自動回退到其他映象。可指定首選映象，或保持自動。</string>
+    <string name="mirror_auto">自動</string>
+    <string name="mirror_auto_desc">優先官方源，然後依次嘗試映象</string>
+    <string name="mirror_saved">映象偏好已儲存</string>
+    <string name="mirror_test_all">測試所有映象</string>
+    <string name="mirror_testing">測試中…</string>
+    <string name="mirror_unreachable">無法訪問</string>
+    <string name="mirror_latency">%1$d 毫秒</string>
     <string name="proxy_type_http">HTTP</string>
     <string name="proxy_type_socks">SOCKS</string>
     <string name="settings_translation">翻譯</string>

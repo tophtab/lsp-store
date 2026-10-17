@@ -20,6 +20,15 @@ class LspStoreApp : Application() {
         UpdateNotifier.ensureChannel(this)
         applySchedule()
         applyProxy()
+        applyMirror()
+    }
+
+    private fun applyMirror() {
+        CoroutineScope(Dispatchers.IO).launch {
+            container.settingsRepository.preferredMirror.collect { host ->
+                container.mirrorState.preferred = host
+            }
+        }
     }
 
     private fun applyProxy() {

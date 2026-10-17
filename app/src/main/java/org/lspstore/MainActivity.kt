@@ -58,6 +58,7 @@ import org.lspstore.ui.screens.library.LibraryKind
 import org.lspstore.ui.screens.library.LibraryListScreen
 import org.lspstore.ui.screens.library.SkippedUpdatesScreen
 import org.lspstore.ui.screens.licenses.LicensesScreen
+import org.lspstore.ui.screens.mirrors.MirrorPickerScreen
 import org.lspstore.ui.screens.onboarding.OnboardingScreen
 import org.lspstore.ui.screens.search.SearchScreen
 import org.lspstore.ui.screens.settings.SettingsScreen
@@ -187,7 +188,11 @@ private fun MainContent() {
                     onOpenAbout = { navController.navigate(Routes.ABOUT) },
                     onOpenImports = { navController.navigate(Routes.IMPORTS) },
                     onOpenDiagnostics = { navController.navigate(Routes.DIAGNOSTICS) },
+                    onOpenMirrors = { navController.navigate(Routes.MIRRORS) },
                 )
+            }
+            composable(Routes.MIRRORS) {
+                MirrorPickerScreen(onBack = { navController.popBackStack() })
             }
             composable(Routes.DIAGNOSTICS) {
                 DiagnosticsScreen(

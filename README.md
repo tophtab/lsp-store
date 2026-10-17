@@ -59,6 +59,8 @@ the remote `versionCode` is higher, or equal with a different `versionName`
 - Proxy: HTTP or SOCKS with optional credentials, applied live to every request
   (index, details, APK downloads) through an OkHttp proxy selector, plus a
   connection test.
+- Mirror picker: choose a preferred repository mirror or keep it automatic, with a
+  latency test for each host; failures still fall back to the other mirrors.
 - Translation: translate a module description with Google (keyless), LibreTranslate,
   DeepL or Microsoft, with a small in-memory cache.
 - External import: installed LSPosed modules that are not in the repository can be
@@ -111,7 +113,7 @@ app/src/main/java/org/lspstore/
     components/    shared Compose components
     navigation/    route constants
     screens/       home, search, installed, detail, author, library, imports,
-                   settings, onboarding, diagnostics, licenses, about
+                   settings, onboarding, diagnostics, licenses, mirrors, about
   di/              AppContainer
 
 Strings live in `res/values/strings.xml` (English) with translations under
