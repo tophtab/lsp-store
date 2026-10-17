@@ -94,11 +94,30 @@ fun SettingsScreen() {
 
             HorizontalDivider()
 
+            SectionTitle("Background checks")
             SwitchRow(
-                title = "Automatically check for updates",
-                subtitle = "Refresh the module index in the background",
-                checked = state.autoCheck,
-                onCheckedChange = viewModel::setAutoCheck,
+                title = "Check for updates in the background",
+                subtitle = "Periodically refresh the module index and notify about updates",
+                checked = state.backgroundCheck,
+                onCheckedChange = viewModel::setBackgroundCheck,
+            )
+            if (state.backgroundCheck) {
+                Text("Check interval", style = MaterialTheme.typography.bodyMedium)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf(6L, 12L, 24L, 48L).forEach { hours ->
+                        FilterChip(
+                            selected = state.intervalHours == hours,
+                            onClick = { viewModel.setIntervalHours(hours) },
+                            label = { Text("${hours}h") },
+                        )
+                    }
+                }
+            }
+            SwitchRow(
+                title = "Auto-update when rooted",
+                subtitle = "Silently install updates in the background using su",
+                checked = state.autoUpdate,
+                onCheckedChange = viewModel::setAutoUpdate,
             )
 
             SwitchRow(

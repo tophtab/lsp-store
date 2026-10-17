@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -54,6 +55,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import org.lspstore.domain.model.ApkVerification
 import org.lspstore.domain.model.ModuleDetail
 import org.lspstore.domain.model.Release
 import org.lspstore.domain.model.ReleaseAsset
@@ -113,6 +115,51 @@ fun ModuleDetailScreen(packageName: String, onBack: () -> Unit) {
             )
         }
     }
+
+    state.pendingMismatch?.let { mismatch ->
+        SignatureMismatchDialog(
+            mismatch = mismatch,
+            onInstallAnyway = viewModel::installAnyway,
+            onDismiss = viewModel::dismissMismatch,
+        )
+    }
+}
+
+@Composable
+private fun SignatureMismatchDialog(
+    mismatch: ApkVerification.Mismatch,
+    onInstallAnyway: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Signature mismatch") },
+        text = {
+            Column {
+                Text(
+                    "The downloaded APK is signed with a different certificate than the installed module. " +
+                        "Android will refuse this update unless the old app is uninstalled first.",
+                )
+                Spacer(Modifier.height(12.dp))
+                Text("Installed signer", style = MaterialTheme.typography.labelMedium)
+                mismatch.installedSigners.forEach { Text(signerLabel(it.sha256, it.subject), style = MaterialTheme.typography.bodySmall) }
+                Spacer(Modifier.height(8.dp))
+                Text("Downloaded signer", style = MaterialTheme.typography.labelMedium)
+                mismatch.signers.forEach { Text(signerLabel(it.sha256, it.subject), style = MaterialTheme.typography.bodySmall) }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onInstallAnyway) { Text("Install anyway") }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel") }
+        },
+    )
+}
+
+private fun signerLabel(sha256: String, subject: String?): String {
+    val shortHash = sha256.take(16)
+    return if (subject.isNullOrBlank()) shortHash else "$shortHash\n$subject"
 }
 
 @Composable

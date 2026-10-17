@@ -3,6 +3,7 @@ package org.lspstore.data.repository
 import android.content.Context
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -19,6 +20,9 @@ class SettingsRepositoryImpl(private val context: Context) {
         val CHANNEL = stringPreferencesKey("update_channel")
         val SORT = stringPreferencesKey("sort_order")
         val AUTO_CHECK = booleanPreferencesKey("auto_check_updates")
+        val UPDATE_CHECK_ENABLED = booleanPreferencesKey("background_check_enabled")
+        val UPDATE_INTERVAL_HOURS = longPreferencesKey("background_check_interval_hours")
+        val AUTO_UPDATE = booleanPreferencesKey("auto_update")
         val ROOT_INSTALL = booleanPreferencesKey("root_install")
         val FAVOURITES = stringSetPreferencesKey("favourites")
     }
@@ -31,6 +35,15 @@ class SettingsRepositoryImpl(private val context: Context) {
 
     val autoCheckUpdates: Flow<Boolean> = context.settingsDataStore.data
         .map { it[Keys.AUTO_CHECK] ?: true }
+
+    val backgroundCheckEnabled: Flow<Boolean> = context.settingsDataStore.data
+        .map { it[Keys.UPDATE_CHECK_ENABLED] ?: true }
+
+    val backgroundCheckIntervalHours: Flow<Long> = context.settingsDataStore.data
+        .map { it[Keys.UPDATE_INTERVAL_HOURS] ?: DEFAULT_INTERVAL_HOURS }
+
+    val autoUpdate: Flow<Boolean> = context.settingsDataStore.data
+        .map { it[Keys.AUTO_UPDATE] ?: false }
 
     val rootInstall: Flow<Boolean> = context.settingsDataStore.data
         .map { it[Keys.ROOT_INSTALL] ?: false }
@@ -50,6 +63,18 @@ class SettingsRepositoryImpl(private val context: Context) {
         context.settingsDataStore.edit { it[Keys.AUTO_CHECK] = enabled }
     }
 
+    suspend fun setBackgroundCheckEnabled(enabled: Boolean) {
+        context.settingsDataStore.edit { it[Keys.UPDATE_CHECK_ENABLED] = enabled }
+    }
+
+    suspend fun setBackgroundCheckIntervalHours(hours: Long) {
+        context.settingsDataStore.edit { it[Keys.UPDATE_INTERVAL_HOURS] = hours }
+    }
+
+    suspend fun setAutoUpdate(enabled: Boolean) {
+        context.settingsDataStore.edit { it[Keys.AUTO_UPDATE] = enabled }
+    }
+
     suspend fun setRootInstall(enabled: Boolean) {
         context.settingsDataStore.edit { it[Keys.ROOT_INSTALL] = enabled }
     }
@@ -59,5 +84,9 @@ class SettingsRepositoryImpl(private val context: Context) {
             val current = prefs[Keys.FAVOURITES] ?: emptySet()
             prefs[Keys.FAVOURITES] = if (packageName in current) current - packageName else current + packageName
         }
+    }
+
+    companion object {
+        const val DEFAULT_INTERVAL_HOURS = 12L
     }
 }

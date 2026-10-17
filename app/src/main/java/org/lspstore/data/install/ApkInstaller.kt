@@ -8,6 +8,7 @@ import io.ktor.client.call.body
 import io.ktor.client.request.get
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.lspstore.domain.model.ApkVerification
 import org.lspstore.domain.model.ReleaseAsset
 import java.io.File
 import java.io.FileOutputStream
@@ -15,6 +16,7 @@ import java.io.FileOutputStream
 sealed interface InstallOutcome {
     data object SilentSuccess : InstallOutcome
     data object SystemInstallerLaunched : InstallOutcome
+    data class SignatureMismatch(val verification: ApkVerification.Mismatch) : InstallOutcome
     data class Failure(val message: String) : InstallOutcome
 }
 
@@ -22,6 +24,8 @@ class ApkInstaller(
     private val context: Context,
     private val client: HttpClient,
 ) {
+
+    private val verifier = ApkVerifier(context)
 
     suspend fun download(
         asset: ReleaseAsset,
@@ -48,7 +52,20 @@ class ApkInstaller(
         }.getOrDefault(false)
     }
 
-    suspend fun install(file: File, useRoot: Boolean): InstallOutcome {
+    suspend fun install(
+        file: File,
+        packageName: String,
+        useRoot: Boolean,
+        allowSignatureMismatch: Boolean = false,
+    ): InstallOutcome {
+        when (val verification = verifier.verify(file, packageName)) {
+            is ApkVerification.Invalid ->
+                return InstallOutcome.Failure("APK rejected: ${verification.reason}")
+            is ApkVerification.Mismatch ->
+                if (!allowSignatureMismatch) return InstallOutcome.SignatureMismatch(verification)
+            is ApkVerification.Trusted, is ApkVerification.NewInstall -> Unit
+        }
+
         if (useRoot) {
             val ok = installSilently(file)
             if (ok) return InstallOutcome.SilentSuccess

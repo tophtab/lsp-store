@@ -12,6 +12,7 @@ import org.lspstore.data.repository.ModuleRepositoryImpl
 import org.lspstore.data.repository.SettingsRepositoryImpl
 
 class AppContainer(context: Context) {
+    val appContext: Context = context.applicationContext
     val json: Json = createJson()
     val httpClient: HttpClient = createHttpClient(json)
 

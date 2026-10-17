@@ -45,8 +45,15 @@ the remote `versionCode` is higher, or equal with a different `versionName`
   install / update / reinstall.
 - Updates: installed LSPosed modules cross-referenced with the index, single and
   batch update.
+- Background checks: a WorkManager periodic job (default 12h, configurable) refreshes
+  the index, finds updates and posts a notification; with root it can update silently.
+  Rescheduled on boot via `BootReceiver`.
+- APK signature verification: every downloaded APK is checked before install. The
+  signer must match the installed module's signing history; mismatches are blocked
+  with a dialog that shows both fingerprints and allows an explicit override.
 - Install: system `PackageInstaller` by default, optional silent install via `su`.
-- Settings: update channel, sort order, auto-check toggle, root install, cache.
+- Settings: update channel, sort order, background-check toggle and interval,
+  auto-update, root install, cache.
 
 ## Architecture
 
@@ -59,7 +66,8 @@ app/src/main/java/org/lspstore/
   data/
     remote/        LsposedRepoApi, Ktor client factory, DTOs, mappers
     repository/    ModuleRepositoryImpl (index cache), InstalledModulesRepositoryImpl, SettingsRepositoryImpl (DataStore)
-    install/       ApkInstaller (download, system installer, su)
+    install/       ApkInstaller (download, system installer, su), ApkVerifier (signatures)
+    work/          UpdateCheckWorker, UpdateScheduler, UpdateNotifier, BootReceiver
   domain/
     model/         Module, ModuleDetail, Release, ModuleVersion, InstalledModule, UpdateInfo, channels
     usecase/       UpdateChecker
@@ -89,8 +97,16 @@ Requires JDK 21 and the Android SDK (compileSdk 35, build-tools 35.0.0).
 - `VersionLogicTest` - tag parsing, the LSPosed upgrade rule, channel selection.
 - `LiveRepoTest` - fetches the real index and a real module detail; requires network.
 
+## Signature verification
+
+Before any install, `ApkVerifier` reads the APK's signers with
+`PackageManager.getPackageArchiveInfo` and compares them against the installed
+module's `signingCertificateHistory` (falling back to `apkContentsSigners`).
+APKs that are unsigned or unparseable are rejected. A signer that differs from
+the installed app returns `ApkVerification.Mismatch`, which the UI surfaces as a
+dialog; the user can still choose to install after uninstalling the old app.
+
 ## Known gaps
 
-- The auto-check toggle is persisted but no background worker consumes it yet.
 - Batch update launches one system-installer dialog per module when not rooted.
-- No signature verification of downloaded APKs before install.
+- Background auto-update requires root; without it the worker only notifies.

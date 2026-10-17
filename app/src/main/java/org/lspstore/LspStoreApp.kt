@@ -1,6 +1,12 @@
 package org.lspstore
 
 import android.app.Application
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import org.lspstore.data.work.UpdateNotifier
+import org.lspstore.data.work.UpdateScheduler
 import org.lspstore.di.AppContainer
 
 class LspStoreApp : Application() {
@@ -11,5 +17,19 @@ class LspStoreApp : Application() {
     override fun onCreate() {
         super.onCreate()
         container = AppContainer(this)
+        UpdateNotifier.ensureChannel(this)
+        applySchedule()
+    }
+
+    private fun applySchedule() {
+        CoroutineScope(Dispatchers.IO).launch {
+            val enabled = container.settingsRepository.backgroundCheckEnabled.first()
+            if (enabled) {
+                val interval = container.settingsRepository.backgroundCheckIntervalHours.first()
+                UpdateScheduler.schedule(this@LspStoreApp, interval)
+            } else {
+                UpdateScheduler.cancel(this@LspStoreApp)
+            }
+        }
     }
 }

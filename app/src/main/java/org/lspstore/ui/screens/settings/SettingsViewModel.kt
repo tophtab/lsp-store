@@ -8,6 +8,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.lspstore.data.repository.SettingsRepositoryImpl
+import org.lspstore.data.work.UpdateScheduler
 import org.lspstore.di.AppContainer
 import org.lspstore.domain.model.SortOrder
 import org.lspstore.domain.model.UpdateChannel
@@ -15,7 +17,9 @@ import org.lspstore.domain.model.UpdateChannel
 data class SettingsUiState(
     val channel: UpdateChannel = UpdateChannel.STABLE,
     val sortOrder: SortOrder = SortOrder.UPDATED,
-    val autoCheck: Boolean = true,
+    val backgroundCheck: Boolean = true,
+    val intervalHours: Long = SettingsRepositoryImpl.DEFAULT_INTERVAL_HOURS,
+    val autoUpdate: Boolean = false,
     val rootInstall: Boolean = false,
     val rootAvailable: Boolean? = null,
     val downloadsSize: Long = 0,
@@ -27,6 +31,7 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
     private val settingsRepository = container.settingsRepository
     private val moduleRepository = container.moduleRepository
     private val installer = container.installer
+    private val appContext = container.appContext
 
     private val _state = MutableStateFlow(SettingsUiState(downloadsSize = installer.downloadsSizeBytes()))
     val state = _state.asStateFlow()
@@ -39,7 +44,17 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
             settingsRepository.sortOrder.collect { order -> _state.update { it.copy(sortOrder = order) } }
         }
         viewModelScope.launch {
-            settingsRepository.autoCheckUpdates.collect { enabled -> _state.update { it.copy(autoCheck = enabled) } }
+            settingsRepository.backgroundCheckEnabled.collect { enabled ->
+                _state.update { it.copy(backgroundCheck = enabled) }
+            }
+        }
+        viewModelScope.launch {
+            settingsRepository.backgroundCheckIntervalHours.collect { hours ->
+                _state.update { it.copy(intervalHours = hours) }
+            }
+        }
+        viewModelScope.launch {
+            settingsRepository.autoUpdate.collect { enabled -> _state.update { it.copy(autoUpdate = enabled) } }
         }
         viewModelScope.launch {
             settingsRepository.rootInstall.collect { enabled -> _state.update { it.copy(rootInstall = enabled) } }
@@ -54,8 +69,38 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
         viewModelScope.launch { settingsRepository.setSortOrder(order) }
     }
 
-    fun setAutoCheck(enabled: Boolean) {
-        viewModelScope.launch { settingsRepository.setAutoCheckUpdates(enabled) }
+    fun setBackgroundCheck(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.setBackgroundCheckEnabled(enabled)
+            if (enabled) {
+                UpdateScheduler.schedule(appContext, _state.value.intervalHours)
+            } else {
+                UpdateScheduler.cancel(appContext)
+            }
+        }
+    }
+
+    fun setIntervalHours(hours: Long) {
+        viewModelScope.launch {
+            settingsRepository.setBackgroundCheckIntervalHours(hours)
+            if (_state.value.backgroundCheck) {
+                UpdateScheduler.schedule(appContext, hours)
+            }
+        }
+    }
+
+    fun setAutoUpdate(enabled: Boolean) {
+        viewModelScope.launch {
+            if (enabled) {
+                val available = installer.isRootAvailable()
+                _state.update { it.copy(rootAvailable = available) }
+                if (!available) {
+                    _state.update { it.copy(message = "Auto-update needs root (su)") }
+                    return@launch
+                }
+            }
+            settingsRepository.setAutoUpdate(enabled)
+        }
     }
 
     fun setRootInstall(enabled: Boolean) {

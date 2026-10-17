@@ -98,12 +98,13 @@ class UpdatesViewModel(private val container: AppContainer) : ViewModel() {
             ?: return InstallOutcome.Failure("No APK asset found")
         val file = installer.download(asset)
         val useRoot = settingsRepository.rootInstall.first()
-        installer.install(file, useRoot)
+        installer.install(file, info.module.packageName, useRoot)
     }.getOrElse { InstallOutcome.Failure(it.message ?: "Install failed") }
 
     private fun describe(outcome: InstallOutcome, info: UpdateInfo): String = when (outcome) {
         InstallOutcome.SilentSuccess -> "Updated ${info.module.title} to ${info.latest.versionName}"
         InstallOutcome.SystemInstallerLaunched -> "Confirm the update for ${info.module.title}"
+        is InstallOutcome.SignatureMismatch -> "Signature mismatch for ${info.module.title}, update skipped"
         is InstallOutcome.Failure -> outcome.message
     }
 
