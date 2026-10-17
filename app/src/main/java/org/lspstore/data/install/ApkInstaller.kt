@@ -3,17 +3,12 @@ package org.lspstore.data.install
 import android.content.Context
 import android.content.Intent
 import androidx.core.content.FileProvider
-import io.ktor.client.HttpClient
-import io.ktor.client.call.body
-import io.ktor.client.request.get
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.lspstore.R
 import org.lspstore.domain.model.ApkVerification
 import org.lspstore.domain.model.ReleaseAsset
 import java.io.File
-import java.io.FileOutputStream
-import java.io.IOException
 
 sealed interface InstallOutcome {
     data object SilentSuccess : InstallOutcome
@@ -24,7 +19,7 @@ sealed interface InstallOutcome {
 
 class ApkInstaller(
     private val context: Context,
-    private val client: HttpClient,
+    private val downloadManager: DownloadManager,
 ) {
 
     private val verifier = ApkVerifier(context)
@@ -32,28 +27,7 @@ class ApkInstaller(
     suspend fun download(
         asset: ReleaseAsset,
         onProgress: (downloaded: Long, total: Long) -> Unit = { _, _ -> },
-    ): File = withContext(Dispatchers.IO) {
-        val directory = File(context.cacheDir, "apk").apply { mkdirs() }
-        val target = File(directory, asset.name.ifBlank { "module.apk" })
-
-        onProgress(0, asset.size)
-        val urls = listOfNotNull(
-            asset.downloadUrl.takeIf { it.isNotBlank() },
-            asset.fallbackUrl,
-        ).distinct()
-        var lastError: Throwable? = null
-        for (url in urls) {
-            try {
-                val bytes: ByteArray = client.get(url).body()
-                FileOutputStream(target).use { it.write(bytes) }
-                onProgress(bytes.size.toLong(), bytes.size.toLong())
-                return@withContext target
-            } catch (t: Throwable) {
-                lastError = t
-            }
-        }
-        throw lastError ?: IOException(context.getString(R.string.installer_no_url, asset.name))
-    }
+    ): File = downloadManager.downloadBlocking(asset, onProgress)
 
     suspend fun isRootAvailable(): Boolean = withContext(Dispatchers.IO) {
         runCatching {
@@ -113,12 +87,8 @@ class ApkInstaller(
     private fun shellQuote(value: String): String = "'" + value.replace("'", "'\\''") + "'"
 
     fun clearDownloads() {
-        runCatching { File(context.cacheDir, "apk").deleteRecursively() }
+        downloadManager.clearAll()
     }
 
-    fun downloadsSizeBytes(): Long {
-        val directory = File(context.cacheDir, "apk")
-        if (!directory.exists()) return 0
-        return directory.walkBottomUp().filter { it.isFile }.sumOf { it.length() }
-    }
+    fun downloadsSizeBytes(): Long = downloadManager.downloadedBytes()
 }

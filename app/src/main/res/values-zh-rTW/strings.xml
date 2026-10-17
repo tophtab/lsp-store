@@ -1,0 +1,292 @@
+<resources>
+    <string name="app_name">LSPosed 商店</string>
+
+    <!-- Common actions -->
+    <string name="action_retry">重試</string>
+    <string name="action_back">返回</string>
+    <string name="action_more">更多</string>
+    <string name="action_clear">清除</string>
+    <string name="action_refresh">重新整理</string>
+    <string name="action_sort">排序</string>
+    <string name="action_share">分享</string>
+    <string name="action_cancel">取消</string>
+    <string name="action_download">下載</string>
+    <string name="action_update">更新</string>
+    <string name="action_unskip">取消跳過</string>
+    <string name="action_unhide">取消隱藏</string>
+    <string name="action_hide">隱藏</string>
+    <string name="action_export">匯出</string>
+    <string name="action_import">匯入</string>
+    <string name="action_save">儲存</string>
+    <string name="label_installed">已安裝</string>
+    <string name="label_beta">beta</string>
+
+    <!-- Enum labels -->
+    <string name="theme_system">跟隨系統</string>
+    <string name="theme_light">淺色</string>
+    <string name="theme_dark">深色</string>
+    <string name="sort_updated">最近更新</string>
+    <string name="sort_stars">星標最多</string>
+    <string name="sort_name">名稱</string>
+    <string name="channel_stable">穩定版</string>
+    <string name="channel_beta">測試版</string>
+    <string name="channel_nightly">每夜構建</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">首頁</string>
+    <string name="nav_search">搜尋</string>
+    <string name="nav_installed">已安裝</string>
+    <string name="nav_settings">設定</string>
+
+    <!-- Module card -->
+    <string name="module_updated_relative">更新於 %1$s</string>
+    <string name="module_favourite">收藏</string>
+
+    <!-- Home -->
+    <string name="home_no_modules">沒有可用模組</string>
+    <string name="home_section_recently_updated">最近更新</string>
+    <string name="home_section_most_starred">星標最多</string>
+    <string name="home_section_beta">Beta 構建</string>
+    <string name="home_section_favourites">收藏</string>
+    <string name="home_section_recently_viewed">最近瀏覽</string>
+    <string name="home_see_all">檢視全部</string>
+    <string name="home_browse_all">瀏覽全部模組</string>
+    <string name="home_updates_banner">有 %1$d 個模組可更新</string>
+    <string name="home_updates_banner_hint">點按檢視並更新</string>
+    <string name="home_load_failed">載入模組失敗</string>
+
+    <!-- Search -->
+    <string name="search_placeholder">搜尋 %1$d 個模組</string>
+    <string name="search_favourites">收藏</string>
+    <string name="search_recent">最近搜尋</string>
+    <string name="search_empty">沒有匹配的模組</string>
+    <string name="search_count">%1$d 個模組</string>
+
+    <!-- Installed -->
+    <string name="installed_empty">未檢測到 LSPosed 模組</string>
+    <string name="installed_section_updates">可更新 (%1$d)</string>
+    <string name="installed_section_up_to_date">已是最新 (%1$d)</string>
+    <string name="installed_section_unknown">不在倉庫中 (%1$d)</string>
+    <string name="installed_update_all">全部更新</string>
+    <string name="installed_version_arrow">%1$s -&gt; %2$s</string>
+    <string name="installed_batch_progress">%1$d/%2$d：%3$s</string>
+    <string name="installed_updated_count">已更新 %1$d 個模組</string>
+    <string name="installed_finished_failures">完成，%1$d 個失敗</string>
+    <string name="installed_updated_one">已將 %1$s 更新到 %2$s</string>
+    <string name="installed_confirm_one">請確認 %1$s 的更新</string>
+    <string name="installed_signature_skipped">%1$s 簽名不一致，已跳過更新</string>
+    <string name="installed_check_failed">檢查更新失敗</string>
+
+    <!-- Detail -->
+    <string name="detail_readme">說明</string>
+    <string name="detail_releases">版本</string>
+    <string name="detail_installed_version">已安裝：%1$s (%2$d)</string>
+    <string name="detail_update_available">有更新：%1$s (%2$d)</string>
+    <string name="detail_no_release">該通道沒有版本</string>
+    <string name="detail_update_to">更新到 %1$s</string>
+    <string name="detail_reinstall">重新安裝 %1$s</string>
+    <string name="detail_install">安裝 %1$s</string>
+    <string name="detail_working">處理中…</string>
+    <string name="detail_source">原始碼</string>
+    <string name="detail_website">網站</string>
+    <string name="detail_repo">倉庫</string>
+    <string name="detail_no_releases">沒有版本</string>
+    <string name="detail_downloads">%1$s - %2$d 次下載</string>
+    <string name="detail_no_apk">沒有 APK 檔案</string>
+    <string name="detail_no_readme">沒有說明</string>
+    <string name="detail_share_module">分享模組</string>
+    <string name="detail_skip_version">跳過此版本</string>
+    <string name="detail_unskip_version">取消跳過此版本</string>
+    <string name="detail_open_app">開啟應用</string>
+    <string name="detail_app_info">應用資訊</string>
+    <string name="detail_uninstall">解除安裝</string>
+    <string name="detail_open_source">開啟原始碼</string>
+    <string name="detail_signature_mismatch">簽名不一致</string>
+    <string name="detail_signature_mismatch_body">下載的 APK 與已安裝模組的簽名證書不同。除非先解除安裝舊版本，否則 Android 會拒絕此次更新。</string>
+    <string name="detail_installed_signer">已安裝簽名</string>
+    <string name="detail_downloaded_signer">下載的簽名</string>
+    <string name="detail_install_anyway">仍然安裝</string>
+    <string name="detail_installed_apk">已安裝 %1$s</string>
+    <string name="detail_confirm_install">請在系統對話方塊中確認安裝</string>
+    <string name="detail_download_failed">下載失敗</string>
+    <string name="detail_load_failed">載入模組失敗</string>
+
+    <!-- Library -->
+    <string name="library_favourites">收藏</string>
+    <string name="library_recently_viewed">最近瀏覽</string>
+    <string name="library_hidden">隱藏的模組</string>
+    <string name="library_skipped">已跳過的更新</string>
+    <string name="library_empty_favourites">還沒有收藏</string>
+    <string name="library_empty_recent">還沒有瀏覽記錄</string>
+    <string name="library_empty_hidden">沒有隱藏的模組</string>
+    <string name="library_empty_skipped">沒有跳過的更新</string>
+    <string name="library_remove_favourite">取消收藏</string>
+    <string name="library_skipped_version">已跳過版本號 %1$d</string>
+    <string name="library_skipped_latest">，最新 %1$d</string>
+    <string name="library_load_failed">載入失敗</string>
+
+    <!-- Settings -->
+    <string name="settings_appearance">外觀</string>
+    <string name="settings_amoled">AMOLED 純黑</string>
+    <string name="settings_amoled_desc">深色模式下使用純黑背景</string>
+    <string name="settings_dynamic">動態取色</string>
+    <string name="settings_dynamic_desc">使用桌布的 Material You 配色</string>
+    <string name="settings_update_channel">更新通道</string>
+    <string name="settings_update_channel_desc">Stable 跟隨正式版，Beta 跟隨預釋出版，Nightly 跟隨 CI 快照構建。</string>
+    <string name="settings_sort">模組排序</string>
+    <string name="settings_background">後臺檢查</string>
+    <string name="settings_background_toggle">後臺檢查更新</string>
+    <string name="settings_background_desc">定期重新整理模組索引並通知更新</string>
+    <string name="settings_interval">檢查間隔</string>
+    <string name="settings_interval_hours">%1$d 小時</string>
+    <string name="settings_auto_update">有 root 時自動更新</string>
+    <string name="settings_auto_update_desc">在後臺透過 su 靜默安裝更新</string>
+    <string name="settings_root">Root 靜默安裝</string>
+    <string name="settings_root_detected">檢測到 su，APK 將靜默安裝</string>
+    <string name="settings_root_unavailable">此裝置沒有 su</string>
+    <string name="settings_root_desc">透過 su 靜默安裝和更新 APK</string>
+    <string name="settings_library">資料庫</string>
+    <string name="import_title">匯入已安裝模組</string>
+    <string name="import_desc">已安裝但不在倉庫中的 LSPosed 模組。即使包名不一致，也可以關聯到某個倉庫模組以獲取更新檢查。</string>
+    <string name="import_empty">所有已安裝模組均已在倉庫中</string>
+    <string name="import_link">關聯到模組</string>
+    <string name="import_unlink">取消關聯</string>
+    <string name="import_linked_to">已關聯</string>
+    <string name="import_linked">已關聯模組</string>
+    <string name="import_unlinked">已取消關聯</string>
+    <string name="import_installed_version">已安裝 %1$s</string>
+    <string name="import_pick_module">選擇倉庫模組</string>
+    <string name="import_search_hint">搜尋模組</string>
+    <string name="import_load_failed">載入模組失敗</string>
+    <string name="settings_backup">備份</string>
+    <string name="settings_backup_desc">收藏、隱藏的模組和跳過的更新會以 JSON 匯出。</string>
+    <string name="settings_storage">儲存</string>
+    <string name="settings_downloaded">已下載的 APK：%1$s</string>
+    <string name="settings_clear_cache">清除快取的索引和 APK</string>
+    <string name="settings_about">關於</string>
+    <string name="settings_advanced">高階</string>
+    <string name="settings_clear_index">清除模組索引快取</string>
+    <string name="settings_clear_apks">清除已下載的 APK</string>
+    <string name="settings_index_cleared">索引快取已清除</string>
+    <string name="settings_apks_cleared">已清除下載的 APK</string>
+
+    <!-- Diagnostics -->
+    <string name="diagnostics_title">應用資訊與診斷</string>
+    <string name="diagnostics_app">應用</string>
+    <string name="diagnostics_version">版本</string>
+    <string name="diagnostics_android">Android</string>
+    <string name="diagnostics_device">裝置</string>
+    <string name="diagnostics_modules">模組</string>
+    <string name="diagnostics_installed">已安裝</string>
+    <string name="diagnostics_repo">倉庫中</string>
+    <string name="diagnostics_storage">儲存</string>
+    <string name="diagnostics_index_cache">索引快取</string>
+    <string name="diagnostics_downloads">已下載 APK</string>
+    <string name="diagnostics_settings">設定</string>
+    <string name="diagnostics_feedback">反饋</string>
+    <string name="diagnostics_feedback_desc">反饋問題時可附上這些診斷資訊。</string>
+    <string name="diagnostics_copy">複製</string>
+    <string name="diagnostics_share">分享</string>
+    <string name="diagnostics_copied">診斷資訊已複製</string>
+
+    <!-- Licenses -->
+    <string name="licenses_title">開源許可證</string>
+    <string name="licenses_intro">本應用基於以下開源專案構建。</string>
+    <string name="licenses_app">LSPosed 商店本身也是開源的。</string>
+    <string name="settings_proxy">代理</string>
+    <string name="settings_proxy_enable">使用代理</string>
+    <string name="settings_proxy_desc">透過代理訪問倉庫和下載</string>
+    <string name="settings_proxy_host">主機</string>
+    <string name="settings_proxy_port">埠</string>
+    <string name="settings_proxy_user">使用者名稱（可選）</string>
+    <string name="settings_proxy_pass">密碼（可選）</string>
+    <string name="settings_proxy_invalid">請輸入有效的主機和埠</string>
+    <string name="settings_proxy_test">測試</string>
+    <string name="settings_proxy_testing">測試中…</string>
+    <string name="settings_proxy_ok">代理可用（%1$d 毫秒）</string>
+    <string name="settings_proxy_failed">代理測試失敗：%1$s</string>
+    <string name="proxy_type_http">HTTP</string>
+    <string name="proxy_type_socks">SOCKS</string>
+    <string name="settings_translation">翻譯</string>
+    <string name="settings_translation_provider">翻譯服務</string>
+    <string name="settings_translation_target">目標語言</string>
+    <string name="translation_disabled">已禁用</string>
+    <string name="translation_google">Google</string>
+    <string name="translation_libre">LibreTranslate</string>
+    <string name="translation_deepl">DeepL</string>
+    <string name="translation_microsoft">Microsoft</string>
+    <string name="settings_translation_deepl_key">DeepL 金鑰</string>
+    <string name="settings_translation_libre_url">LibreTranslate 地址</string>
+    <string name="settings_translation_libre_key">LibreTranslate API 金鑰（可選）</string>
+    <string name="settings_translation_ms_key">Microsoft 金鑰</string>
+    <string name="settings_translation_ms_region">Microsoft 區域</string>
+    <string name="settings_translation_note">Google 使用公共介面，無需金鑰。</string>
+    <string name="detail_translate">翻譯簡介</string>
+    <string name="detail_clear_translation">清除翻譯</string>
+    <string name="detail_translated">已翻譯</string>
+    <string name="detail_translate_failed">翻譯失敗</string>
+    <string name="detail_translation_disabled">翻譯已在設定中禁用</string>
+    <string name="download_progress">%1$s / %2$s</string>
+    <string name="download_pause">暫停</string>
+    <string name="download_resume">繼續</string>
+    <string name="download_cancel">取消</string>
+    <string name="download_cancelled">已取消下載</string>
+    <string name="variant_picker_title">選擇 APK</string>
+    <string name="variant_picker_subtitle">該版本包含多個 APK。</string>
+    <string name="settings_auto_update_needs_root">自動更新需要 root (su)</string>
+    <string name="settings_root_unavailable_msg">此裝置沒有 root (su)</string>
+    <string name="settings_cache_cleared">快取已清除</string>
+    <string name="settings_exported">資料庫已匯出</string>
+    <string name="settings_export_failed">匯出失敗</string>
+    <string name="settings_imported">已匯入 %1$d 個收藏、%2$d 個隱藏、%3$d 個跳過</string>
+    <string name="settings_import_failed">匯入失敗</string>
+    <string name="settings_cannot_open">無法開啟所選檔案</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_welcome_title">歡迎使用 LSPosed 商店</string>
+    <string name="onboarding_welcome_body">瀏覽 LSPosed 模組倉庫、安裝模組，並讓裝置上已有的模組保持最新。全部開源，模組資料來自 modules.lsposed.org。</string>
+    <string name="onboarding_appearance_title">選擇你的外觀</string>
+    <string name="onboarding_appearance_subtitle">之後可在設定中修改。</string>
+    <string name="onboarding_permissions_title">兩個快捷授權</string>
+    <string name="onboarding_permissions_subtitle">都是可選的，之後可在設定中修改。</string>
+    <string name="onboarding_notifications">通知</string>
+    <string name="onboarding_notifications_desc">更新提醒和安裝進度</string>
+    <string name="onboarding_install">安裝未知應用</string>
+    <string name="onboarding_install_desc">在 Play 商店外安裝 APK 所需</string>
+    <string name="onboarding_granted">已授權</string>
+    <string name="onboarding_allow">允許</string>
+    <string name="onboarding_skip">跳過</string>
+    <string name="onboarding_next">下一步</string>
+    <string name="onboarding_get_started">開始使用</string>
+
+    <!-- About -->
+    <string name="about_version">版本 %1$s</string>
+    <string name="about_body">一個開源的 LSPosed 模組瀏覽器和更新器。模組資料來自 modules.lsposed.org，它聚合了 Xposed-Modules-Repo 這個 GitHub 組織下的倉庫。</string>
+    <string name="about_open_site">開啟 modules.lsposed.org</string>
+    <string name="about_open_repo">在 GitHub 開啟 Xposed-Modules-Repo</string>
+    <string name="about_disclaimer">與 LSPosed 專案無隸屬關係。</string>
+
+    <!-- Author -->
+    <string name="author_no_modules">該作者沒有模組</string>
+    <string name="author_module_count">%1$d 個模組</string>
+    <string name="author_load_failed">載入模組失敗</string>
+    <string name="author_view">檢視該作者的模組</string>
+
+    <!-- Installer -->
+    <string name="error_no_apk_asset">未找到 APK 檔案</string>
+    <string name="error_install_failed">安裝失敗</string>
+    <string name="installer_apk_rejected">APK 被拒絕：%1$s</string>
+    <string name="installer_no_url">%1$s 沒有可用的下載地址</string>
+    <string name="installer_launch_failed">無法啟動安裝器</string>
+    <string name="verifier_invalid_apk">不是有效的 APK</string>
+    <string name="verifier_unsigned_apk">APK 未簽名</string>
+
+    <!-- Notifications -->
+    <string name="notifier_channel_name">模組更新</string>
+    <string name="notifier_channel_desc">後臺檢查發現的 LSPosed 模組更新</string>
+    <string name="notifier_single_update">%1$s 有更新</string>
+    <string name="notifier_multi_updates">有 %1$d 個模組可更新</string>
+    <string name="notifier_auto_title">自動更新完成</string>
+    <string name="notifier_auto_updated">已更新 %1$d 個模組</string>
+    <string name="notifier_auto_failed">，%1$d 個失敗</string>
+</resources>

@@ -95,6 +95,13 @@ data class ModuleDetail(
         UpdateChannel.NIGHTLY -> snapshotReleases.ifEmpty { betaReleases.ifEmpty { releases } }
     }
 
+    fun latestReleaseFor(channel: UpdateChannel): Release? {
+        val target = module.latestFor(channel)
+        val channelReleases = releasesFor(channel)
+        return channelReleases.firstOrNull { it.tagName == target?.raw }
+            ?: channelReleases.firstOrNull { it.apkAssets.isNotEmpty() }
+    }
+
     fun latestAssetFor(channel: UpdateChannel): ReleaseAsset? {
         val target = module.latestFor(channel)
         val channelReleases = releasesFor(channel)

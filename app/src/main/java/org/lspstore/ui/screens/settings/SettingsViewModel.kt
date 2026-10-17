@@ -34,6 +34,7 @@ data class SettingsUiState(
     val translation: TranslationSettings = TranslationSettings(),
     val proxyTesting: Boolean = false,
     val downloadsSize: Long = 0,
+    val indexCacheSize: Long = 0,
     val message: String? = null,
 )
 
@@ -44,7 +45,12 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
     private val installer = container.installer
     private val appContext = container.appContext
 
-    private val _state = MutableStateFlow(SettingsUiState(downloadsSize = installer.downloadsSizeBytes()))
+    private val _state = MutableStateFlow(
+        SettingsUiState(
+            downloadsSize = installer.downloadsSizeBytes(),
+            indexCacheSize = moduleRepository.cacheSizeBytes(),
+        ),
+    )
     val state = _state.asStateFlow()
 
     init {
@@ -197,7 +203,35 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
             moduleRepository.clearCache()
             installer.clearDownloads()
             _state.update {
-                it.copy(downloadsSize = installer.downloadsSizeBytes(), message = appContext.getString(R.string.settings_cache_cleared))
+                it.copy(
+                    downloadsSize = installer.downloadsSizeBytes(),
+                    indexCacheSize = moduleRepository.cacheSizeBytes(),
+                    message = appContext.getString(R.string.settings_cache_cleared),
+                )
+            }
+        }
+    }
+
+    fun clearIndexCache() {
+        viewModelScope.launch {
+            moduleRepository.clearCache()
+            _state.update {
+                it.copy(
+                    indexCacheSize = moduleRepository.cacheSizeBytes(),
+                    message = appContext.getString(R.string.settings_index_cleared),
+                )
+            }
+        }
+    }
+
+    fun clearDownloadedApks() {
+        viewModelScope.launch {
+            installer.clearDownloads()
+            _state.update {
+                it.copy(
+                    downloadsSize = installer.downloadsSizeBytes(),
+                    message = appContext.getString(R.string.settings_apks_cleared),
+                )
             }
         }
     }

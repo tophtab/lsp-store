@@ -4,6 +4,7 @@ import android.content.Context
 import io.ktor.client.HttpClient
 import kotlinx.serialization.json.Json
 import org.lspstore.data.install.ApkInstaller
+import org.lspstore.data.install.DownloadManager
 import org.lspstore.data.remote.LsposedRepoApi
 import org.lspstore.data.remote.ProxyState
 import org.lspstore.data.remote.createHttpClient
@@ -25,7 +26,8 @@ class AppContainer(context: Context) {
     val installedRepository: InstalledModulesRepositoryImpl = InstalledModulesRepositoryImpl(context)
     val settingsRepository: SettingsRepositoryImpl = SettingsRepositoryImpl(context)
     val libraryRepository: LibraryRepositoryImpl = LibraryRepositoryImpl(context)
-    val installer: ApkInstaller = ApkInstaller(context, httpClient)
+    val downloadManager: DownloadManager = DownloadManager(context, proxyState)
+    val installer: ApkInstaller = ApkInstaller(context, downloadManager)
     val translationRepository: TranslationRepository = TranslationRepository(httpClient, settingsRepository)
     val proxyTester: ProxyTester = ProxyTester(httpClient)
 }

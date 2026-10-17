@@ -7,9 +7,12 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.lspstore.R
+import org.lspstore.data.install.DownloadStatus
+import org.lspstore.data.install.DownloadTask
 import org.lspstore.data.install.InstallOutcome
 import org.lspstore.data.repository.InstalledModulesRepositoryImpl
 import org.lspstore.data.repository.LibraryRepositoryImpl
@@ -19,9 +22,15 @@ import org.lspstore.di.AppContainer
 import org.lspstore.domain.model.ApkVerification
 import org.lspstore.domain.model.InstalledModule
 import org.lspstore.domain.model.ModuleDetail
+import org.lspstore.domain.model.Release
 import org.lspstore.domain.model.ReleaseAsset
 import org.lspstore.domain.model.UpdateChannel
 import java.io.File
+
+data class VariantPicker(
+    val release: Release,
+    val variants: List<ReleaseAsset>,
+)
 
 data class ModuleDetailUiState(
     val isLoading: Boolean = true,
@@ -33,11 +42,12 @@ data class ModuleDetailUiState(
     val isHidden: Boolean = false,
     val skippedVersionCode: Long? = null,
     val isBusy: Boolean = false,
-    val downloadProgress: Float? = null,
+    val activeDownload: DownloadTask? = null,
     val message: String? = null,
     val pendingMismatch: ApkVerification.Mismatch? = null,
     val translatedSummary: String? = null,
     val isTranslating: Boolean = false,
+    val variantPicker: VariantPicker? = null,
 ) {
     val latestVersionCode: Long?
         get() = detail?.module?.latestFor(channel)?.versionCode
@@ -51,6 +61,9 @@ data class ModuleDetailUiState(
 
     val isUpdateSkipped: Boolean
         get() = skippedVersionCode != null && skippedVersionCode == latestVersionCode
+
+    val downloadProgress: Float
+        get() = activeDownload?.progress ?: 0f
 }
 
 class ModuleDetailViewModel(
@@ -63,6 +76,7 @@ class ModuleDetailViewModel(
     private val settingsRepository: SettingsRepositoryImpl = container.settingsRepository
     private val libraryRepository: LibraryRepositoryImpl = container.libraryRepository
     private val installer = container.installer
+    private val downloadManager = container.downloadManager
     private val translationRepository = container.translationRepository
 
     private val _state = MutableStateFlow(ModuleDetailUiState())
@@ -105,7 +119,12 @@ class ModuleDetailViewModel(
                 _state.update { it.copy(isLoading = false, detail = detail, installed = installed) }
                 libraryRepository.addRecentlyViewed(packageName)
             }.onFailure { error ->
-                _state.update { it.copy(isLoading = false, error = error.message ?: container.appContext.getString(R.string.detail_load_failed)) }
+                _state.update {
+                    it.copy(
+                        isLoading = false,
+                        error = error.message ?: container.appContext.getString(R.string.detail_load_failed),
+                    )
+                }
             }
         }
     }
@@ -128,16 +147,50 @@ class ModuleDetailViewModel(
     }
 
     fun installLatest() {
-        val asset = latestAsset() ?: return
-        install(asset)
+        val detail = _state.value.detail ?: return
+        val release = detail.latestReleaseFor(_state.value.channel) ?: return
+        val apks = release.apkAssets
+        when {
+            apks.isEmpty() -> Unit
+            apks.size == 1 -> beginDownload(apks.first())
+            else -> _state.update { it.copy(variantPicker = VariantPicker(release, apks)) }
+        }
     }
 
-    fun installAsset(asset: ReleaseAsset) = install(asset)
+    fun installAsset(asset: ReleaseAsset) = beginDownload(asset)
+
+    fun dismissVariantPicker() {
+        _state.update { it.copy(variantPicker = null) }
+    }
+
+    fun pauseDownload() {
+        val task = _state.value.activeDownload ?: return
+        downloadManager.pause(task.key)
+    }
+
+    fun resumeDownload() {
+        val asset = pendingInstall?.second ?: return
+        downloadManager.resume(asset)
+    }
+
+    fun cancelDownload() {
+        val task = _state.value.activeDownload ?: return
+        downloadManager.cancel(task.key)
+        pendingInstall = null
+        _state.update {
+            it.copy(
+                isBusy = false,
+                activeDownload = null,
+                message = container.appContext.getString(R.string.download_cancelled),
+            )
+        }
+    }
 
     fun installAnyway() {
         val asset = pendingInstall?.second ?: return
+        val file = pendingInstall?.first ?: return
         _state.update { it.copy(pendingMismatch = null) }
-        install(asset, allowSignatureMismatch = true)
+        viewModelScope.launch { performInstall(file, asset, allowSignatureMismatch = true) }
     }
 
     fun dismissMismatch() {
@@ -173,48 +226,85 @@ class ModuleDetailViewModel(
         _state.update { it.copy(translatedSummary = null) }
     }
 
-    private fun latestAsset(): ReleaseAsset? =
-        _state.value.detail?.latestAssetFor(_state.value.channel)
-
-    private fun install(asset: ReleaseAsset, allowSignatureMismatch: Boolean = false) {
+    private fun beginDownload(asset: ReleaseAsset) {
         if (_state.value.isBusy) return
+        _state.update { it.copy(isBusy = true, message = null, variantPicker = null) }
+        val key = downloadManager.start(asset)
         viewModelScope.launch {
-            _state.update { it.copy(isBusy = true, downloadProgress = 0f, message = null) }
-            runCatching {
-                val file = if (allowSignatureMismatch && pendingInstall?.second == asset) {
-                    pendingInstall!!.first
-                } else {
-                    installer.download(asset) { downloaded, total ->
-                        val progress = if (total > 0) downloaded.toFloat() / total.toFloat() else null
-                        _state.update { it.copy(downloadProgress = progress) }
+            val progressJob = launch {
+                downloadManager.tasks.collect { tasks ->
+                    tasks[key]?.let { task -> _state.update { it.copy(activeDownload = task) } }
+                }
+            }
+            val task = downloadManager.tasks
+                .mapNotNull { it[key] }
+                .first {
+                    it.status == DownloadStatus.COMPLETED ||
+                        it.status == DownloadStatus.FAILED ||
+                        it.status == DownloadStatus.CANCELLED
+                }
+            progressJob.cancel()
+
+            when (task.status) {
+                DownloadStatus.COMPLETED -> {
+                    val file = task.file
+                    if (file == null) {
+                        _state.update { it.copy(isBusy = false, activeDownload = null) }
+                        return@launch
+                    }
+                    pendingInstall = file to asset
+                    performInstall(file, asset, allowSignatureMismatch = false)
+                }
+                DownloadStatus.CANCELLED -> {
+                    pendingInstall = null
+                    _state.update {
+                        it.copy(
+                            isBusy = false,
+                            activeDownload = null,
+                            message = container.appContext.getString(R.string.download_cancelled),
+                        )
                     }
                 }
-                pendingInstall = file to asset
-                val useRoot = settingsRepository.rootInstall.first()
-                installer.install(file, packageName, useRoot, allowSignatureMismatch)
-            }.onSuccess { outcome ->
-                when (outcome) {
-                    InstallOutcome.SilentSuccess -> {
-                        pendingInstall = null
-                        finishInstall(container.appContext.getString(R.string.detail_installed_apk, asset.name))
-                    }
-                    InstallOutcome.SystemInstallerLaunched -> {
-                        pendingInstall = null
-                        finishInstall(container.appContext.getString(R.string.detail_confirm_install))
-                    }
-                    is InstallOutcome.SignatureMismatch -> {
-                        _state.update {
-                            it.copy(isBusy = false, downloadProgress = null, pendingMismatch = outcome.verification)
-                        }
-                    }
-                    is InstallOutcome.Failure -> {
-                        pendingInstall = null
-                        finishInstall(outcome.message)
+                else -> {
+                    pendingInstall = null
+                    _state.update {
+                        it.copy(
+                            isBusy = false,
+                            activeDownload = null,
+                            message = task.error ?: container.appContext.getString(R.string.detail_download_failed),
+                        )
                     }
                 }
-            }.onFailure { error ->
+            }
+        }
+    }
+
+    private suspend fun performInstall(
+        file: File,
+        asset: ReleaseAsset,
+        allowSignatureMismatch: Boolean,
+    ) {
+        val useRoot = settingsRepository.rootInstall.first()
+        val outcome = runCatching {
+            installer.install(file, packageName, useRoot, allowSignatureMismatch)
+        }.getOrElse { InstallOutcome.Failure(it.message ?: "install failed") }
+        when (outcome) {
+            InstallOutcome.SilentSuccess -> {
                 pendingInstall = null
-                finishInstall(error.message ?: container.appContext.getString(R.string.detail_download_failed))
+                finishInstall(container.appContext.getString(R.string.detail_installed_apk, asset.name))
+            }
+            InstallOutcome.SystemInstallerLaunched -> {
+                pendingInstall = null
+                finishInstall(container.appContext.getString(R.string.detail_confirm_install))
+            }
+            is InstallOutcome.SignatureMismatch -> {
+                _state.update {
+                    it.copy(isBusy = false, activeDownload = null, pendingMismatch = outcome.verification)
+                }
+            }
+            is InstallOutcome.Failure -> {
+                pendingInstall = null
+                finishInstall(outcome.message)
             }
         }
     }
@@ -222,7 +312,7 @@ class ModuleDetailViewModel(
     private suspend fun finishInstall(message: String) {
         val installed = installedRepository.getInstalledModule(packageName)
         _state.update {
-            it.copy(isBusy = false, downloadProgress = null, message = message, installed = installed)
+            it.copy(isBusy = false, activeDownload = null, message = message, installed = installed)
         }
     }
 

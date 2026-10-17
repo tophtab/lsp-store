@@ -48,13 +48,16 @@ import org.lspstore.domain.model.ThemeMode
 import org.lspstore.ui.LocalAppContainer
 import org.lspstore.ui.navigation.Routes
 import org.lspstore.ui.screens.about.AboutScreen
+import org.lspstore.ui.screens.author.AuthorScreen
 import org.lspstore.ui.screens.detail.ModuleDetailScreen
+import org.lspstore.ui.screens.diagnostics.DiagnosticsScreen
 import org.lspstore.ui.screens.home.HomeScreen
 import org.lspstore.ui.screens.imports.ExternalImportScreen
 import org.lspstore.ui.screens.installed.InstalledScreen
 import org.lspstore.ui.screens.library.LibraryKind
 import org.lspstore.ui.screens.library.LibraryListScreen
 import org.lspstore.ui.screens.library.SkippedUpdatesScreen
+import org.lspstore.ui.screens.licenses.LicensesScreen
 import org.lspstore.ui.screens.onboarding.OnboardingScreen
 import org.lspstore.ui.screens.search.SearchScreen
 import org.lspstore.ui.screens.settings.SettingsScreen
@@ -183,7 +186,17 @@ private fun MainContent() {
                     onOpenSkipped = { navController.navigate(Routes.SKIPPED) },
                     onOpenAbout = { navController.navigate(Routes.ABOUT) },
                     onOpenImports = { navController.navigate(Routes.IMPORTS) },
+                    onOpenDiagnostics = { navController.navigate(Routes.DIAGNOSTICS) },
                 )
+            }
+            composable(Routes.DIAGNOSTICS) {
+                DiagnosticsScreen(
+                    onBack = { navController.popBackStack() },
+                    onOpenLicenses = { navController.navigate(Routes.LICENSES) },
+                )
+            }
+            composable(Routes.LICENSES) {
+                LicensesScreen(onBack = { navController.popBackStack() })
             }
             composable(Routes.IMPORTS) {
                 ExternalImportScreen(onBack = { navController.popBackStack() })
@@ -223,6 +236,18 @@ private fun MainContent() {
                 ModuleDetailScreen(
                     packageName = packageName,
                     onBack = { navController.popBackStack() },
+                    onOpenAuthor = { navController.navigate(Routes.author(it)) },
+                )
+            }
+            composable(
+                route = Routes.AUTHOR,
+                arguments = listOf(navArgument(Routes.AUTHOR_ARG) { type = NavType.StringType }),
+            ) { entry ->
+                val author = entry.arguments?.getString(Routes.AUTHOR_ARG).orEmpty()
+                AuthorScreen(
+                    author = author,
+                    onBack = { navController.popBackStack() },
+                    onOpenModule = { navController.navigate(Routes.detail(it)) },
                 )
             }
         }

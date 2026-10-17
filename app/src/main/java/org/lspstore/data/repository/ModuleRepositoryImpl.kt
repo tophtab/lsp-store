@@ -64,6 +64,8 @@ class ModuleRepositoryImpl(
         runCatching { cacheFile.delete() }
     }
 
+    fun cacheSizeBytes(): Long = runCatching { if (cacheFile.exists()) cacheFile.length() else 0L }.getOrDefault(0L)
+
     private suspend fun fetchAll(): List<ModuleListItemDto> {
         val first = api.moduleList(1)
         val items = mutableListOf<ModuleListItemDto>().apply { addAll(first.modules) }

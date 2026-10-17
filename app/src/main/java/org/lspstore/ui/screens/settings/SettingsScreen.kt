@@ -65,6 +65,7 @@ fun SettingsScreen(
     onOpenSkipped: () -> Unit,
     onOpenImports: () -> Unit,
     onOpenAbout: () -> Unit,
+    onOpenDiagnostics: () -> Unit,
 ) {
     val container = LocalAppContainer.current
     val viewModel: SettingsViewModel = viewModel(factory = SettingsViewModel.factory(container))
@@ -410,12 +411,23 @@ fun SettingsScreen(
                 text = stringResource(R.string.settings_downloaded, formatBytes(state.downloadsSize)),
                 style = MaterialTheme.typography.bodyMedium,
             )
-            OutlinedButton(onClick = viewModel::clearCache) {
-                Text(stringResource(R.string.settings_clear_cache))
+            Text(
+                text = stringResource(R.string.diagnostics_index_cache) + ": " + formatBytes(state.indexCacheSize),
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(onClick = viewModel::clearIndexCache) {
+                    Text(stringResource(R.string.settings_clear_index))
+                }
+                OutlinedButton(onClick = viewModel::clearDownloadedApks) {
+                    Text(stringResource(R.string.settings_clear_apks))
+                }
             }
 
             HorizontalDivider()
 
+            SectionTitle(stringResource(R.string.settings_advanced))
+            NavRow(stringResource(R.string.diagnostics_title), onOpenDiagnostics)
             NavRow(stringResource(R.string.settings_about), onOpenAbout)
         }
     }

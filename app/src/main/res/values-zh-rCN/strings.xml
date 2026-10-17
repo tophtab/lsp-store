@@ -164,6 +164,35 @@
     <string name="settings_downloaded">已下载的 APK：%1$s</string>
     <string name="settings_clear_cache">清除缓存的索引和 APK</string>
     <string name="settings_about">关于</string>
+    <string name="settings_advanced">高级</string>
+    <string name="settings_clear_index">清除模块索引缓存</string>
+    <string name="settings_clear_apks">清除已下载的 APK</string>
+    <string name="settings_index_cleared">索引缓存已清除</string>
+    <string name="settings_apks_cleared">已清除下载的 APK</string>
+
+    <!-- Diagnostics -->
+    <string name="diagnostics_title">应用信息与诊断</string>
+    <string name="diagnostics_app">应用</string>
+    <string name="diagnostics_version">版本</string>
+    <string name="diagnostics_android">Android</string>
+    <string name="diagnostics_device">设备</string>
+    <string name="diagnostics_modules">模块</string>
+    <string name="diagnostics_installed">已安装</string>
+    <string name="diagnostics_repo">仓库中</string>
+    <string name="diagnostics_storage">存储</string>
+    <string name="diagnostics_index_cache">索引缓存</string>
+    <string name="diagnostics_downloads">已下载 APK</string>
+    <string name="diagnostics_settings">设置</string>
+    <string name="diagnostics_feedback">反馈</string>
+    <string name="diagnostics_feedback_desc">反馈问题时可附上这些诊断信息。</string>
+    <string name="diagnostics_copy">复制</string>
+    <string name="diagnostics_share">分享</string>
+    <string name="diagnostics_copied">诊断信息已复制</string>
+
+    <!-- Licenses -->
+    <string name="licenses_title">开源许可证</string>
+    <string name="licenses_intro">本应用基于以下开源项目构建。</string>
+    <string name="licenses_app">LSPosed 商店本身也是开源的。</string>
     <string name="settings_proxy">代理</string>
     <string name="settings_proxy_enable">使用代理</string>
     <string name="settings_proxy_desc">通过代理访问仓库和下载</string>
@@ -197,6 +226,13 @@
     <string name="detail_translated">已翻译</string>
     <string name="detail_translate_failed">翻译失败</string>
     <string name="detail_translation_disabled">翻译已在设置中禁用</string>
+    <string name="download_progress">%1$s / %2$s</string>
+    <string name="download_pause">暂停</string>
+    <string name="download_resume">继续</string>
+    <string name="download_cancel">取消</string>
+    <string name="download_cancelled">已取消下载</string>
+    <string name="variant_picker_title">选择 APK</string>
+    <string name="variant_picker_subtitle">该版本包含多个 APK。</string>
     <string name="settings_auto_update_needs_root">自动更新需要 root (su)</string>
     <string name="settings_root_unavailable_msg">此设备没有 root (su)</string>
     <string name="settings_cache_cleared">缓存已清除</string>
@@ -229,6 +265,12 @@
     <string name="about_open_site">打开 modules.lsposed.org</string>
     <string name="about_open_repo">在 GitHub 打开 Xposed-Modules-Repo</string>
     <string name="about_disclaimer">与 LSPosed 项目无隶属关系。</string>
+
+    <!-- Author -->
+    <string name="author_no_modules">该作者没有模块</string>
+    <string name="author_module_count">%1$d 个模块</string>
+    <string name="author_load_failed">加载模块失败</string>
+    <string name="author_view">查看该作者的模块</string>
 
     <!-- Installer -->
     <string name="error_no_apk_asset">未找到 APK 文件</string>

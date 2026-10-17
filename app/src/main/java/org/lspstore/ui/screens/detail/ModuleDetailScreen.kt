@@ -6,6 +6,7 @@ import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
 import android.webkit.WebView
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -65,6 +66,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import org.lspstore.R
+import org.lspstore.data.install.DownloadStatus
 import org.lspstore.domain.model.ApkVerification
 import org.lspstore.domain.model.ModuleDetail
 import org.lspstore.domain.model.Release
@@ -77,7 +79,7 @@ import org.lspstore.ui.components.VersionChip
 import org.lspstore.ui.components.formatRelativeTime
 
 @Composable
-fun ModuleDetailScreen(packageName: String, onBack: () -> Unit) {
+fun ModuleDetailScreen(packageName: String, onBack: () -> Unit, onOpenAuthor: (String) -> Unit) {
     val container = LocalAppContainer.current
     val viewModel: ModuleDetailViewModel = viewModel(
         factory = ModuleDetailViewModel.factory(container, packageName),
@@ -209,6 +211,10 @@ fun ModuleDetailScreen(packageName: String, onBack: () -> Unit) {
                 onToggleFavourite = viewModel::toggleFavourite,
                 onTranslate = viewModel::translateSummary,
                 onClearTranslation = viewModel::clearTranslation,
+                onOpenAuthor = onOpenAuthor,
+                onPause = viewModel::pauseDownload,
+                onResume = viewModel::resumeDownload,
+                onCancel = viewModel::cancelDownload,
                 modifier = Modifier.padding(innerPadding),
             )
         }
@@ -221,6 +227,72 @@ fun ModuleDetailScreen(packageName: String, onBack: () -> Unit) {
             onDismiss = viewModel::dismissMismatch,
         )
     }
+
+    state.variantPicker?.let { picker ->
+        VariantPickerDialog(
+            picker = picker,
+            onSelect = { asset ->
+                viewModel.dismissVariantPicker()
+                viewModel.installAsset(asset)
+            },
+            onDismiss = viewModel::dismissVariantPicker,
+        )
+    }
+}
+
+@Composable
+private fun VariantPickerDialog(
+    picker: VariantPicker,
+    onSelect: (ReleaseAsset) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.variant_picker_title)) },
+        text = {
+            Column {
+                Text(
+                    text = stringResource(R.string.variant_picker_subtitle),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.height(8.dp))
+                picker.variants.forEach { asset ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onSelect(asset) }
+                            .padding(vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = asset.name,
+                                style = MaterialTheme.typography.bodyMedium,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            Text(
+                                text = stringResource(
+                                    R.string.detail_downloads,
+                                    formatSize(asset.size),
+                                    asset.downloadCount,
+                                ),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        Icon(Icons.Filled.Download, contentDescription = null)
+                    }
+                    HorizontalDivider()
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
+        },
+    )
 }
 
 @Composable
@@ -266,6 +338,10 @@ private fun DetailContent(
     onToggleFavourite: () -> Unit,
     onTranslate: () -> Unit,
     onClearTranslation: () -> Unit,
+    onOpenAuthor: (String) -> Unit,
+    onPause: () -> Unit,
+    onResume: () -> Unit,
+    onCancel: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
@@ -278,6 +354,10 @@ private fun DetailContent(
             onToggleFavourite = onToggleFavourite,
             onTranslate = onTranslate,
             onClearTranslation = onClearTranslation,
+            onOpenAuthor = onOpenAuthor,
+            onPause = onPause,
+            onResume = onResume,
+            onCancel = onCancel,
         )
         TabRow(selectedTabIndex = selectedTab) {
             Tab(
@@ -314,6 +394,10 @@ private fun DetailHeader(
     onToggleFavourite: () -> Unit,
     onTranslate: () -> Unit,
     onClearTranslation: () -> Unit,
+    onOpenAuthor: (String) -> Unit,
+    onPause: () -> Unit,
+    onResume: () -> Unit,
+    onCancel: () -> Unit,
 ) {
     val module = detail.module
     val uriHandler = LocalUriHandler.current
@@ -342,7 +426,12 @@ private fun DetailHeader(
                         Text(" ${module.stars}  ", style = MaterialTheme.typography.labelSmall)
                     }
                     module.contributor?.let {
-                        Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(
+                            text = it,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.clickable { onOpenAuthor(it) },
+                        )
                     }
                 }
             }
@@ -435,12 +524,36 @@ private fun DetailHeader(
                 Text(buttonLabel)
             }
         }
-        state.downloadProgress?.let { progress ->
+        state.activeDownload?.let { task ->
             Spacer(Modifier.height(8.dp))
             LinearProgressIndicator(
-                progress = { progress },
+                progress = { task.progress },
                 modifier = Modifier.fillMaxWidth(),
             )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = stringResource(
+                    R.string.download_progress,
+                    formatSize(task.downloaded),
+                    formatSize(task.total),
+                ),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                when (task.status) {
+                    DownloadStatus.RUNNING -> TextButton(onClick = onPause) {
+                        Text(stringResource(R.string.download_pause))
+                    }
+                    DownloadStatus.PAUSED -> TextButton(onClick = onResume) {
+                        Text(stringResource(R.string.download_resume))
+                    }
+                    else -> Unit
+                }
+                TextButton(onClick = onCancel) {
+                    Text(stringResource(R.string.download_cancel))
+                }
+            }
         }
 
         Spacer(Modifier.height(8.dp))

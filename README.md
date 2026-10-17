@@ -54,7 +54,8 @@ the remote `versionCode` is higher, or equal with a different `versionName`
   install-unknown-apps), with a persisted completion flag.
 - Backup: export/import favourites, recently viewed, hidden and skipped updates as
   versioned JSON through the Storage Access Framework.
-- Localization: English and Simplified Chinese (`values-zh-rCN`).
+- Localization: English, Simplified Chinese (`values-zh-rCN`) and Traditional
+  Chinese (`values-zh-rTW`).
 - Proxy: HTTP or SOCKS with optional credentials, applied live to every request
   (index, details, APK downloads) through an OkHttp proxy selector, plus a
   connection test.
@@ -63,6 +64,15 @@ the remote `versionCode` is higher, or equal with a different `versionName`
 - External import: installed LSPosed modules that are not in the repository can be
   linked to a repository module so update checks still work; links are part of the
   JSON backup.
+- Author pages: tap the contributor on a detail screen to see every module they
+  publish.
+- Variant picker: when a release ships more than one APK, the app asks which one to
+  install instead of guessing.
+- Download controls: streamed downloads with progress, pause, resume (HTTP Range)
+  and cancel, shared by the interactive and background flows.
+- Diagnostics: app/device info, module counts, cache sizes, current settings, plus
+  copy and share for bug reports; an open-source licenses screen.
+- Storage: the index cache and downloaded APKs can be cleared separately.
 - Background checks: a WorkManager periodic job (default 12h, configurable) refreshes
   the index, finds updates and posts a notification; with root it can update silently.
   Rescheduled on boot via `BootReceiver`.
@@ -100,8 +110,8 @@ app/src/main/java/org/lspstore/
   ui/
     components/    shared Compose components
     navigation/    route constants
-    screens/       home, search, installed, detail, library, imports, settings,
-                   onboarding, about
+    screens/       home, search, installed, detail, author, library, imports,
+                   settings, onboarding, diagnostics, licenses, about
   di/              AppContainer
 
 Strings live in `res/values/strings.xml` (English) with translations under
@@ -140,7 +150,8 @@ dialog; the user can still choose to install after uninstalling the old app.
 
 - Batch update launches one system-installer dialog per module when not rooted.
 - Background auto-update requires root; without it the worker only notifies.
-- Only English and Simplified Chinese are translated so far.
+- Only English, Simplified and Traditional Chinese are translated so far.
 - Translation only covers the module description; the readme and release notes are
   not translated.
-- No curated collections or announcements feed.
+- No curated collections, announcements feed or release-notes history (explicitly
+  out of scope).
