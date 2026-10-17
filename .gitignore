@@ -12,3 +12,7 @@ captures/
 
 # Reference clone used while designing this project
 komi-store/
+
+# Python
+tools/__pycache__/
+*.pyc
