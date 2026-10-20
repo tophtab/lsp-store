@@ -4,37 +4,33 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.lspstore.R
 import org.lspstore.di.AppContainer
+import org.lspstore.ui.toUserMessage
 import org.lspstore.domain.model.InstalledModule
 import org.lspstore.domain.model.Module
-import org.lspstore.domain.model.UpdateChannel
-import org.lspstore.domain.usecase.UpdateChecker
 import java.time.Instant
 
 data class HomeUiState(
     val isLoading: Boolean = true,
     val isRefreshing: Boolean = false,
     val error: String? = null,
-    val updateCount: Int = 0,
     val recentlyUpdated: List<Module> = emptyList(),
     val mostStarred: List<Module> = emptyList(),
-    val betaBuilds: List<Module> = emptyList(),
-    val favourites: List<Module> = emptyList(),
-    val recentlyViewed: List<Module> = emptyList(),
     val installedPackages: Set<String> = emptySet(),
-    val channel: UpdateChannel = UpdateChannel.STABLE,
+    val searchQuery: String = "",
+    val searchResults: List<Module> = emptyList(),
 )
 
 class HomeViewModel(private val container: AppContainer) : ViewModel() {
 
     private val moduleRepository = container.moduleRepository
     private val installedRepository = container.installedRepository
-    private val settingsRepository = container.settingsRepository
     private val libraryRepository = container.libraryRepository
 
     private val _state = MutableStateFlow(HomeUiState())
@@ -42,29 +38,10 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
 
     private var index: List<Module> = emptyList()
     private var installed: List<InstalledModule> = emptyList()
-    private var hidden: Set<String> = emptySet()
-    private var favourites: List<String> = emptyList()
-    private var recentlyViewed: List<String> = emptyList()
-    private var skipped: Map<String, Long> = emptyMap()
     private var links: Map<String, String> = emptyMap()
-    private var channel: UpdateChannel = UpdateChannel.STABLE
+    private var loadJob: Job? = null
 
     init {
-        viewModelScope.launch {
-            settingsRepository.updateChannel.collect { channel = it; rebuild() }
-        }
-        viewModelScope.launch {
-            libraryRepository.favourites.collect { favourites = it; rebuild() }
-        }
-        viewModelScope.launch {
-            libraryRepository.recentlyViewed.collect { recentlyViewed = it; rebuild() }
-        }
-        viewModelScope.launch {
-            libraryRepository.hidden.collect { hidden = it; rebuild() }
-        }
-        viewModelScope.launch {
-            libraryRepository.skippedUpdates.collect { skipped = it; rebuild() }
-        }
         viewModelScope.launch {
             libraryRepository.links.collect { links = it; rebuild() }
         }
@@ -73,65 +50,129 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
 
     fun refresh() = load(force = true)
 
+    fun onSearchQueryChange(query: String) {
+        _state.update { it.copy(searchQuery = query) }
+        rebuild()
+    }
+
+    fun clearSearch() {
+        onSearchQueryChange("")
+    }
+
     private fun load(force: Boolean) {
-        viewModelScope.launch {
-            _state.update {
-                it.copy(
-                    isLoading = it.recentlyUpdated.isEmpty(),
-                    isRefreshing = it.recentlyUpdated.isNotEmpty(),
-                    error = null,
-                )
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
+            var paintedFromCache = false
+
+            // 1. Paint the index saved by a previous session immediately.
+            if (index.isEmpty()) {
+                val cachedIndex = moduleRepository.getCachedIndex()
+                if (cachedIndex != null) {
+                    index = cachedIndex
+                    installedRepository.getCachedInstalledModules()?.let { installed = it }
+                    paintedFromCache = true
+                    _state.update {
+                        it.copy(
+                            isLoading = false,
+                            // Automatic startup refresh is silent; only a user
+                            // pull-to-refresh shows the spinner.
+                            isRefreshing = force,
+                            error = null,
+                        )
+                    }
+                    rebuild()
+                }
             }
-            runCatching {
-                val modules = moduleRepository.getIndex(force)
-                val installedModules = installedRepository.getInstalledModules()
-                modules to installedModules
-            }.onSuccess { (modules, installedModules) ->
-                index = modules
-                installed = installedModules
-                _state.update { it.copy(isLoading = false, isRefreshing = false) }
-                rebuild()
-            }.onFailure { error ->
+
+            if (!paintedFromCache) {
                 _state.update {
                     it.copy(
-                        isLoading = false,
-                        isRefreshing = false,
-                        error = error.message ?: container.appContext.getString(R.string.home_load_failed),
+                        isLoading = index.isEmpty(),
+                        isRefreshing = force && index.isNotEmpty(),
+                        error = null,
                     )
                 }
             }
+
+            // 2. Scan installed packages and refresh the repository in parallel.
+            // PackageManager is local, but scanning hundreds of packages can still
+            // take a while; the network should not wait behind it.
+            launch {
+                runCatching { installedRepository.getInstalledModules() }
+                    .onSuccess { installedModules ->
+                        installed = installedModules
+                        rebuild()
+                    }
+            }
+
+            // 3. Refresh the repository in the background of the cached UI.
+            // The first screen of the session performs the fetch; later screens
+            // reuse the refreshed in-memory index. Pull-to-refresh forces it.
+            runCatching { moduleRepository.refreshIndexIfNeeded(force) }
+                .onSuccess { modules ->
+                    index = modules
+                    _state.update { it.copy(isLoading = false, isRefreshing = false) }
+                    rebuild()
+                }
+                .onFailure { error ->
+                    _state.update {
+                        it.copy(
+                            isLoading = false,
+                            isRefreshing = false,
+                            // Keep showing cached content when the refresh fails.
+                            error = if (index.isEmpty()) {
+                                error.toUserMessage(container.appContext, R.string.home_load_failed)
+                            } else {
+                                null
+                            },
+                        )
+                    }
+                }
         }
     }
 
     private fun rebuild() {
         if (index.isEmpty()) return
-        val visible = index.filterNot { it.packageName in hidden }
-        val byPackage = visible.associateBy { it.packageName }
-        val installedPackages = installed.filter { it.isXposedModule }.map { it.packageName }.toSet()
-        val updates = UpdateChecker.findUpdates(installed, index, channel, skipped, hidden, links)
+        val byPackage = index.associateBy { it.packageName }
+        val installedPackages = installed
+            .filter { it.isXposedModule }
+            .mapNotNull { installedModule ->
+                val repoPackage = links[installedModule.packageName]
+                when {
+                    installedModule.packageName in byPackage -> installedModule.packageName
+                    repoPackage != null && repoPackage in byPackage -> repoPackage
+                    else -> null
+                }
+            }
+            .toSet()
 
-        val recentlyUpdated = visible
+        val recentlyUpdated = index
             .sortedByDescending { it.updatedAt ?: Instant.EPOCH }
             .take(SECTION_SIZE)
-        val mostStarred = visible
+        val mostStarred = index
             .filter { it.stars > 0 }
             .sortedByDescending { it.stars }
             .take(SECTION_SIZE)
-        val betaBuilds = visible
-            .filter { it.latestBetaRelease != null }
-            .sortedByDescending { it.updatedAt ?: Instant.EPOCH }
-            .take(SECTION_SIZE)
+
+        val query = _state.value.searchQuery.trim()
+        val searchResults = if (query.isBlank()) {
+            emptyList()
+        } else {
+            index
+                .filter { module ->
+                    module.title.contains(query, ignoreCase = true) ||
+                        module.packageName.contains(query, ignoreCase = true) ||
+                        module.summary?.contains(query, ignoreCase = true) == true
+                }
+                .sortedByDescending { it.updatedAt ?: Instant.EPOCH }
+        }
 
         _state.update {
             it.copy(
-                updateCount = updates.size,
                 recentlyUpdated = recentlyUpdated,
                 mostStarred = mostStarred,
-                betaBuilds = betaBuilds,
-                favourites = favourites.mapNotNull { name -> byPackage[name] },
-                recentlyViewed = recentlyViewed.mapNotNull { name -> byPackage[name] },
                 installedPackages = installedPackages,
-                channel = channel,
+                searchResults = searchResults,
             )
         }
     }

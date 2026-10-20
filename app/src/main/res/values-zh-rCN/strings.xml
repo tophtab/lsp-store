@@ -1,5 +1,4 @@
 <resources>
-    <string name="app_name">LSPosed 商店</string>
 
     <!-- Common actions -->
     <string name="action_retry">重试</string>
@@ -13,10 +12,7 @@
     <string name="action_download">下载</string>
     <string name="action_update">更新</string>
     <string name="action_unskip">取消跳过</string>
-    <string name="action_unhide">取消隐藏</string>
-    <string name="action_hide">隐藏</string>
-    <string name="action_export">导出</string>
-    <string name="action_import">导入</string>
+    <string name="action_restore_update">恢复更新</string>
     <string name="action_save">保存</string>
     <string name="label_installed">已安装</string>
     <string name="label_beta">beta</string>
@@ -34,6 +30,7 @@
 
     <!-- Navigation -->
     <string name="nav_home">首页</string>
+    <string name="nav_repository">仓库</string>
     <string name="nav_search">搜索</string>
     <string name="nav_installed">已安装</string>
     <string name="nav_settings">设置</string>
@@ -46,53 +43,58 @@
     <string name="home_no_modules">没有可用模块</string>
     <string name="home_section_recently_updated">最近更新</string>
     <string name="home_section_most_starred">星标最多</string>
-    <string name="home_section_beta">Beta 构建</string>
-    <string name="home_section_favourites">收藏</string>
-    <string name="home_section_recently_viewed">最近浏览</string>
-    <string name="home_see_all">查看全部</string>
     <string name="home_browse_all">浏览全部模块</string>
-    <string name="home_updates_banner">有 %1$d 个模块可更新</string>
-    <string name="home_updates_banner_hint">点按查看并更新</string>
     <string name="home_load_failed">加载模块失败</string>
 
     <!-- Search -->
-    <string name="search_placeholder">搜索 %1$d 个模块</string>
+    <string name="search_placeholder">搜索模块：%1$d</string>
     <string name="search_favourites">收藏</string>
     <string name="search_recent">最近搜索</string>
     <string name="search_empty">没有匹配的模块</string>
-    <string name="search_count">%1$d 个模块</string>
+    <string name="search_count">找到模块：%1$d</string>
 
     <!-- Installed -->
     <string name="installed_empty">未检测到 LSPosed 模块</string>
     <string name="installed_section_updates">可更新 (%1$d)</string>
-    <string name="installed_section_up_to_date">已是最新 (%1$d)</string>
-    <string name="installed_section_unknown">不在仓库中 (%1$d)</string>
+    <string name="installed_section_up_to_date">仓库中 (%1$d)</string>
+    <string name="installed_section_unknown">未找到仓库 (%1$d)</string>
+    <string name="pending_install">等待安装</string>
     <string name="installed_update_all">全部更新</string>
     <string name="installed_version_arrow">%1$s -&gt; %2$s</string>
     <string name="installed_batch_progress">%1$d/%2$d：%3$s</string>
-    <string name="installed_updated_count">已更新 %1$d 个模块</string>
-    <string name="installed_finished_failures">完成，%1$d 个失败</string>
+    <string name="installed_all_updated">全部模块更新完成</string>
+    <string name="installed_finished_failures">失败：%1$d</string>
+    <string name="installed_batch_installer_busy">安装器仍处于打开状态，已跳过 %1$d 个更新</string>
     <string name="installed_updated_one">已将 %1$s 更新到 %2$s</string>
-    <string name="installed_confirm_one">请确认 %1$s 的更新</string>
-    <string name="installed_signature_skipped">%1$s 签名不一致，已跳过更新</string>
+    <string name="installed_batch_failure_download">下载 APK 失败</string>
     <string name="installed_check_failed">检查更新失败</string>
+    <string name="installed_choose_variant">选择变体</string>
+    <string name="installed_ignore_update">忽略更新</string>
+    <string name="installed_unignore_update">取消忽略更新</string>
+    <string name="installed_variant_auto">自动选择（按设备 ABI）</string>
+    <string name="installed_variant_auto_subtitle">自动选择适合当前设备的 APK</string>
+    <string name="installed_variant_empty">没有可用的 APK 变体</string>
+    <string name="installed_variant_load_failed">加载变体失败</string>
+    <string name="installed_variant_saved">已保存首选变体</string>
+    <string name="installed_variant_auto_saved">已改为自动选择变体</string>
+    <string name="installed_update_ignored">已忽略 %1$s 的更新</string>
+    <string name="installed_update_unignored">已恢复 %1$s 的更新</string>
 
     <!-- Detail -->
     <string name="detail_readme">说明</string>
+    <string name="detail_whats_new">更新内容</string>
+    <string name="detail_about">关于此应用</string>
     <string name="detail_releases">版本</string>
-    <string name="detail_installed_version">已安装：%1$s (%2$d)</string>
     <string name="detail_update_available">有更新：%1$s (%2$d)</string>
     <string name="detail_no_release">该通道没有版本</string>
     <string name="detail_update_to">更新到 %1$s</string>
     <string name="detail_reinstall">重新安装 %1$s</string>
     <string name="detail_install">安装 %1$s</string>
     <string name="detail_working">处理中…</string>
-    <string name="detail_source">源码</string>
-    <string name="detail_website">网站</string>
-    <string name="detail_repo">仓库</string>
     <string name="detail_no_releases">没有版本</string>
-    <string name="detail_downloads">%1$s - %2$d 次下载</string>
+    <string name="detail_downloads">%1$s - 下载：%2$d</string>
     <string name="detail_no_apk">没有 APK 文件</string>
+    <string name="detail_readme_details">详情</string>
     <string name="detail_no_readme">没有说明</string>
     <string name="detail_share_module">分享模块</string>
     <string name="detail_skip_version">跳过此版本</string>
@@ -101,39 +103,33 @@
     <string name="detail_app_info">应用信息</string>
     <string name="detail_uninstall">卸载</string>
     <string name="detail_open_source">打开源码</string>
-    <string name="detail_signature_mismatch">签名不一致</string>
-    <string name="detail_signature_mismatch_body">下载的 APK 与已安装模块的签名证书不同。除非先卸载旧版本，否则 Android 会拒绝此次更新。</string>
-    <string name="detail_installed_signer">已安装签名</string>
-    <string name="detail_downloaded_signer">下载的签名</string>
-    <string name="detail_install_anyway">仍然安装</string>
     <string name="detail_installed_apk">已安装 %1$s</string>
-    <string name="detail_confirm_install">请在系统对话框中确认安装</string>
     <string name="detail_download_failed">下载失败</string>
     <string name="detail_load_failed">加载模块失败</string>
 
     <!-- Library -->
     <string name="library_favourites">收藏</string>
     <string name="library_recently_viewed">最近浏览</string>
-    <string name="library_hidden">隐藏的模块</string>
-    <string name="library_skipped">已跳过的更新</string>
+    <string name="library_skipped">已忽略更新模块</string>
     <string name="library_empty_favourites">还没有收藏</string>
     <string name="library_empty_recent">还没有浏览记录</string>
-    <string name="library_empty_hidden">没有隐藏的模块</string>
-    <string name="library_empty_skipped">没有跳过的更新</string>
+    <string name="library_empty_skipped">没有已忽略更新模块</string>
     <string name="library_remove_favourite">取消收藏</string>
-    <string name="library_skipped_version">已跳过版本号 %1$d</string>
+    <string name="library_skipped_version">已跳过版本 %1$d</string>
     <string name="library_skipped_latest">，最新 %1$d</string>
+    <string name="library_ignored_module">已关闭此模块的更新检查</string>
     <string name="library_load_failed">加载失败</string>
 
     <!-- Settings -->
     <string name="settings_appearance">外观</string>
+    <string name="settings_theme">主题</string>
+    <string name="settings_updates">更新与安装</string>
     <string name="settings_amoled">AMOLED 纯黑</string>
     <string name="settings_amoled_desc">深色模式下使用纯黑背景</string>
     <string name="settings_dynamic">动态取色</string>
     <string name="settings_dynamic_desc">使用壁纸的 Material You 配色</string>
     <string name="settings_update_channel">更新通道</string>
     <string name="settings_update_channel_desc">Stable 跟随正式版，Beta 跟随预发布版，Nightly 跟随 CI 快照构建。</string>
-    <string name="settings_sort">模块排序</string>
     <string name="settings_background">后台检查</string>
     <string name="settings_background_toggle">后台检查更新</string>
     <string name="settings_background_desc">定期刷新模块索引并通知更新</string>
@@ -147,7 +143,7 @@
     <string name="settings_root_desc">通过 su 静默安装和更新 APK</string>
     <string name="settings_library">资料库</string>
     <string name="import_title">导入已安装模块</string>
-    <string name="import_desc">已安装但不在仓库中的 LSPosed 模块。即使包名不一致，也可以关联到某个仓库模块以获取更新检查。</string>
+    <string name="import_desc">已安装但不在仓库中的 LSPosed 模块。将一个模块链接到仓库模块即可检查更新。下载的 APK 必须与已安装的包匹配才能原地更新。</string>
     <string name="import_empty">所有已安装模块均已在仓库中</string>
     <string name="import_link">关联到模块</string>
     <string name="import_unlink">取消关联</string>
@@ -158,11 +154,8 @@
     <string name="import_pick_module">选择仓库模块</string>
     <string name="import_search_hint">搜索模块</string>
     <string name="import_load_failed">加载模块失败</string>
-    <string name="settings_backup">备份</string>
-    <string name="settings_backup_desc">收藏、隐藏的模块和跳过的更新会以 JSON 导出。</string>
     <string name="settings_storage">存储</string>
     <string name="settings_downloaded">已下载的 APK：%1$s</string>
-    <string name="settings_clear_cache">清除缓存的索引和 APK</string>
     <string name="settings_about">关于</string>
     <string name="settings_advanced">高级</string>
     <string name="settings_clear_index">清除模块索引缓存</string>
@@ -193,18 +186,6 @@
     <string name="licenses_title">开源许可证</string>
     <string name="licenses_intro">本应用基于以下开源项目构建。</string>
     <string name="licenses_app">LSPosed 商店本身也是开源的。</string>
-    <string name="settings_proxy">代理</string>
-    <string name="settings_proxy_enable">使用代理</string>
-    <string name="settings_proxy_desc">通过代理访问仓库和下载</string>
-    <string name="settings_proxy_host">主机</string>
-    <string name="settings_proxy_port">端口</string>
-    <string name="settings_proxy_user">用户名（可选）</string>
-    <string name="settings_proxy_pass">密码（可选）</string>
-    <string name="settings_proxy_invalid">请输入有效的主机和端口</string>
-    <string name="settings_proxy_test">测试</string>
-    <string name="settings_proxy_testing">测试中…</string>
-    <string name="settings_proxy_ok">代理可用（%1$d 毫秒）</string>
-    <string name="settings_proxy_failed">代理测试失败：%1$s</string>
 
     <!-- Mirrors -->
     <string name="mirror_title">模块来源</string>
@@ -216,16 +197,10 @@
     <string name="mirror_testing">测试中…</string>
     <string name="mirror_unreachable">无法访问</string>
     <string name="mirror_latency">%1$d 毫秒</string>
-    <string name="proxy_type_http">HTTP</string>
-    <string name="proxy_type_socks">SOCKS</string>
     <string name="settings_translation">翻译</string>
     <string name="settings_translation_provider">翻译服务</string>
     <string name="settings_translation_target">目标语言</string>
     <string name="translation_disabled">已禁用</string>
-    <string name="translation_google">Google</string>
-    <string name="translation_libre">LibreTranslate</string>
-    <string name="translation_deepl">DeepL</string>
-    <string name="translation_microsoft">Microsoft</string>
     <string name="settings_translation_deepl_key">DeepL 密钥</string>
     <string name="settings_translation_libre_url">LibreTranslate 地址</string>
     <string name="settings_translation_libre_key">LibreTranslate API 密钥（可选）</string>
@@ -243,15 +218,23 @@
     <string name="download_cancel">取消</string>
     <string name="download_cancelled">已取消下载</string>
     <string name="variant_picker_title">选择 APK</string>
+
+    <string name="variant_recommended">推荐</string>
+    <string name="variant_reason_matches_device">与你的设备匹配（%1$s）</string>
+    <string name="variant_needs_confirm">此版本包含多个变体，请选择一个</string>
+    <string name="variant_bundled_apps">此版本附带的其他应用（%1$d）</string>
+    <string name="variant_bundled_app">与模块一起发布在同一版本中</string>
+    <string name="variant_incompatible_min_sdk">需要 Android %1$d+（你的是 %2$d）</string>
+    <string name="variant_incompatible_abi">仅有 %1$s 版本，与此设备不兼容</string>
+    <string name="variant_incompatible_api">需要 LSPosed API %1$d</string>
+    <string name="variant_remembered">已记住你的选择，后续更新将自动使用</string>
+    <string name="variant_debug_badge">debug 构建</string>
+    <string name="variant_not_applicable">此设备不可用</string>
+    <string name="variant_not_module">此 APK 不是 Xposed 模块</string>
+    <string name="installed_finished_skipped">%1$d 个模块需要选择变体，请打开它们进行更新</string>
     <string name="variant_picker_subtitle">该版本包含多个 APK。</string>
     <string name="settings_auto_update_needs_root">自动更新需要 root (su)</string>
     <string name="settings_root_unavailable_msg">此设备没有 root (su)</string>
-    <string name="settings_cache_cleared">缓存已清除</string>
-    <string name="settings_exported">资料库已导出</string>
-    <string name="settings_export_failed">导出失败</string>
-    <string name="settings_imported">已导入 %1$d 个收藏、%2$d 个隐藏、%3$d 个跳过</string>
-    <string name="settings_import_failed">导入失败</string>
-    <string name="settings_cannot_open">无法打开所选文件</string>
 
     <!-- Onboarding -->
     <string name="onboarding_welcome_title">欢迎使用 LSPosed 商店</string>
@@ -279,25 +262,64 @@
 
     <!-- Author -->
     <string name="author_no_modules">该作者没有模块</string>
-    <string name="author_module_count">%1$d 个模块</string>
+    <string name="author_module_count">模块：%1$d</string>
     <string name="author_load_failed">加载模块失败</string>
-    <string name="author_view">查看该作者的模块</string>
 
     <!-- Installer -->
     <string name="error_no_apk_asset">未找到 APK 文件</string>
     <string name="error_install_failed">安装失败</string>
-    <string name="installer_apk_rejected">APK 被拒绝：%1$s</string>
-    <string name="installer_no_url">%1$s 没有可用的下载地址</string>
     <string name="installer_launch_failed">无法启动安装器</string>
-    <string name="verifier_invalid_apk">不是有效的 APK</string>
-    <string name="verifier_unsigned_apk">APK 未签名</string>
+    <string name="installer_no_handler">这台设备上没有可以安装 APK 的应用</string>
+    <string name="installer_unknown_sources">请先允许 LSPosed Store 「安装未知应用」，然后重试</string>
+    <string name="installer_apk_missing">APK 文件不存在：%1$s</string>
 
     <!-- Notifications -->
     <string name="notifier_channel_name">模块更新</string>
     <string name="notifier_channel_desc">后台检查发现的 LSPosed 模块更新</string>
     <string name="notifier_single_update">%1$s 有更新</string>
-    <string name="notifier_multi_updates">有 %1$d 个模块可更新</string>
+    <string name="notifier_multi_updates">模块更新：%1$d</string>
     <string name="notifier_auto_title">自动更新完成</string>
-    <string name="notifier_auto_updated">已更新 %1$d 个模块</string>
-    <string name="notifier_auto_failed">，%1$d 个失败</string>
+    <string name="notifier_auto_updated">已更新模块：%1$d</string>
+    <string name="notifier_auto_failed">，失败：%1$d</string>
+    <string name="detail_install_finished">安装完成</string>
+    <string name="detail_install_failed">安装失败：%1$s</string>
+    <string name="detail_scope">作用域</string>
+    <string name="detail_contributors">贡献者</string>
+    <string name="verifier_package_mismatch">APK 包名 %1$s 与预期的 %2$s 不一致</string>
+    <string name="installer_silent_failed">静默安装失败（su）</string>
+    <string name="settings_translation_https_note">LibreTranslate 端点请使用 HTTPS 地址。</string>
+    <string name="installed_batch_cancelled">已取消批量更新</string>
+    <string name="settings_check_now">立即检查更新</string>
+    <string name="settings_check_now_run">立即运行</string>
+    <string name="settings_check_now_desc">在定期检查之外再执行一次检查</string>
+    <string name="settings_check_now_found">发现更新：%1$d</string>
+    <string name="settings_check_now_none">已是最新版本</string>
+    <string name="settings_check_now_failed">检查更新失败</string>
+    <string name="error_network">网络不可用，请检查网络连接</string>
+    <string name="error_timeout">请求超时</string>
+    <string name="error_http">服务器错误（%1$d）</string>
+    <string name="download_channel_name">下载</string>
+    <string name="download_channel_desc">APK 下载进度</string>
+    <string name="download_notification_title">正在下载：%1$d</string>
+    <string name="download_notification_text">%1$s / %2$s</string>
+    <string name="download_notification_unknown">正在准备下载…</string>
+    <string name="action_cancel_all">全部取消</string>
+    <string name="action_close">关闭</string>
+    <string name="home_masthead_subtitle">LSPosed 模块索引</string>
+    <string name="installed_masthead_subtitle">已安装 %1$d 个 LSPosed 模块</string>
+    <string name="installed_search_hint">搜索已安装的模块</string>
+    <string name="settings_masthead_subtitle">偏好设置</string>
+    <string name="detail_stats">统计</string>
+    <string name="detail_stat_stars">星标</string>
+    <string name="detail_stat_releases">发布</string>
+    <string name="detail_stat_latest">最新</string>
+    <string name="read_more">展开阅读</string>
+    <string name="show_less">收起</string>
+    <string name="detail_all">全部</string>
+    <string name="detail_logs">安装日志</string>
+    <string name="notifier_ambiguous_title">有 %1$d 个更新需要选择变体</string>
+    <string name="notifier_ambiguous_text">打开商店选择要安装的 APK</string>
+    <string name="notifier_ambiguous_more"> · 另有 %1$d 个需要选择变体</string>
+    <string name="variant_field_choose">选择 APK（%1$d 个）</string>
+    <string name="variant_incompatible_group">与此设备不兼容（%1$d 个）</string>
 </resources>

@@ -1,0 +1,9 @@
+0.2.0
+- Modüller/sürümler arasındaki APK indirme önbelleği çakışmalarını düzeltin.
+- Bağlantılı modüller artık kurulu pakete göre kurulur/doğrulanır.
+- Sonuç geri aramaları içeren PackageInstaller oturumları; imza uyuşmazlığı durumunda kaldır-sonra-yükle.
+- Toplu/arka plan güncellemeleri için ABI uyumlu APK seçimi.
+- Daha hızlı dizin önbellek işleme ve çevrimdışı geri dönüş.
+- Arama kanalı filtresi, dinamik renkli AMOLED, proxy testi düzeltmeleri.
+- Kapsam, sürüm notları ve modül ayrıntılarına katkıda bulunanlar.
+- CI, küçültme ve 14 dilli meta verileri yayınlayın.

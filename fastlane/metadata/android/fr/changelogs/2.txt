@@ -1,0 +1,9 @@
+0.2.0
+- Correction des collisions de cache de téléchargement d'APK entre les modules/versions.
+- Les modules liés s'installent/vérifient désormais par rapport au package installé.
+- Sessions PackageInstaller avec rappels de résultats ; désinstaller puis installer en cas d'incompatibilité de signature.
+- Choix APK compatible ABI pour les mises à jour par lots/en arrière-plan.
+- Gestion plus rapide du cache d’index et repli hors ligne.
+- Filtre de canal de recherche, AMOLED avec couleur dynamique, correctifs de test proxy.
+- Portée, notes de version et contributeurs sur les détails du module.
+- CI, minification des versions et métadonnées en 14 langues.

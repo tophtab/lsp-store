@@ -3,254 +3,192 @@
 package org.lspstore.ui.components
 
 import android.text.format.DateUtils
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Extension
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.outlined.FavoriteBorder
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.core.graphics.drawable.toBitmap
 import coil.compose.AsyncImage
-import org.lspstore.R
 import org.lspstore.domain.model.Module
+import org.lspstore.ui.design.KomiEmpty
+import org.lspstore.ui.design.KomiError
+import org.lspstore.ui.design.KomiLoading
+import org.lspstore.ui.design.KomiText
+import org.lspstore.ui.theme.KomiTextRole
 import java.time.Instant
 
 @Composable
 fun LoadingBox(modifier: Modifier = Modifier) {
-    Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        CircularProgressIndicator()
-    }
+    KomiLoading(modifier)
 }
 
 @Composable
 fun ErrorBox(message: String, onRetry: () -> Unit, modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier.fillMaxSize().padding(24.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Text(message, style = MaterialTheme.typography.bodyLarge)
-        Spacer(Modifier.height(16.dp))
-        Button(onClick = onRetry) { Text(stringResource(R.string.action_retry)) }
-    }
+    KomiError(message = message, onRetry = onRetry, modifier = modifier)
 }
 
 @Composable
 fun EmptyBox(message: String, modifier: Modifier = Modifier) {
-    Box(modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
-        Text(message, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-    }
+    KomiEmpty(message = message, modifier = modifier)
 }
 
 @Composable
 fun VersionChip(text: String, container: Color, content: Color) {
-    Surface(color = container, shape = RoundedCornerShape(6.dp)) {
-        Text(
+    Surface(
+        color = container,
+        contentColor = content,
+        shape = RoundedCornerShape(8.dp),
+    ) {
+        KomiText(
             text = text,
+            role = KomiTextRole.Label,
             color = content,
-            style = MaterialTheme.typography.labelSmall,
-            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+            fontSize = 11.sp,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+            maxLines = 1,
         )
     }
 }
 
 @Composable
-fun ModuleCard(
-    module: Module,
-    installed: Boolean,
-    isFavourite: Boolean,
-    onOpen: () -> Unit,
-    onToggleFavourite: () -> Unit,
-) {
-    Card(
-        onClick = onOpen,
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-    ) {
-        Row(modifier = Modifier.padding(12.dp)) {
-            ModuleAvatar(module)
-            Spacer(Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = module.title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(
-                    text = module.packageName,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                module.summary?.let { summary ->
-                    Spacer(Modifier.height(4.dp))
-                    Text(
-                        text = summary,
-                        style = MaterialTheme.typography.bodySmall,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-                Spacer(Modifier.height(6.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    module.latestRelease?.let {
-                        VersionChip(
-                            text = it.versionName,
-                            container = MaterialTheme.colorScheme.primaryContainer,
-                            content = MaterialTheme.colorScheme.onPrimaryContainer,
-                        )
-                    }
-                    module.latestBetaRelease?.let {
-                        Spacer(Modifier.width(4.dp))
-                        VersionChip(
-                            text = it.versionName,
-                            container = MaterialTheme.colorScheme.tertiaryContainer,
-                            content = MaterialTheme.colorScheme.onTertiaryContainer,
-                        )
-                    }
-                    if (installed) {
-                        Spacer(Modifier.width(6.dp))
-                        VersionChip(
-                            text = stringResource(R.string.label_installed),
-                            container = MaterialTheme.colorScheme.secondaryContainer,
-                            content = MaterialTheme.colorScheme.onSecondaryContainer,
-                        )
-                    }
-                    Spacer(Modifier.weight(1f))
-                    if (module.stars > 0) {
-                        Icon(
-                            Icons.Filled.Star,
-                            contentDescription = null,
-                            modifier = Modifier.size(14.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                        Text(
-                            text = " ${module.stars}",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
-                val relative = formatRelativeTime(module.updatedAt)
-                if (relative.isNotBlank()) {
-                    Text(
-                        text = stringResource(R.string.module_updated_relative, relative),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-            IconButton(onClick = onToggleFavourite) {
-                Icon(
-                    imageVector = if (isFavourite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
-                    contentDescription = stringResource(R.string.module_favourite),
-                    tint = if (isFavourite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
+fun ModuleAvatar(module: Module, size: Int = 48, installedPackage: String? = null) {
+    val context = LocalContext.current
+    val installedIcon = remember(installedPackage) {
+        installedPackage?.let { packageName -> loadPackageIcon(context, packageName) }
     }
-}
-
-@Composable
-fun ModuleCardCompact(
-    module: Module,
-    installed: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Card(
-        onClick = onClick,
-        modifier = modifier.width(172.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-    ) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            ModuleAvatar(module, size = 40)
-            Spacer(Modifier.height(8.dp))
-            Text(
-                text = module.title,
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Text(
-                text = module.packageName,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Spacer(Modifier.height(6.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                module.latestRelease?.let {
-                    VersionChip(
-                        text = it.versionName,
-                        container = MaterialTheme.colorScheme.primaryContainer,
-                        content = MaterialTheme.colorScheme.onPrimaryContainer,
-                    )
-                }
-                if (installed) {
-                    Spacer(Modifier.width(4.dp))
-                    VersionChip(
-                        text = stringResource(R.string.label_installed),
-                        container = MaterialTheme.colorScheme.secondaryContainer,
-                        content = MaterialTheme.colorScheme.onSecondaryContainer,
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun ModuleAvatar(module: Module, size: Int = 48) {
     val avatar = module.contributorAvatarUrl
-    if (!avatar.isNullOrBlank()) {
-        AsyncImage(
+    val shape = RoundedCornerShape(14.dp)
+    val monogram = module.title.trim().take(2).uppercase()
+    when {
+        installedIcon != null -> Image(
+            bitmap = installedIcon,
+            contentDescription = module.title,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .size(size.dp)
+                .clip(shape),
+        )
+
+        installedPackage != null -> MonogramTile(monogram, size, shape)
+
+        !avatar.isNullOrBlank() -> AsyncImage(
             model = avatar,
             contentDescription = null,
-            modifier = Modifier.size(size.dp),
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .size(size.dp)
+                .clip(shape)
+                .background(MaterialTheme.colorScheme.surfaceVariant),
+        )
+
+        else -> MonogramTile(monogram, size, shape)
+    }
+}
+
+/**
+ * Launcher icon for an installed package, with the same tile treatment as
+ * [ModuleAvatar]. Used by the installed list, where only the package name is
+ * known.
+ */
+@Composable
+fun PackageAvatar(packageName: String, label: String?, size: Int = 44) {
+    val context = LocalContext.current
+    val icon = remember(packageName) { loadPackageIcon(context, packageName) }
+    val shape = RoundedCornerShape(14.dp)
+    if (icon != null) {
+        Image(
+            bitmap = icon,
+            contentDescription = label,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .size(size.dp)
+                .clip(shape),
         )
     } else {
-        Surface(
-            modifier = Modifier.size(size.dp),
-            shape = RoundedCornerShape(12.dp),
-            color = MaterialTheme.colorScheme.surfaceVariant,
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                Icon(Icons.Filled.Extension, contentDescription = null)
+        MonogramTile(
+            monogram = label.orEmpty().trim().take(2).uppercase(),
+            size = size,
+            shape = shape,
+        )
+    }
+}
+
+private fun loadPackageIcon(
+    context: android.content.Context,
+    packageName: String,
+): androidx.compose.ui.graphics.ImageBitmap? = runCatching {
+    context.packageManager
+        .getApplicationIcon(packageName)
+        .toBitmap()
+        .asImageBitmap()
+}.getOrNull()
+
+
+@Composable
+private fun MonogramTile(
+    monogram: String,
+    size: Int,
+    shape: androidx.compose.ui.graphics.Shape,
+) {
+    Surface(
+        modifier = Modifier.size(size.dp),
+        shape = shape,
+        color = MaterialTheme.colorScheme.surfaceVariant,
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            if (monogram.isBlank()) {
+                Icon(
+                    Icons.Filled.Extension,
+                    contentDescription = null,
+                    modifier = Modifier.size((size * 0.4f).dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            } else {
+                KomiText(
+                    text = monogram,
+                    role = KomiTextRole.Title,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = (size * 0.36f).sp,
+                    maxLines = 1,
+                )
             }
+        }
+    }
+}
+
+@Composable
+fun ExtensionAvatar(size: Int = 44) {
+    Surface(
+        modifier = Modifier.size(size.dp),
+        shape = RoundedCornerShape(14.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Icon(
+                Icons.Filled.Extension,
+                contentDescription = null,
+                modifier = Modifier.size((size * 0.46f).dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }

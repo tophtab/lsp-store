@@ -11,15 +11,15 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.lspstore.R
 import org.lspstore.di.AppContainer
+import org.lspstore.ui.toUserMessage
 import org.lspstore.domain.model.Module
 
 enum class LibraryKind(
-    @StringRes val titleRes: Int,
-    @StringRes val emptyRes: Int,
+    @param:StringRes val titleRes: Int,
+    @param:StringRes val emptyRes: Int,
 ) {
     FAVOURITES(R.string.library_favourites, R.string.library_empty_favourites),
     RECENTLY_VIEWED(R.string.library_recently_viewed, R.string.library_empty_recent),
-    HIDDEN(R.string.library_hidden, R.string.library_empty_hidden),
 }
 
 data class LibraryUiState(
@@ -43,6 +43,8 @@ class LibraryListViewModel(
 
     private var index: List<Module> = emptyList()
     private var names: List<String> = emptyList()
+    private var installedRaw: Set<String> = emptySet()
+    private var links: Map<String, String> = emptyMap()
 
     init {
         when (kind) {
@@ -52,8 +54,11 @@ class LibraryListViewModel(
             LibraryKind.RECENTLY_VIEWED -> viewModelScope.launch {
                 libraryRepository.recentlyViewed.collect { names = it; rebuild() }
             }
-            LibraryKind.HIDDEN -> viewModelScope.launch {
-                libraryRepository.hidden.collect { names = it.toList(); rebuild() }
+        }
+        viewModelScope.launch {
+            libraryRepository.links.collect { value ->
+                links = value
+                refreshInstalledBadges()
             }
         }
         load()
@@ -63,7 +68,6 @@ class LibraryListViewModel(
         viewModelScope.launch {
             when (kind) {
                 LibraryKind.FAVOURITES -> libraryRepository.toggleFavourite(packageName)
-                LibraryKind.HIDDEN -> libraryRepository.toggleHidden(packageName)
                 LibraryKind.RECENTLY_VIEWED -> Unit
             }
         }
@@ -89,10 +93,12 @@ class LibraryListViewModel(
                 modules to installed
             }.onSuccess { (modules, installed) ->
                 index = modules
-                _state.update { it.copy(isLoading = false, installedPackages = installed) }
+                installedRaw = installed
+                _state.update { it.copy(isLoading = false) }
+                refreshInstalledBadges()
                 rebuild()
             }.onFailure { error ->
-                _state.update { it.copy(isLoading = false, error = error.message ?: container.appContext.getString(R.string.library_load_failed)) }
+                _state.update { it.copy(isLoading = false, error = error.toUserMessage(container.appContext, R.string.library_load_failed)) }
             }
         }
     }
@@ -101,6 +107,20 @@ class LibraryListViewModel(
         if (index.isEmpty()) return
         val byPackage = index.associateBy { it.packageName }
         _state.update { it.copy(modules = names.mapNotNull { name -> byPackage[name] }) }
+    }
+
+    private fun refreshInstalledBadges() {
+        if (index.isEmpty()) return
+        val repoPackages = index.map { it.packageName }.toSet()
+        val resolved = installedRaw.mapNotNull { installedPackage ->
+            val repoPackage = links[installedPackage]
+            when {
+                installedPackage in repoPackages -> installedPackage
+                repoPackage != null && repoPackage in repoPackages -> repoPackage
+                else -> null
+            }
+        }.toSet()
+        _state.update { it.copy(installedPackages = resolved) }
     }
 
     companion object {

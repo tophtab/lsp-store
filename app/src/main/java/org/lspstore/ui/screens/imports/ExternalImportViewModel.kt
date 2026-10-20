@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.lspstore.R
 import org.lspstore.di.AppContainer
+import org.lspstore.ui.toUserMessage
 import org.lspstore.domain.model.InstalledModule
 import org.lspstore.domain.model.Module
 
@@ -119,7 +120,7 @@ class ExternalImportViewModel(private val container: AppContainer) : ViewModel()
                 rebuild()
             }.onFailure { error ->
                 _state.update {
-                    it.copy(isLoading = false, error = error.message ?: appContext.getString(R.string.import_load_failed))
+                    it.copy(isLoading = false, error = error.toUserMessage(appContext, R.string.import_load_failed))
                 }
             }
         }

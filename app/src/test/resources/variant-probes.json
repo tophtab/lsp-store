@@ -1,0 +1,2673 @@
+[
+ {
+  "pkg": "com.hhvvg.launcher3customizer",
+  "name": "Launcher3Customizer-1.0.1-release.apk",
+  "tag": "5-1.0.1",
+  "versionCode": 5,
+  "versionName": "1.0.1",
+  "package": "com.hhvvg.launcher3customizer",
+  "minSdk": 30,
+  "targetSdk": 33,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": "Customize your Launcher3",
+   "xposedminversion": 53,
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "cn.lliiooll.ppbuff",
+  "name": "app-release.apk",
+  "tag": "110-1.0.5.r110.ea62aa7",
+  "versionCode": 110,
+  "versionName": "1.0.5.r110.ea62aa7",
+  "package": "cn.lliiooll.ppbuff",
+  "minSdk": 26,
+  "targetSdk": 33,
+  "libs": [
+   "arm64-v8a",
+   "armeabi-v7a"
+  ],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": null,
+   "xposedminversion": 51,
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "com.z1812.hyperhome",
+  "name": "HyperHome-v1.2.apk",
+  "tag": "3-1.2",
+  "versionCode": 3,
+  "versionName": "1.2",
+  "package": "com.z1812.hyperhome",
+  "minSdk": 33,
+  "targetSdk": 36,
+  "libs": [
+   "arm64-v8a"
+  ],
+  "providers": [
+   "io.github.libxposed.service.XposedProvider"
+  ],
+  "xmeta": {
+   "xposedminversion": 101,
+   "xposeddescription": "Customize HyperOS Launcher",
+   "libxposed": true
+  }
+ },
+ {
+  "pkg": "com.wmods.watranschat",
+  "name": "WATransChat.v1.1.1.apk",
+  "tag": "2-1.1.1",
+  "versionCode": 2,
+  "versionName": "1.1.1",
+  "package": "com.wmods.watranschat",
+  "minSdk": 28,
+  "targetSdk": 34,
+  "debuggable": true,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": "WhatsApp 聊天翻译模块",
+   "xposedminversion": 93,
+   "xposedsharedprefs": true
+  }
+ },
+ {
+  "pkg": "com.gswxxn.xmsfnotichannel",
+  "name": "app-release.apk",
+  "tag": "121-1.2.1",
+  "versionCode": 121,
+  "versionName": "1.2.1",
+  "package": "com.gswxxn.xmsfnotichannel",
+  "minSdk": 28,
+  "targetSdk": 33,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": "一键管理所有应用的运营消息通知通道",
+   "xposedminversion": 93,
+   "xposedscope": "android"
+  }
+ },
+ {
+  "pkg": "com.fkzhang.qqxposed",
+  "name": "QQXposed.Qx.44_2.18.apk",
+  "tag": "44-2.18",
+  "versionCode": 44,
+  "versionName": "2.18",
+  "package": "com.fkzhang.qqxposed",
+  "minSdk": 15,
+  "targetSdk": 32,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": "Add Extra features to QQ Mobile. QQ增加更多功能。",
+   "xposedminversion": 46,
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "io.github.yourpancakes.yandexgopatcher",
+  "name": "YandexGOPatcher_v1.0.4.apk",
+  "tag": "5-1.0.4",
+  "versionCode": 5,
+  "versionName": "1.0.4",
+  "package": "io.github.yourpancakes.yandexgopatcher",
+  "minSdk": 26,
+  "targetSdk": 36,
+  "debuggable": true,
+  "libs": []
+ },
+ {
+  "pkg": "cn.xihan.qdds",
+  "name": "qdreader-QDReadHook-v3.5.0-2278-arm64.apk",
+  "tag": "2278-3.5.0",
+  "versionCode": 2278,
+  "versionName": "3.5.0",
+  "package": "cn.xihan.qdds",
+  "minSdk": 26,
+  "targetSdk": 37,
+  "libs": [
+   "arm64-v8a"
+  ],
+  "providers": [
+   "io.github.libxposed.service.XposedProvider"
+  ]
+ },
+ {
+  "pkg": "cn.wankkoree.xp.webviewpp",
+  "name": "cn.wankkoree.xp.webviewpp-v3.1.0.179.8ebb609_16-release.apk",
+  "tag": "16-v3.1.0.179.8ebb609",
+  "versionCode": 16,
+  "versionName": "v3.1.0.179.8ebb609",
+  "package": "cn.wankkoree.xp.webviewpp",
+  "minSdk": 27,
+  "targetSdk": 33,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": null,
+   "xposedminversion": 93
+  }
+ },
+ {
+  "pkg": "com.game.reschange",
+  "name": "GameResChange.apk",
+  "tag": "6-1.5",
+  "versionCode": 6,
+  "versionName": "1.5",
+  "package": "com.game.reschange",
+  "minSdk": 31,
+  "targetSdk": 35,
+  "libs": [
+   "arm64-v8a",
+   "armeabi-v7a",
+   "x86",
+   "x86_64"
+  ],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": "Removes the gamemode downscale restriction on some Android 15-16 devices",
+   "xposedscope": null,
+   "xposedminversion": 53
+  }
+ },
+ {
+  "pkg": "com.web.czero",
+  "name": "CZeroX_v1.2.4.apk",
+  "tag": "10204-1.2.4",
+  "versionCode": 10204,
+  "versionName": "1.2.4",
+  "package": "com.web.czero",
+  "minSdk": 24,
+  "targetSdk": 37,
+  "libs": [
+   "arm64-v8a",
+   "armeabi-v7a",
+   "x86",
+   "x86_64"
+  ],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": null,
+   "xposedminversion": 82,
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "com.xtaolabs.fuck_huaya",
+  "name": "fuck_huaya-v1.3.0-release.apk",
+  "tag": "7-1.3.0",
+  "versionCode": 7,
+  "versionName": "1.3.0",
+  "package": "com.xtaolabs.fuck_huaya",
+  "minSdk": 23,
+  "targetSdk": 33,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposedscope": null,
+   "xposeddescription": null,
+   "xposedminversion": 93
+  }
+ },
+ {
+  "pkg": "tn.amin.mpro2",
+  "name": "mpro.apk",
+  "tag": "7-1.0.5",
+  "versionCode": 7,
+  "versionName": "1.0.5",
+  "package": "tn.amin.mpro2",
+  "minSdk": 24,
+  "targetSdk": 33,
+  "debuggable": true,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": "Enhance Facebook Messenger app with loads of exciting features !",
+   "xposedminversion": 53,
+   "xposedscope": "com.facebook.orca"
+  }
+ },
+ {
+  "pkg": "cn.martinkay.autocheckinplugin",
+  "name": "AutoCheckIn-2.9.apk",
+  "tag": "29-2.9",
+  "versionCode": 29,
+  "versionName": "2.9",
+  "package": "cn.martinkay.autocheckinplugin",
+  "minSdk": 24,
+  "targetSdk": 24,
+  "libs": [
+   "arm64-v8a",
+   "armeabi",
+   "armeabi-v7a",
+   "x86",
+   "x86_64"
+  ],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": "基于系统闹钟的定时任务，更高的可靠性！",
+   "xposedminversion": 53,
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "io.github.yilink1.xiaolianplus",
+  "name": "XiaoLianPlus-v1.3.0.apk",
+  "tag": "4-1.3.0",
+  "versionCode": 4,
+  "versionName": "1.3.0",
+  "package": "io.github.yilink1.xiaolianplus",
+  "minSdk": 24,
+  "targetSdk": 37,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": null,
+   "xposedminversion": 102,
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "com.weverses.modempro",
+  "name": "ModemPro_2.2.0_2023-11-27_release.apk",
+  "tag": "220-2.2.0",
+  "versionCode": 220,
+  "versionName": "2.2.0",
+  "package": "com.weverses.modempro",
+  "minSdk": 29,
+  "targetSdk": 34,
+  "libs": [],
+  "xmeta": {
+   "xposeddescription": null,
+   "xposedscope": null,
+   "xposedminversion": 93
+  }
+ },
+ {
+  "pkg": "me.hd.nullavatar",
+  "name": "NullAvatar_v1.8.apk",
+  "tag": "9-1.8",
+  "versionCode": 9,
+  "versionName": "1.8",
+  "package": "me.hd.nullavatar",
+  "minSdk": 27,
+  "targetSdk": 35,
+  "libs": [
+   "arm64-v8a",
+   "armeabi-v7a",
+   "x86",
+   "x86_64"
+  ],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": null,
+   "xposedminversion": 89,
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "fr.netstat.locationindicatorwhitelist",
+  "name": "LocationIndicatorWhitelist-v1.1.apk",
+  "tag": "2-1.1",
+  "versionCode": 2,
+  "versionName": "1.1",
+  "package": "fr.netstat.locationindicatorwhitelist",
+  "minSdk": 31,
+  "targetSdk": 33,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": "Prevent packages to trigger the location indicator in status bar",
+   "xposedminversion": 54,
+   "xposedscope": null,
+   "xposedsharedprefs": true
+  }
+ },
+ {
+  "pkg": "app.neonorbit.chatheadenabler",
+  "name": "ChatHeadEnabler-v2.4.7.apk",
+  "tag": "247-2.4.7",
+  "versionCode": 247,
+  "versionName": "2.4.7",
+  "package": "app.neonorbit.chatheadenabler",
+  "minSdk": 30,
+  "targetSdk": 33,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": null,
+   "xposedminversion": 82,
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "com.nnnen.tool",
+  "name": "NE+.2.0911.01.apk",
+  "tag": "2091101-2.0911.01",
+  "versionCode": 2091101,
+  "versionName": "2.0911.01",
+  "package": "com.nnnen.tool",
+  "minSdk": 21,
+  "targetSdk": 27,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": null,
+   "xposedminversion": 53,
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "io.github.yudigaga.douai",
+  "name": "DouAi-0.1.97-release.apk",
+  "tag": "98-0.1.97",
+  "versionCode": 98,
+  "versionName": "0.1.97",
+  "package": "io.github.yudigaga.douai",
+  "minSdk": 28,
+  "targetSdk": 35,
+  "libs": [
+   "arm64-v8a",
+   "armeabi-v7a",
+   "x86",
+   "x86_64"
+  ],
+  "providers": [
+   "io.github.libxposed.service.XposedProvider"
+  ],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": "本地抖音增强模块",
+   "xposedminversion": 102
+  }
+ },
+ {
+  "pkg": "com.mymod.playspoofer",
+  "name": "PlayVersionSpoofer-v1.7-release.apk",
+  "tag": "9-1.7",
+  "versionCode": 9,
+  "versionName": "1.7",
+  "package": "com.mymod.playspoofer",
+  "minSdk": 28,
+  "targetSdk": 36,
+  "libs": [
+   "arm64-v8a",
+   "armeabi-v7a",
+   "x86",
+   "x86_64"
+  ],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": "Change Google Play Store App Version",
+   "xposedminversion": 93,
+   "xposedscope": null,
+   "xposed-scope": "com.android.vending"
+  }
+ },
+ {
+  "pkg": "com.vstory.hook.coloros.gallery3d",
+  "name": "ColorOSGalleryNomediaGuard.1.3.0.13.release.apk",
+  "tag": "13-1.3.0",
+  "versionCode": 13,
+  "versionName": "1.3.0",
+  "package": "com.vstory.hook.coloros.gallery3d",
+  "minSdk": 26,
+  "targetSdk": 37,
+  "libs": [],
+  "providers": [
+   "io.github.libxposed.service.XposedProvider"
+  ]
+ },
+ {
+  "pkg": "com.fxxkmoondrop.secret",
+  "name": "FxxkMoondrop-340-3.2.20.apk",
+  "tag": "340-3.2.20",
+  "versionCode": 340,
+  "versionName": "3.2.20",
+  "package": "com.fxxkmoondrop.secret",
+  "minSdk": 26,
+  "targetSdk": 36,
+  "libs": [
+   "arm64-v8a",
+   "armeabi-v7a"
+  ]
+ },
+ {
+  "pkg": "io.github.nkr00711.xviphook",
+  "name": "xVIPHookXposed-8-260926.apk",
+  "tag": "8-260926",
+  "versionCode": 8,
+  "versionName": "260926",
+  "package": "io.github.nkr00711.xviphook",
+  "minSdk": 27,
+  "targetSdk": 36,
+  "libs": [
+   "arm64-v8a",
+   "armeabi-v7a",
+   "x86",
+   "x86_64"
+  ],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": null,
+   "xposedminversion": 93,
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "io.github.lcebot.clipsync",
+  "name": "app-release.apk",
+  "tag": "2102-2.1.2",
+  "versionCode": 2102,
+  "versionName": "2.1.2",
+  "package": "io.github.lcebot.clipsync",
+  "minSdk": 35,
+  "targetSdk": 35,
+  "libs": [
+   "arm64-v8a"
+  ]
+ },
+ {
+  "pkg": "io.github.imroxy2222.autoscreenoffcode",
+  "name": "app-release.apk",
+  "tag": "3-1.2",
+  "versionCode": 3,
+  "versionName": "1.2",
+  "package": "io.github.imroxy2222.autoscreenoffcode",
+  "minSdk": 26,
+  "targetSdk": 36,
+  "libs": [
+   "arm64-v8a",
+   "armeabi-v7a",
+   "x86",
+   "x86_64"
+  ],
+  "providers": [
+   "io.github.libxposed.service.XposedProvider"
+  ]
+ },
+ {
+  "pkg": "dev.hyperears",
+  "name": "HyperEars-v2.7.0.apk",
+  "tag": "20700-2.7.0",
+  "versionCode": 20700,
+  "versionName": "2.7.0",
+  "package": "dev.hyperears",
+  "minSdk": 35,
+  "targetSdk": 36,
+  "libs": [
+   "arm64-v8a",
+   "armeabi-v7a",
+   "x86",
+   "x86_64"
+  ],
+  "providers": [
+   "io.github.libxposed.service.XposedProvider"
+  ],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": null,
+   "xposedminversion": 101,
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "com.alex193a.xdowngrader",
+  "name": "com.alex193a.xdowngrader_v2_302ef9.apk",
+  "tag": "2-1.1",
+  "versionCode": 2,
+  "versionName": "1.1",
+  "package": "com.alex193a.xdowngrader",
+  "minSdk": 21,
+  "targetSdk": 32,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposedminversion": 53,
+   "xposeddescription": null
+  }
+ },
+ {
+  "pkg": "ml.pyshivam.imeimasker",
+  "name": "ml.pyshivam.imeimasker.apk",
+  "tag": "3-2.0.1",
+  "versionCode": 3,
+  "versionName": "2.0.1",
+  "package": "ml.pyshivam.imeimasker",
+  "minSdk": 15,
+  "targetSdk": 27,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": "Mask your IMEI number, privacy tool.",
+   "xposedminversion": 53
+  }
+ },
+ {
+  "pkg": "com.js.deepsleep",
+  "name": "release-1.2.1.apk",
+  "tag": "16-1.2.1",
+  "versionCode": 16,
+  "versionName": "1.2.1",
+  "package": "com.js.deepsleep",
+  "minSdk": 24,
+  "targetSdk": 32,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": null,
+   "xposedminversion": 93,
+   "xposedsharedprefs": true,
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "io.github.ndevlabs.fkf",
+  "name": "fkf-v1.0-1-app-release.apk",
+  "tag": "1-1.0",
+  "versionCode": 1,
+  "versionName": "1.0",
+  "package": "io.github.ndevlabs.fkf",
+  "minSdk": 26,
+  "targetSdk": 34,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": "Adds Force Kill button to the Recents task menu (OneUI 8.5).",
+   "xposedminversion": 93,
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "com.evo.piccatcher",
+  "name": "piccatcher-4.10.55.apk",
+  "tag": "71-4.10.55",
+  "versionCode": 71,
+  "versionName": "4.10.55",
+  "package": "com.evo.piccatcher",
+  "minSdk": 29,
+  "targetSdk": 36,
+  "debuggable": true,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": null,
+   "xposedminversion": 93,
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "io.github.leekin2.xnotify",
+  "name": "XNotify-3.5.apk",
+  "tag": "28-3.5",
+  "versionCode": 28,
+  "versionName": "3.5",
+  "package": "io.github.leekin2.xnotify",
+  "minSdk": 35,
+  "targetSdk": 36,
+  "libs": [],
+  "providers": [
+   "io.github.libxposed.service.XposedProvider"
+  ]
+ },
+ {
+  "pkg": "com.strawing.duckusb",
+  "name": "DuckUSB-2.1.7.apk",
+  "tag": "30-2.1.7",
+  "versionCode": 30,
+  "versionName": "2.1.7",
+  "package": "com.strawing.duckusb",
+  "minSdk": 26,
+  "targetSdk": 35,
+  "libs": [],
+  "providers": [
+   "io.github.libxposed.service.XposedProvider"
+  ]
+ },
+ {
+  "pkg": "com.darkeyes.tricks",
+  "name": "Tricks_v3.4.apk",
+  "tag": "43-3.4",
+  "versionCode": 43,
+  "versionName": "3.4",
+  "package": "com.darkeyes.tricks",
+  "minSdk": 34,
+  "targetSdk": 34,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposedminversion": 100,
+   "xposedsharedprefs": true,
+   "xposeddescription": "Dark_Eyes_'s tricks",
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "com.xiaoai.islandnotify",
+  "name": "courseisland_2026100601.apk",
+  "tag": "2026100601-2026100601",
+  "versionCode": 2026100601,
+  "versionName": "2026100601",
+  "package": "com.xiaoai.islandnotify",
+  "minSdk": 31,
+  "targetSdk": 36,
+  "libs": [
+   "arm64-v8a",
+   "armeabi-v7a",
+   "x86",
+   "x86_64"
+  ],
+  "providers": [
+   "io.github.libxposed.service.XposedProvider"
+  ]
+ },
+ {
+  "pkg": "im.mingxi.miko",
+  "name": "NewMiko-1.8.0-v342.apk",
+  "tag": "342-1.8.0",
+  "versionCode": 342,
+  "versionName": "1.8.0",
+  "package": "im.mingxi.miko",
+  "minSdk": 27,
+  "targetSdk": 36,
+  "libs": [
+   "arm64-v8a"
+  ],
+  "providers": [
+   "io.github.libxposed.service.XposedProvider"
+  ],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposedminversion": 82,
+   "xposedscope": null,
+   "xposeddescription": null
+  }
+ },
+ {
+  "pkg": "com.ext.star.wars",
+  "name": "ad-wars-v3.8.80.apk",
+  "tag": "308080-3.8.80",
+  "versionCode": 308080,
+  "versionName": "3.8.80",
+  "package": "com.ext.star.wars",
+  "minSdk": 21,
+  "targetSdk": 27,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": null,
+   "xposedminversion": 53
+  }
+ },
+ {
+  "pkg": "com.gswxxn.camerasnap",
+  "name": "UnlockMIUICameraSnap_1.7_1700.apk",
+  "tag": "1700-1.7",
+  "versionCode": 1700,
+  "versionName": "1.7",
+  "package": "com.gswxxn.camerasnap",
+  "minSdk": 28,
+  "targetSdk": 34,
+  "libs": [
+   "arm64-v8a",
+   "armeabi-v7a"
+  ],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposedscope": null,
+   "xposeddescription": null,
+   "xposedminversion": 93
+  }
+ },
+ {
+  "pkg": "me.siowu.OplusKeyHook",
+  "name": "app-release.apk",
+  "tag": "5-1.4",
+  "versionCode": 5,
+  "versionName": "1.4",
+  "package": "me.siowu.OplusKeyHook",
+  "minSdk": 26,
+  "targetSdk": 35,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": "ColorOS快捷键功能自定义 by酷安@西瓜味的奥利奥",
+   "xposedminversion": 53,
+   "xposedsharedprefs": true,
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "io.github.linx3141.timmonet",
+  "name": "TimMonet-v2.1.apk",
+  "tag": "4-2.1",
+  "versionCode": 4,
+  "versionName": "2.1",
+  "package": "io.github.linx3141.timmonet",
+  "minSdk": 26,
+  "targetSdk": 35,
+  "libs": [
+   "arm64-v8a",
+   "armeabi-v7a",
+   "x86",
+   "x86_64"
+  ],
+  "providers": [
+   "io.github.libxposed.service.XposedProvider"
+  ],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposedminversion": 93,
+   "xposeddescription": null
+  }
+ },
+ {
+  "pkg": "com.owl.auxiliary",
+  "name": "com.owl.auxiliary_1.0.1.0_1.apk",
+  "tag": "1-1.0.1.0",
+  "versionCode": 1,
+  "versionName": "1.0.1.0",
+  "package": "com.owl.auxiliary",
+  "minSdk": 25,
+  "targetSdk": 35,
+  "libs": [
+   "arm64-v8a"
+  ],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": "猫头鹰助手",
+   "xposedminversion": 82,
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "io.github.lzghzr.biliveinvisible",
+  "name": "BiLiveInvisible_v1.1.0.apk",
+  "tag": "6-1.1.0",
+  "versionCode": 6,
+  "versionName": "1.1.0",
+  "package": "io.github.lzghzr.biliveinvisible",
+  "minSdk": 28,
+  "targetSdk": 37,
+  "libs": [
+   "arm64-v8a"
+  ]
+ },
+ {
+  "pkg": "io.github.kotobawakusei.nicoenhance",
+  "name": "NicoEnhance-1.2.1.apk",
+  "tag": "10201-1.2.1",
+  "versionCode": 10201,
+  "versionName": "1.2.1",
+  "package": "io.github.kotobawakusei.nicoenhance",
+  "minSdk": 29,
+  "targetSdk": 36,
+  "libs": [
+   "arm64-v8a",
+   "armeabi-v7a",
+   "x86",
+   "x86_64"
+  ],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": "niconico增强模块",
+   "xposedminversion": 102,
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "com.unexpected.twitter",
+  "name": "XAuxiliary-11.30.0-release.0_37db702e.apk",
+  "tag": "311300000-11.30.0-release.0",
+  "versionCode": 311300000,
+  "versionName": "11.30.0-release.0",
+  "package": "com.unexpected.twitter",
+  "minSdk": 21,
+  "targetSdk": 34,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": null,
+   "xposedminversion": 54,
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "com.dingda.adfree",
+  "name": "app-debug.apk",
+  "tag": "11-1.1",
+  "versionCode": 11,
+  "versionName": "1.1",
+  "package": "com.dingda.adfree",
+  "minSdk": 26,
+  "targetSdk": 34,
+  "debuggable": true,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": "叮嗒出行强力去广告",
+   "xposedminversion": 82,
+   "xposedscope": "com.dingda.app"
+  }
+ },
+ {
+  "pkg": "com.owo233.fuckmarketads",
+  "name": "FuckMarketAds_1.2.6.apk",
+  "tag": "26-1.2.6",
+  "versionCode": 26,
+  "versionName": "1.2.6",
+  "package": "com.owo233.fuckmarketads",
+  "minSdk": 31,
+  "targetSdk": 36,
+  "libs": []
+ },
+ {
+  "pkg": "io.github.nitsuya.donottryaccessibility",
+  "name": "1.0.3.apk",
+  "tag": "3-1.0.3",
+  "versionCode": 3,
+  "versionName": "1.0.3",
+  "package": "io.github.nitsuya.donottryaccessibility",
+  "minSdk": 27,
+  "targetSdk": 34,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposedsharedprefs": true,
+   "xposedscope": null,
+   "xposeddescription": null,
+   "xposedminversion": 93
+  }
+ },
+ {
+  "pkg": "dev.wtonec",
+  "name": "Wtonec-1.7.6-708-universal.apk",
+  "tag": "708-1.7.6",
+  "versionCode": 708,
+  "versionName": "1.7.6",
+  "package": "dev.wtonec.final",
+  "minSdk": 28,
+  "targetSdk": 37,
+  "libs": [
+   "arm64-v8a",
+   "armeabi-v7a"
+  ],
+  "providers": [
+   "io.github.libxposed.service.XposedProvider"
+  ],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": null,
+   "xposedminversion": 51,
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "com.wecom.padbridge",
+  "name": "WePadBridge-v1.0.0.apk",
+  "tag": "1-1.0.0",
+  "versionCode": 1,
+  "versionName": "1.0.0",
+  "package": "com.wecom.padbridge",
+  "minSdk": 27,
+  "targetSdk": 35,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposedscope": null,
+   "xposeddescription": null,
+   "xposedminversion": 93
+  }
+ },
+ {
+  "pkg": "com.ceco.q.gravitybox",
+  "name": "GravityBox_Q_10.1.2.apk",
+  "tag": "1013-10.1.2",
+  "versionCode": 1013,
+  "versionName": "10.1.2",
+  "package": "com.ceco.q.gravitybox",
+  "minSdk": 29,
+  "targetSdk": 29,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposedminversion": 90,
+   "xposeddescription": "GravityBox by C3C076@XDA",
+   "xposedsharedprefs": true,
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "com.xiddoc.playintegrityalert",
+  "name": "PlayIntegrityAlert-v1.0.9.apk",
+  "tag": "23-1.0.9",
+  "versionCode": 23,
+  "versionName": "1.0.9",
+  "package": "com.xiddoc.playintegrityalert",
+  "minSdk": 30,
+  "targetSdk": 35,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": null,
+   "xposedminversion": 102,
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "io.github.chsbuffer.miuihelper",
+  "name": "miuiqol-1.1.17.apk",
+  "tag": "19-1.1.17",
+  "versionCode": 19,
+  "versionName": "1.1.17",
+  "package": "io.github.chsbuffer.miuihelper",
+  "minSdk": 27,
+  "targetSdk": 35,
+  "libs": [
+   "arm64-v8a"
+  ],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": null,
+   "xposedminversion": 93,
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "com.crossbowffs.quotelock",
+  "name": "QuoteLock-1.4.0.apk",
+  "tag": "11-1.4.0",
+  "versionCode": 11,
+  "versionName": "1.4.0",
+  "package": "com.crossbowffs.quotelock",
+  "minSdk": 21,
+  "targetSdk": 23,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": "Displays quotes on your phone lockscreen",
+   "xposedminversion": 53
+  }
+ },
+ {
+  "pkg": "com.variable.apkhook",
+  "name": "com.variable.apkhook_1.9.8.apk",
+  "tag": "10-1.9.8-炼妖壶",
+  "versionCode": 10,
+  "versionName": "1.9.8-炼妖壶",
+  "package": "com.variable.apkhook",
+  "minSdk": 19,
+  "targetSdk": 23,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": "顾名思义",
+   "xposedminversion": 54
+  }
+ },
+ {
+  "pkg": "com.vend.pulseautocolor",
+  "name": "PulseAutoColor-v1.1.0.apk",
+  "tag": "2-1.1.0",
+  "versionCode": 2,
+  "versionName": "1.1.0",
+  "package": "com.vend.pulseautocolor",
+  "minSdk": 29,
+  "targetSdk": 37,
+  "libs": [],
+  "providers": [
+   "io.github.libxposed.service.XposedProvider"
+  ]
+ },
+ {
+  "pkg": "sb.firefds.r.firefdskit",
+  "name": "FirefdsKit_R_11.0.3.0-STABLE-2.apk",
+  "tag": "11030-11.0.3.0-STABLE-2",
+  "versionCode": 11030,
+  "versionName": "11.0.3.0-STABLE-2",
+  "package": "sb.firefds.r.firefdskit",
+  "minSdk": 30,
+  "targetSdk": 31,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposedminversion": 93,
+   "xposeddescription": "Made for stock Samsung devices supporting Android 11.0 Roms by Firefds",
+   "xposedsharedprefs": true,
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "miko.client",
+  "name": "Miko-1.1.2.fix.-1181-output-fix.APK",
+  "tag": "1181-1.1.2",
+  "versionCode": 1181,
+  "versionName": "1.1.2",
+  "package": "miko.client",
+  "minSdk": 26,
+  "targetSdk": 34,
+  "libs": [
+   "arm64-v8a"
+  ],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposedminversion": 82,
+   "xposedscope": null,
+   "xposeddescription": null
+  }
+ },
+ {
+  "pkg": "com.luckyzyx.killredone",
+  "name": "KillRedOne_v1.0.2.62.apk",
+  "tag": "62-1.0.2",
+  "versionCode": 62,
+  "versionName": "1.0.2",
+  "package": "com.luckyzyx.killredone",
+  "minSdk": 30,
+  "targetSdk": 32,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": null,
+   "xposedminversion": 93,
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "dev.lackluster.mihelper",
+  "name": "XiaomiHelper_26.05_26050_release_1777616691.apk",
+  "tag": "26050-26.05",
+  "versionCode": 26050,
+  "versionName": "26.05",
+  "package": "dev.lackluster.mihelper",
+  "minSdk": 35,
+  "targetSdk": 37,
+  "libs": [
+   "arm64-v8a"
+  ],
+  "providers": [
+   "io.github.libxposed.service.XposedProvider"
+  ]
+ },
+ {
+  "pkg": "com.zgcwkj.xpwechatcall",
+  "name": "XPoser_WeChatCall_v1.0.apk",
+  "tag": "261005-1.0",
+  "versionCode": 261005,
+  "versionName": "1.0",
+  "package": "com.zgcwkj.xpwechatcall",
+  "minSdk": 30,
+  "targetSdk": 36,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": null,
+   "xposedminversion": 82,
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "dev.fzer0x.pokegocontrole",
+  "name": "LocationJoystick-420.apk",
+  "tag": "420-4.2.0",
+  "versionCode": 420,
+  "versionName": "4.2.0",
+  "package": "dev.fzer0x.pokegocontrole",
+  "minSdk": 28,
+  "targetSdk": 36,
+  "libs": [
+   "arm64-v8a",
+   "armeabi-v7a",
+   "x86",
+   "x86_64"
+  ],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": "Location simulation with joystick overlay.",
+   "xposedminversion": 93,
+   "xposedscope": null,
+   "xposedstaticscope": false,
+   "xposedsharedprefs": true
+  }
+ },
+ {
+  "pkg": "io.github.zhaoyuanguo.traesignin",
+  "name": "app-release.apk",
+  "tag": "9-1.0.8",
+  "versionCode": 9,
+  "versionName": "1.0.8",
+  "package": "io.github.zhaoyuanguo.traesignin",
+  "minSdk": 26,
+  "targetSdk": 35,
+  "libs": [],
+  "providers": [
+   "io.github.libxposed.service.XposedProvider"
+  ]
+ },
+ {
+  "pkg": "io.github.leekin2.xreply",
+  "name": "XReply-1.1.apk",
+  "tag": "2-1.1",
+  "versionCode": 2,
+  "versionName": "1.1",
+  "package": "io.github.leekin2.xreply",
+  "minSdk": 35,
+  "targetSdk": 36,
+  "libs": [],
+  "providers": [
+   "io.github.libxposed.service.XposedProvider"
+  ]
+ },
+ {
+  "pkg": "top.chuyb.fakeScreen",
+  "name": "fakeScreen-2.0.apk",
+  "tag": "20-2.0",
+  "versionCode": 20,
+  "versionName": "2.0",
+  "package": "top.chuyb.fakeScreen",
+  "minSdk": 26,
+  "targetSdk": 31,
+  "libs": [],
+  "providers": [
+   "io.github.libxposed.service.XposedProvider"
+  ]
+ },
+ {
+  "pkg": "ru.mike.customiuizer125plugin",
+  "name": "CustoMIUIzer_12.5_A11_plugin_v1.0.2.apk",
+  "tag": "3-1.0.2",
+  "versionCode": 3,
+  "versionName": "1.0.2",
+  "package": "ru.mike.customiuizer125plugin",
+  "minSdk": 29,
+  "targetSdk": 30,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposedminversion": "30+",
+   "xposeddescription": "Mikanoshi's CustoMIUIzer plugin for MIUI 12.5 & Android 11",
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "com.fun.camerahook",
+  "name": "dcc-app.apk",
+  "tag": "1-1.0",
+  "versionCode": 1,
+  "versionName": "1.0",
+  "package": "com.fun.camerahook",
+  "minSdk": 24,
+  "targetSdk": 35,
+  "libs": [
+   "arm64-v8a"
+  ],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": "一键修复微X模块，一键复活！Email:chat50897@gmail.com",
+   "xposedminversion": 53
+  }
+ },
+ {
+  "pkg": "com.heytap.purify",
+  "name": "v1.0.0-release.apk",
+  "tag": "100-1.0.0",
+  "versionCode": 100,
+  "versionName": "1.0.0",
+  "package": "com.heytap.purify",
+  "minSdk": 29,
+  "targetSdk": 34,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": "让进步持续，让改变可见",
+   "xposedminversion": 82,
+   "xposedsharedprefs": true,
+   "xposedscope": "com.heytap.browser"
+  }
+ },
+ {
+  "pkg": "com.mjcome.weiwei",
+  "name": "mj-video-xposed-v1.1.0.apk",
+  "tag": "2-1.1.0",
+  "versionCode": 2,
+  "versionName": "1.1.0",
+  "package": "com.mjcome.weiwei",
+  "minSdk": 21,
+  "targetSdk": 34,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": "Xposed module demo",
+   "xposedminversion": 102,
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "com.noobexon.xposedfakelocation",
+  "name": "XposedFakeLocation.apk",
+  "tag": "104-0.1.4",
+  "versionCode": 104,
+  "versionName": "0.1.4",
+  "package": "com.noobexon.xposedfakelocation",
+  "minSdk": 29,
+  "targetSdk": 36,
+  "debuggable": true,
+  "libs": [
+   "arm64-v8a",
+   "armeabi-v7a",
+   "x86",
+   "x86_64"
+  ],
+  "providers": [
+   "io.github.libxposed.service.XposedProvider"
+  ]
+ },
+ {
+  "pkg": "com.coderstory.flyme10",
+  "name": "flyme10.4.6.8.apk",
+  "tag": "556-4.6.8",
+  "versionCode": 556,
+  "versionName": "4.6.8",
+  "package": "com.coderstory.flyme10",
+  "minSdk": 33,
+  "targetSdk": 33,
+  "libs": [
+   "arm64-v8a",
+   "armeabi",
+   "armeabi-v7a",
+   "x86"
+  ],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": "不忘初心 方得始终",
+   "xposedminversion": 54,
+   "xposedsharedprefs": true,
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "io.github.panjiaben.lingxi",
+  "name": "Lingxi-1.67-244.apk",
+  "tag": "244-1.67",
+  "versionCode": 244,
+  "versionName": "1.67",
+  "package": "io.github.panjiaben.lingxi",
+  "minSdk": 26,
+  "targetSdk": 36,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": "本地 AI 回复助手：接进聊天页，读懂对方发来的文字/图片/语音，按你设的风格给出可直接使用的话术。支持微信、企业微信、QQ（含群聊）、陌陌",
+   "xposedminversion": 82,
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "io.github.nvg064.xiaomicharginganimation",
+  "name": "XiaomiChargeAnimation-1.0.0-.1.apk",
+  "tag": "1-1.0.0",
+  "versionCode": 1,
+  "versionName": "1.0.0",
+  "package": "io.github.nvg064.xiaomicharginganimation",
+  "minSdk": 27,
+  "targetSdk": 34,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposedscope": null,
+   "xposeddescription": null,
+   "xposedminversion": 93
+  }
+ },
+ {
+  "pkg": "mufanc.tools.applock",
+  "name": "app-release.apk",
+  "tag": "20220417-2.1.1.r46.7e4d397",
+  "versionCode": 20220417,
+  "versionName": "2.1.1.r46.7e4d397",
+  "package": "mufanc.tools.applock",
+  "minSdk": 28,
+  "targetSdk": 32,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": null,
+   "xposedminversion": 82,
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "xyz.siwane.drawix.pro",
+  "name": "app-release-sign.apk",
+  "tag": "1-1.0",
+  "versionCode": 1,
+  "versionName": "1.0",
+  "package": "xyz.siwane.drawix.pro",
+  "minSdk": 24,
+  "targetSdk": 35,
+  "libs": [
+   "arm64-v8a",
+   "armeabi-v7a",
+   "x86",
+   "x86_64"
+  ],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": null,
+   "xposedminversion": 93,
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "io.github.YGHFv.ReaMicroExtend",
+  "name": "ReaMicro-Extend-2.3.9-release.apk",
+  "tag": "71-2.3.9",
+  "versionCode": 71,
+  "versionName": "2.3.9",
+  "package": "com.reamicro.fix",
+  "minSdk": 26,
+  "targetSdk": 35,
+  "libs": [
+   "arm64-v8a"
+  ]
+ },
+ {
+  "pkg": "io.mo.glassmic",
+  "name": "GlassMic-1.4.6-release.apk",
+  "tag": "25-1.4.6",
+  "versionCode": 25,
+  "versionName": "1.4.6",
+  "package": "io.mo.glassmic",
+  "minSdk": 29,
+  "targetSdk": 35,
+  "libs": [
+   "arm64-v8a",
+   "armeabi-v7a",
+   "x86",
+   "x86_64"
+  ],
+  "providers": [
+   "io.github.libxposed.service.XposedProvider"
+  ],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": null,
+   "xposedminversion": 82
+  }
+ },
+ {
+  "pkg": "com.niki914.qqmail.cleaner",
+  "name": "app-release.apk",
+  "tag": "2-1.0.1",
+  "versionCode": 2,
+  "versionName": "1.0.1",
+  "package": "com.niki914.qqmail.cleaner",
+  "minSdk": 26,
+  "targetSdk": 35,
+  "libs": [
+   "arm64-v8a",
+   "armeabi-v7a",
+   "x86",
+   "x86_64"
+  ],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": "某 Q 邮箱去广告",
+   "xposedminversion": 82,
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "me.siowu.RamInfoShow",
+  "name": "app-release.apk",
+  "tag": "1-1.0",
+  "versionCode": 1,
+  "versionName": "1.0",
+  "package": "me.siowu.RamInfoShow",
+  "minSdk": 21,
+  "targetSdk": 35,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": "ColorOS最近任务强制显示内存信息 by酷安@西瓜味的奥利奥",
+   "xposedminversion": 53,
+   "xposedscope": "com.android.launcher"
+  }
+ },
+ {
+  "pkg": "Telegram.Speed.Hook",
+  "name": "Telegram.Speed.Hook-v2.1.apk",
+  "tag": "2-2.1_AR",
+  "versionCode": 2,
+  "versionName": "2.1 AR",
+  "package": "Telegram.Speed.Hook",
+  "minSdk": 24,
+  "targetSdk": 35,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": "Increase Telegram Download Speed to Extreme",
+   "xposedminversion": 82,
+   "xposedscope": "org.telegram.messenger"
+  }
+ },
+ {
+  "pkg": "dev.fzer0x.silentrar",
+  "name": "SilentRAR-100.apk",
+  "tag": "1-1.0",
+  "versionCode": 1,
+  "versionName": "1.0",
+  "package": "dev.fzer0x.silentrar",
+  "minSdk": 24,
+  "targetSdk": 36,
+  "debuggable": true,
+  "libs": [
+   "arm64-v8a",
+   "armeabi-v7a",
+   "x86",
+   "x86_64"
+  ],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": "Blocks the subscription dialog in RAR",
+   "xposedminversion": 82,
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "sb.firefds.u.firefdskit",
+  "name": "FirefdsKit_U_14.0.0.3-ALPHA-3.apk",
+  "tag": "14003-14.0.0.3-ALPHA-3",
+  "versionCode": 14003,
+  "versionName": "14.0.0.3-ALPHA-3",
+  "package": "sb.firefds.u.firefdskit",
+  "minSdk": 34,
+  "targetSdk": 34,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposedminversion": 93,
+   "xposeddescription": "Made for stock Samsung devices supporting Android 14.0 Roms by Firefds",
+   "xposedsharedprefs": true,
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "com.sai.pokecall",
+  "name": "PokeCall-v1.3-signed.apk",
+  "tag": "7-1.3",
+  "versionCode": 7,
+  "versionName": "1.3",
+  "package": "com.sai.pokecall",
+  "minSdk": 29,
+  "targetSdk": 34,
+  "debuggable": true,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": "Pokémon battle themed incoming call screen",
+   "xposedminversion": 82,
+   "xposedscope": "com.android.incallui;com.android.server.telecom;com.android.systemui;com.android.contacts;com.android.phone;android"
+  }
+ },
+ {
+  "pkg": "tn.payoneer.loukious",
+  "name": "PayoneerRootDetectionBypass-1.0.0.apk",
+  "tag": "1-1.0.0",
+  "versionCode": 1,
+  "versionName": "1.0.0",
+  "package": "tn.payoneer.loukious",
+  "minSdk": 27,
+  "targetSdk": 34,
+  "libs": [
+   "arm64-v8a",
+   "armeabi-v7a",
+   "x86",
+   "x86_64"
+  ],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": "An Xposed module that removes root detection from Payoneer's banking app.",
+   "xposedminversion": 93,
+   "xposedsharedprefs": false,
+   "xposedscope": "com.payoneer.android"
+  }
+ },
+ {
+  "pkg": "com.hchen.clipboardlist",
+  "name": "ClipboardList-v4.3.2025072300._release.apk",
+  "tag": "2025072300-4.3",
+  "versionCode": 2025072300,
+  "versionName": "4.3",
+  "package": "com.hchen.clipboardlist",
+  "minSdk": 30,
+  "targetSdk": 35,
+  "libs": [
+   "arm64-v8a",
+   "armeabi-v7a",
+   "x86",
+   "x86_64"
+  ],
+  "xmeta": {
+   "xposedscope": null,
+   "xposeddescription": null,
+   "xposedsharedprefs": true,
+   "xposedminversion": 93
+  }
+ },
+ {
+  "pkg": "io.github.ahdaolma.yybpoints",
+  "name": "yybpoints-0.2.0.apk",
+  "tag": "5-0.2.0",
+  "versionCode": 5,
+  "versionName": "0.2.0",
+  "package": "io.github.ahdaolma.yybpoints",
+  "minSdk": 23,
+  "targetSdk": 28,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": "后台串行观看真实视频任务，确认到账后继续",
+   "xposedminversion": 82,
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "io.github.mikudayoooooooo.hypersidebar",
+  "name": "app-release.apk",
+  "tag": "2026092224-2.2.0",
+  "versionCode": 2026092224,
+  "versionName": "2.2.0",
+  "package": "io.github.mikudayoooooooo.hypersidebar",
+  "minSdk": 33,
+  "targetSdk": 36,
+  "libs": [
+   "arm64-v8a",
+   "armeabi-v7a",
+   "x86",
+   "x86_64"
+  ],
+  "providers": [
+   "io.github.libxposed.service.XposedProvider"
+  ]
+ },
+ {
+  "pkg": "com.oosl.colorostool",
+  "name": "ColorOSTool_v1.9.9.9.apk",
+  "tag": "31-1.9.9.9",
+  "versionCode": 31,
+  "versionName": "1.9.9.9",
+  "package": "com.oosl.colorostool",
+  "minSdk": 30,
+  "targetSdk": 31,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": null,
+   "xposedminversion": 93,
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "xyz.xfqlittlefan.ciwong.hello",
+  "name": "app-release.apk",
+  "tag": "3-1.1.1",
+  "versionCode": 3,
+  "versionName": "1.1.1",
+  "package": "xyz.xfqlittlefan.ciwong.hello",
+  "minSdk": 21,
+  "targetSdk": 32,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": "Hello, Ciwong!",
+   "xposedminversion": 53,
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "Cleaner.Royall",
+  "name": "Cleaner.Royall.v4.8.apk",
+  "tag": "4-4.7_AraafRoyall",
+  "versionCode": 4,
+  "versionName": "4.8 AraafRoyall",
+  "package": "Cleaner.Royall",
+  "minSdk": 23,
+  "targetSdk": 33,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": "Auto Clears All Type of Cache when Scoped App's launch or started",
+   "xposedminversion": 82
+  }
+ },
+ {
+  "pkg": "rongyi.puddingpods",
+  "name": "default.apk",
+  "tag": "347-3.47",
+  "versionCode": 347,
+  "versionName": "3.47",
+  "package": "rongyi.puddingpods",
+  "minSdk": 35,
+  "targetSdk": 36,
+  "libs": [
+   "arm64-v8a",
+   "armeabi-v7a",
+   "x86",
+   "x86_64"
+  ],
+  "providers": [
+   "io.github.libxposed.service.XposedProvider"
+  ],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": "MOONDROP PUDDING support for Xiaomi HyperOS.",
+   "xposedminversion": 101,
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "cn.buffcow.hyperste",
+  "name": "app-release.apk",
+  "tag": "2-1.1.0",
+  "versionCode": 2,
+  "versionName": "1.1.0",
+  "package": "cn.buffcow.hyperste",
+  "minSdk": 34,
+  "targetSdk": 37,
+  "libs": []
+ },
+ {
+  "pkg": "com.hiiro.fuckddvip",
+  "name": "FuckDDVip_1.0.0.apk",
+  "tag": "1-1.0.0",
+  "versionCode": 1,
+  "versionName": "1.0.0",
+  "package": "com.hiiro.fuckddvip",
+  "minSdk": 24,
+  "targetSdk": 34,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": null,
+   "xposedminversion": 54,
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "io.github.benbaobaoshigemi.rotationcontrol",
+  "name": "io.github.benbaobaoshigemi.rotationcontrol-v1.0.0.apk",
+  "tag": "1-1.0.0",
+  "versionCode": 1,
+  "versionName": "1.0.0",
+  "package": "io.github.benbaobaoshigemi.rotationcontrol",
+  "minSdk": 26,
+  "targetSdk": 34,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": null,
+   "xposedminversion": 82,
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "com.yotagit.xfucker",
+  "name": "xfucker-v1.4.apk",
+  "tag": "1-1.4",
+  "versionCode": 1,
+  "versionName": "1.4",
+  "package": "com.yotagit.xfucker",
+  "minSdk": 24,
+  "targetSdk": 33,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": null,
+   "xposedminversion": 52,
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "eu.hxreborn.qsboundlesstiles",
+  "name": "app-release.apk",
+  "tag": "400-4.0.0",
+  "versionCode": 400,
+  "versionName": "4.0.0",
+  "package": "eu.hxreborn.qsboundlesstiles",
+  "minSdk": 33,
+  "targetSdk": 37,
+  "libs": []
+ },
+ {
+  "pkg": "com.ljlvink.formhook",
+  "name": "app-release.apk",
+  "tag": "1-1.0",
+  "versionCode": 1,
+  "versionName": "1.0",
+  "package": "com.ljlvink.formhook",
+  "minSdk": 33,
+  "targetSdk": 33,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposedscope": null,
+   "xposeddescription": "解决MIUI14小窗和工作台最大数量限制",
+   "xposedminversion": 82
+  }
+ },
+ {
+  "pkg": "com.tamer.linetamer",
+  "name": "LineTamer-v1.6.2.apk",
+  "tag": "20-1.6.2",
+  "versionCode": 20,
+  "versionName": "1.6.2",
+  "package": "com.tamer.linetamer",
+  "minSdk": 26,
+  "targetSdk": 34,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": "LINE 功能开关：视图层去广告/隐藏 Tab（无风险）+ 协议层拦截（可选）+ 实验性防撤回（默认关）",
+   "xposedminversion": 82,
+   "xposedscope": "jp.naver.line.android"
+  }
+ },
+ {
+  "pkg": "io.github.howard20181.notificationiconfix",
+  "name": "NotifyIconFix-1.7.1.103-release.apk",
+  "tag": "103-1.7.1",
+  "versionCode": 103,
+  "versionName": "1.7.1",
+  "package": "io.github.howard20181.notificationiconfix",
+  "minSdk": 27,
+  "targetSdk": 36,
+  "libs": []
+ },
+ {
+  "pkg": "io.github.hashxxl.chatgptspeaker",
+  "name": "ChatGPT-Speaker-v1.2.apk",
+  "tag": "3-1.2",
+  "versionCode": 3,
+  "versionName": "1.2",
+  "package": "io.github.hashxxl.chatgptspeaker",
+  "minSdk": 31,
+  "targetSdk": 36,
+  "debuggable": true,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": "Experimental ChatGPT speaker/media audio routing",
+   "xposedminversion": 82
+  }
+ },
+ {
+  "pkg": "com.github.dan.nostoragerestrict",
+  "name": "app-release.apk",
+  "tag": "7-0.7.0",
+  "versionCode": 7,
+  "versionName": "0.7.0",
+  "package": "com.github.dan.NoStorageRestrict",
+  "minSdk": 15,
+  "targetSdk": 35,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": "Removes the restriction when selecting folders (Downloads/Android) through the file manager on Android 11 and higher",
+   "xposedscope": null,
+   "xposedminversion": 53
+  }
+ },
+ {
+  "pkg": "io.github.Morpheus799.wrhook",
+  "name": "wrhook.apk",
+  "tag": "1-1.0",
+  "versionCode": 1,
+  "versionName": "1.0",
+  "package": "io.github.Morpheus799.wrhook",
+  "minSdk": 21,
+  "targetSdk": 31,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": "体验卡过期后续读缓存章节、缓存并下载epub书籍",
+   "xposedminversion": 53,
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "com.amanoteam.sunny",
+  "name": "app-release.apk",
+  "tag": "6-0.6",
+  "versionCode": 6,
+  "versionName": "0.6",
+  "package": "com.amanoteam.sunny",
+  "minSdk": 21,
+  "targetSdk": 36,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": "Prevent Tachiyomi/Mihon from throttling your requests",
+   "xposedminversion": 53
+  }
+ },
+ {
+  "pkg": "dev.otp.autocopy",
+  "name": "dev.otp.autocopy-1.0.9.apk",
+  "tag": "10-1.0.9",
+  "versionCode": 10,
+  "versionName": "1.0.9",
+  "package": "dev.otp.autocopy",
+  "minSdk": 28,
+  "targetSdk": 36,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": "从通知中提取验证码并自动复制到剪贴板",
+   "xposedminversion": 82,
+   "xposedscope": "android"
+  }
+ },
+ {
+  "pkg": "com.qqmail.extlink",
+  "name": "QQMail-DisableBuiltinBrowser-v1.2.apk",
+  "tag": "3-1.2",
+  "versionCode": 3,
+  "versionName": "1.2",
+  "package": "com.qqmail.extlink",
+  "minSdk": 24,
+  "targetSdk": 34,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": null,
+   "xposedminversion": 93,
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "moe.henry_zhr.force_dark",
+  "name": "app-release.apk",
+  "tag": "2-2",
+  "versionCode": 2,
+  "versionName": "2",
+  "package": "moe.henry_zhr.force_dark",
+  "minSdk": 29,
+  "targetSdk": 33,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposedminversion": 53,
+   "xposeddescription": null
+  }
+ },
+ {
+  "pkg": "io.github.duzhaokun123.darkaischedule",
+  "name": "DarkAISchedule_release_v0.0.1.apk",
+  "tag": "1-0.0.1",
+  "versionCode": 1,
+  "versionName": "0.0.1",
+  "package": "io.github.duzhaokun123.darkaischedule",
+  "minSdk": 24,
+  "targetSdk": 33,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": "小爱课程表暗色支持",
+   "xposedminversion": 53,
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "io.github.tehcneko.satback",
+  "name": "app-release.apk",
+  "tag": "2-1.1.0",
+  "versionCode": 2,
+  "versionName": "1.1.0",
+  "package": "io.github.tehcneko.satback",
+  "minSdk": 21,
+  "targetSdk": 33,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": null,
+   "xposedminversion": 53,
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "dev.rushii.xspoofsignatures",
+  "name": "dev.rushii.xspoofsignatures-1.0.1.apk",
+  "tag": "2-1.0.1",
+  "versionCode": 2,
+  "versionName": "1.0.1",
+  "package": "dev.rushii.xspoofsignatures",
+  "minSdk": 3,
+  "targetSdk": 35,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": null,
+   "xposedminversion": 36,
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "io.github.chipppppppppp.binnosoko",
+  "name": "Binnosoko-v2.5.1.apk",
+  "tag": "22-2.5.1",
+  "versionCode": 22,
+  "versionName": "2.5.1",
+  "package": "io.github.chipppppppppp.binnosoko",
+  "minSdk": 23,
+  "targetSdk": 34,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": "F*ck ChMate's ads",
+   "xposedminversion": 82,
+   "xposedscope": "jp.co.airfront.android.a2chMate",
+   "xposedsharedprefs": true
+  }
+ },
+ {
+  "pkg": "io.github.stevenwin818.HyperTrust",
+  "name": "HyperTrust_1.2.2_arm64.apk",
+  "tag": "26040501-1.2.2",
+  "versionCode": 26040501,
+  "versionName": "1.2.2",
+  "package": "io.github.stevenwin818.HyperTrust",
+  "minSdk": 31,
+  "targetSdk": 34,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": null,
+   "xposedminversion": 93,
+   "xposedscope": "com.android.systemui"
+  }
+ },
+ {
+  "pkg": "io.github.tehcneko.applinkverify",
+  "name": "app-release.apk",
+  "tag": "1-1.0.0",
+  "versionCode": 1,
+  "versionName": "1.0.0",
+  "package": "io.github.tehcneko.applinkverify",
+  "minSdk": 31,
+  "targetSdk": 32,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": null,
+   "xposedminversion": 53,
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "com.lixingchi.noclearhijack",
+  "name": "NoClearHijack.apk",
+  "tag": "1-1.0",
+  "versionCode": 1,
+  "versionName": "1.0",
+  "package": "com.lixingchi.noclearhijack",
+  "minSdk": 26,
+  "targetSdk": 36,
+  "libs": []
+ },
+ {
+  "pkg": "com.anony.keyguardrotation",
+  "name": "Keyguard-Rotation-Unlocker.apk",
+  "tag": "1-1.0",
+  "versionCode": 1,
+  "versionName": "1.0",
+  "package": "com.anony.keyguardrotation",
+  "minSdk": 26,
+  "targetSdk": 35,
+  "debuggable": true,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": "Unlocks screen rotation on Keyguard",
+   "xposedminversion": 53,
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "com.zitan.eternalseniahook",
+  "name": "1.0.apk",
+  "tag": "1-1.0",
+  "versionCode": 1,
+  "versionName": "1.0",
+  "package": "com.zitan.eternalseniahook",
+  "minSdk": 21,
+  "targetSdk": 26,
+  "debuggable": true,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": "Xposed module demo",
+   "xposedminversion": 53,
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "cc.aoeiuv020.hookfanqie",
+  "name": "HookFanqie-6.5.5.32-hook.apk",
+  "tag": "1-6.5.5.32",
+  "versionCode": 1,
+  "versionName": "6.5.5.32",
+  "package": "cc.aoeiuv020.hookfanqie",
+  "minSdk": 26,
+  "targetSdk": 34,
+  "libs": [],
+  "xmeta": {
+   "xposedscope": null,
+   "xposedmodule": true,
+   "xposeddescription": "给番茄小说(com.dragon.read)去广告",
+   "xposedminversion": 82
+  }
+ },
+ {
+  "pkg": "com.hook.satelliteicon",
+  "name": "com.hook.satelliteicon-1.0.apk",
+  "tag": "1-1.0",
+  "versionCode": 1,
+  "versionName": "1.0.0",
+  "package": "com.hook.satelliteicon",
+  "minSdk": 33,
+  "targetSdk": 36,
+  "debuggable": true,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": null,
+   "xposedminversion": 93,
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "io.github.duofuwang.clearall",
+  "name": "ClearAllPin.apk",
+  "tag": "2-2.0",
+  "versionCode": 2,
+  "versionName": "2.0",
+  "package": "io.github.duofuwang.clearall",
+  "minSdk": 29,
+  "targetSdk": 35,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": "适用于 Launcher3/Trebuchet 系桌面：把最近任务的「全部清除」按钮常驻在截图按钮旁，样式可在应用内自选",
+   "xposedminversion": 82
+  }
+ },
+ {
+  "pkg": "io.github.li_yifei.pixelwatchbatterydrainfix",
+  "name": "pixel-watch-battery-drain-fix.apk",
+  "tag": "5-0.5.0",
+  "versionCode": 5,
+  "versionName": "0.5.0",
+  "package": "io.github.li_yifei.pixelwatchbatterydrainfix",
+  "minSdk": 30,
+  "targetSdk": 35,
+  "libs": []
+ },
+ {
+  "pkg": "io.github.lcebot.clipsync",
+  "name": "app-release.apk",
+  "tag": "2102-2.1.2",
+  "versionCode": 2102,
+  "versionName": "2.1.2",
+  "package": "io.github.lcebot.clipsync",
+  "minSdk": 35,
+  "targetSdk": 35,
+  "libs": [
+   "arm64-v8a"
+  ]
+ },
+ {
+  "pkg": "io.github.lcebot.clipsync",
+  "name": "app-release.apk",
+  "tag": "2101-2.1.1",
+  "versionCode": 2101,
+  "versionName": "2.1.1",
+  "package": "io.github.lcebot.clipsync",
+  "minSdk": 35,
+  "targetSdk": 35,
+  "libs": [
+   "arm64-v8a"
+  ]
+ },
+ {
+  "pkg": "io.github.lcebot.clipsync",
+  "name": "app-release.apk",
+  "tag": "2100-2.1.0",
+  "versionCode": 2100,
+  "versionName": "2.1.0",
+  "package": "io.github.lcebot.clipsync",
+  "minSdk": 35,
+  "targetSdk": 35,
+  "libs": [
+   "arm64-v8a",
+   "armeabi-v7a",
+   "x86",
+   "x86_64"
+  ]
+ },
+ {
+  "pkg": "io.github.lcebot.clipsync",
+  "name": "app-release.apk",
+  "tag": "2001-2.0.1",
+  "versionCode": 2001,
+  "versionName": "2.0.1",
+  "package": "io.github.lcebot.clipsync",
+  "minSdk": 35,
+  "targetSdk": 35,
+  "libs": []
+ },
+ {
+  "pkg": "dev.hyperears",
+  "name": "HyperEars-v2.7.0.apk",
+  "tag": "20700-2.7.0",
+  "versionCode": 20700,
+  "versionName": "2.7.0",
+  "package": "dev.hyperears",
+  "minSdk": 35,
+  "targetSdk": 36,
+  "libs": [
+   "arm64-v8a",
+   "armeabi-v7a",
+   "x86",
+   "x86_64"
+  ],
+  "providers": [
+   "io.github.libxposed.service.XposedProvider"
+  ],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": null,
+   "xposedminversion": 101,
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "dev.hyperears",
+  "name": "HyperEars-v2.6.0.apk",
+  "tag": "20600-2.6.0",
+  "versionCode": 20600,
+  "versionName": "2.6.0",
+  "package": "dev.hyperears",
+  "minSdk": 35,
+  "targetSdk": 36,
+  "libs": [
+   "arm64-v8a",
+   "armeabi-v7a",
+   "x86",
+   "x86_64"
+  ],
+  "providers": [
+   "io.github.libxposed.service.XposedProvider"
+  ],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": null,
+   "xposedminversion": 101,
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "dev.hyperears",
+  "name": "HyperEars-v2.5.0.apk",
+  "tag": "20500-2.5.0",
+  "versionCode": 20500,
+  "versionName": "2.5.0",
+  "package": "dev.hyperears",
+  "minSdk": 35,
+  "targetSdk": 36,
+  "libs": [
+   "arm64-v8a",
+   "armeabi-v7a",
+   "x86",
+   "x86_64"
+  ],
+  "providers": [
+   "io.github.libxposed.service.XposedProvider"
+  ],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": null,
+   "xposedminversion": 101,
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "dev.hyperears",
+  "name": "HyperEars-v2.4.1.apk",
+  "tag": "20401-2.4.1",
+  "versionCode": 20401,
+  "versionName": "2.4.1",
+  "package": "dev.hyperears",
+  "minSdk": 35,
+  "targetSdk": 36,
+  "libs": [
+   "arm64-v8a",
+   "armeabi-v7a",
+   "x86",
+   "x86_64"
+  ],
+  "providers": [
+   "io.github.libxposed.service.XposedProvider"
+  ],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": null,
+   "xposedminversion": 101,
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "io.github.leekin2.xnotify",
+  "name": "XNotify-3.5.apk",
+  "tag": "28-3.5",
+  "versionCode": 28,
+  "versionName": "3.5",
+  "package": "io.github.leekin2.xnotify",
+  "minSdk": 35,
+  "targetSdk": 36,
+  "libs": [],
+  "providers": [
+   "io.github.libxposed.service.XposedProvider"
+  ]
+ },
+ {
+  "pkg": "io.github.leekin2.xnotify",
+  "name": "XNotify-3.4.apk",
+  "tag": "26-3.4",
+  "versionCode": 26,
+  "versionName": "3.4",
+  "package": "io.github.leekin2.xnotify",
+  "minSdk": 35,
+  "targetSdk": 36,
+  "libs": [],
+  "providers": [
+   "io.github.libxposed.service.XposedProvider"
+  ]
+ },
+ {
+  "pkg": "io.github.leekin2.xnotify",
+  "name": "XNotify-3.3.apk",
+  "tag": "24-3.3",
+  "versionCode": 24,
+  "versionName": "3.3",
+  "package": "io.github.leekin2.xnotify",
+  "minSdk": 35,
+  "targetSdk": 36,
+  "libs": []
+ },
+ {
+  "pkg": "com.darkeyes.tricks",
+  "name": "Tricks_v3.4.apk",
+  "tag": "43-3.4",
+  "versionCode": 43,
+  "versionName": "3.4",
+  "package": "com.darkeyes.tricks",
+  "minSdk": 34,
+  "targetSdk": 34,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposedminversion": 100,
+   "xposedsharedprefs": true,
+   "xposeddescription": "Dark_Eyes_'s tricks",
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "com.darkeyes.tricks",
+  "name": "Tricks_v3.3.apk",
+  "tag": "42-3.3",
+  "versionCode": 42,
+  "versionName": "3.3",
+  "package": "com.darkeyes.tricks",
+  "minSdk": 34,
+  "targetSdk": 34,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposedminversion": 100,
+   "xposedsharedprefs": true,
+   "xposeddescription": "Dark_Eyes_'s tricks",
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "com.darkeyes.tricks",
+  "name": "Tricks_v3.2.apk",
+  "tag": "41-3.2",
+  "versionCode": 41,
+  "versionName": "3.2",
+  "package": "com.darkeyes.tricks",
+  "minSdk": 34,
+  "targetSdk": 34,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposedminversion": 100,
+   "xposedsharedprefs": true,
+   "xposeddescription": "Dark_Eyes_'s tricks",
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "com.darkeyes.tricks",
+  "name": "Tricks_v3.1.apk",
+  "tag": "40-3.1",
+  "versionCode": 40,
+  "versionName": "3.1",
+  "package": "com.darkeyes.tricks",
+  "minSdk": 34,
+  "targetSdk": 34,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposedminversion": 100,
+   "xposedsharedprefs": true,
+   "xposeddescription": "Dark_Eyes_'s tricks",
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "dev.lackluster.mihelper",
+  "name": "XiaomiHelper_26.05_26050_release_1777616691.apk",
+  "tag": "26050-26.05",
+  "versionCode": 26050,
+  "versionName": "26.05",
+  "package": "dev.lackluster.mihelper",
+  "minSdk": 35,
+  "targetSdk": 37,
+  "libs": [
+   "arm64-v8a"
+  ],
+  "providers": [
+   "io.github.libxposed.service.XposedProvider"
+  ]
+ },
+ {
+  "pkg": "dev.lackluster.mihelper",
+  "name": "XiaomiHelper_3.1.8_318_release_1760862928.apk",
+  "tag": "318-3.1.8",
+  "versionCode": 318,
+  "versionName": "3.1.8",
+  "package": "dev.lackluster.mihelper",
+  "minSdk": 34,
+  "targetSdk": 36,
+  "libs": [
+   "arm64-v8a"
+  ],
+  "xmeta": {
+   "xposedscope": null,
+   "xposeddescription": null,
+   "xposedminversion": 93,
+   "xposedsharedprefs": true,
+   "xposedmodule": true
+  }
+ },
+ {
+  "pkg": "dev.lackluster.mihelper",
+  "name": "XiaomiHelper_3.1.0_310_release_1749569929601.apk",
+  "tag": "310-3.1.0",
+  "versionCode": 310,
+  "versionName": "3.1.0",
+  "package": "dev.lackluster.mihelper",
+  "minSdk": 34,
+  "targetSdk": 35,
+  "libs": [
+   "arm64-v8a"
+  ],
+  "xmeta": {
+   "xposedscope": null,
+   "xposeddescription": null,
+   "xposedminversion": 93,
+   "xposedsharedprefs": true
+  }
+ },
+ {
+  "pkg": "dev.lackluster.mihelper",
+  "name": "XiaomiHelper_3.0.6-compose_235_release.apk",
+  "tag": "235-3.0.6-compose",
+  "versionCode": 235,
+  "versionName": "3.0.6-compose",
+  "package": "dev.lackluster.mihelper",
+  "minSdk": 34,
+  "targetSdk": 35,
+  "libs": [
+   "arm64-v8a",
+   "armeabi-v7a",
+   "x86",
+   "x86_64"
+  ],
+  "xmeta": {
+   "xposedscope": null,
+   "xposeddescription": null,
+   "xposedminversion": 93
+  }
+ },
+ {
+  "pkg": "io.github.leekin2.xreply",
+  "name": "XReply-1.1.apk",
+  "tag": "2-1.1",
+  "versionCode": 2,
+  "versionName": "1.1",
+  "package": "io.github.leekin2.xreply",
+  "minSdk": 35,
+  "targetSdk": 36,
+  "libs": [],
+  "providers": [
+   "io.github.libxposed.service.XposedProvider"
+  ]
+ },
+ {
+  "pkg": "io.github.leekin2.xreply",
+  "name": "XReply-1.0.apk",
+  "tag": "1-1.0",
+  "versionCode": 1,
+  "versionName": "1.0",
+  "package": "io.github.leekin2.xreply",
+  "minSdk": 35,
+  "targetSdk": 36,
+  "libs": [],
+  "providers": [
+   "io.github.libxposed.service.XposedProvider"
+  ]
+ },
+ {
+  "pkg": "sb.firefds.u.firefdskit",
+  "name": "FirefdsKit_U_14.0.0.3-ALPHA-3.apk",
+  "tag": "14003-14.0.0.3-ALPHA-3",
+  "versionCode": 14003,
+  "versionName": "14.0.0.3-ALPHA-3",
+  "package": "sb.firefds.u.firefdskit",
+  "minSdk": 34,
+  "targetSdk": 34,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposedminversion": 93,
+   "xposeddescription": "Made for stock Samsung devices supporting Android 14.0 Roms by Firefds",
+   "xposedsharedprefs": true,
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "sb.firefds.u.firefdskit",
+  "name": "FirefdsKit_U_14.0.0.2-ALPHA-2.apk",
+  "tag": "14002-14.0.0.2-ALPHA-2",
+  "versionCode": 14002,
+  "versionName": "14.0.0.2-ALPHA-2",
+  "package": "sb.firefds.u.firefdskit",
+  "minSdk": 34,
+  "targetSdk": 34,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposedminversion": 93,
+   "xposeddescription": "Made for stock Samsung devices supporting Android 14.0 Roms by Firefds",
+   "xposedsharedprefs": true,
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "sb.firefds.u.firefdskit",
+  "name": "FirefdsKit_U_14.0.0.1-ALPHA-1.apk",
+  "tag": "14001-14.0.0.1-ALPHA-1",
+  "versionCode": 14001,
+  "versionName": "14.0.0.1-ALPHA-1",
+  "package": "sb.firefds.u.firefdskit",
+  "minSdk": 34,
+  "targetSdk": 34,
+  "libs": [],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposedminversion": 93,
+   "xposeddescription": "Made for stock Samsung devices supporting Android 14.0 Roms by Firefds",
+   "xposedsharedprefs": true,
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "rongyi.puddingpods",
+  "name": "default.apk",
+  "tag": "347-3.47",
+  "versionCode": 347,
+  "versionName": "3.47",
+  "package": "rongyi.puddingpods",
+  "minSdk": 35,
+  "targetSdk": 36,
+  "libs": [
+   "arm64-v8a",
+   "armeabi-v7a",
+   "x86",
+   "x86_64"
+  ],
+  "providers": [
+   "io.github.libxposed.service.XposedProvider"
+  ],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": "MOONDROP PUDDING support for Xiaomi HyperOS.",
+   "xposedminversion": 101,
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "rongyi.puddingpods",
+  "name": "PuddingPods.apk",
+  "tag": "345-3.45",
+  "versionCode": 345,
+  "versionName": "3.45",
+  "package": "rongyi.puddingpods",
+  "minSdk": 35,
+  "targetSdk": 36,
+  "libs": [
+   "arm64-v8a",
+   "armeabi-v7a",
+   "x86",
+   "x86_64"
+  ],
+  "providers": [
+   "io.github.libxposed.service.XposedProvider"
+  ],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": "MOONDROP PUDDING support for Xiaomi HyperOS.",
+   "xposedminversion": 101,
+   "xposedscope": null
+  }
+ },
+ {
+  "pkg": "cn.buffcow.hyperste",
+  "name": "app-release.apk",
+  "tag": "2-1.1.0",
+  "versionCode": 2,
+  "versionName": "1.1.0",
+  "package": "cn.buffcow.hyperste",
+  "minSdk": 34,
+  "targetSdk": 37,
+  "libs": []
+ },
+ {
+  "pkg": "cn.buffcow.hyperste",
+  "name": "app-release.apk",
+  "tag": "1-1.0.0",
+  "versionCode": 1,
+  "versionName": "1.0.0",
+  "package": "cn.buffcow.hyperste",
+  "minSdk": 34,
+  "targetSdk": 37,
+  "libs": []
+ },
+ {
+  "pkg": "vn.kwaiching.live",
+  "name": "V24.08.02_riscv64_release.apk",
+  "tag": "62-24.08.02",
+  "versionCode": 62,
+  "versionName": "24.08.02",
+  "package": "vn.kwaiching.live",
+  "minSdk": 21,
+  "targetSdk": 26,
+  "libs": [
+   "riscv64"
+  ],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": null,
+   "xposedminversion": 53
+  }
+ },
+ {
+  "pkg": "vn.kwaiching.anantaryamarga",
+  "name": "V23.01.21_x86_64_release.apk",
+  "tag": "21-23.01.21",
+  "versionCode": 21,
+  "versionName": "23.01.21",
+  "package": "vn.kwaiching.anantaryamarga",
+  "minSdk": 21,
+  "targetSdk": 26,
+  "libs": [
+   "x86_64"
+  ],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": null,
+   "xposedminversion": 53
+  }
+ },
+ {
+  "pkg": "cn.kwaiching.hook",
+  "name": "V24.07.27_universal_release.apk",
+  "tag": "387-24.07.27",
+  "versionCode": 387,
+  "versionName": "24.07.27",
+  "package": "cn.kwaiching.hook",
+  "minSdk": 21,
+  "targetSdk": 26,
+  "libs": [
+   "arm64-v8a",
+   "armeabi-v7a",
+   "riscv64",
+   "x86",
+   "x86_64"
+  ],
+  "xmeta": {
+   "xposedmodule": true,
+   "xposeddescription": null,
+   "xposedminversion": 53
+  }
+ }
+]

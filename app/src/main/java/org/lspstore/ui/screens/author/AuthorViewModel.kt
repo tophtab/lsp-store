@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.lspstore.R
 import org.lspstore.di.AppContainer
+import org.lspstore.ui.toUserMessage
 import org.lspstore.domain.model.Module
 import java.time.Instant
 
@@ -19,7 +20,6 @@ data class AuthorUiState(
     val author: String = "",
     val modules: List<Module> = emptyList(),
     val installedPackages: Set<String> = emptySet(),
-    val favourites: Set<String> = emptySet(),
 )
 
 class AuthorViewModel(
@@ -29,7 +29,6 @@ class AuthorViewModel(
 
     private val moduleRepository = container.moduleRepository
     private val installedRepository = container.installedRepository
-    private val libraryRepository = container.libraryRepository
 
     private val _state = MutableStateFlow(AuthorUiState(author = author))
     val state = _state.asStateFlow()
@@ -37,19 +36,10 @@ class AuthorViewModel(
     private var index: List<Module> = emptyList()
 
     init {
-        viewModelScope.launch {
-            libraryRepository.favourites.collect { favourites ->
-                _state.update { it.copy(favourites = favourites.toSet()) }
-            }
-        }
         load()
     }
 
     fun refresh() = load()
-
-    fun toggleFavourite(packageName: String) {
-        viewModelScope.launch { libraryRepository.toggleFavourite(packageName) }
-    }
 
     private fun load() {
         viewModelScope.launch {
@@ -73,7 +63,7 @@ class AuthorViewModel(
                 _state.update {
                     it.copy(
                         isLoading = false,
-                        error = error.message ?: container.appContext.getString(R.string.author_load_failed),
+                        error = error.toUserMessage(container.appContext, R.string.author_load_failed),
                     )
                 }
             }

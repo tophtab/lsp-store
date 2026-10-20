@@ -11,30 +11,24 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import org.lspstore.R
@@ -44,7 +38,14 @@ import org.lspstore.ui.components.EmptyBox
 import org.lspstore.ui.components.ErrorBox
 import org.lspstore.ui.components.LoadingBox
 import org.lspstore.ui.components.ModuleAvatar
-import org.lspstore.ui.components.VersionChip
+import org.lspstore.ui.design.KomiButton
+import org.lspstore.ui.design.KomiButtonSize
+import org.lspstore.ui.design.KomiButtonVariant
+import org.lspstore.ui.design.KomiInfoChip
+import org.lspstore.ui.design.KomiSurface
+import org.lspstore.ui.design.KomiText
+import org.lspstore.ui.design.KomiTopBar
+import org.lspstore.ui.theme.KomiTextRole
 
 @Composable
 fun LibraryListScreen(
@@ -60,17 +61,20 @@ fun LibraryListScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            TopAppBar(
-                title = { Text(stringResource(kind.titleRes)) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
-                    }
-                },
+            KomiTopBar(
+                title = stringResource(kind.titleRes),
+                onBack = onBack,
+                backContentDescription = stringResource(R.string.action_back),
                 actions = {
                     if (kind == LibraryKind.RECENTLY_VIEWED && state.modules.isNotEmpty()) {
-                        TextButton(onClick = viewModel::clearAll) { Text(stringResource(R.string.action_clear)) }
+                        KomiButton(
+                            onClick = viewModel::clearAll,
+                            label = stringResource(R.string.action_clear),
+                            variant = KomiButtonVariant.Text,
+                            size = KomiButtonSize.Small,
+                        )
                     }
                 },
             )
@@ -78,12 +82,16 @@ fun LibraryListScreen(
     ) { innerPadding ->
         when {
             state.isLoading -> LoadingBox(Modifier.padding(innerPadding))
-            state.error != null -> ErrorBox(state.error!!, viewModel::refresh, Modifier.padding(innerPadding))
-            state.modules.isEmpty() -> EmptyBox(stringResource(kind.emptyRes), Modifier.padding(innerPadding))
-            else -> LazyColumn(
+            state.error != null ->
+                ErrorBox(state.error!!, viewModel::refresh, Modifier.padding(innerPadding))
+            state.modules.isEmpty() ->
+                EmptyBox(stringResource(kind.emptyRes), Modifier.padding(innerPadding))
+            else -> LazyVerticalStaggeredGrid(
+                columns = StaggeredGridCells.Adaptive(minSize = 320.dp),
                 modifier = Modifier.fillMaxSize().padding(innerPadding),
-                contentPadding = PaddingValues(12.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(start = 12.dp, end = 12.dp, bottom = 32.dp),
+                verticalItemSpacing = 10.dp,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 items(state.modules, key = { it.packageName }) { module ->
                     LibraryRow(
@@ -107,52 +115,56 @@ private fun LibraryRow(
     onClick: () -> Unit,
     onRemove: () -> Unit,
 ) {
-    Card(
-        onClick = onClick,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+    KomiSurface(
         modifier = Modifier.fillMaxWidth(),
+        onClick = onClick,
+        contentPadding = PaddingValues(14.dp),
     ) {
-        Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-            ModuleAvatar(module, size = 44)
-            Spacer(Modifier.width(12.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (installed) {
+                ModuleAvatar(
+                    module,
+                    size = 44,
+                    installedPackage = module.packageName,
+                )
+                Spacer(Modifier.width(12.dp))
+            }
             Column(modifier = Modifier.weight(1f)) {
-                Text(
+                KomiText(
                     text = module.title,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
+                    role = KomiTextRole.Title,
+                    fontSize = 15.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                Text(
+                KomiText(
                     text = module.packageName,
-                    style = MaterialTheme.typography.labelSmall,
+                    role = KomiTextRole.Body,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 11.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(top = 2.dp),
                 )
-                Spacer(Modifier.width(4.dp))
-                module.latestRelease?.let {
-                    VersionChip(
-                        text = it.versionName,
-                        container = MaterialTheme.colorScheme.primaryContainer,
-                        content = MaterialTheme.colorScheme.onPrimaryContainer,
-                    )
-                }
-                if (installed) {
-                    VersionChip(
-                        text = stringResource(R.string.label_installed),
-                        container = MaterialTheme.colorScheme.secondaryContainer,
-                        content = MaterialTheme.colorScheme.onSecondaryContainer,
-                    )
+                Row(
+                    modifier = Modifier.padding(top = 6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    if (installed) {
+                        KomiInfoChip(stringResource(R.string.label_installed))
+                    }
+                    module.latestRelease?.let { KomiInfoChip(it.versionName) }
                 }
             }
             when (kind) {
                 LibraryKind.FAVOURITES -> IconButton(onClick = onRemove) {
-                    Icon(Icons.Filled.Favorite, contentDescription = stringResource(R.string.library_remove_favourite))
+                    Icon(
+                        Icons.Filled.Favorite,
+                        contentDescription = stringResource(R.string.library_remove_favourite),
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                    )
                 }
-                LibraryKind.HIDDEN -> IconButton(onClick = onRemove) {
-                    Icon(Icons.Filled.Visibility, contentDescription = stringResource(R.string.action_unhide))
-                }
+
                 LibraryKind.RECENTLY_VIEWED -> Unit
             }
         }
@@ -166,17 +178,20 @@ fun SkippedUpdatesScreen(onBack: () -> Unit) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.library_skipped)) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
-                    }
-                },
+            KomiTopBar(
+                title = stringResource(R.string.library_skipped),
+                onBack = onBack,
+                backContentDescription = stringResource(R.string.action_back),
                 actions = {
                     if (state.items.isNotEmpty()) {
-                        TextButton(onClick = viewModel::clearAll) { Text(stringResource(R.string.action_clear)) }
+                        KomiButton(
+                            onClick = viewModel::clearAll,
+                            label = stringResource(R.string.action_clear),
+                            variant = KomiButtonVariant.Text,
+                            size = KomiButtonSize.Small,
+                        )
                     }
                 },
             )
@@ -184,45 +199,69 @@ fun SkippedUpdatesScreen(onBack: () -> Unit) {
     ) { innerPadding ->
         when {
             state.isLoading -> LoadingBox(Modifier.padding(innerPadding))
-            state.error != null -> ErrorBox(state.error!!, viewModel::refresh, Modifier.padding(innerPadding))
-            state.items.isEmpty() -> EmptyBox(stringResource(R.string.library_empty_skipped), Modifier.padding(innerPadding))
-            else -> LazyColumn(
+            state.error != null ->
+                ErrorBox(state.error!!, viewModel::refresh, Modifier.padding(innerPadding))
+            state.items.isEmpty() ->
+                EmptyBox(stringResource(R.string.library_empty_skipped), Modifier.padding(innerPadding))
+            else -> LazyVerticalStaggeredGrid(
+                columns = StaggeredGridCells.Adaptive(minSize = 320.dp),
                 modifier = Modifier.fillMaxSize().padding(innerPadding),
-                contentPadding = PaddingValues(12.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(start = 12.dp, end = 12.dp, bottom = 32.dp),
+                verticalItemSpacing = 10.dp,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 items(state.items, key = { it.packageName }) { item ->
-                    Card(
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                    KomiSurface(
                         modifier = Modifier.fillMaxWidth(),
+                        contentPadding = PaddingValues(14.dp),
                     ) {
-                        Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
                             Column(modifier = Modifier.weight(1f)) {
-                                Text(
+                                KomiText(
                                     text = item.title,
-                                    style = MaterialTheme.typography.titleSmall,
-                                    fontWeight = FontWeight.SemiBold,
+                                    role = KomiTextRole.Title,
+                                    fontSize = 15.sp,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis,
                                 )
-                                Text(
+                                KomiText(
                                     text = item.packageName,
-                                    style = MaterialTheme.typography.labelSmall,
+                                    role = KomiTextRole.Body,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontSize = 11.sp,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.padding(top = 2.dp),
                                 )
-                                Text(
-                                    text = stringResource(R.string.library_skipped_version, item.skippedVersionCode) +
-                                        (item.latestVersionCode?.let {
-                                            stringResource(R.string.library_skipped_latest, it)
-                                        } ?: ""),
-                                    style = MaterialTheme.typography.bodySmall,
+                                KomiText(
+                                    text = if (item.isModuleIgnored) {
+                                        stringResource(R.string.library_ignored_module)
+                                    } else {
+                                        stringResource(
+                                            R.string.library_skipped_version,
+                                            item.skippedVersionCode ?: 0,
+                                        )
+                                    } + (item.latestVersionCode?.let {
+                                        stringResource(R.string.library_skipped_latest, it)
+                                    } ?: ""),
+                                    role = KomiTextRole.Label,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontSize = 12.sp,
+                                    modifier = Modifier.padding(top = 4.dp),
                                 )
                             }
-                            TextButton(onClick = { viewModel.unskip(item.packageName) }) {
-                                Text(stringResource(R.string.action_unskip))
-                            }
+                            KomiButton(
+                                onClick = { viewModel.restore(item) },
+                                label = stringResource(
+                                    if (item.isModuleIgnored) {
+                                        R.string.action_restore_update
+                                    } else {
+                                        R.string.action_unskip
+                                    },
+                                ),
+                                variant = KomiButtonVariant.Outline,
+                                size = KomiButtonSize.Small,
+                            )
                         }
                     }
                 }
@@ -230,4 +269,3 @@ fun SkippedUpdatesScreen(onBack: () -> Unit) {
         }
     }
 }
-

@@ -1,6 +1,7 @@
 package org.lspstore.data.remote
 
 import org.lspstore.data.remote.dto.CollaboratorDto
+import org.lspstore.data.remote.dto.FullModuleIndexDto
 import org.lspstore.data.remote.dto.ModuleListItemDto
 import org.lspstore.data.remote.dto.OnlineModuleDto
 import org.lspstore.data.remote.dto.ReleaseAssetDto
@@ -14,6 +15,33 @@ import java.time.Instant
 
 private fun parseInstant(raw: String?): Instant? =
     raw?.let { runCatching { Instant.parse(it) }.getOrNull() }
+
+/**
+ * Converts the single-file `/modules.json` payload into the same list DTO used by
+ * the paginated index, so the cache format stays unchanged.
+ */
+fun FullModuleIndexDto.toModuleListItem(): ModuleListItemDto {
+    val login = collaborators.firstOrNull()?.login?.takeIf { it.isNotBlank() }
+    val contributorName = collaborators.firstOrNull()?.name?.takeIf { it.isNotBlank() }
+    return ModuleListItemDto(
+        name = this.name,
+        description = this.description,
+        summary = summary,
+        url = url,
+        homepageUrl = homepageUrl,
+        sourceUrl = sourceUrl,
+        updatedAt = updatedAt,
+        stargazerCount = stargazerCount,
+        firstContributor = login ?: contributorName,
+        firstContributorAvatarUrl = login?.let { "https://github.com/$it.png?size=200" },
+        latestRelease = latestRelease,
+        latestBetaRelease = latestBetaRelease,
+        latestSnapshotRelease = latestSnapshotRelease,
+        latestReleaseTime = latestReleaseTime,
+        latestBetaReleaseTime = latestBetaReleaseTime,
+        latestSnapshotReleaseTime = latestSnapshotReleaseTime,
+    )
+}
 
 fun ModuleListItemDto.toModule(): Module = Module(
     packageName = name,
@@ -30,6 +58,8 @@ fun ModuleListItemDto.toModule(): Module = Module(
     latestBetaRelease = ModuleVersion.parse(latestBetaRelease),
     latestSnapshotRelease = ModuleVersion.parse(latestSnapshotRelease),
     latestReleaseTime = latestReleaseTime,
+    latestBetaReleaseTime = latestBetaReleaseTime,
+    latestSnapshotReleaseTime = latestSnapshotReleaseTime,
 )
 
 fun OnlineModuleDto.toModule(): Module = Module(
@@ -41,18 +71,25 @@ fun OnlineModuleDto.toModule(): Module = Module(
     sourceUrl = sourceUrl?.takeIf { it.isNotBlank() },
     updatedAt = parseInstant(updatedAt),
     stars = stargazerCount,
-    contributor = collaborators.firstOrNull()?.displayName(),
-    contributorAvatarUrl = null,
+    contributor = collaborators.firstOrNull()?.login?.takeIf { it.isNotBlank() }
+        ?: collaborators.firstOrNull()?.name?.takeIf { it.isNotBlank() },
+    contributorAvatarUrl = collaborators.firstOrNull()
+        ?.login
+        ?.takeIf { it.isNotBlank() }
+        ?.let { "https://github.com/$it.png?size=200" },
     latestRelease = ModuleVersion.parse(latestRelease),
     latestBetaRelease = ModuleVersion.parse(latestBetaRelease),
     latestSnapshotRelease = ModuleVersion.parse(latestSnapshotRelease),
     latestReleaseTime = latestReleaseTime,
+    latestBetaReleaseTime = latestBetaReleaseTime,
+    latestSnapshotReleaseTime = latestSnapshotReleaseTime,
 )
 
 fun OnlineModuleDto.toDetail(): ModuleDetail = ModuleDetail(
     module = toModule(),
     readmeHtml = readmeHTML,
-    collaborators = collaborators.mapNotNull { it.displayName() },
+    collaborators = (collaborators.mapNotNull { it.displayName() } +
+        additionalAuthors.mapNotNull { it.name?.takeIf(String::isNotBlank) }).distinct(),
     scope = scope.orEmpty(),
     releases = releases.map { it.toRelease() },
     betaReleases = betaReleases.map { it.toRelease() },

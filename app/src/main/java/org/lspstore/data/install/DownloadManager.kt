@@ -13,13 +13,11 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import org.lspstore.data.remote.DynamicProxySelector
-import org.lspstore.data.remote.ProxyAuthenticator
-import org.lspstore.data.remote.ProxyState
 import org.lspstore.domain.model.ReleaseAsset
 import java.io.File
 import java.io.IOException
 import java.io.RandomAccessFile
+import java.security.MessageDigest
 import java.util.concurrent.ConcurrentHashMap
 
 enum class DownloadStatus { RUNNING, PAUSED, COMPLETED, FAILED, CANCELLED }
@@ -44,11 +42,8 @@ data class DownloadTask(
  */
 class DownloadManager(
     private val context: Context,
-    proxyState: ProxyState,
 ) {
     private val client = OkHttpClient.Builder()
-        .proxySelector(DynamicProxySelector(proxyState))
-        .proxyAuthenticator(ProxyAuthenticator(proxyState))
         .connectTimeout(20, java.util.concurrent.TimeUnit.SECONDS)
         .readTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
         .build()
@@ -58,16 +53,15 @@ class DownloadManager(
     private val _tasks = MutableStateFlow<Map<String, DownloadTask>>(emptyMap())
     val tasks = _tasks.asStateFlow()
 
-    fun keyOf(asset: ReleaseAsset): String = asset.name.ifBlank { asset.downloadUrl.takeLast(48) }
+    fun keyOf(asset: ReleaseAsset): String = assetCacheKey(asset)
 
     fun taskFor(asset: ReleaseAsset): DownloadTask? = _tasks.value[keyOf(asset)]
 
     fun start(asset: ReleaseAsset): String {
         val key = keyOf(asset)
         val existing = _tasks.value[key]
-        if (existing?.status == DownloadStatus.RUNNING || existing?.status == DownloadStatus.COMPLETED) {
-            return key
-        }
+        if (existing?.status == DownloadStatus.RUNNING) return key
+        if (existing?.status == DownloadStatus.COMPLETED && existing.file?.exists() == true) return key
         launchDownload(key, asset, resume = existing?.status == DownloadStatus.PAUSED)
         return key
     }
@@ -85,9 +79,10 @@ class DownloadManager(
     }
 
     fun cancel(key: String) {
+        val task = _tasks.value[key]
         jobs.remove(key)?.cancel()
         updateTask(key) { it.copy(status = DownloadStatus.CANCELLED) }
-        runCatching { partialFile(_tasks.value[key]?.assetName.orEmpty()).delete() }
+        runCatching { task?.file?.delete() }
     }
 
     fun clearFinished() {
@@ -133,9 +128,11 @@ class DownloadManager(
     }
 
     private fun launchDownload(key: String, asset: ReleaseAsset, resume: Boolean) {
-        val target = partialFile(asset.name)
+        val target = targetFile(key, asset.name)
         val existingBytes = if (resume && target.exists()) target.length() else 0L
         if (!resume) runCatching { target.delete() }
+
+        DownloadService.start(context)
 
         updateTask(key, create = true) {
             it.copy(
@@ -144,6 +141,7 @@ class DownloadManager(
                 downloaded = existingBytes,
                 total = asset.size,
                 status = DownloadStatus.RUNNING,
+                file = target,
                 error = null,
             )
         }
@@ -155,13 +153,21 @@ class DownloadManager(
                 var lastError: Throwable? = null
                 for (url in urls) {
                     try {
-                        fetch(url, target, existingBytes) { downloaded, total ->
+                        // Continue from whatever a previous mirror attempt actually
+                        // wrote, so a mid-stream fallback cannot leave stale bytes.
+                        val offset = if (target.exists()) target.length() else 0L
+                        fetch(url, target, offset) { downloaded, total ->
                             updateTask(key) {
                                 it.copy(
                                     downloaded = downloaded,
                                     total = if (total > 0) total else asset.size,
                                 )
                             }
+                        }
+                        if (asset.size > 0 && target.length() != asset.size) {
+                            throw IOException(
+                                "Downloaded size ${target.length()} does not match ${asset.size}",
+                            )
                         }
                         updateTask(key) {
                             it.copy(
@@ -187,7 +193,8 @@ class DownloadManager(
                     it.copy(status = DownloadStatus.FAILED, error = t.message ?: "Download failed")
                 }
             } finally {
-                jobs.remove(key)
+                val self = coroutineContext[Job]
+                if (self != null) jobs.remove(key, self) else jobs.remove(key)
             }
         }
     }
@@ -226,9 +233,15 @@ class DownloadManager(
         }
     }
 
-    private fun partialFile(assetName: String): File {
+    private fun targetFile(key: String, assetName: String): File {
         val dir = File(context.cacheDir, "apk").apply { mkdirs() }
-        return File(dir, assetName.ifBlank { "module.apk" })
+        val safeName = assetName
+            .substringAfterLast('/')
+            .substringAfterLast('\\')
+            .replace(Regex("[^A-Za-z0-9._-]"), "_")
+            .take(80)
+            .ifBlank { "module.apk" }
+        return File(dir, "$key-$safeName")
     }
 
     private fun updateTask(key: String, create: Boolean = false, transform: (DownloadTask) -> DownloadTask) {
@@ -244,10 +257,42 @@ class DownloadManager(
         return dir.walkBottomUp().filter { it.isFile }.sumOf { it.length() }
     }
 
+    /** Cancels every running/paused download, keeping the tasks list for history. */
+    fun cancelAllActive() {
+        _tasks.value.keys.toList().forEach { key ->
+            val task = _tasks.value[key] ?: return@forEach
+            if (task.status == DownloadStatus.RUNNING || task.status == DownloadStatus.PAUSED) {
+                jobs.remove(key)?.cancel()
+                updateTask(key) { it.copy(status = DownloadStatus.CANCELLED) }
+            }
+        }
+    }
+
     fun clearAll() {
         jobs.values.forEach { it.cancel() }
         jobs.clear()
         _tasks.value = emptyMap()
         runCatching { File(context.cacheDir, "apk").deleteRecursively() }
     }
+}
+
+/**
+ * Cache key for an asset. The file name alone is not unique: many modules ship
+ * assets called app-release.apk, and one module can reuse a name across releases.
+ * Hash the download identity so two different APKs can never share a task or file.
+ */
+internal fun assetCacheKey(asset: ReleaseAsset): String {
+    val identity = buildString {
+        append(asset.downloadUrl)
+        append('|')
+        append(asset.fallbackUrl.orEmpty())
+        append('|')
+        append(asset.name)
+        append('|')
+        append(asset.size)
+    }
+    return MessageDigest.getInstance("SHA-256")
+        .digest(identity.toByteArray(Charsets.UTF_8))
+        .take(8)
+        .joinToString("") { "%02x".format(it.toInt() and 0xff) }
 }

@@ -5,7 +5,6 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import org.lspstore.data.repository.LibraryBackup
 import org.lspstore.domain.model.InstalledModule
 import org.lspstore.domain.model.Module
 import org.lspstore.domain.model.ModuleVersion
@@ -73,7 +72,7 @@ class VersionLogicTest {
     }
 
     @Test
-    fun updateCheckerRespectsSkippedAndHidden() {
+    fun updateCheckerRespectsSkippedAndIgnored() {
         val module = Module(
             packageName = "a.b",
             title = "T",
@@ -102,10 +101,10 @@ class VersionLogicTest {
         )
         assertEquals(1, skippedOlder.size)
 
-        val hidden = UpdateChecker.findUpdates(
-            listOf(installed), listOf(module), UpdateChannel.STABLE, hidden = setOf("a.b"),
+        val ignored = UpdateChecker.findUpdates(
+            listOf(installed), listOf(module), UpdateChannel.STABLE, ignored = setOf("a.b"),
         )
-        assertTrue(hidden.isEmpty())
+        assertTrue(ignored.isEmpty())
     }
 
     @Test
@@ -143,17 +142,73 @@ class VersionLogicTest {
     }
 
     @Test
-    fun libraryBackupRoundTrips() {
-        val json = kotlinx.serialization.json.Json { ignoreUnknownKeys = true }
-        val backup = LibraryBackup(
-            favourites = listOf("a.b", "c.d"),
-            recentlyViewed = listOf("c.d"),
-            hidden = listOf("e.f"),
-            skipped = mapOf("a.b" to 12L),
-            links = mapOf("com.example.alias" to "a.b"),
+    fun linkedModuleHonoursRepoKeyForSkippedAndIgnored() {
+        val module = Module(
+            packageName = "repo.pkg",
+            title = "T",
+            summary = null,
+            url = null,
+            homepageUrl = null,
+            sourceUrl = null,
+            updatedAt = null,
+            stars = 0,
+            contributor = null,
+            contributorAvatarUrl = null,
+            latestRelease = ModuleVersion.parse("10-1.0"),
+            latestBetaRelease = null,
+            latestSnapshotRelease = null,
+            latestReleaseTime = null,
         )
-        val text = json.encodeToString(LibraryBackup.serializer(), backup)
-        val decoded = json.decodeFromString(LibraryBackup.serializer(), text)
-        assertEquals(backup, decoded)
+        val installed = InstalledModule("com.vendor.alias", 9, "0.9", "T", true, null)
+        val links = mapOf("com.vendor.alias" to "repo.pkg")
+
+        assertTrue(
+            UpdateChecker.findUpdates(
+                listOf(installed), listOf(module), UpdateChannel.STABLE,
+                skipped = mapOf("repo.pkg" to 10L), links = links,
+            ).isEmpty(),
+        )
+        assertTrue(
+            UpdateChecker.findUpdates(
+                listOf(installed), listOf(module), UpdateChannel.STABLE,
+                links = links, ignored = setOf("com.vendor.alias"),
+            ).isEmpty(),
+        )
+        assertTrue(
+            UpdateChecker.findUpdates(
+                listOf(installed), listOf(module), UpdateChannel.STABLE,
+                links = links, ignored = setOf("repo.pkg"),
+            ).isEmpty(),
+        )
+        assertEquals(
+            1,
+            UpdateChecker.findUpdates(
+                listOf(installed), listOf(module), UpdateChannel.STABLE,
+                skipped = mapOf("com.vendor.alias" to 9L), links = links,
+            ).size,
+        )
+    }
+
+    @Test
+    fun matchesChannelFilterForStableAndBeta() {
+        val module = Module(
+            packageName = "a.b",
+            title = "T",
+            summary = null,
+            url = null,
+            homepageUrl = null,
+            sourceUrl = null,
+            updatedAt = null,
+            stars = 0,
+            contributor = null,
+            contributorAvatarUrl = null,
+            latestRelease = ModuleVersion.parse("10-1.0"),
+            latestBetaRelease = ModuleVersion.parse("11-1.1-beta"),
+            latestSnapshotRelease = null,
+            latestReleaseTime = null,
+        )
+        assertTrue(module.hasChannel(UpdateChannel.STABLE))
+        assertTrue(module.hasChannel(UpdateChannel.BETA))
+        assertFalse(module.hasChannel(UpdateChannel.NIGHTLY))
     }
 }

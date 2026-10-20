@@ -18,7 +18,7 @@ data class OnboardingUiState(
     val currentIndex: Int = 0,
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     val amoled: Boolean = false,
-    val dynamicColor: Boolean = true,
+    val dynamicColor: Boolean = false,
 ) {
     val currentStep: OnboardingStep get() = steps[currentIndex]
     val isFirst: Boolean get() = currentIndex == 0

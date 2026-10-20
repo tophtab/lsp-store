@@ -1,0 +1,9 @@
+0.2.0
+- Risolti i conflitti della cache di download dell'APK tra moduli/versioni.
+- I moduli collegati ora vengono installati/verificati rispetto al pacchetto installato.
+- Sessioni di PackageInstaller con callback dei risultati; disinstalla-quindi-installa in caso di mancata corrispondenza della firma.
+- Scelta dell'APK compatibile con ABI per aggiornamenti batch/in background.
+- Gestione più rapida della cache dell'indice e fallback offline.
+- Filtro del canale di ricerca, AMOLED con colore dinamico, correzioni di test proxy.
+- Ambito, note di rilascio e contributori sui dettagli del modulo.
+- CI, minimizzazione delle versioni e metadati in 14 lingue.

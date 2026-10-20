@@ -2,7 +2,9 @@ package org.lspstore.data.remote
 
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.plugins.timeout
 import io.ktor.client.request.get
+import org.lspstore.data.remote.dto.FullModuleIndexDto
 import org.lspstore.data.remote.dto.ModuleListResponseDto
 import org.lspstore.data.remote.dto.OnlineModuleDto
 import java.io.IOException
@@ -19,10 +21,15 @@ class LsposedRepoApi(
     @Volatile
     private var hostIndex = 0
 
-    private suspend fun <T> fetch(path: String, request: suspend (String) -> T): T {
+    private suspend fun <T> fetch(
+        path: String,
+        maxAttempts: Int = Int.MAX_VALUE,
+        request: suspend (String) -> T,
+    ): T {
         val hosts = mirrorState.orderedHosts()
+        val attempts = minOf(maxAttempts, hosts.size)
         var last: Throwable? = null
-        for (offset in hosts.indices) {
+        for (offset in 0 until attempts) {
             val index = (hostIndex + offset) % hosts.size
             try {
                 val result = request(hosts[index] + path)
@@ -39,6 +46,20 @@ class LsposedRepoApi(
 
     suspend fun moduleList(page: Int): ModuleListResponseDto =
         fetch("module-list/$page.json") { url -> client.get(url).body() }
+
+    /** Single-request full index, the same endpoint the official LSPosed Manager uses. */
+    suspend fun fullModuleIndex(): List<FullModuleIndexDto> =
+        fetch("modules.json", maxAttempts = 1) { url ->
+            client.get(url) {
+                // A stalled single-file request must not delay the paginated
+                // fallback for the client's full 30 s timeout.
+                timeout {
+                    connectTimeoutMillis = 5_000
+                    requestTimeoutMillis = 10_000
+                    socketTimeoutMillis = 10_000
+                }
+            }.body()
+        }
 
     suspend fun moduleDetail(packageName: String): OnlineModuleDto =
         fetch("module/$packageName.json") { url -> client.get(url).body() }

@@ -30,7 +30,6 @@ data class DiagnosticsUiState(
     val theme: String = "",
     val backgroundCheck: Boolean = true,
     val rootInstall: Boolean = false,
-    val proxyEnabled: Boolean = false,
     val translationProvider: String = "",
     val message: String? = null,
 ) {
@@ -47,7 +46,6 @@ data class DiagnosticsUiState(
         appendLine("theme: $theme")
         appendLine("background check: $backgroundCheck")
         appendLine("root install: $rootInstall")
-        appendLine("proxy: $proxyEnabled")
         appendLine("translation: $translationProvider")
     }
 }
@@ -97,7 +95,6 @@ class DiagnosticsViewModel(private val container: AppContainer) : ViewModel() {
             val theme = settings.themeMode.first()
             val background = settings.backgroundCheckEnabled.first()
             val root = settings.rootInstall.first()
-            val proxy = settings.proxyConfig.first()
             val translation = settings.translationSettings.first()
             val installed = runCatching { container.installedRepository.getInstalledModules() }
                 .getOrDefault(emptyList())
@@ -118,7 +115,6 @@ class DiagnosticsViewModel(private val container: AppContainer) : ViewModel() {
                     theme = theme.name,
                     backgroundCheck = background,
                     rootInstall = root,
-                    proxyEnabled = proxy.enabled,
                     translationProvider = translation.provider.name,
                 )
             }

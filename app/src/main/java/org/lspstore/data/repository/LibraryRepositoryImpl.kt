@@ -7,25 +7,66 @@ import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.MapSerializer
+import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
+import org.lspstore.domain.variant.ModuleVariantState
+import org.lspstore.domain.variant.VariantSignature
+import org.lspstore.domain.variant.onInstallFailed
+import org.lspstore.domain.variant.onInstallSucceeded
+import org.lspstore.domain.variant.parseTraits
 
 private val Context.libraryDataStore by preferencesDataStore(name = "library")
 
 /**
- * User-curated lists: favourites, recently viewed, hidden modules and skipped
- * updates. Ordered lists are stored newline separated; skipped updates as
+ * User-curated lists: favourites, recently viewed and ignored updates.
+ * Ordered lists are stored newline separated; skipped updates as
  * "package:versionCode" lines.
  */
-class LibraryRepositoryImpl(private val context: Context) {
+interface LibraryRepository {
+    val favourites: Flow<List<String>>
+    val recentlyViewed: Flow<List<String>>
+    val skippedUpdates: Flow<Map<String, Long>>
+    val ignoredUpdates: Flow<Set<String>>
+    val searchHistory: Flow<List<String>>
+    val links: Flow<Map<String, String>>
+    val variantStates: Flow<Map<String, ModuleVariantState>>
+
+    suspend fun toggleFavourite(packageName: String)
+    suspend fun addRecentlyViewed(packageName: String)
+    suspend fun clearRecentlyViewed()
+    suspend fun skipUpdate(packageName: String, versionCode: Long)
+    suspend fun unskipUpdate(packageName: String)
+    suspend fun clearSkippedUpdates()
+    suspend fun setUpdateCheckEnabled(packageName: String, enabled: Boolean)
+    suspend fun clearIgnoredUpdates()
+    suspend fun addSearchQuery(query: String)
+    suspend fun clearSearchHistory()
+    suspend fun linkModule(installedPackage: String, repoPackage: String)
+    suspend fun unlinkModule(installedPackage: String)
+    suspend fun setVariantState(packageName: String, state: ModuleVariantState)
+    suspend fun clearVariantState(packageName: String)
+    suspend fun recordInstallResult(
+        packageName: String,
+        ok: Boolean,
+        signature: VariantSignature? = null,
+    )
+
+    /** Idempotent one-off migration of the legacy asset-name preferences. */
+    suspend fun migratePreferredVariants()
+}
+
+class LibraryRepositoryImpl(private val context: Context) : LibraryRepository {
 
     private object Keys {
         val FAVOURITES = stringPreferencesKey("favourites")
         val RECENTLY_VIEWED = stringPreferencesKey("recently_viewed")
-        val HIDDEN = stringPreferencesKey("hidden")
         val SKIPPED = stringPreferencesKey("skipped")
+        val IGNORED_UPDATES = stringPreferencesKey("ignored_updates")
         val SEARCH_HISTORY = stringPreferencesKey("search_history")
         val LINKS = stringPreferencesKey("manual_links")
+        val PREFERRED_VARIANTS = stringPreferencesKey("preferred_variants")
+        val VARIANT_STATE = stringPreferencesKey("variant_state")
     }
 
     private val json = Json {
@@ -34,26 +75,34 @@ class LibraryRepositoryImpl(private val context: Context) {
         encodeDefaults = true
     }
 
-    val favourites: Flow<List<String>> = context.libraryDataStore.data
+    private val variantStatesSerializer =
+        MapSerializer(String.serializer(), ModuleVariantState.serializer())
+
+    override val favourites: Flow<List<String>> = context.libraryDataStore.data
         .map { decodeList(it[Keys.FAVOURITES]) }
 
-    val recentlyViewed: Flow<List<String>> = context.libraryDataStore.data
+    override val recentlyViewed: Flow<List<String>> = context.libraryDataStore.data
         .map { decodeList(it[Keys.RECENTLY_VIEWED]) }
 
-    val hidden: Flow<Set<String>> = context.libraryDataStore.data
-        .map { decodeList(it[Keys.HIDDEN]).toSet() }
-
-    val skippedUpdates: Flow<Map<String, Long>> = context.libraryDataStore.data
+    override val skippedUpdates: Flow<Map<String, Long>> = context.libraryDataStore.data
         .map { decodeSkipped(it[Keys.SKIPPED]) }
 
-    val searchHistory: Flow<List<String>> = context.libraryDataStore.data
+    /** Installed or repository package names whose updates the user ignored. */
+    override val ignoredUpdates: Flow<Set<String>> = context.libraryDataStore.data
+        .map { decodeList(it[Keys.IGNORED_UPDATES]).toSet() }
+
+    override val searchHistory: Flow<List<String>> = context.libraryDataStore.data
         .map { decodeList(it[Keys.SEARCH_HISTORY]) }
 
     /** installed package name -> repository module package name */
-    val links: Flow<Map<String, String>> = context.libraryDataStore.data
+    override val links: Flow<Map<String, String>> = context.libraryDataStore.data
         .map { decodeLinks(it[Keys.LINKS]) }
 
-    suspend fun toggleFavourite(packageName: String) {
+    /** repository module package name -> variant status + semantic signature */
+    override val variantStates: Flow<Map<String, ModuleVariantState>> = context.libraryDataStore.data
+        .map { decodeVariantStates(it[Keys.VARIANT_STATE]) }
+
+    override suspend fun toggleFavourite(packageName: String) {
         context.libraryDataStore.edit { prefs ->
             val current = decodeList(prefs[Keys.FAVOURITES])
             prefs[Keys.FAVOURITES] = encodeList(
@@ -62,7 +111,7 @@ class LibraryRepositoryImpl(private val context: Context) {
         }
     }
 
-    suspend fun addRecentlyViewed(packageName: String) {
+    override suspend fun addRecentlyViewed(packageName: String) {
         context.libraryDataStore.edit { prefs ->
             val current = decodeList(prefs[Keys.RECENTLY_VIEWED])
             val updated = (listOf(packageName) + current.filterNot { it == packageName }).take(MAX_RECENT)
@@ -70,20 +119,11 @@ class LibraryRepositoryImpl(private val context: Context) {
         }
     }
 
-    suspend fun clearRecentlyViewed() {
+    override suspend fun clearRecentlyViewed() {
         context.libraryDataStore.edit { it[Keys.RECENTLY_VIEWED] = "" }
     }
 
-    suspend fun toggleHidden(packageName: String) {
-        context.libraryDataStore.edit { prefs ->
-            val current = decodeList(prefs[Keys.HIDDEN])
-            prefs[Keys.HIDDEN] = encodeList(
-                if (packageName in current) current - packageName else listOf(packageName) + current,
-            )
-        }
-    }
-
-    suspend fun skipUpdate(packageName: String, versionCode: Long) {
+    override suspend fun skipUpdate(packageName: String, versionCode: Long) {
         context.libraryDataStore.edit { prefs ->
             val current = decodeSkipped(prefs[Keys.SKIPPED]).toMutableMap()
             current[packageName] = versionCode
@@ -91,7 +131,7 @@ class LibraryRepositoryImpl(private val context: Context) {
         }
     }
 
-    suspend fun unskipUpdate(packageName: String) {
+    override suspend fun unskipUpdate(packageName: String) {
         context.libraryDataStore.edit { prefs ->
             val current = decodeSkipped(prefs[Keys.SKIPPED]).toMutableMap()
             current.remove(packageName)
@@ -99,11 +139,24 @@ class LibraryRepositoryImpl(private val context: Context) {
         }
     }
 
-    suspend fun clearSkippedUpdates() {
+    override suspend fun clearSkippedUpdates() {
         context.libraryDataStore.edit { it[Keys.SKIPPED] = "" }
     }
 
-    suspend fun addSearchQuery(query: String) {
+    override suspend fun setUpdateCheckEnabled(packageName: String, enabled: Boolean) {
+        context.libraryDataStore.edit { prefs ->
+            val current = decodeList(prefs[Keys.IGNORED_UPDATES])
+            prefs[Keys.IGNORED_UPDATES] = encodeList(
+                if (enabled) current - packageName else listOf(packageName) + current,
+            )
+        }
+    }
+
+    override suspend fun clearIgnoredUpdates() {
+        context.libraryDataStore.edit { it[Keys.IGNORED_UPDATES] = "" }
+    }
+
+    override suspend fun addSearchQuery(query: String) {
         val trimmed = query.trim()
         if (trimmed.length < 2) return
         context.libraryDataStore.edit { prefs ->
@@ -114,11 +167,11 @@ class LibraryRepositoryImpl(private val context: Context) {
         }
     }
 
-    suspend fun clearSearchHistory() {
+    override suspend fun clearSearchHistory() {
         context.libraryDataStore.edit { it[Keys.SEARCH_HISTORY] = "" }
     }
 
-    suspend fun linkModule(installedPackage: String, repoPackage: String) {
+    override suspend fun linkModule(installedPackage: String, repoPackage: String) {
         context.libraryDataStore.edit { prefs ->
             val current = decodeLinks(prefs[Keys.LINKS]).toMutableMap()
             current[installedPackage] = repoPackage
@@ -126,7 +179,7 @@ class LibraryRepositoryImpl(private val context: Context) {
         }
     }
 
-    suspend fun unlinkModule(installedPackage: String) {
+    override suspend fun unlinkModule(installedPackage: String) {
         context.libraryDataStore.edit { prefs ->
             val current = decodeLinks(prefs[Keys.LINKS]).toMutableMap()
             current.remove(installedPackage)
@@ -134,54 +187,81 @@ class LibraryRepositoryImpl(private val context: Context) {
         }
     }
 
-    suspend fun exportJson(): String {
-        val prefs = context.libraryDataStore.data.first()
-        val backup = LibraryBackup(
-            favourites = decodeList(prefs[Keys.FAVOURITES]),
-            recentlyViewed = decodeList(prefs[Keys.RECENTLY_VIEWED]),
-            hidden = decodeList(prefs[Keys.HIDDEN]),
-            skipped = decodeSkipped(prefs[Keys.SKIPPED]),
-            links = decodeLinks(prefs[Keys.LINKS]),
-        )
-        return json.encodeToString(LibraryBackup.serializer(), backup)
-    }
-
-    suspend fun importJson(raw: String): LibraryImportResult {
-        val backup = runCatching {
-            json.decodeFromString(LibraryBackup.serializer(), raw)
-        }.getOrElse { error ->
-            return LibraryImportResult(error = error.message ?: "Invalid backup file")
-        }
-
+    /**
+     * Pins the semantic variant used the next time this module is updated, and
+     * marks it trusted right away: the user has stated what they want.
+     */
+    override suspend fun setVariantState(packageName: String, state: ModuleVariantState) {
         context.libraryDataStore.edit { prefs ->
-            val favourites = (backup.favourites + decodeList(prefs[Keys.FAVOURITES])).distinct()
-            prefs[Keys.FAVOURITES] = encodeList(favourites)
-
-            val recent = (backup.recentlyViewed + decodeList(prefs[Keys.RECENTLY_VIEWED]))
-                .distinct()
-                .take(MAX_RECENT)
-            prefs[Keys.RECENTLY_VIEWED] = encodeList(recent)
-
-            val hidden = (backup.hidden + decodeList(prefs[Keys.HIDDEN])).distinct()
-            prefs[Keys.HIDDEN] = encodeList(hidden)
-
-            val skipped = decodeSkipped(prefs[Keys.SKIPPED]).toMutableMap()
-            backup.skipped.forEach { (packageName, versionCode) -> skipped[packageName] = versionCode }
-            prefs[Keys.SKIPPED] = skipped.entries.joinToString("\n") { "${it.key}:${it.value}" }
-
-            val links = decodeLinks(prefs[Keys.LINKS]).toMutableMap()
-            links.putAll(backup.links)
-            prefs[Keys.LINKS] = encodeLinks(links)
+            val current = decodeVariantStates(prefs[Keys.VARIANT_STATE]).toMutableMap()
+            current[packageName] = state
+            prefs[Keys.VARIANT_STATE] = encodeVariantStates(current)
         }
-
-        return LibraryImportResult(
-            favourites = backup.favourites.size,
-            recentlyViewed = backup.recentlyViewed.size,
-            hidden = backup.hidden.size,
-            skipped = backup.skipped.size,
-            links = backup.links.size,
-        )
     }
+
+    override suspend fun clearVariantState(packageName: String) {
+        context.libraryDataStore.edit { prefs ->
+            val current = decodeVariantStates(prefs[Keys.VARIANT_STATE]).toMutableMap()
+            current.remove(packageName)
+            prefs[Keys.VARIANT_STATE] = encodeVariantStates(current)
+        }
+    }
+
+    /**
+     * Records one install attempt. Success remembers the semantic signature and
+     * resets the failure count; three consecutive failures give up and mark the
+     * module as not applicable on this device.
+     */
+    override suspend fun recordInstallResult(
+        packageName: String,
+        ok: Boolean,
+        signature: VariantSignature?,
+    ) {
+        context.libraryDataStore.edit { prefs ->
+            val current = decodeVariantStates(prefs[Keys.VARIANT_STATE]).toMutableMap()
+            val state = current[packageName] ?: ModuleVariantState()
+            current[packageName] = if (ok) {
+                state.onInstallSucceeded(signature)
+            } else {
+                state.onInstallFailed()
+            }
+            prefs[Keys.VARIANT_STATE] = encodeVariantStates(current)
+        }
+    }
+
+    /**
+     * One-off migration from v1's asset file names to semantic signatures. The
+     * file name is the only information those entries had.
+     */
+    override suspend fun migratePreferredVariants() {
+        context.libraryDataStore.edit { prefs ->
+            val legacy = decodeLinks(prefs[Keys.PREFERRED_VARIANTS])
+            if (legacy.isEmpty()) return@edit
+            val states = decodeVariantStates(prefs[Keys.VARIANT_STATE]).toMutableMap()
+            val now = System.currentTimeMillis()
+            legacy.forEach { (packageName, assetName) ->
+                if (packageName !in states) {
+                    states[packageName] = ModuleVariantState(
+                        status = ModuleVariantState.Status.TRUSTED,
+                        signature = VariantSignature.of(parseTraits(assetName)),
+                        updatedAt = now,
+                    )
+                }
+            }
+            prefs[Keys.VARIANT_STATE] = encodeVariantStates(states)
+            prefs[Keys.PREFERRED_VARIANTS] = ""
+        }
+    }
+
+    private fun decodeVariantStates(raw: String?): Map<String, ModuleVariantState> {
+        if (raw.isNullOrBlank()) return emptyMap()
+        return runCatching {
+            json.decodeFromString(variantStatesSerializer, raw)
+        }.getOrDefault(emptyMap())
+    }
+
+    private fun encodeVariantStates(states: Map<String, ModuleVariantState>): String =
+        json.encodeToString(variantStatesSerializer, states)
 
     private fun decodeList(raw: String?): List<String> =
         raw?.split('\n')?.map { it.trim() }?.filter { it.isNotBlank() } ?: emptyList()
@@ -217,22 +297,3 @@ class LibraryRepositoryImpl(private val context: Context) {
         const val MAX_SEARCH_HISTORY = 15
     }
 }
-
-@Serializable
-data class LibraryBackup(
-    val version: Int = 1,
-    val favourites: List<String> = emptyList(),
-    val recentlyViewed: List<String> = emptyList(),
-    val hidden: List<String> = emptyList(),
-    val skipped: Map<String, Long> = emptyMap(),
-    val links: Map<String, String> = emptyMap(),
-)
-
-data class LibraryImportResult(
-    val favourites: Int = 0,
-    val recentlyViewed: Int = 0,
-    val hidden: Int = 0,
-    val skipped: Int = 0,
-    val links: Int = 0,
-    val error: String? = null,
-)

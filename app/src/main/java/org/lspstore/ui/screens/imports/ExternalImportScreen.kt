@@ -15,22 +15,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -38,9 +28,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -51,10 +41,18 @@ import org.lspstore.ui.components.EmptyBox
 import org.lspstore.ui.components.ErrorBox
 import org.lspstore.ui.components.LoadingBox
 import org.lspstore.ui.components.ModuleAvatar
-import org.lspstore.ui.components.VersionChip
+import org.lspstore.ui.design.KomiButton
+import org.lspstore.ui.design.KomiButtonSize
+import org.lspstore.ui.design.KomiButtonVariant
+import org.lspstore.ui.design.KomiInfoChip
+import org.lspstore.ui.design.KomiSurface
+import org.lspstore.ui.design.KomiText
+import org.lspstore.ui.design.KomiTextField
+import org.lspstore.ui.design.KomiTopBar
+import org.lspstore.ui.theme.KomiTextRole
 
 @Composable
-fun ExternalImportScreen(onBack: () -> Unit) {
+fun ExternalImportScreen(onBack: () -> Unit, onOpenModule: (String) -> Unit) {
     val container = LocalAppContainer.current
     val viewModel: ExternalImportViewModel = viewModel(factory = ExternalImportViewModel.factory(container))
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -68,26 +66,26 @@ fun ExternalImportScreen(onBack: () -> Unit) {
     }
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.import_title)) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
-                    }
-                },
+            KomiTopBar(
+                title = stringResource(R.string.import_title),
+                onBack = onBack,
+                backContentDescription = stringResource(R.string.action_back),
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { innerPadding ->
         when {
             state.isLoading -> LoadingBox(Modifier.padding(innerPadding))
-            state.error != null -> ErrorBox(state.error!!, viewModel::refresh, Modifier.padding(innerPadding))
+            state.error != null ->
+                ErrorBox(state.error!!, viewModel::refresh, Modifier.padding(innerPadding))
             else -> Column(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
-                Text(
+                KomiText(
                     text = stringResource(R.string.import_desc),
-                    style = MaterialTheme.typography.bodySmall,
+                    role = KomiTextRole.Body,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 13.sp,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                 )
                 if (state.unknown.isEmpty()) {
@@ -95,12 +93,20 @@ fun ExternalImportScreen(onBack: () -> Unit) {
                 } else {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(12.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        contentPadding = PaddingValues(start = 12.dp, end = 12.dp, bottom = 32.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
                         items(state.unknown, key = { it.installed.packageName }) { item ->
                             UnknownRow(
                                 item = item,
+                                onOpen = {
+                                    val linked = item.linkedModule
+                                    if (linked != null) {
+                                        onOpenModule(linked.packageName)
+                                    } else {
+                                        viewModel.openPicker(item.installed.packageName)
+                                    }
+                                },
                                 onLink = { viewModel.openPicker(item.installed.packageName) },
                                 onUnlink = { viewModel.unlink(item.installed.packageName) },
                             )
@@ -124,58 +130,66 @@ fun ExternalImportScreen(onBack: () -> Unit) {
 @Composable
 private fun UnknownRow(
     item: UnknownModuleItem,
+    onOpen: () -> Unit,
     onLink: () -> Unit,
     onUnlink: () -> Unit,
 ) {
-    Card(
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+    KomiSurface(
         modifier = Modifier.fillMaxWidth(),
+        onClick = onOpen,
+        contentPadding = PaddingValues(14.dp),
     ) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = item.installed.label,
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    Text(
-                        text = item.installed.packageName,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    Text(
-                        text = stringResource(R.string.import_installed_version, item.installed.versionName ?: "?"),
-                        style = MaterialTheme.typography.labelSmall,
-                    )
-                }
-            }
+        Column {
+            KomiText(
+                text = item.installed.label,
+                role = KomiTextRole.Title,
+                fontSize = 15.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            KomiText(
+                text = item.installed.packageName,
+                role = KomiTextRole.Mono,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontSize = 11.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.padding(top = 2.dp),
+            )
+            KomiText(
+                text = stringResource(R.string.import_installed_version, item.installed.versionName ?: "?"),
+                role = KomiTextRole.Label,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontSize = 12.sp,
+                modifier = Modifier.padding(top = 4.dp),
+            )
             Spacer(Modifier.height(8.dp))
             if (item.linkedModule != null) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    VersionChip(
-                        text = stringResource(R.string.import_linked_to),
-                        container = MaterialTheme.colorScheme.secondaryContainer,
-                        content = MaterialTheme.colorScheme.onSecondaryContainer,
-                    )
+                    KomiInfoChip(stringResource(R.string.import_linked_to))
                     Spacer(Modifier.width(8.dp))
-                    Text(
+                    KomiText(
                         text = item.linkedModule.title,
-                        style = MaterialTheme.typography.bodySmall,
+                        role = KomiTextRole.Body,
+                        fontSize = 13.sp,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f),
                     )
-                    TextButton(onClick = onUnlink) { Text(stringResource(R.string.import_unlink)) }
+                    KomiButton(
+                        onClick = onUnlink,
+                        label = stringResource(R.string.import_unlink),
+                        variant = KomiButtonVariant.Text,
+                        size = KomiButtonSize.Small,
+                    )
                 }
             } else {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    TextButton(onClick = onLink) { Text(stringResource(R.string.import_link)) }
-                }
+                KomiButton(
+                    onClick = onLink,
+                    label = stringResource(R.string.import_link),
+                    variant = KomiButtonVariant.Outline,
+                    size = KomiButtonSize.Small,
+                )
             }
         }
     }
@@ -189,32 +203,42 @@ private fun ModulePickerDialog(
     onDismiss: () -> Unit,
 ) {
     Dialog(onDismissRequest = onDismiss) {
-        Card(modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(
+        KomiSurface(
+            modifier = Modifier.fillMaxWidth(),
+            contentPadding = PaddingValues(16.dp),
+            elevation = 8.dp,
+        ) {
+            Column {
+                KomiText(
                     text = stringResource(R.string.import_pick_module),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
+                    role = KomiTextRole.Title,
                 )
-                Spacer(Modifier.height(8.dp))
-                OutlinedTextField(
+                Spacer(Modifier.height(10.dp))
+                KomiTextField(
                     value = state.pickerQuery,
                     onValueChange = onQueryChange,
-                    placeholder = { Text(stringResource(R.string.import_search_hint)) },
-                    leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+                    placeholder = stringResource(R.string.import_search_hint),
+                    leadingIcon = Icons.Filled.Search,
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
-                Spacer(Modifier.height(8.dp))
-                LazyColumn(modifier = Modifier.height(320.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Spacer(Modifier.height(10.dp))
+                LazyColumn(
+                    modifier = Modifier.height(320.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
                     items(state.pickerResults, key = { it.packageName }) { module ->
                         PickerRow(module = module, onClick = { onSelect(module.packageName) })
                     }
                 }
                 Spacer(Modifier.height(8.dp))
-                TextButton(onClick = onDismiss, modifier = Modifier.align(Alignment.End)) {
-                    Text(stringResource(R.string.action_cancel))
-                }
+                KomiButton(
+                    onClick = onDismiss,
+                    label = stringResource(R.string.action_cancel),
+                    variant = KomiButtonVariant.Text,
+                    size = KomiButtonSize.Small,
+                    modifier = Modifier.align(Alignment.End),
+                )
             }
         }
     }
@@ -222,25 +246,28 @@ private fun ModulePickerDialog(
 
 @Composable
 private fun PickerRow(module: Module, onClick: () -> Unit) {
-    Card(
-        onClick = onClick,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+    KomiSurface(
         modifier = Modifier.fillMaxWidth(),
+        onClick = onClick,
+        elevation = 0.dp,
+        contentPadding = PaddingValues(10.dp),
     ) {
-        Row(modifier = Modifier.padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
             ModuleAvatar(module, size = 36)
-            Spacer(Modifier.width(8.dp))
+            Spacer(Modifier.width(10.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(
+                KomiText(
                     text = module.title,
-                    style = MaterialTheme.typography.bodyMedium,
+                    role = KomiTextRole.Body,
+                    fontSize = 13.5.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                Text(
+                KomiText(
                     text = module.packageName,
-                    style = MaterialTheme.typography.labelSmall,
+                    role = KomiTextRole.Label,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 11.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )

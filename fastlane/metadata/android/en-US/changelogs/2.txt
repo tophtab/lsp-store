@@ -1,0 +1,9 @@
+0.2.0
+- Fix APK download cache collisions between modules/releases.
+- Linked modules now install/verify against the installed package.
+- PackageInstaller sessions with result callbacks; uninstall-then-install on signature mismatch.
+- ABI-aware APK choice for batch/background updates.
+- Faster index cache handling and offline fallback.
+- Search channel filter, AMOLED with dynamic colour, proxy test fixes.
+- Scope, release notes and contributors on module details.
+- CI, release minification and 14-language metadata.

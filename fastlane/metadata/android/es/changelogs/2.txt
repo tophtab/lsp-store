@@ -1,0 +1,9 @@
+0.2.0
+- Solucionar colisiones de caché de descarga de APK entre módulos/versiones.
+- Los módulos vinculados ahora se instalan/verifican con el paquete instalado.
+- Sesiones de PackageInstaller con devoluciones de llamadas de resultados; desinstalar y luego instalar si la firma no coincide.
+- Opción de APK compatible con ABI para actualizaciones por lotes o en segundo plano.
+- Manejo de caché de índice más rápido y respaldo sin conexión.
+- Filtro de canales de búsqueda, AMOLED con color dinámico, correcciones de prueba de proxy.
+- Alcance, notas de la versión y colaboradores sobre los detalles del módulo.
+- CI, minificación de lanzamientos y metadatos en 14 idiomas.

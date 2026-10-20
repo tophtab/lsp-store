@@ -1,0 +1,9 @@
+0.2.0
+- Napraw kolizje pamięci podręcznej pobierania plików APK między modułami/wersjami.
+- Połączone moduły są teraz instalowane/weryfikowane względem zainstalowanego pakietu.
+- Sesje PackageInstaller z wywołaniami zwrotnymi wyników; odinstaluj, a następnie zainstaluj w przypadku niezgodności podpisu.
+- Wybór pakietu APK obsługującego technologię ABI do aktualizacji wsadowych/w tle.
+- Szybsza obsługa pamięci podręcznej indeksu i powrót do trybu offline.
+- Filtr kanałów wyszukiwania, AMOLED z dynamicznymi kolorami, poprawki testu proxy.
+- Zakres, uwagi do wersji i współautorzy szczegółów modułu.
+- CI, minifikacja wersji i metadane w 14 językach.

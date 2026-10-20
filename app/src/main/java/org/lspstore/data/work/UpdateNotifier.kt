@@ -18,10 +18,10 @@ import org.lspstore.domain.model.UpdateInfo
 
 object UpdateNotifier {
     const val CHANNEL_ID = "module_updates"
+    const val EXTRA_OPEN_UPDATES = "org.lspstore.extra.OPEN_UPDATES"
     private const val NOTIFICATION_ID = 2001
 
     fun ensureChannel(context: Context) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
         val manager = context.getSystemService(NotificationManager::class.java) ?: return
         if (manager.getNotificationChannel(CHANNEL_ID) != null) return
         val channel = NotificationChannel(
@@ -34,23 +34,36 @@ object UpdateNotifier {
         manager.createNotificationChannel(channel)
     }
 
-    fun notifyUpdates(context: Context, updates: List<UpdateInfo>) {
-        if (updates.isEmpty() || !canNotify(context)) return
+    /**
+     * @param ambiguous updates that exist but need the user to pick a variant.
+     *   They are never downloaded in the background, but staying silent about
+     *   them makes the notification count disagree with the Installed tab.
+     */
+    fun notifyUpdates(context: Context, updates: List<UpdateInfo>, ambiguous: Int = 0) {
+        if ((updates.isEmpty() && ambiguous <= 0) || !canNotify(context)) return
         ensureChannel(context)
-        val title = if (updates.size == 1) {
-            context.getString(R.string.notifier_single_update, updates.first().module.title)
-        } else {
-            context.getString(R.string.notifier_multi_updates, updates.size)
+        val title = when {
+            updates.isEmpty() -> context.getString(R.string.notifier_ambiguous_title, ambiguous)
+            updates.size == 1 ->
+                context.getString(R.string.notifier_single_update, updates.first().module.title)
+
+            else -> context.getString(R.string.notifier_multi_updates, updates.size)
         }
-        val text = if (updates.size == 1) {
-            val update = updates.first()
-            context.getString(
+        val text = when {
+            updates.isEmpty() -> context.getString(R.string.notifier_ambiguous_text)
+            updates.size == 1 -> context.getString(
                 R.string.installed_version_arrow,
-                update.installed.versionName ?: "?",
-                update.latest.versionName,
+                updates.first().installed.versionName ?: "?",
+                updates.first().latest.versionName,
             )
-        } else {
-            updates.take(6).joinToString(", ") { it.module.title }
+
+            else -> updates.take(6).joinToString(", ") { it.module.title }
+        }.let { base ->
+            if (ambiguous > 0 && updates.isNotEmpty()) {
+                base + context.getString(R.string.notifier_ambiguous_more, ambiguous)
+            } else {
+                base
+            }
         }
         post(context, title, text)
     }
@@ -69,6 +82,7 @@ object UpdateNotifier {
     private fun post(context: Context, title: String, text: String) {
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra(EXTRA_OPEN_UPDATES, true)
         }
         val pendingIntent = PendingIntent.getActivity(
             context,
@@ -77,7 +91,7 @@ object UpdateNotifier {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.stat_sys_download_done)
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(title)
             .setContentText(text)
             .setStyle(NotificationCompat.BigTextStyle().bigText(text))

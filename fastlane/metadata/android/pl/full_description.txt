@@ -1,0 +1,15 @@
+LSPosed Store to przeglądarka, instalator i aktualizator modułów LSPosed, korzystający z tego samego repozytorium co LSPosed Manager (modules.lsposed.org).
+
+Cechy:
+- Przeglądaj ostatnio zaktualizowane, najczęściej oznaczone gwiazdką i moduły beta.
+- Wyszukuj za pomocą filtrów sortowania, kanałów i ulubionych.
+- Instaluj, aktualizuj lub ponownie instaluj moduły z weryfikacją podpisu APK.
+- Zobacz zainstalowane moduły pogrupowane w aktualizacje, aktualne i nie znajdujące się w repozytorium.
+- Aktualizacja zbiorcza z sekwencyjnymi, nienakładającymi się potwierdzeniami systemowymi.
+- Plik Readme, zakres haków, informacje o wersji i pliki do pobrania na stronie modułu.
+- Ulubione, ostatnio przeglądane i moduły z ignorowanymi aktualizacjami.
+- Kanały aktualizacji: stabilne, beta i nocne.
+- Opcjonalna cicha instalacja roota i automatyczne aktualizacje w tle.
+- Wybór kopii lustrzanych i dostawcy tłumaczeń.
+- Tworzenie kopii zapasowych i przywracanie danych biblioteki w formacie JSON.
+- 14 języków, ciemny motyw, czarny AMOLED i kolory Material You.

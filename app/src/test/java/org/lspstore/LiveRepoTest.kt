@@ -4,9 +4,9 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
+import org.junit.Assume.assumeTrue
 import org.junit.Test
 import org.lspstore.data.remote.LsposedRepoApi
-import org.lspstore.data.remote.ProxyState
 import org.lspstore.data.remote.createHttpClient
 import org.lspstore.data.remote.createJson
 import org.lspstore.data.remote.toDetail
@@ -19,7 +19,9 @@ class LiveRepoTest {
 
     @Test
     fun fetchesIndexAndModuleDetail() = runBlocking {
-        val client = createHttpClient(createJson(), ProxyState())
+        // Network tests are opt-in so the normal unit-test suite works offline/CI.
+        assumeTrue("set LIVE_REPO_TEST=1 to run", System.getenv("LIVE_REPO_TEST") == "1")
+        val client = createHttpClient(createJson())
         try {
             val api = LsposedRepoApi(client)
 

@@ -1,6 +1,7 @@
 package org.lspstore.domain.model
 
 import java.time.Instant
+import kotlinx.serialization.Serializable
 
 enum class UpdateChannel(val key: String) {
     STABLE("CHANNEL_STABLE"),
@@ -64,7 +65,21 @@ data class Module(
     val latestBetaRelease: ModuleVersion?,
     val latestSnapshotRelease: ModuleVersion?,
     val latestReleaseTime: String?,
+    val latestBetaReleaseTime: String? = null,
+    val latestSnapshotReleaseTime: String? = null,
 ) {
+    /** Publication time of the tag that [latestFor] returns. */
+    fun latestTimeFor(channel: UpdateChannel): String? = when (channel) {
+        UpdateChannel.STABLE -> latestReleaseTime
+        UpdateChannel.BETA ->
+            if (latestBetaRelease != null) latestBetaReleaseTime ?: latestReleaseTime
+            else latestReleaseTime
+
+        UpdateChannel.NIGHTLY ->
+            if (latestSnapshotRelease != null) latestSnapshotReleaseTime ?: latestReleaseTime
+            else latestTimeFor(UpdateChannel.BETA)
+    }
+
     fun latestFor(channel: UpdateChannel): ModuleVersion? = when (channel) {
         UpdateChannel.STABLE -> latestRelease
         UpdateChannel.BETA -> latestBetaRelease ?: latestRelease
@@ -101,16 +116,6 @@ data class ModuleDetail(
         return channelReleases.firstOrNull { it.tagName == target?.raw }
             ?: channelReleases.firstOrNull { it.apkAssets.isNotEmpty() }
     }
-
-    fun latestAssetFor(channel: UpdateChannel): ReleaseAsset? {
-        val target = module.latestFor(channel)
-        val channelReleases = releasesFor(channel)
-        val release = channelReleases.firstOrNull { it.tagName == target?.raw }
-            ?: channelReleases.firstOrNull { it.apkAssets.isNotEmpty() }
-            ?: return null
-        return release.apkAssets.firstOrNull { !it.name.contains("debug", ignoreCase = true) }
-            ?: release.apkAssets.firstOrNull()
-    }
 }
 
 data class Release(
@@ -140,6 +145,7 @@ data class ReleaseAsset(
             contentType?.contains("android.package", ignoreCase = true) == true
 }
 
+@Serializable
 data class InstalledModule(
     val packageName: String,
     val versionCode: Long,
@@ -147,10 +153,33 @@ data class InstalledModule(
     val label: String,
     val isXposedModule: Boolean,
     val description: String?,
+    // Added for the variant seed (P0). Defaults keep old caches readable.
+    val minSdk: Int = 0,
+    val targetSdk: Int = 0,
+    val primaryCpuAbi: String? = null,
+    val debuggable: Boolean = false,
+    val hasLibXposedProvider: Boolean = false,
+    /** PackageManager install/update timestamp; 0 when an old cache had no value. */
+    val lastUpdateTime: Long = 0L,
 )
 
 data class UpdateInfo(
     val module: Module,
     val installed: InstalledModule,
     val latest: ModuleVersion,
+)
+
+/**
+ * An install handed to an external installer that has not been confirmed by a
+ * package broadcast yet. Mirrors komi-store's `isPendingInstall` state.
+ */
+@Serializable
+data class PendingInstall(
+    val packageName: String,
+    val repoPackageName: String? = null,
+    val title: String = "",
+    val versionCode: Long = 0L,
+    val versionName: String = "",
+    val assetName: String = "",
+    val createdAt: Long = 0L,
 )

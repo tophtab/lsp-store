@@ -17,14 +17,7 @@ fun createJson(): Json = Json {
     coerceInputValues = true
 }
 
-fun createHttpClient(json: Json, proxyState: ProxyState): HttpClient = HttpClient(OkHttp) {
-    engine {
-        config {
-            proxySelector(DynamicProxySelector(proxyState))
-            proxyAuthenticator(ProxyAuthenticator(proxyState))
-        }
-    }
-
+fun createHttpClient(json: Json): HttpClient = HttpClient(OkHttp) {
     expectSuccess = true
 
     install(ContentNegotiation) {
@@ -41,6 +34,24 @@ fun createHttpClient(json: Json, proxyState: ProxyState): HttpClient = HttpClien
         headers {
             append(HttpHeaders.UserAgent, USER_AGENT)
             append(HttpHeaders.Accept, "application/json")
+        }
+    }
+}
+
+/** Ranged APK probing: never throws on 4xx/5xx, short timeouts, no JSON. */
+fun createProbeHttpClient(): HttpClient = HttpClient(OkHttp) {
+    expectSuccess = false
+
+    install(HttpTimeout) {
+        connectTimeoutMillis = 8_000
+        requestTimeoutMillis = 15_000
+        socketTimeoutMillis = 15_000
+    }
+
+    defaultRequest {
+        headers {
+            append(HttpHeaders.UserAgent, USER_AGENT)
+            append(HttpHeaders.Accept, "*/*")
         }
     }
 }

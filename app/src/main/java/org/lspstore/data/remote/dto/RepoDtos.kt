@@ -31,6 +31,30 @@ data class ModuleListItemDto(
     val latestSnapshotReleaseTime: String? = null,
 )
 
+/**
+ * Lightweight shape of `/modules.json`. The official LSPosed Manager downloads
+ * this single file as its full repository index; we only decode the fields the
+ * list/card UI needs and ignore readme/release payloads.
+ */
+@Serializable
+data class FullModuleIndexDto(
+    val name: String,
+    val description: String? = null,
+    val summary: String? = null,
+    val url: String? = null,
+    val homepageUrl: String? = null,
+    val sourceUrl: String? = null,
+    val updatedAt: String? = null,
+    val stargazerCount: Int = 0,
+    val collaborators: List<CollaboratorDto> = emptyList(),
+    val latestRelease: String? = null,
+    val latestBetaRelease: String? = null,
+    val latestSnapshotRelease: String? = null,
+    val latestReleaseTime: String? = null,
+    val latestBetaReleaseTime: String? = null,
+    val latestSnapshotReleaseTime: String? = null,
+)
+
 @Serializable
 data class OnlineModuleDto(
     val name: String,
@@ -38,6 +62,7 @@ data class OnlineModuleDto(
     val url: String? = null,
     val homepageUrl: String? = null,
     val collaborators: List<CollaboratorDto> = emptyList(),
+    val additionalAuthors: List<AdditionalAuthorDto> = emptyList(),
     val summary: String? = null,
     val sourceUrl: String? = null,
     val hide: Boolean = false,
@@ -63,6 +88,13 @@ data class OnlineModuleDto(
 data class CollaboratorDto(
     val login: String? = null,
     val name: String? = null,
+)
+
+@Serializable
+data class AdditionalAuthorDto(
+    val type: String? = null,
+    val name: String? = null,
+    val link: String? = null,
 )
 
 @Serializable

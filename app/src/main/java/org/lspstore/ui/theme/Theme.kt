@@ -2,57 +2,79 @@ package org.lspstore.ui.theme
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.Shapes
+import androidx.compose.material3.Typography
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 
-private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80,
+val LocalStatusColors = staticCompositionLocalOf { statusColors(dark = false) }
+
+/** 16dp panels, 10dp controls — the classic komi geometry. */
+val Shapes = Shapes(
+    extraSmall = RoundedCornerShape(6.dp),
+    small = RoundedCornerShape(10.dp),
+    medium = RoundedCornerShape(16.dp),
+    large = RoundedCornerShape(16.dp),
+    extraLarge = RoundedCornerShape(24.dp),
 )
 
-private val AmoledColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80,
-    background = androidx.compose.ui.graphics.Color.Black,
-    surface = androidx.compose.ui.graphics.Color.Black,
-    surfaceContainerLow = androidx.compose.ui.graphics.Color(0xFF0A0A0A),
-    surfaceContainer = androidx.compose.ui.graphics.Color(0xFF0A0A0A),
-    surfaceContainerHigh = androidx.compose.ui.graphics.Color(0xFF111111),
-)
-
-private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40,
-)
+fun cyanColorScheme(
+    dark: Boolean,
+    amoled: Boolean = false,
+): androidx.compose.material3.ColorScheme = when {
+    !dark -> CyanLightScheme
+    amoled -> CyanAmoledScheme
+    else -> CyanDarkScheme
+}
 
 @Composable
 fun LspStoreTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false,
     amoled: Boolean = false,
     content: @Composable () -> Unit,
 ) {
-    val colorScheme = when {
+    val baseScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
-        darkTheme && amoled -> AmoledColorScheme
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
+
+        else -> cyanColorScheme(dark = darkTheme, amoled = amoled)
+    }
+    // AMOLED is an independent preference: it also applies on top of a dynamic
+    // (Material You) dark scheme, not only the cyan palette.
+    val colorScheme = if (darkTheme && amoled && dynamicColor) {
+        baseScheme.copy(
+            background = CyanAmoledScheme.background,
+            surface = CyanAmoledScheme.surface,
+            surfaceDim = CyanAmoledScheme.surfaceDim,
+            surfaceContainerLowest = CyanAmoledScheme.surfaceContainerLowest,
+            surfaceContainerLow = CyanAmoledScheme.surfaceContainerLow,
+            surfaceContainer = CyanAmoledScheme.surfaceContainer,
+            surfaceContainerHigh = CyanAmoledScheme.surfaceContainerHigh,
+            surfaceContainerHighest = CyanAmoledScheme.surfaceContainerHighest,
+        )
+    } else {
+        baseScheme
     }
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
-        content = content,
-    )
+    CompositionLocalProvider(
+        LocalStatusColors provides statusColors(darkTheme),
+        LocalKomiType provides ClassicType,
+    ) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = Typography,
+            shapes = Shapes,
+            content = content,
+        )
+    }
 }

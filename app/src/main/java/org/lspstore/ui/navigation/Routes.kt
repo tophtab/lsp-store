@@ -2,13 +2,11 @@ package org.lspstore.ui.navigation
 
 object Routes {
     const val HOME = "home"
-    const val SEARCH = "search"
     const val INSTALLED = "installed"
     const val SETTINGS = "settings"
 
     const val FAVOURITES = "library/favourites"
     const val RECENTLY_VIEWED = "library/recent"
-    const val HIDDEN = "library/hidden"
     const val SKIPPED = "library/skipped"
     const val IMPORTS = "library/imports"
     const val ABOUT = "about"
@@ -23,5 +21,5 @@ object Routes {
 
     fun detail(packageName: String): String = "module/$packageName"
 
-    fun author(name: String): String = "author/${java.net.URLEncoder.encode(name, "UTF-8")}"
+    fun author(name: String): String = "author/${android.net.Uri.encode(name)}"
 }

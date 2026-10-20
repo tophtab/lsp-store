@@ -19,14 +19,14 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonArray
-import org.lspstore.data.repository.SettingsRepositoryImpl
+import org.lspstore.data.repository.SettingsRepository
 import org.lspstore.domain.model.TranslationProvider
 import org.lspstore.domain.model.TranslationSettings
 import java.net.URLEncoder
 
 class TranslationRepository(
     private val client: HttpClient,
-    private val settingsRepository: SettingsRepositoryImpl,
+    private val settingsRepository: SettingsRepository,
 ) {
     private val cache = object : LinkedHashMap<String, String>(64, 0.75f, true) {
         override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, String>): Boolean =
