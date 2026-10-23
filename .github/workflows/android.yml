@@ -3,6 +3,7 @@ name: Android
 on:
   push:
     branches: [master]
+    tags: ['v*']
   pull_request:
 
 concurrency:
@@ -20,7 +21,7 @@ jobs:
           java-version: '21'
       - uses: android-actions/setup-android@v3
       - name: Install SDK platform used by compileSdk
-        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+        run: sdkmanager "platforms;android-37.1" "build-tools;36.0.0"
       - uses: gradle/actions/setup-gradle@v4
       - name: Lint
         run: ./gradlew :app:lintDebug --stacktrace
@@ -28,7 +29,7 @@ jobs:
         run: ./gradlew :app:testDebugUnitTest --stacktrace
       - name: Build debug APK
         run: ./gradlew :app:assembleDebug --stacktrace
-      - name: Build release APK (unsigned; stores sign it)
+      - name: Build release APK (unsigned here; the release job signs it)
         run: ./gradlew :app:assembleRelease --stacktrace
       - name: Upload unsigned release APK
         uses: actions/upload-artifact@v4
@@ -36,3 +37,130 @@ jobs:
           name: app-release-unsigned
           path: app/build/outputs/apk/release/*.apk
           if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      XPOSED_REPO_TOKEN: ${{ secrets.XPOSED_REPO_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: android-actions/setup-android@v3
+      - name: Install SDK platform used by compileSdk
+        run: sdkmanager "platforms;android-37.1" "build-tools;36.0.0"
+      - uses: gradle/actions/setup-gradle@v4
+
+      # The release keystore lives in secrets as base64. Losing it means every
+      # installed copy can never be updated again, so keep an offline backup.
+      - name: Decode keystore
+        env:
+          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+        run: |
+          if [ -z "$SIGNING_KEY" ]; then
+            echo "::error::SIGNING_KEY secret is missing; refusing to publish an unsigned APK"
+            exit 1
+          fi
+          echo "$SIGNING_KEY" | base64 --decode > "$RUNNER_TEMP/release.keystore.jks"
+          echo "KEYSTORE_FILE=$RUNNER_TEMP/release.keystore.jks" >> "$GITHUB_ENV"
+
+      - name: Build signed release APK
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: ./gradlew :app:assembleRelease --stacktrace
+
+      - name: Collect, verify and checksum
+        id: artifact
+        run: |
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME#v}"
+          APK="app/build/outputs/apk/release/app-release.apk"
+          test -f "$APK" || { echo "::error::signed APK not found"; exit 1; }
+
+          # The module repository renames our tag from what the APK reports, so a
+          # version mismatch here would silently publish the wrong version.
+          BADGING="$("$ANDROID_HOME/build-tools/36.0.0/aapt2" dump badging "$APK" | head -1)"
+          echo "$BADGING"
+          echo "$BADGING" | grep -q "versionName='${VERSION}'" || {
+            echo "::error::tag $VERSION does not match the APK versionName"; exit 1; }
+
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --print-certs "$APK" \
+            | tee "$RUNNER_TEMP/certs.txt"
+          grep -q "Signer #1 certificate DN" "$RUNNER_TEMP/certs.txt" || {
+            echo "::error::APK is not signed"; exit 1; }
+
+          mkdir -p out
+          cp "$APK" "out/LSP-Store-${VERSION}.apk"
+          (cd out && sha256sum "LSP-Store-${VERSION}.apk" > SHA256SUMS)
+          cat out/SHA256SUMS
+
+          VERSION_CODE="$("$ANDROID_HOME/build-tools/36.0.0/aapt2" dump badging "$APK" \
+            | head -1 | sed -E "s/.*versionCode='([0-9]+)'.*/\1/")"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "version_code=${VERSION_CODE}" >> "$GITHUB_OUTPUT"
+
+      - name: Remove keystore
+        if: always()
+        run: rm -f "$RUNNER_TEMP/release.keystore.jks"
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.artifact.outputs.version }}
+        run: |
+          set -euo pipefail
+          NOTES="release-notes/${VERSION}.md"
+          if [ ! -f "$NOTES" ]; then
+            echo "::error::$NOTES is missing; release notes are required"
+            exit 1
+          fi
+          gh release create "$GITHUB_REF_NAME" \
+            --title "LSP Store ${VERSION}" \
+            --notes-file "$NOTES" \
+            "out/LSP-Store-${VERSION}.apk" \
+            "out/SHA256SUMS"
+
+      # The module index only needs metadata plus the signed APK. Tag format is
+      # dictated by Xposed-Modules-Repo: <versionCode>-<versionName>.
+      - name: Mirror to Xposed-Modules-Repo
+        if: env.XPOSED_REPO_TOKEN != ''
+        env:
+          VERSION: ${{ steps.artifact.outputs.version }}
+          VERSION_CODE: ${{ steps.artifact.outputs.version_code }}
+        run: |
+          set -euo pipefail
+          REPO="Xposed-Modules-Repo/io.github.tophtab.lspstore"
+          TAG="${VERSION_CODE}-${VERSION}"
+          API="https://api.github.com/repos/${REPO}"
+          AUTH="Authorization: token ${XPOSED_REPO_TOKEN}"
+
+          # A re-run must not stack a second release on the same tag.
+          if curl -sf -H "$AUTH" "${API}/releases/tags/${TAG}" > /dev/null; then
+            echo "::error::release ${TAG} already exists; bump the version instead of re-running"
+            exit 1
+          fi
+
+          curl -sf -X POST -H "$AUTH" -H "Accept: application/vnd.github+json" \
+            "${API}/releases" \
+            -d "{\"tag_name\":\"${TAG}\",\"name\":\"${VERSION}\",\"draft\":false,\"prerelease\":false}" \
+            -o "$RUNNER_TEMP/release.json"
+
+          UPLOAD_URL="$(sed -nE 's/.*"upload_url":[[:space:]]*"([^"]+)".*/\1/p' "$RUNNER_TEMP/release.json" | sed 's/{?name,label}//')"
+          test -n "$UPLOAD_URL"
+
+          curl -sf -X POST -H "$AUTH" -H "Content-Type: application/vnd.android.package-archive" \
+            "${UPLOAD_URL}?name=LSP-Store-${VERSION}.apk" \
+            --data-binary "out/LSP-Store-${VERSION}.apk" -o /dev/null
+          curl -sf -X POST -H "$AUTH" -H "Content-Type: text/plain" \
+            "${UPLOAD_URL}?name=SHA256SUMS" \
+            --data-binary "out/SHA256SUMS" -o /dev/null
+
+          echo "Published ${TAG} to ${REPO}"

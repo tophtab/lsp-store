@@ -1,4 +1,4 @@
-LSPosed Store 是 LSPosed 模块的浏览器、安装程序和更新程序，使用与 LSPosed Manager 相同的存储库 (modules.lsspoke.org)。
+LSP Store 是 LSPosed 模块的浏览器、安装程序和更新程序，使用与 LSPosed Manager 相同的存储库 (modules.lsspoke.org)。
 
 特征：
 - 浏览最近更新、加星最多的模块和测试版模块。

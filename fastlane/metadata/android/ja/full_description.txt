@@ -1,4 +1,4 @@
-LSPosed Store は、LSPosed Manager (modules.lsposed.org) と同じリポジトリを使用する、LSPosed モジュールのブラウザ、インストーラ、およびアップデータです。
+LSP Store は、LSPosed Manager (modules.lsposed.org) と同じリポジトリを使用する、LSPosed モジュールのブラウザ、インストーラ、およびアップデータです。
 
 特徴：
 - 最近更新されたモジュール、最もスターの付いたモジュール、およびベータ版のモジュールを参照します。

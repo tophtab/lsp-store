@@ -1,4 +1,4 @@
-LSPosed Store es un navegador, instalador y actualizador de módulos LSPosed, que utiliza el mismo repositorio que LSPosed Manager (modules.lsposed.org).
+LSP Store es un navegador, instalador y actualizador de módulos LSPosed, que utiliza el mismo repositorio que LSPosed Manager (modules.lsposed.org).
 
 Características:
 - Explore los módulos beta, más destacados y actualizados recientemente.

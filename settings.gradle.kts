@@ -20,5 +20,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "LSPosedStore"
+rootProject.name = "LspStore"
 include(":app")

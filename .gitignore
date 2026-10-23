@@ -1,3 +1,8 @@
+# Signing material never belongs in the repo
+*.jks
+*.keystore
+release.keystore*
+
 # Build output
 *.iml
 .gradle/

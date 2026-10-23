@@ -1,4 +1,4 @@
-LSPosed Store, LSPosed Manager (modules.lsposed.org) ile aynı havuzu kullanan, LSPosed modülleri için bir tarayıcı, yükleyici ve güncelleyicidir.
+LSP Store, LSPosed Manager (modules.lsposed.org) ile aynı havuzu kullanan, LSPosed modülleri için bir tarayıcı, yükleyici ve güncelleyicidir.
 
 Özellikler:
 - Yakın zamanda güncellenen, en çok yıldızlı ve beta modüllere göz atın.

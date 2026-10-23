@@ -1,4 +1,4 @@
-LSPosed Store 是 LSPosed 模組的瀏覽器、安裝程式和更新程序，使用與 LSPosed Manager 相同的儲存庫 (modules.lsspoke.org)。
+LSP Store 是 LSPosed 模組的瀏覽器、安裝程式和更新程序，使用與 LSPosed Manager 相同的儲存庫 (modules.lsspoke.org)。
 
 特徵：
 - 瀏覽最近更新、最多加星的模組和測試版模組。

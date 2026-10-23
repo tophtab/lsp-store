@@ -1,4 +1,4 @@
-LSPosed Store هو متصفح ومثبت ومحدث لوحدات LSPosed، باستخدام نفس المستودع مثل LSPosed Manager (modules.lspose.org).
+LSP Store هو متصفح ومثبت ومحدث لوحدات LSPosed، باستخدام نفس المستودع مثل LSPosed Manager (modules.lspose.org).
 
 سمات:
 - تصفح الوحدات التي تم تحديثها مؤخرًا والأكثر تمييزًا بنجمة والتجريبية.

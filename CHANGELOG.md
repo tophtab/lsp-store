@@ -1,6 +1,59 @@
 # Changelog
 
-## Unreleased
+## 1.0.0
+
+### Packaging
+
+- Build toolchain moved to AGP 9.4.1 / Gradle 9.8.2 / Kotlin 2.4.21 and
+  `compileSdk 37` (Android 17), which is what the libxposed 102 artifacts require.
+  `targetSdk` stays at 36 and `minSdk` at 27, so the runtime support matrix does not
+  change. The `org.jetbrains.kotlin.android` plugin is gone: AGP 9 compiles Kotlin
+  itself, and the `kotlin { compilerOptions { jvmTarget } }` block went with it
+  (`jvmTarget` now defaults to `compileOptions.targetCompatibility`).
+- `io.github.libxposed:service` is now 102.0.0, matching the API and `module.prop`
+  versions; the earlier 101.0.0 pin only existed because 102 required `compileSdk 37`.
+- First public release, version 1.0.0 (versionCode 10000). The version code is
+  `major * 10000 + minor * 100 + patch`, so minor and patch must stay below 100.
+- The application id is now `io.github.tophtab.lspstore`, and the Kotlin namespace
+  follows it. The old `org.lspstore` id was never published, so no installed copy
+  is orphaned.
+- `minSdk` is 27 (Android 8.1), the floor LSPosed itself supports; the README no
+  longer claims 8.0.
+- Release APKs are self-signed from CI instead of being left unsigned for a store
+  to sign, because the module repository distributes them as-is.
+
+### Release tooling
+
+- A minimal libxposed declaration (`META-INF/xposed/module.prop`, `java_init.list`,
+  `scope.list`) plus an empty `LspStoreModule` entry class, so the app can be listed
+  in the official module index and installed or updated from LSPosed Manager. The
+  scope is the app's own package and the entry class hooks nothing; every feature
+  works without the module being activated.
+- `io.github.libxposed:service` ships its `XposedProvider` into the manifest. That provider
+  is how a modern module is recognised without opening its APK, so the store now
+  detects itself as an installed module and updates itself through the same
+  installed-module flow as everything else, instead of needing a separate
+  self-update path.
+- `release-notes/` holds the text published as GitHub release notes, which the
+  module index renders as the release description.
+- The release job refuses to publish an unsigned APK, checks that the tag matches
+  the APK's `versionName`, and uploads `SHA256SUMS` next to the APK.
+
+### Added
+
+- Per-module pre-release tracking, komi style. The More sheet on an installed
+  module (above "Ignore this version") and a chip on the module page toggle
+  **Pre-releases** for that one module, with a checkmark showing the current
+  state; it only appears for modules that actually published a pre-release.
+  While it is on, that module's update checks follow its pre-release stream
+  instead of only its stable releases. The two streams are still compared and
+  the newer one wins, so an older beta can never hide a newer stable build (24
+  of the 29 modules with pre-releases ship exactly that), modules that only ever
+  published a pre-release finally show up as updatable, and same-code
+  re-uploads still count when the chosen stream was published later. The choice
+  is stored per repository package (`pre_release_modules`) and defaults to off.
+  The module page lists the pre-release builds too, so the update it proposes can
+  actually be installed.
 
 ### Removed
 
@@ -16,9 +69,34 @@
   mismatched-signature dialog, its uninstall-and-install shortcut and the
   `ApkVerifier` / `ApkVerification` code are gone. `ApkGate` still rejects APKs
   that cannot run on this device at all (minSdk, ABI, LSPosed API, not an APK).
+- The global update-channel picker. Settings no longer offers Stable/Beta
+  (Nightly was already hidden), so a beta preference written by an older build
+  no longer applies; pre-releases are now chosen per module instead (see
+  "Per-module pre-release tracking"). `UpdateChannel` is gone from the
+  domain, the stored `update_channel` preference is neither read nor written,
+  and the diagnostics page no longer lists a channel it can no longer display.
+- Automatic update checks in the background, and with them the whole
+  background pipeline: the periodic WorkManager job, the "check in the
+  background" switch, the interval picker, the "check now" button, `BootReceiver`
+  and its boot permission, the "auto-update when rooted" switch, the
+  `auto_update` preference, the update notification (channel, permission use and
+  the deep link that opened the Installed tab). `UpdateCheckWorker`,
+  `UpdateScheduler` and `UpdateNotifier` are gone. The app no longer polls the
+  repository on its own: updates are computed from the index it already
+  refreshes while you browse, and installing stays manual — silently via root
+  when "Root 静默安装" is on, otherwise through the system installer. The
+  settings group that used to hold all of this is now a single "Root" switch.
 
 ### Fixed
 
+- A resumed APK download no longer fails with a bare `HTTP 416`. The downloader
+  only sends `Range` when the partial file can actually be continued: a file
+  that already covers the whole asset (a pause that landed after the last write,
+  or an asset re-uploaded smaller under the same URL) is fetched again, and a
+  server that refuses or misplaces the range now gets one fresh request from
+  byte 0 instead of the error being reported. The completion size check also
+  prefers the total the server reports over the repository index's size, so a
+  stale index entry cannot turn a finished download into a failure.
 - "Update all" no longer ends on a bare "Failures: 1". The batch queue now
   keeps the reason for every module it could not install — download/resolve
   failure, or the installer's own message — and the summary toast lists them
@@ -34,6 +112,28 @@
   empty band above every page is gone.
 
 ### Changed
+
+- The Repository screen no longer truncates its shelves. "Recently updated"
+  and "Most starred" each list every module in the index instead of the first
+  15, and "Most starred" also keeps modules with no stars (at the end) rather
+  than filtering them out. There is no other module-browsing screen, so the
+  cut-off made the rest of the repository unreachable.
+- The Installed row's overflow now offers both update-suppression actions:
+  "Skip this version" and "Permanently ignore updates" (the latter restores
+  update checks when tapped again). Skips are stored as the repository tag
+  instead of the numeric versionCode, so modules that reuse `versionCode` 1 for
+  every release only hide the version the user actually saw. Old numeric skips
+  keep their previous code-wide meaning. The Ignored updates list now shows the
+  author's version name (e.g. `3.0`), not the internal versionCode or the raw
+  `code-versionName` tag.
+- The Nightly update channel is no longer offered. The repository currently
+  publishes no snapshot releases, so the old preference is read as Beta.
+- A downloaded APK is only installed when its release matches the version the
+  update list promised. A stale mirror detail (which can lag days behind the
+  index) now fails with "repository is still serving an older release" instead
+  of installing the old build and prompting again.
+- PackageManager scans are reused for 30 seconds by callers that do not force a
+  refresh; installs, package broadcasts and pull-to-refresh still rescan.
 
 - Removed the manga theme style. The app now always uses the classic komi
   layout with a Material 3 "icon cyan" scheme: the launcher icon's background
@@ -85,6 +185,13 @@
   release being installed.
 - The Source / Website / Repo text buttons were removed from the detail hero;
   the repository still opens from the top-bar browser action.
+- The detail hero is now a plain tinted card: the diagonal accent stripes and
+  the 100dp module avatar (which also carried the circular download spinner)
+  are gone, and the author handle and title sit on a normal 20dp margin. Download
+  progress still shows in the install controls below the picker.
+- Readme badges (shields.io and friends) render at 18dp instead of up to 40dp,
+  so a row of badges no longer dominates the About this app section. Badge cells
+  inside readme tables shrank the same way.
 - The readme now renders like komi's markdown: tables become bordered panels
   with a header row, ordered lists are numbered, `<details>` blocks are
   collapsible, horizontal rules are kept, links are accent-coloured and
@@ -177,6 +284,20 @@
   user is sent to the toggle with a clear message instead of getting an aborted
   install.
 - Root installs still run `pm install` through `su` and complete in-process.
+- The module source list now matches what the hosts actually serve, and every
+  endpoint has its own host order instead of one shared rotation. The catalogue
+  is fetched from the paginated `module-list` endpoint on `modules.lsposed.org`
+  (real time), and `modules.json` on `backup.modules.lsposed.org` is the
+  one-request fallback; module details still come from `modules.lsposed.org` and
+  now fall back to the backup host. `modules-blogcdn.lsposed.org` (answers 418)
+  and `modules-cloudflare.lsposed.org` (no DNS record) are gone, and the source
+  picker no longer probes every host with `module-list/1.json`, which used to
+  report the backup host as unreachable even though it is the only host serving
+  `modules.json`. The paginated catalogue stays the default on purpose: update
+  checks read the index, and the backup mirror publishes a deployment that is
+  several days old. Pinning the backup host in the source picker flips that
+  order, because the choice is otherwise meaningless: that host serves no
+  paginated catalogue at all, so it can only mean "take the older single file".
 
 ## 0.2.0
 

@@ -1,4 +1,4 @@
-LSPosed Store는 LSPosed Manager(modules.lsposed.org)와 동일한 저장소를 사용하는 LSPosed 모듈용 브라우저, 설치 프로그램 및 업데이트 프로그램입니다.
+LSP Store는 LSPosed Manager(modules.lsposed.org)와 동일한 저장소를 사용하는 LSPosed 모듈용 브라우저, 설치 프로그램 및 업데이트 프로그램입니다.
 
 특징:
 - 최근 업데이트되고 가장 많이 표시된 베타 모듈을 찾아보세요.
