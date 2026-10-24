@@ -137,12 +137,28 @@ versionCode 与正式版相同（10000），所以 dev 包和正式包可以互�
    fatal，所以这条 40s 的 vital 检查能捕获全量 lint 会拦下的全部 error，而全量 lint 要
    ~150s。全量 lint（包括 warning 级别）留给 PR。给这两个检查加上 `fatal` 是这套流水线
    的前提，不要随手删掉。
-6. 索引仓库的 bot 会重写 tag 为 `10000-1.0.0`，索引在 5–60 分钟内刷新。
+6. 索引仓库的 bot 会重写 tag 为 `10000-1.0.0`，索引在 5–60 分钟内刷新（见下节，
+   不用等它）。
 7. 如果这次发版改了 README、图标或 `module-repo/` 里的元数据，确认 `module-repo`
    工作流跑过了（或本地跑一次 `tools/sync_module_repo.sh`），否则索引页还是旧的。
 
 **第一个版本建议手动发一遍**（网页建 release、上传 APK），确认权限、索引构建、
 Manager 里的展示都正常，再依赖自动化。
+
+## 怎么判断这次发版成了
+
+只有两件事算数：
+
+1. `tophtab/lsp-store` 上该 tag 的 GitHub Release 已发布，`LSP-Store-<version>.apk`
+   和 `SHA256SUMS` 就位；
+2. 索引仓库里 `<versionCode>-<versionName>` 那个 release 是 `draft=false`。
+
+两件都由 CI 自己判定：发版 job 会校验 tag 与 APK 的 `versionName`、签名，上传后断言
+asset 字节数，发布后等 30 秒再查一次 `draft`——被 bot 退回就让 job 失败。
+
+**不需要去盯 `modules.lsposed.org` 的 `latestRelease`。** 那份 JSON 是定时全量重建的
+（5–60 分钟）并且 CDN 再缓存一层，它晚一点刷出来不代表发版有问题；反过来，它没刷出来
+也很难说明是哪一步坏了。看上面两件事就够了，多盯没有额外信息。
 
 ## 应用自身的更新
 
@@ -158,6 +174,12 @@ Manager 里的展示都正常，再依赖自动化。
 
 ## 坑
 
+- 往索引仓库传 asset 必须写 `--data-binary "@out/LSP-Store-<version>.apk"`，**`@` 不能漏**。
+  漏掉时 curl 把参数本身当请求体，传上去的是 23 字节的字符串
+  `out/LSP-Store-<version>.apk`（`SHA256SUMS` 同理变 14 字节）。asset 列表看起来一切
+  正常，只有对字节数才能发现；索引 bot 会打不开这个"APK"，在发布后约 20 秒把 release
+  退回 draft。1.0.1 和 1.0.3 都踩过，而 1.0.0 / 1.0.2 没暴露是因为那两版是手动传的。
+  CI 现在会断言上传后的字节数，并在发布后复查 draft。
 - 索引仓库里**先发 release、再传 APK 是无效的**：索引 bot 只在 release 内容被发布/编辑时
   校验，官方 README 原话是 “editing only the release asset won't trigger the bot”。
   这样发出去的 release 会一直躺在那里当 draft，索引里根本看不到（1.0.1、1.0.2 都踩过）。
