@@ -1,5 +1,43 @@
 # Changelog
 
+## 1.0.3
+
+### Changed
+
+- Settings -> About lost the "not affiliated with the LSPosed project" card and
+  its two buttons. The module is distributed through the module index itself, so
+  the disclaimer was noise; the slot now holds a clickable card that opens
+  https://github.com/tophtab/lsp-store and asks for a star.
+- The About and Diagnostics screens show the commit the APK was built from:
+  `BuildConfig.BUILD_SHA`, e.g. `1.0.3 · 3f2a91c`. The version name no longer
+  carries a `.dev.<sha>` suffix, because a commit's APK is now published as-is
+  when that commit is tagged - its `versionName` has to stay the plain release
+  version for the tag check and for the module index. The stamped sha is the
+  on-device identifier in its place, and it is also written into the `dev`
+  pre-release notes.
+
+### Release tooling
+
+- CI builds the app once per push. Previously the gate job produced an unsigned
+  release APK that nothing consumed and the snapshot/release job rebuilt it from
+  a second cold Gradle User Home, so R8 and lint ran twice: 10m22s of wall clock
+  for a commit that was also tagged. A push now takes ~3m30s.
+- A master push uploads the signed APK as a workflow artifact. A tag pointing at
+  a commit that already has one downloads and publishes it instead of compiling,
+  which makes a release take about a minute and makes the released file exactly
+  the build that was tested. Without an artifact (tag pushed together with
+  master, or expired after 30 days) it falls back to a full build.
+- The full lint no longer runs on pushes: `assembleRelease` already runs
+  `lintVital`, and `MissingTranslation`/`ExtraTranslation` are now promoted to
+  fatal checks so the published APK is gated by the project's error policy in
+  ~40s instead of ~150s. Full lint, warnings included, stays on pull requests.
+- The guard against a second release on the same tag reads the release list
+  instead of `/releases/tags/<tag>`, which returns 404 for drafts - the state a
+  failed run leaves behind. It fails closed when the list cannot be read.
+- The Gradle configuration cache is enabled, docs-only commits no longer trigger
+  a build, and `android-actions/setup-android` installs the SDK packages in one
+  step (the runner image no longer puts `sdkmanager` on `PATH`).
+
 ## 1.0.2
 
 ### Changed
