@@ -123,6 +123,12 @@ Manager 里的展示都正常，再依赖自动化。
 
 ## 坑
 
+- 索引仓库里**先发 release、再传 APK 是无效的**：索引 bot 只在 release 内容被发布/编辑时
+  校验，官方 README 原话是 “editing only the release asset won't trigger the bot”。
+  这样发出去的 release 会一直躺在那里当 draft，索引里根本看不到（1.0.1、1.0.2 都踩过）。
+  正确顺序是：建 draft → 传 APK/SHA256SUMS → 改内容（写 body）并发布，这一次内容变更
+  才会让 bot 在 APK 已在位的情况下索引。要让索引重新看一遍，就 PATCH 一次该 release
+  的内容（例如补 body），单独重传 asset 没有用。
 - 同一 tag 不能重复发：重跑工作流会撞上已存在的 release，脚本会直接失败（这是故意的，
   因为 `softprops/action-gh-release` 遇到已存在的 tag 是**更新**而不是新建，会把上一版
   覆盖掉）。要重发就提高版本号。

@@ -12,6 +12,16 @@
   The tick is only honoured on success: a failed refresh keeps the scroll
   position and the cached content.
 
+### Release tooling
+
+- The Xposed-Modules-Repo mirror step now creates the index release as a draft,
+  uploads the APK and `SHA256SUMS`, and only then publishes it with the release
+  notes as the body. The index bot validates a release once, when its content is
+  published: 1.0.1 and 1.0.2 were published first and given their APK afterwards,
+  so the index never saw them and both stayed drafts (invisible at
+  modules.lsposed.org, so nobody was offered the update). 1.0.2 was republished
+  that way by hand.
+
 ## 1.0.1
 
 ### Packaging

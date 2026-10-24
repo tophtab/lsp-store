@@ -194,6 +194,14 @@ jobs:
 
       # The module index only needs metadata plus the signed APK. Tag format is
       # dictated by Xposed-Modules-Repo: <versionCode>-<versionName>.
+      #
+      # Order matters. The index bot only validates a release when its content is
+      # published or edited; "editing only the release asset won't trigger the
+      # bot" (their README). Publishing first and uploading the APK afterwards is
+      # therefore invisible to the index and leaves the release sitting there as a
+      # draft - exactly what happened to 1.0.1 and 1.0.2. So: create a draft,
+      # upload the assets, and publish last, which is one content change the bot
+      # acts on with the APK already in place.
       - name: Mirror to Xposed-Modules-Repo
         if: env.XPOSED_REPO_TOKEN != ''
         env:
@@ -205,6 +213,8 @@ jobs:
           TAG="${VERSION_CODE}-${VERSION}"
           API="https://api.github.com/repos/${REPO}"
           AUTH="Authorization: token ${XPOSED_REPO_TOKEN}"
+          JSON="Content-Type: application/json"
+          RELEASE_JSON="$RUNNER_TEMP/release.json"
 
           # A re-run must not stack a second release on the same tag.
           if curl -sf -H "$AUTH" "${API}/releases/tags/${TAG}" > /dev/null; then
@@ -212,14 +222,17 @@ jobs:
             exit 1
           fi
 
-          curl -sf -X POST -H "$AUTH" -H "Accept: application/vnd.github+json" \
-            "${API}/releases" \
-            -d "{\"tag_name\":\"${TAG}\",\"name\":\"${VERSION}\",\"draft\":false,\"prerelease\":false}" \
-            -o "$RUNNER_TEMP/release.json"
+          # 1. Draft: no index event fires while the APK is still missing.
+          jq -n --arg tag "$TAG" --arg name "$VERSION" \
+            '{tag_name: $tag, name: $name, draft: true, prerelease: false}' \
+            | curl -sf -X POST -H "$AUTH" -H "$JSON" "${API}/releases" -d @- \
+                -o "$RELEASE_JSON"
 
-          UPLOAD_URL="$(sed -nE 's/.*"upload_url":[[:space:]]*"([^"]+)".*/\1/p' "$RUNNER_TEMP/release.json" | sed 's/{?name,label}//')"
-          test -n "$UPLOAD_URL"
+          RELEASE_ID="$(jq -r .id "$RELEASE_JSON")"
+          UPLOAD_URL="$(jq -r .upload_url "$RELEASE_JSON" | sed 's/{?name,label}//')"
+          test -n "$RELEASE_ID" && test -n "$UPLOAD_URL"
 
+          # 2. Assets, while the release is still invisible to the index.
           curl -sf -X POST -H "$AUTH" -H "Content-Type: application/vnd.android.package-archive" \
             "${UPLOAD_URL}?name=LSP-Store-${VERSION}.apk" \
             --data-binary "out/LSP-Store-${VERSION}.apk" -o /dev/null
@@ -227,4 +240,12 @@ jobs:
             "${UPLOAD_URL}?name=SHA256SUMS" \
             --data-binary "out/SHA256SUMS" -o /dev/null
 
+          # 3. Publish with the release notes as the body: this is the content
+          # change that makes the bot index the release.
+          jq -n --rawfile body "release-notes/${VERSION}.md" \
+            '{draft: false, body: $body}' \
+            | curl -sf -X PATCH -H "$AUTH" -H "$JSON" "${API}/releases/${RELEASE_ID}" -d @- \
+                -o "$RELEASE_JSON"
+
+          test "$(jq -r .draft "$RELEASE_JSON")" = "false"
           echo "Published ${TAG} to ${REPO}"
