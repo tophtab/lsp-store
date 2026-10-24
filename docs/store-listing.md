@@ -1,20 +1,55 @@
-# 上架商店（F-Droid / IzzyOnDroid）
+# 上架商店（F-Droid）
 
-两条渠道的现状：**metadata 已备好，提交动作需要你的账号**（本机没有 GitLab / Codeberg 凭据）。
+唯一在跟的渠道是 **F-Droid**。IzzyOnDroid 已放弃，原因见文末「已关闭的渠道」。
+
+现状：**MR 已提过，被以"活跃开发不足 3 个月"关闭，暂缓到 2027-01**（见第 1 节）。
+metadata 已备好，重开只需你的 GitLab 账号。
 
 - `io.github.tophtab.lspstore.yml` —— F-Droid 的构建元数据，已用 `fdroid lint`（fdroidserver 2.4.5）验证通过。
 - 商店页的描述、图标、截图来自本仓库的 `fastlane/metadata/android/`，不要另外维护一份。
+- 自建/侧载分发（GitHub Releases + 模块索引）不受影响，继续作为签名一致的主渠道。
 
 ## 0. 前置：需要一个包含 fastlane 元数据的 tag
 
-F-Droid 和 IzzyOnDroid 都**只读最新 release/tag 里的** `fastlane/`（F-Droid 文档原话：
+F-Droid **只读最新 release/tag 里的** `fastlane/`（F-Droid 文档原话：
 "F-Droid will only use metadata files from the latest release"）。
 
-当前 `v1.0.0`（2026-10-24 01:23）打在 fastlane 截图更新（`dcbc904` / `8ba1e46`）之前，
-所以 1.0.0 的商店页拿不到新截图。下次发版打 `v1.0.1` 时自然会带上；如果急着上线，
-也可以重新打一个 tag（同一个 versionCode 不能重复发布，建议直接起 `1.0.1`）。
+当前最新 tag 是 `v1.0.2`（2026-10-24 14:33），已带上最新的 `fastlane/`，
+这一条现在满足。以后每次发版只要记得 tag 打在 fastlane 有改动之后即可。
 
-## 1. F-Droid 主仓库
+## 1. 状态：暂缓（时间门槛）
+
+MR 已提过一次，**被 F-Droid 关闭**：理由是应用"活跃开发不足 3 个月"——同一周才建仓库。
+审核原话（duckniii / seeker）：
+
+> Closing this because This app doesn't meet the policy that it needs to be maintained for
+> more than 3 months. and this was created last week.
+
+对应 [Inclusion Policy](https://f-droid.org/docs/Inclusion_Policy/) 原文：
+
+> The application should have been actively developed for at least 3 months, unless:
+> 1. The application has been proven to have some users.
+> 2. The author has been maintaining other apps on F-Droid.
+> 3. The application is developed only for an event.
+
+这不是永久拒绝，是"还不到时候"。时间线：仓库 2026-10-24 公开（首个 commit 2026-10-17），
+所以**最早 2027-01-24 再 re-open**（按首个 commit 算 2027-01-17），期间不要反复重开 MR。
+
+重开时能拿出的"已有用户"证据（豁免条件 1）：
+
+| 来源 | 数据（2026-10-24） |
+|---|---|
+| 模块索引 `assets.lsposed.org` 上 1.0.0 APK | 666 次下载 |
+| GitHub Release 1.0.0 / 1.0.1 | 20 / 32 次下载 |
+| 本仓库 | 5 star、1 fork |
+
+认不认由审核决定，但至少在门槛之外多一条论据。重开前还要：
+
+- 把 `docs/store-listing/io.github.tophtab.lspstore.yml` 的 `versionName` / `versionCode` /
+  `commit` / `CurrentVersion` 更新成那时的最新 release（现在仍钉在 1.0.1 / `727c413`）；
+- 确认最新 tag 的 `fastlane/` 是最新的（见上一节）。
+
+## 2. F-Droid 主仓库
 
 **流程**（GitLab 账号）：
 
@@ -52,26 +87,47 @@ AllowedAPKSigningKeys: <签名证书的 SHA-256 指纹>
 并且 F-Droid 的构建产物要和你的 APK 逐字节一致（用 `apksigcopier compare` 验证）。
 Compose/AGP 项目默认往往不可复现，这一步要单独调试，别在第一次提交时就指望它。
 
-## 2. IzzyOnDroid（建议先走）
+## 3. 已关闭的渠道
 
-用你自己的 GitHub Releases APK，**保留你的签名**，同步 `fastlane/` 元数据，一般 24 小时内上架。
+### IzzyOnDroid —— 政策性拒绝（不要重投）
 
-在 `https://codeberg.org/IzzyOnDroid/repo/issues` 新建 issue，正文可直接用：
+Issue：[`IzzyOnDroid/repodata#772`](https://codeberg.org/IzzyOnDroid/repodata/issues/772)，
+2026-10-24 08:56 提（CEST），当天关闭，标签 `llm/substantial` + `status/declined`。
+唯一一条回复（machiav3lli）：
 
-```
-App: LSP Store
-Package id: io.github.tophtab.lspstore
-Source: https://github.com/tophtab/lsp-store
-Releases: https://github.com/tophtab/lsp-store/releases
-License: Apache-2.0
-Fastlane metadata: yes (fastlane/metadata/android/)
-Category: Xposed / System
-Description: An updater and browser for LSPosed modules. Reads the official
-modules.lsposed.org repository, groups installed modules into updates / up to date /
-not in the repository, and can update one or all of them.
-Notes: the app is itself an empty libxposed module scoped to itself (SCOPE declares
-only its own package); it hooks nothing and needs no activation.
-```
+> Vibe coded, can't be accepted under our current policy.
 
-要求和 F-Droid 的差别：必须免费、无广告，会做病毒扫描；对部分非自由依赖较宽容；
-APK 由上游自己构建并签名，所以不会出现"两个签名"的问题。
+这句话不是随口说的，对应他们 [App Inclusion Policy](https://izzyondroid.org/docs/general/AppInclusionPolicy/)
+的 **AI policy** 一节，原文最后有一段 Specifically, this means：
+
+> - **Vibe-coded apps will be rejected.**
+> - Readme, Changelogs and similar documentation files are allowed to include LLM-generated
+>   texts, but the code itself should be free of it.
+> - Using LLMs for research, brainstorming, inspiration, debugging, look-ups, and comparable
+>   „read-only“ tasks, is acceptable – provided their output is not included in the app's code.
+
+所以边界很清楚：**文档可以用 AI 写，代码不行**，而且只读用途（查资料 / 调试 / 头脑风暴）
+可以，产出落到代码里就不行。他们列的理由是训练数据的版权与隐私、被剥削的标注工人、能耗与
+用水、抓取型爬虫搞垮基础设施（点名了 Codeberg 被 AI bot 打挂那次）。
+
+为什么不去申诉：
+
+- 提交时模板里的 “AI Tools Usage / Assistance Level” 我们填的是 *to be confirmed*，
+  两条 AI Accountability 勾选框也没勾；维护者于是自己判定为 `llm/substantial`。
+- 政策明写：“Any lack of transparency discovered by us, can lead to the project being
+  degraded to rejected state.” 再去争“这不算 vibe coding”属于不诚实的申报，只会把状态
+  弄得更差；改描述、换账号重投同理。
+- 这个 issue 的 tracker 恰好挂在 Codeberg 上，但拦你的是 IzzyOnDroid 自己的政策，不是
+  Codeberg 的规则。
+
+结论：**这个渠道不再尝试**。原先准备好的 issue 正文已从本文档删掉，避免以后误投。
+
+技术上也确实没有损失：IzzyOnDroid 的卖点是用上游自己签名的 APK（避开 F-Droid 重签导致的
+两个签名问题），而这一点用 GitHub Releases + 可复现构建同样能满足。
+
+## 4. 结论
+
+- 分发渠道现在只有一条：**GitHub Releases**（作者签名，模块索引走这条）。F-Droid 等
+  2027-01 时间门槛过了再重投。
+- 不再申请其它第三方商店 / 可信任仓库：IzzyOnDroid 这类带 AI 条款的仓库已经明确不收，
+  继续投等于重复上面那条 issue 的结局。
