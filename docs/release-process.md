@@ -174,12 +174,9 @@ asset 字节数，发布后等 30 秒再查一次 `draft`——被 bot 退回就
 
 ## 坑
 
-- 往索引仓库传 asset 必须写 `--data-binary "@out/LSP-Store-<version>.apk"`，**`@` 不能漏**。
-  漏掉时 curl 把参数本身当请求体，传上去的是 23 字节的字符串
-  `out/LSP-Store-<version>.apk`（`SHA256SUMS` 同理变 14 字节）。asset 列表看起来一切
-  正常，只有对字节数才能发现；索引 bot 会打不开这个"APK"，在发布后约 20 秒把 release
-  退回 draft。1.0.1 和 1.0.3 都踩过，而 1.0.0 / 1.0.2 没暴露是因为那两版是手动传的。
-  CI 现在会断言上传后的字节数，并在发布后复查 draft。
+- 改那段镜像上传脚本时，`--data-binary` 后面的 `@` 不能丢：丢了传给 GitHub 的是文件名
+  （ 23 字节）而不是 APK，asset 列表照样显示“上传成功”，只有对字节数才看得出；索引 bot
+  随后会把 release 退回 draft。CI 现在有字节数断言 + 发布后 draft 复查兜底，这两道别一起删。
 - 索引仓库里**先发 release、再传 APK 是无效的**：索引 bot 只在 release 内容被发布/编辑时
   校验，官方 README 原话是 “editing only the release asset won't trigger the bot”。
   这样发出去的 release 会一直躺在那里当 draft，索引里根本看不到（1.0.1、1.0.2 都踩过）。
