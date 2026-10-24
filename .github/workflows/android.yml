@@ -335,12 +335,25 @@ jobs:
           test -n "$RELEASE_ID" && test -n "$UPLOAD_URL"
 
           # 2. Assets, while the release is still invisible to the index.
-          curl -sf -X POST -H "$AUTH" -H "Content-Type: application/vnd.android.package-archive" \
-            "${UPLOAD_URL}?name=${ASSET}" \
-            --data-binary "out/${ASSET}" -o /dev/null
-          curl -sf -X POST -H "$AUTH" -H "Content-Type: text/plain" \
-            "${UPLOAD_URL}?name=SHA256SUMS" \
-            --data-binary "out/SHA256SUMS" -o /dev/null
+          #    The `@` in --data-binary is not optional: without it curl sends the
+          #    file *name* as the body. That is how 1.0.1 and 1.0.3 ended up with a
+          #    23-byte "APK" (the literal string out/LSP-Store-x.apk) that the index
+          #    bot could not validate, which in turn is why it re-drafted them. Their
+          #    assets arrived, so the release looked fine unless you checked sizes.
+          upload_asset() { # name, content-type, path
+            curl -sf -X POST -H "$AUTH" -H "Content-Type: $2" \
+              "${UPLOAD_URL}?name=$1" --data-binary "@$3" \
+              -o "$RUNNER_TEMP/asset.json"
+            local want got
+            want="$(stat -c%s "$3")"
+            got="$(jq -r .size "$RUNNER_TEMP/asset.json")"
+            [ "$want" = "$got" ] || {
+              echo "::error::$1 uploaded as ${got}B, expected ${want}B"
+              exit 1
+            }
+          }
+          upload_asset "${ASSET}" application/vnd.android.package-archive "out/${ASSET}"
+          upload_asset SHA256SUMS text/plain out/SHA256SUMS
 
           # 3. Publish with the release notes as the body: this is the content
           # change that makes the bot index the release.
@@ -350,4 +363,15 @@ jobs:
                 -o "$RELEASE_JSON"
 
           test "$(jq -r .draft "$RELEASE_JSON")" = "false"
+
+          # 4. The bot validates asynchronously and turns a release it rejects back
+          # into a draft within ~20s, leaving nothing but a draft for the next run
+          # to trip over. Wait for that verdict so a rejection fails this job.
+          sleep 30
+          curl -sf -H "$AUTH" "${API}/releases/${RELEASE_ID}" -o "$RELEASE_JSON"
+          test "$(jq -r .draft "$RELEASE_JSON")" = "false" || {
+            echo "::error::${TAG} was turned back into a draft after publishing; the index bot rejected it"
+            exit 1
+          }
+
           echo "Published ${TAG} to ${REPO}"
