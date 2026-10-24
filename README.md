@@ -25,9 +25,7 @@ LSPosed 模块的更新与浏览工具
 
 ### 下载
 
-<p align="center">
-  <a href="https://github.com/tophtab/lsp-store/releases/latest">GitHub Releases</a>
-</p>
+[GitHub Releases](https://github.com/tophtab/lsp-store/releases/latest)
 
 ---
 

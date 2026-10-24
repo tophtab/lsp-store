@@ -25,9 +25,7 @@ An updater and browser for LSPosed modules
 
 ### Download
 
-<p align="center">
-  <a href="https://github.com/tophtab/lsp-store/releases/latest">GitHub Releases</a>
-</p>
+[GitHub Releases](https://github.com/tophtab/lsp-store/releases/latest)
 
 ---
 
