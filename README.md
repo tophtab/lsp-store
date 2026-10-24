@@ -42,6 +42,12 @@ apksigner verify --print-certs LSP-Store-1.0.0.apk
 sha256sum -c SHA256SUMS
 ```
 
+签名证书 SHA-256 指纹（所有版本都应是这个）：
+
+```
+b733f85831f27656fbbf0c424b0a76ceef74dd7ac3261423b0311dc6c8804fcb
+```
+
 也可以直接在 LSPosed Manager 的模块仓库里安装与更新。**本应用不需要激活任何模块，
 也不 Hook 任何应用**：它只是把自己声明成一个空模块（作用域是自身），以便进入官方索引、
 参与 Manager 的安装与更新流程。需要 Android 8.1+ 并已安装 LSPosed。

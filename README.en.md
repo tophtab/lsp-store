@@ -43,6 +43,12 @@ apksigner verify --print-certs LSP-Store-1.0.0.apk
 sha256sum -c SHA256SUMS
 ```
 
+Signing certificate SHA-256 fingerprint (identical for every release):
+
+```
+b733f85831f27656fbbf0c424b0a76ceef74dd7ac3261423b0311dc6c8804fcb
+```
+
 You can also install and update it straight from the LSPosed Manager module
 repository. **No module activation is needed and no app is hooked**: LSP Store
 declares itself as an empty module scoped to itself only, so that it can be listed
