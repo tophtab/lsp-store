@@ -42,15 +42,14 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      - name: Install the SDK packages compileSdk needs
-        # The runner image ships the SDK, build-tools and the accepted licences,
-        # so android-actions/setup-android@v4 only added ~12s per job here.
-        run: |
-          command -v sdkmanager > /dev/null || {
-            echo "::error::sdkmanager is not on PATH any more; the runner image changed. Restore android-actions/setup-android@v4."
-            exit 1
-          }
-          sdkmanager --install "platforms;android-37.1" "build-tools;36.0.0" > /dev/null
+      - uses: android-actions/setup-android@v4
+        with:
+          # The ubuntu-latest image stopped exporting ANDROID_HOME and putting
+          # cmdline-tools on PATH, so this is not optional (a plain
+          # `sdkmanager` call fails with "command not found"). It also provides
+          # the SDK location the apksigner/aapt2 calls below rely on.
+          packages: 'platforms;android-37.1 build-tools;36.0.0'
+          log-accepted-android-sdk-licenses: false
       - uses: gradle/actions/setup-gradle@v4
       - name: Lint, unit tests and debug APK
         run: ./gradlew :app:lintDebug :app:testDebugUnitTest :app:assembleDebug --stacktrace
@@ -88,13 +87,14 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      - name: Install the SDK packages compileSdk needs
-        run: |
-          command -v sdkmanager > /dev/null || {
-            echo "::error::sdkmanager is not on PATH any more; the runner image changed. Restore android-actions/setup-android@v4."
-            exit 1
-          }
-          sdkmanager --install "platforms;android-37.1" "build-tools;36.0.0" > /dev/null
+      - uses: android-actions/setup-android@v4
+        with:
+          # The ubuntu-latest image stopped exporting ANDROID_HOME and putting
+          # cmdline-tools on PATH, so this is not optional (a plain
+          # `sdkmanager` call fails with "command not found"). It also provides
+          # the SDK location the apksigner/aapt2 calls below rely on.
+          packages: 'platforms;android-37.1 build-tools;36.0.0'
+          log-accepted-android-sdk-licenses: false
 
       # Tagging a commit that master already built means the APK exists: grab it
       # and skip the build. The version check below still runs, so a mismatch is a
