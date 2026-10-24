@@ -5,7 +5,7 @@
 ### Packaging
 
 - Store listing only: `fastlane/metadata/android/en-US/images/phoneScreenshots/` now
-  holds the current three screens (module, repository, installed) named `1.png`–`3.png`
+  holds the current three tabs (installed, repository, settings) named `1.png`–`3.png`
   as F-Droid expects, replacing the five screenshots from the old four-tab UI. No app
   code changed; the version was bumped because F-Droid and IzzyOnDroid only read
   `fastlane/` from the latest release.
