@@ -114,6 +114,7 @@
     <string name="library_skipped_latest">, en son %1$s</string>
     <string name="library_ignored_module">Güncelleme kontrolü devre dışı bırakıldı</string>
     <string name="library_load_failed">Yüklenemedi</string>
+    <string name="settings_masthead_subtitle">Tercihler</string>
     <string name="settings_appearance">Dış görünüş</string>
     <string name="settings_theme">Tema</string>
     <string name="settings_amoled">AMOLED siyah</string>
@@ -124,6 +125,7 @@
     <string name="settings_root">Kök sessiz kurulum</string>
     <string name="settings_root_detected">su algılandı, APK\'lar sessizce yükleniyor</string>
     <string name="settings_root_unavailable">su bu cihazda mevcut değil</string>
+    <string name="settings_root_desc">APK\'ları su aracılığıyla sessizce yükleyin ve güncelleyin</string>
     <string name="settings_library">Kütüphane</string>
     <string name="import_title">Kurulu modülleri içe aktar</string>
     <string name="import_desc">Depoda bulunmayan yüklü LSPosed modülleri. Güncellemeleri kontrol etmek için birini bir depo modülüne bağlayın. İndirilen APK\'nın güncellenmesi için yüklü paketle eşleşmesi gerekir.</string>
@@ -139,6 +141,8 @@
     <string name="import_load_failed">Modüller yüklenemedi</string>
     <string name="settings_storage">Depolamak</string>
     <string name="settings_downloaded">İndirilen APK\'lar: %1$s</string>
+    <string name="settings_clear_index">Modül dizini önbelleğini temizle</string>
+    <string name="settings_clear_apks">İndirilen APK\'leri temizle</string>
     <string name="settings_about">Hakkında</string>
     <string name="settings_advanced">Gelişmiş</string>
     <string name="settings_index_cleared">Dizin önbelleği temizlendi</string>

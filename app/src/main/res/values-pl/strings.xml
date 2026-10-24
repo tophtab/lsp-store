@@ -114,6 +114,7 @@
     <string name="library_skipped_latest">, najnowsze %1$s</string>
     <string name="library_ignored_module">Sprawdzanie aktualizacji wyłączone</string>
     <string name="library_load_failed">Nie udało się załadować</string>
+    <string name="settings_masthead_subtitle">Preferencje</string>
     <string name="settings_appearance">Wygląd</string>
     <string name="settings_theme">Motyw</string>
     <string name="settings_amoled">AMOLED-owy czarny</string>
@@ -124,6 +125,7 @@
     <string name="settings_root">Zrootuj cichą instalację</string>
     <string name="settings_root_detected">su, pliki APK instalują się w trybie cichym</string>
     <string name="settings_root_unavailable">su nie jest dostępne na tym urządzeniu</string>
+    <string name="settings_root_desc">Instaluj i aktualizuj pliki APK w trybie cichym za pośrednictwem su</string>
     <string name="settings_library">Biblioteka</string>
     <string name="import_title">Importuj zainstalowane moduły</string>
     <string name="import_desc">Zainstalowano moduły LSPosed, których nie ma w repozytorium. Połącz jeden z modułem repozytorium, aby sprawdzić dostępność aktualizacji. Pobrany plik APK musi pasować do zainstalowanego pakietu, aby można go było zaktualizować.</string>
@@ -139,6 +141,8 @@
     <string name="import_load_failed">Nie udało się załadować modułów</string>
     <string name="settings_storage">Składowanie</string>
     <string name="settings_downloaded">Pobrane pliki APK: %1$s</string>
+    <string name="settings_clear_index">Wyczyść pamięć podręczną indeksu modułów</string>
+    <string name="settings_clear_apks">Wyczyść pobrane APK</string>
     <string name="settings_about">O</string>
     <string name="settings_advanced">Zaawansowany</string>
     <string name="settings_index_cleared">Pamięć podręczna indeksu została wyczyszczona</string>

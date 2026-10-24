@@ -114,6 +114,7 @@
     <string name="library_skipped_latest">, الأحدث %1$s</string>
     <string name="library_ignored_module">تم تعطيل التحقق من التحديث</string>
     <string name="library_load_failed">فشل التحميل</string>
+    <string name="settings_masthead_subtitle">التفضيلات</string>
     <string name="settings_appearance">مظهر</string>
     <string name="settings_theme">السمة</string>
     <string name="settings_amoled">أموليد أسود</string>
@@ -124,6 +125,7 @@
     <string name="settings_root">تثبيت الجذر الصامت</string>
     <string name="settings_root_detected">تم اكتشاف su، ويتم تثبيت ملفات APK بصمت</string>
     <string name="settings_root_unavailable">su غير متوفر على هذا الجهاز</string>
+    <string name="settings_root_desc">قم بتثبيت ملفات APK وتحديثها بصمت عبر su</string>
     <string name="settings_library">مكتبة</string>
     <string name="import_title">استيراد الوحدات المثبتة</string>
     <string name="import_desc">وحدات LSPosed المثبتة غير الموجودة في المستودع. قم بربط أحدها بوحدة المستودع للتحقق من وجود تحديثات. يجب أن يتطابق ملف APK الذي تم تنزيله مع الحزمة المثبتة حتى يتم تحديثه في مكانه.</string>
@@ -139,6 +141,8 @@
     <string name="import_load_failed">فشل تحميل الوحدات</string>
     <string name="settings_storage">تخزين</string>
     <string name="settings_downloaded">ملفات APK التي تم تنزيلها: %1$s</string>
+    <string name="settings_clear_index">مسح ذاكرة التخزين المؤقت لفهرس الوحدات</string>
+    <string name="settings_clear_apks">مسح ملفات APK التي تم تنزيلها</string>
     <string name="settings_about">عن</string>
     <string name="settings_advanced">متقدم</string>
     <string name="settings_index_cleared">تم مسح ذاكرة التخزين المؤقت للفهرس</string>

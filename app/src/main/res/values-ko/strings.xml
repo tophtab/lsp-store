@@ -114,6 +114,7 @@
     <string name="library_skipped_latest">, 최신 %1$s</string>
     <string name="library_ignored_module">업데이트 확인이 비활성화되었습니다.</string>
     <string name="library_load_failed">로드하지 못했습니다.</string>
+    <string name="settings_masthead_subtitle">환경설정</string>
     <string name="settings_appearance">모습</string>
     <string name="settings_theme">테마</string>
     <string name="settings_amoled">아몰레드 블랙</string>
@@ -124,6 +125,7 @@
     <string name="settings_root">루트 자동 설치</string>
     <string name="settings_root_detected">감지됨, APK가 자동으로 설치됨</string>
     <string name="settings_root_unavailable">이 장치에서는 su를 사용할 수 없습니다</string>
+    <string name="settings_root_desc">su를 통해 자동으로 APK 설치 및 업데이트</string>
     <string name="settings_library">도서관</string>
     <string name="import_title">설치된 모듈 가져오기</string>
     <string name="import_desc">저장소에 없는 LSPosed 모듈을 설치했습니다. 업데이트를 확인하려면 하나를 저장소 모듈에 연결하세요. 다운로드한 APK는 설치된 패키지와 일치해야 업데이트됩니다.</string>
@@ -139,6 +141,8 @@
     <string name="import_load_failed">모듈을 로드하지 못했습니다.</string>
     <string name="settings_storage">저장</string>
     <string name="settings_downloaded">다운로드한 APK: %1$s</string>
+    <string name="settings_clear_index">모듈 인덱스 캐시 지우기</string>
+    <string name="settings_clear_apks">다운로드한 APK 지우기</string>
     <string name="settings_about">에 대한</string>
     <string name="settings_advanced">고급의</string>
     <string name="settings_index_cleared">인덱스 캐시가 지워졌습니다.</string>

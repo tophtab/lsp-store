@@ -107,7 +107,10 @@ fun SettingsScreen(
         containerColor = MaterialTheme.colorScheme.background,
         contentWindowInsets = topContentWindowInsets(),
         topBar = {
-            KomiTopBar(title = stringResource(R.string.nav_settings))
+            KomiTopBar(
+                title = stringResource(R.string.nav_settings),
+                subtitle = stringResource(R.string.settings_masthead_subtitle),
+            )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { innerPadding ->
@@ -136,11 +139,13 @@ fun SettingsScreen(
                     )
                     KomiSettingsSwitchRow(
                         title = stringResource(R.string.settings_amoled),
+                        subtitle = stringResource(R.string.settings_amoled_desc),
                         checked = state.amoled,
                         onCheckedChange = viewModel::setAmoled,
                     )
                     KomiSettingsSwitchRow(
                         title = stringResource(R.string.settings_dynamic),
+                        subtitle = stringResource(R.string.settings_dynamic_desc),
                         checked = state.dynamicColor,
                         onCheckedChange = viewModel::setDynamicColor,
                         last = true,
@@ -154,7 +159,7 @@ fun SettingsScreen(
                         subtitle = when (state.rootAvailable) {
                             true -> stringResource(R.string.settings_root_detected)
                             false -> stringResource(R.string.settings_root_unavailable)
-                            null -> null
+                            null -> stringResource(R.string.settings_root_desc)
                         },
                         checked = state.rootInstall,
                         onCheckedChange = viewModel::setRootInstall,
@@ -293,6 +298,7 @@ fun SettingsScreen(
                             R.string.settings_downloaded,
                             formatBytes(state.downloadsSize),
                         ),
+                        subtitle = stringResource(R.string.settings_clear_apks),
                         trailing = {
                             KomiButton(
                                 onClick = viewModel::clearDownloadedApks,
@@ -305,6 +311,7 @@ fun SettingsScreen(
                     KomiSettingsRow(
                         title = stringResource(R.string.diagnostics_index_cache) + ": " +
                             formatBytes(state.indexCacheSize),
+                        subtitle = stringResource(R.string.settings_clear_index),
                         trailing = {
                             KomiButton(
                                 onClick = viewModel::clearIndexCache,

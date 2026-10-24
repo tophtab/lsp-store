@@ -114,6 +114,7 @@
     <string name="library_skipped_latest">, नवीनतम %1$s</string>
     <string name="library_ignored_module">अद्यतन जाँच अक्षम किया गया</string>
     <string name="library_load_failed">लोड करने में विफल</string>
+    <string name="settings_masthead_subtitle">प्राथमिकताएँ</string>
     <string name="settings_appearance">उपस्थिति</string>
     <string name="settings_theme">थीम</string>
     <string name="settings_amoled">AMOLED काला</string>
@@ -124,6 +125,7 @@
     <string name="settings_root">रूट साइलेंट इंस्टाल</string>
     <string name="settings_root_detected">सु का पता चला, APK चुपचाप इंस्टॉल हो जाते हैं</string>
     <string name="settings_root_unavailable">su इस डिवाइस पर उपलब्ध नहीं है</string>
+    <string name="settings_root_desc">सु के माध्यम से चुपचाप एपीके इंस्टॉल और अपडेट करें</string>
     <string name="settings_library">पुस्तकालय</string>
     <string name="import_title">स्थापित मॉड्यूल आयात करें</string>
     <string name="import_desc">स्थापित एलएसपोज़्ड मॉड्यूल जो रिपॉजिटरी में नहीं हैं। अपडेट की जांच के लिए किसी एक को रिपॉजिटरी मॉड्यूल से लिंक करें। अद्यतन करने के लिए डाउनलोड किया गया एपीके स्थापित पैकेज से मेल खाना चाहिए।</string>
@@ -139,6 +141,8 @@
     <string name="import_load_failed">मॉड्यूल लोड करने में विफल</string>
     <string name="settings_storage">भंडारण</string>
     <string name="settings_downloaded">डाउनलोड किए गए एपीके: %1$s</string>
+    <string name="settings_clear_index">मॉड्यूल इंडेक्स कैश साफ़ करें</string>
+    <string name="settings_clear_apks">डाउनलोड किए गए APK साफ़ करें</string>
     <string name="settings_about">के बारे में</string>
     <string name="settings_advanced">विकसित</string>
     <string name="settings_index_cleared">इंडेक्स कैश साफ़ किया गया</string>

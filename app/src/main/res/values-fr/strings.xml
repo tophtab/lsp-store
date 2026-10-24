@@ -114,6 +114,7 @@
     <string name="library_skipped_latest">, le dernier %1$s</string>
     <string name="library_ignored_module">Vérification des mises à jour désactivée</string>
     <string name="library_load_failed">Échec du chargement</string>
+    <string name="settings_masthead_subtitle">Préférences</string>
     <string name="settings_appearance">Apparence</string>
     <string name="settings_theme">Thème</string>
     <string name="settings_amoled">AMOLED noir</string>
@@ -124,6 +125,7 @@
     <string name="settings_root">Installation silencieuse root</string>
     <string name="settings_root_detected">su détecté, les APK s\'installent silencieusement</string>
     <string name="settings_root_unavailable">su n\'est pas disponible sur cet appareil</string>
+    <string name="settings_root_desc">Installez et mettez à jour les APK en silence via su</string>
     <string name="settings_library">Bibliothèque</string>
     <string name="import_title">Importer les modules installés</string>
     <string name="import_desc">Modules LSPosed installés qui ne sont pas dans le référentiel. Associez-en un à un module de référentiel pour vérifier les mises à jour. L\'APK téléchargé doit correspondre au package installé pour être mis à jour.</string>
@@ -139,6 +141,8 @@
     <string name="import_load_failed">Échec du chargement des modules</string>
     <string name="settings_storage">Stockage</string>
     <string name="settings_downloaded">APK téléchargés : %1$s</string>
+    <string name="settings_clear_index">Effacer le cache de l\'index des modules</string>
+    <string name="settings_clear_apks">Effacer les APK téléchargés</string>
     <string name="settings_about">À propos</string>
     <string name="settings_advanced">Avancé</string>
     <string name="settings_index_cleared">Cache d\'index vidé</string>

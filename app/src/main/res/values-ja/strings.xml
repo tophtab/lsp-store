@@ -114,6 +114,7 @@
     <string name="library_skipped_latest">、最新 %1$s</string>
     <string name="library_ignored_module">更新チェックが無効になっています</string>
     <string name="library_load_failed">ロードに失敗しました</string>
+    <string name="settings_masthead_subtitle">設定</string>
     <string name="settings_appearance">外観</string>
     <string name="settings_theme">テーマ</string>
     <string name="settings_amoled">AMOLEDブラック</string>
@@ -124,6 +125,7 @@
     <string name="settings_root">ルートサイレントインストール</string>
     <string name="settings_root_detected">su が検出され、APK がサイレントにインストールされます</string>
     <string name="settings_root_unavailable">このデバイスでは su を利用できません</string>
+    <string name="settings_root_desc">su 経由で APK をサイレントにインストールおよび更新する</string>
     <string name="settings_library">図書館</string>
     <string name="import_title">インストールされているモジュールをインポートする</string>
     <string name="import_desc">リポジトリにないインストール済みの LSPosed モジュール。 1 つをリポジトリ モジュールにリンクして、更新を確認します。適切に更新するには、ダウンロードした APK がインストールされているパッケージと一致する必要があります。</string>
@@ -139,6 +141,8 @@
     <string name="import_load_failed">モジュールのロードに失敗しました</string>
     <string name="settings_storage">ストレージ</string>
     <string name="settings_downloaded">ダウンロードしたAPK: %1$s</string>
+    <string name="settings_clear_index">モジュールインデックスのキャッシュを削除</string>
+    <string name="settings_clear_apks">ダウンロードした APK を削除</string>
     <string name="settings_about">について</string>
     <string name="settings_advanced">高度な</string>
     <string name="settings_index_cleared">インデックスキャッシュがクリアされました</string>

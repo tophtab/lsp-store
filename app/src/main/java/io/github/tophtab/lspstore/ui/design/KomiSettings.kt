@@ -142,7 +142,7 @@ fun KomiSettingsRow(
 @Composable
 fun KomiSettingsSwitchRow(
     title: String,
-    subtitle: String? = null,
+    subtitle: String?,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,

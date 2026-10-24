@@ -139,6 +139,7 @@
     <string name="settings_root">Root 靜默安裝</string>
     <string name="settings_root_detected">檢測到 su，APK 將靜默安裝</string>
     <string name="settings_root_unavailable">此裝置沒有 su</string>
+    <string name="settings_root_desc">透過 su 靜默安裝和更新 APK</string>
     <string name="settings_library">資料庫</string>
     <string name="import_title">匯入已安裝模組</string>
     <string name="import_desc">已安裝但不在倉庫中的 LSPosed 模組。將模組連結到倉庫模組即可檢查更新。下載的 APK 必須與已安裝的套件相符才能原地更新。</string>
@@ -154,6 +155,8 @@
     <string name="import_load_failed">載入模組失敗</string>
     <string name="settings_storage">儲存</string>
     <string name="settings_downloaded">已下載的 APK：%1$s</string>
+    <string name="settings_clear_index">清除模組索引快取</string>
+    <string name="settings_clear_apks">清除已下載的 APK</string>
     <string name="settings_about">關於</string>
     <string name="settings_advanced">高階</string>
     <string name="settings_index_cleared">索引快取已清除</string>
@@ -285,6 +288,7 @@
     <string name="home_masthead_subtitle">LSPosed 模組索引</string>
     <string name="installed_masthead_subtitle">已安裝 %1$d 個 LSPosed 模組</string>
     <string name="installed_search_hint">搜尋已安裝的模組</string>
+    <string name="settings_masthead_subtitle">偏好設定</string>
     <string name="detail_stats">統計</string>
     <string name="detail_stat_stars">星標</string>
     <string name="detail_stat_releases">發佈</string>

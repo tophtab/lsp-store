@@ -114,6 +114,7 @@
     <string name="library_skipped_latest">, সর্বশেষ %1$s</string>
     <string name="library_ignored_module">আপডেট চেক নিষ্ক্রিয়</string>
     <string name="library_load_failed">লোড করতে ব্যর্থ হয়েছে</string>
+    <string name="settings_masthead_subtitle">পছন্দসমূহ</string>
     <string name="settings_appearance">চেহারা</string>
     <string name="settings_theme">থিম</string>
     <string name="settings_amoled">AMOLED কালো</string>
@@ -124,6 +125,7 @@
     <string name="settings_root">রুট নীরব ইনস্টল</string>
     <string name="settings_root_detected">su সনাক্ত করা হয়েছে, APK গুলি নিঃশব্দে ইনস্টল হয়৷</string>
     <string name="settings_root_unavailable">su এই ডিভাইসে উপলব্ধ নয়</string>
+    <string name="settings_root_desc">su এর মাধ্যমে চুপচাপ APK ইনস্টল এবং আপডেট করুন</string>
     <string name="settings_library">লাইব্রেরি</string>
     <string name="import_title">ইনস্টল করা মডিউল আমদানি করুন</string>
     <string name="import_desc">LSPosed মডিউলগুলি ইনস্টল করা হয়েছে যা সংগ্রহস্থলে নেই। আপডেটের জন্য চেক করতে একটি সংগ্রহস্থল মডিউলের সাথে লিঙ্ক করুন। ডাউনলোড করা APK আপডেট করার জন্য ইনস্টল করা প্যাকেজের সাথে মেলে।</string>
@@ -139,6 +141,8 @@
     <string name="import_load_failed">মডিউল লোড করতে ব্যর্থ হয়েছে৷</string>
     <string name="settings_storage">স্টোরেজ</string>
     <string name="settings_downloaded">ডাউনলোড করা APK: %1$s</string>
+    <string name="settings_clear_index">মডিউল ইনডেক্স ক্যাশে সাফ করুন</string>
+    <string name="settings_clear_apks">ডাউনলোড করা APK সাফ করুন</string>
     <string name="settings_about">সম্পর্কে</string>
     <string name="settings_advanced">উন্নত</string>
     <string name="settings_index_cleared">ইনডেক্স ক্যাশে সাফ করা হয়েছে</string>

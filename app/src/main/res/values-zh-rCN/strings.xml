@@ -137,6 +137,7 @@
     <string name="settings_root">Root 静默安装</string>
     <string name="settings_root_detected">检测到 su，APK 将静默安装</string>
     <string name="settings_root_unavailable">此设备没有 su</string>
+    <string name="settings_root_desc">通过 su 静默安装和更新 APK</string>
     <string name="settings_library">资料库</string>
     <string name="import_title">导入已安装模块</string>
     <string name="import_desc">已安装但不在仓库中的 LSPosed 模块。将一个模块链接到仓库模块即可检查更新。下载的 APK 必须与已安装的包匹配才能原地更新。</string>
@@ -152,6 +153,8 @@
     <string name="import_load_failed">加载模块失败</string>
     <string name="settings_storage">存储</string>
     <string name="settings_downloaded">已下载的 APK：%1$s</string>
+    <string name="settings_clear_index">清除模块索引缓存</string>
+    <string name="settings_clear_apks">清除已下载的 APK</string>
     <string name="settings_about">关于</string>
     <string name="settings_advanced">高级</string>
     <string name="settings_index_cleared">索引缓存已清除</string>
@@ -287,6 +290,7 @@
     <string name="home_masthead_subtitle">LSPosed 模块索引</string>
     <string name="installed_masthead_subtitle">已安装 %1$d 个 LSPosed 模块</string>
     <string name="installed_search_hint">搜索已安装的模块</string>
+    <string name="settings_masthead_subtitle">偏好设置</string>
     <string name="detail_stats">统计</string>
     <string name="detail_stat_stars">星标</string>
     <string name="detail_stat_releases">发布</string>

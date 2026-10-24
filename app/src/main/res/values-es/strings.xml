@@ -114,6 +114,7 @@
     <string name="library_skipped_latest">, último %1$s</string>
     <string name="library_ignored_module">Comprobación de actualización deshabilitada</string>
     <string name="library_load_failed">No se pudo cargar</string>
+    <string name="settings_masthead_subtitle">Preferencias</string>
     <string name="settings_appearance">Apariencia</string>
     <string name="settings_theme">Tema</string>
     <string name="settings_amoled">AMOLED negro</string>
@@ -124,6 +125,7 @@
     <string name="settings_root">Instalación silenciosa raíz</string>
     <string name="settings_root_detected">su detectado, los APK se instalan silenciosamente</string>
     <string name="settings_root_unavailable">su no está disponible en este dispositivo</string>
+    <string name="settings_root_desc">Instale y actualice APK silenciosamente a través de su</string>
     <string name="settings_library">Biblioteca</string>
     <string name="import_title">Importar módulos instalados</string>
     <string name="import_desc">Módulos LSPosed instalados que no están en el repositorio. Vincule uno a un módulo de repositorio para buscar actualizaciones. El APK descargado debe coincidir con el paquete instalado para actualizarse en su lugar.</string>
@@ -139,6 +141,8 @@
     <string name="import_load_failed">No se pudieron cargar los módulos</string>
     <string name="settings_storage">Almacenamiento</string>
     <string name="settings_downloaded">APK descargados: %1$s</string>
+    <string name="settings_clear_index">Borrar caché del índice de módulos</string>
+    <string name="settings_clear_apks">Borrar APK descargados</string>
     <string name="settings_about">Acerca de</string>
     <string name="settings_advanced">Avanzado</string>
     <string name="settings_index_cleared">Caché de índice borrado</string>

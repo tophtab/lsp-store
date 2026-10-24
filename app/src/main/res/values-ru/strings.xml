@@ -114,6 +114,7 @@
     <string name="library_skipped_latest">, последний %1$s</string>
     <string name="library_ignored_module">Проверка обновлений отключена</string>
     <string name="library_load_failed">Не удалось загрузить</string>
+    <string name="settings_masthead_subtitle">Предпочтения</string>
     <string name="settings_appearance">Появление</string>
     <string name="settings_theme">Тема</string>
     <string name="settings_amoled">AMOLED черный</string>
@@ -124,6 +125,7 @@
     <string name="settings_root">Тихая установка root</string>
     <string name="settings_root_detected">su обнаружен, APK устанавливаются автоматически</string>
     <string name="settings_root_unavailable">su недоступен на этом устройстве</string>
+    <string name="settings_root_desc">Устанавливайте и обновляйте APK автоматически через su</string>
     <string name="settings_library">Библиотека</string>
     <string name="import_title">Импортировать установленные модули</string>
     <string name="import_desc">Установлены модули LSPosed, которых нет в репозитории. Свяжите его с модулем репозитория, чтобы проверить наличие обновлений. Для возможности обновления загруженный APK должен соответствовать установленному пакету.</string>
@@ -139,6 +141,8 @@
     <string name="import_load_failed">Не удалось загрузить модули</string>
     <string name="settings_storage">Хранилище</string>
     <string name="settings_downloaded">Скачано APK: %1$s</string>
+    <string name="settings_clear_index">Очистить кэш индекса модулей</string>
+    <string name="settings_clear_apks">Очистить скачанные APK</string>
     <string name="settings_about">О</string>
     <string name="settings_advanced">Передовой</string>
     <string name="settings_index_cleared">Кэш индекса очищен.</string>

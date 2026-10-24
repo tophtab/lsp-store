@@ -114,6 +114,7 @@
     <string name="library_skipped_latest">, ultimo %1$s</string>
     <string name="library_ignored_module">Controllo aggiornamenti disabilitato</string>
     <string name="library_load_failed">Impossibile caricare</string>
+    <string name="settings_masthead_subtitle">Preferenze</string>
     <string name="settings_appearance">Aspetto</string>
     <string name="settings_theme">Tema</string>
     <string name="settings_amoled">AMOLED nero</string>
@@ -124,6 +125,7 @@
     <string name="settings_root">Installazione silenziosa root</string>
     <string name="settings_root_detected">su rilevato, gli APK vengono installati in modalità silenziosa</string>
     <string name="settings_root_unavailable">su non disponibile su questo dispositivo</string>
+    <string name="settings_root_desc">Installa e aggiorna gli APK in modalità silenziosa tramite su</string>
     <string name="settings_library">Biblioteca</string>
     <string name="import_title">Importa i moduli installati</string>
     <string name="import_desc">Moduli LSPosed installati che non sono nel repository. Collegane uno a un modulo del repository per verificare la presenza di aggiornamenti. L\'APK scaricato deve corrispondere al pacchetto installato da aggiornare sul posto.</string>
@@ -139,6 +141,8 @@
     <string name="import_load_failed">Impossibile caricare i moduli</string>
     <string name="settings_storage">Magazzinaggio</string>
     <string name="settings_downloaded">APK scaricati: %1$s</string>
+    <string name="settings_clear_index">Cancella la cache dell\'indice dei moduli</string>
+    <string name="settings_clear_apks">Cancella gli APK scaricati</string>
     <string name="settings_about">Di</string>
     <string name="settings_advanced">Avanzato</string>
     <string name="settings_index_cleared">Cache dell\'indice cancellata</string>
