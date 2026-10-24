@@ -25,6 +25,12 @@ data class HomeUiState(
     val installedPackages: Set<String> = emptySet(),
     val searchQuery: String = "",
     val searchResults: List<Module> = emptyList(),
+    /**
+     * Bumped whenever a load finishes, silent startup refresh included, so the
+     * list jumps back to the top: the newest modules are the reason the refresh
+     * exists, and leaving the viewport where it was made it look like a no-op.
+     */
+    val refreshTick: Int = 0,
 )
 
 class HomeViewModel(private val container: AppContainer) : ViewModel() {
@@ -111,7 +117,13 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
             runCatching { moduleRepository.refreshIndexIfNeeded(force) }
                 .onSuccess { modules ->
                     index = modules
-                    _state.update { it.copy(isLoading = false, isRefreshing = false) }
+                    _state.update {
+                        it.copy(
+                            isLoading = false,
+                            isRefreshing = false,
+                            refreshTick = it.refreshTick + 1,
+                        )
+                    }
                     rebuild()
                 }
                 .onFailure { error ->

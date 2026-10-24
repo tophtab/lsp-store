@@ -70,6 +70,19 @@ fun HomeScreen(
         }
     }
 
+    // A finished refresh returns to the top: the newest modules are there, and
+    // staying on the old offset made the refresh look like a no-op. The startup
+    // refresh counts too, so opening the app always lands on the newest modules
+    // instead of wherever the list was left last time.
+    LaunchedEffect(state.refreshTick) {
+        if (state.refreshTick == 0) return@LaunchedEffect
+        if (state.searchQuery.isNotBlank()) {
+            if (state.searchResults.isNotEmpty()) searchListState.animateScrollToItem(0)
+        } else if (state.recentlyUpdated.isNotEmpty()) {
+            listState.animateScrollToItem(0)
+        }
+    }
+
     val tabs = buildList {
         add(
             HomeTab(

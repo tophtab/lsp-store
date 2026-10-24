@@ -80,6 +80,12 @@ data class InstalledUiState(
     val batchProgress: String? = null,
     val batchItems: Map<String, BatchInstallState> = emptyMap(),
     val message: String? = null,
+    /**
+     * Bumped whenever a load finishes, silent startup refresh included, so the
+     * list jumps back to the top: the newest updates are the reason the refresh
+     * exists, and leaving the viewport where it was made it look like a no-op.
+     */
+    val refreshTick: Int = 0,
 )
 
 class InstalledViewModel(private val container: AppContainer) : ViewModel() {
@@ -727,7 +733,13 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
             runCatching { moduleRepository.refreshIndexIfNeeded(force) }
                 .onSuccess { modules ->
                     index = modules
-                    _state.update { it.copy(isLoading = false, isRefreshing = false) }
+                    _state.update {
+                        it.copy(
+                            isLoading = false,
+                            isRefreshing = false,
+                            refreshTick = it.refreshTick + 1,
+                        )
+                    }
                     recompute()
                 }
                 .onFailure { error ->

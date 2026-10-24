@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.0.2
+
+### Changed
+
+- A finished refresh now returns the Repository and Installed lists to the top.
+  Both view models bump a `refreshTick` once a load lands, and the screens answer
+  it with `animateScrollToItem(0)`. This covers pull-to-refresh, re-tapping the
+  current bottom tab (which already scrolled) and the silent startup refresh, so
+  a cold start ends on the newest modules instead of wherever the list was left.
+  The tick is only honoured on success: a failed refresh keeps the scroll
+  position and the cached content.
+
 ## 1.0.1
 
 ### Packaging
