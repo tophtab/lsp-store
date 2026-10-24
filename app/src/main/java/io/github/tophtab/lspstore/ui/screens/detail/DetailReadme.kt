@@ -87,6 +87,14 @@ internal data class ReadmeTableCell(
     val isHeader: Boolean = false,
 )
 
+/**
+ * `AnnotatedString.fromHtml` turns every `<img>` into U+FFFC (the object
+ * replacement character), which Text renders as an `OBJ` box. Table images are
+ * drawn with AsyncImage instead, so their captions must not keep that marker.
+ */
+internal val ReadmeTableCell.captionText: String
+    get() = annotated.text.filterNot { it == '\uFFFC' }.trim()
+
 internal data class ReadmeTableRow(
     val cells: List<ReadmeTableCell>,
     val isHeader: Boolean,
@@ -337,13 +345,31 @@ internal fun ReadmeTableRowView(row: ReadmeTableRow) {
                     .weight(1f)
                     .padding(horizontal = 10.dp, vertical = 8.dp),
             ) {
-                if (cell.imageUrl != null && cell.annotated.text.isBlank()) {
+                val imageUrl = cell.imageUrl
+                if (imageUrl != null) {
+                    val caption = cell.captionText
                     AsyncImage(
-                        model = cell.imageUrl,
-                        contentDescription = null,
+                        model = imageUrl,
+                        contentDescription = caption.ifBlank { null },
                         contentScale = ContentScale.Fit,
-                        modifier = Modifier.height(18.dp).widthIn(max = 160.dp),
+                        modifier = if (isBadgeUrl(imageUrl)) {
+                            Modifier.height(18.dp).widthIn(max = 160.dp)
+                        } else {
+                            // Screenshot tables put several portrait images side
+                            // by side; fit each one to its cell, not to 18 dp.
+                            Modifier
+                                .fillMaxWidth()
+                                .heightIn(max = 320.dp)
+                        },
                     )
+                    if (caption.isNotEmpty()) {
+                        Text(
+                            text = caption,
+                            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(top = 4.dp),
+                        )
+                    }
                 } else {
                     Text(
                         text = cell.annotated,

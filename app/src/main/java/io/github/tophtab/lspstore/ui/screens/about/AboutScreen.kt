@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.Image
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -107,17 +109,29 @@ fun AboutScreen(onBack: () -> Unit) {
                     contentPadding = PaddingValues(18.dp),
                     onClick = { uriHandler.openUri("https://github.com/tophtab/lsp-store") },
                 ) {
-                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        KomiText(
-                            text = stringResource(R.string.about_source_title),
-                            role = KomiTextRole.Title,
-                            fontSize = 14.sp,
-                        )
-                        KomiText(
-                            text = stringResource(R.string.about_source_body),
-                            role = KomiTextRole.Body,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontSize = 12.5.sp,
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(6.dp),
+                        ) {
+                            KomiText(
+                                text = stringResource(R.string.about_source_title),
+                                role = KomiTextRole.Title,
+                                fontSize = 14.sp,
+                            )
+                            KomiText(
+                                text = stringResource(R.string.about_source_body),
+                                role = KomiTextRole.Body,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontSize = 12.5.sp,
+                            )
+                        }
+                        Spacer(Modifier.width(12.dp))
+                        Icon(
+                            Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                 }

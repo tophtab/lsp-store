@@ -15,7 +15,7 @@ LSPosed 模块的更新与浏览工具
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.0.0-00A9A5?style=flat-square" alt="版本 1.0.0"/>
+  <img src="https://img.shields.io/badge/version-1.0.5-00A9A5?style=flat-square" alt="版本 1.0.5"/>
   <img src="https://img.shields.io/badge/Android-8.1%2B-3DDC84?style=flat-square&logo=android&logoColor=white" alt="Android 8.1+"/>
   <img src="https://img.shields.io/badge/languages-14-6C5CE7?style=flat-square" alt="14 种语言"/>
   <img src="https://img.shields.io/badge/license-Apache--2.0-blue?style=flat-square" alt="Apache 2.0"/>

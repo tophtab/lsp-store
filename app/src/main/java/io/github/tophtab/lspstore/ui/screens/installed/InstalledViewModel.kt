@@ -28,6 +28,7 @@ import io.github.tophtab.lspstore.domain.model.PendingInstall
 import io.github.tophtab.lspstore.domain.model.ReleaseAsset
 import io.github.tophtab.lspstore.domain.model.SkippedVersion
 import io.github.tophtab.lspstore.domain.model.UpdateInfo
+import io.github.tophtab.lspstore.domain.model.sortedByLabel
 import io.github.tophtab.lspstore.domain.usecase.BatchFailure
 import io.github.tophtab.lspstore.domain.usecase.BatchFailureKind
 import io.github.tophtab.lspstore.domain.usecase.BatchInstallPhase
@@ -656,10 +657,10 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
         val upToDate = xposed.filter { module ->
             val repoPackage = repoPackageByInstalled[module.packageName] ?: return@filter false
             repoPackage !in updating
-        }
+        }.sortedByLabel()
         val unknown = xposed.filter {
             it.packageName !in repoPackageByInstalled
-        }
+        }.sortedByLabel()
         val pendingInstalls = pending.values
             .sortedByDescending { it.createdAt }
 

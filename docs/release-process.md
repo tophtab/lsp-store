@@ -61,11 +61,13 @@ bot 会建好 `Xposed-Modules-Repo/io.github.tophtab.lspstore` 并邀请你为 m
 | `README.md` | `README.md` | 本项目的 README，原样复制 |
 | `README.en.md` | `README.en.md` | 同上（否则 README 里的语言切换是死链） |
 | `assets/icon.png` | `assets/icon.png` | 512×512 应用图标 |
+| `assets/screenshots/*.png` | `assets/screenshots/*.png` | README 里的三张截图 |
 
 两条容易踩的坑：
 
-- README 里的图标必须写成 `assets/icon.png`。索引仓库没有 `fastlane/` 目录，
-  用 fastlane 的路径引图标，推过去就是一张裂图（这正是之前的现象）。
+- README 里引用的图片必须写成 `assets/...`，并且由 `tools/sync_module_repo.sh`
+  一并同步。索引仓库没有 `fastlane/` 目录，也不共享源仓库的其他文件；漏同步就是
+  一张裂图（图标和截图都踩过）。
 - `SUMMARY` 里必须写明"无需激活模块即可使用全部功能"，否则用户会去 Manager 里
   对着一个空模块找设置。
 
@@ -106,7 +108,8 @@ versionCode 与正式版相同（10000），所以 dev 包和正式包可以互�
    （`versionCode = major * 10000 + minor * 100 + patch`）。
 2. 写 `release-notes/<version>.md`——这份内容就是 GitHub Release 正文，也会被索引页
    当作该版本的更新说明展示。中文在前、英文在后，3–5 条面向用户的改动。
-3. 在 `CHANGELOG.md` 里加一节。
+3. 在 `CHANGELOG.md` 里加一节，使用 `增加：` / `减少：` / `修复：` 三个分类；
+   没有改动的分类写 `- 无。`。
 4. 先推 master，等 `build` 任务绿了（它会把这次的 APK 上传成构建产物），再打 tag：
 
    ```bash

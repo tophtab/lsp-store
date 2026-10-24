@@ -3,10 +3,11 @@
 # Mirror the module metadata this repository owns into
 # Xposed-Modules-Repo/io.github.tophtab.lspstore, which is the repository the
 # LSPosed index (modules.lsposed.org) reads. That repository holds metadata only,
-# never source: the README, the icon and the SUMMARY/SCOPE/SOURCE_URL files.
+# never source: the README, the images the README references, and the
+# SUMMARY/SCOPE/SOURCE_URL files.
 #
-# Everything is copied verbatim, which is why the README references the icon as
-# `assets/icon.png`: the same relative path has to resolve in both repositories.
+# Everything is copied verbatim, which is why the README references images as
+# `assets/...`: the same relative path has to resolve in both repositories.
 #
 # Usage:
 #   GH_TOKEN=<pat with contents:write on the module repository> tools/sync_module_repo.sh
@@ -25,6 +26,9 @@ PAIRS=(
   "README.md:README.md"
   "README.en.md:README.en.md"
   "assets/icon.png:assets/icon.png"
+  "assets/screenshots/installed.png:assets/screenshots/installed.png"
+  "assets/screenshots/repository.png:assets/screenshots/repository.png"
+  "assets/screenshots/settings.png:assets/screenshots/settings.png"
   "module-repo/SUMMARY:SUMMARY"
   "module-repo/SCOPE:SCOPE"
   "module-repo/SOURCE_URL:SOURCE_URL"
@@ -53,7 +57,7 @@ for pair in "${PAIRS[@]}"; do
     continue
   fi
 
-  # The body has to go through a file: the icon's base64 is far past the
+  # The body has to go through a file: the screenshots' base64 is far past the
   # per-argument limit of exec(2).
   base64 -w0 "$src" > "$body_file"
   jq -n --rawfile content "$body_file" \
