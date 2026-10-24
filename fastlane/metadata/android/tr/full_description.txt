@@ -1,15 +1,15 @@
 LSP Store, LSPosed Manager (modules.lsposed.org) ile aynı havuzu kullanan, LSPosed modülleri için bir tarayıcı, yükleyici ve güncelleyicidir.
 
 Özellikler:
-- Yakın zamanda güncellenen, en çok yıldızlı ve beta modüllere göz atın.
+- Yakın zamanda güncellenen ve en çok yıldızlı modüllere göz atın.
 - Sıralama, kanal ve favori filtreleriyle arama yapın.
 - APK imza doğrulamasıyla modülleri yükleyin, güncelleyin veya yeniden yükleyin.
 - Güncel ve depoda olmayan, güncellemeler halinde gruplandırılmış yüklü modülleri görün.
 - Sıralı, örtüşmeyen sistem onaylarıyla toplu güncelleme.
 - Modül sayfasında benioku, kanca kapsamı, sürüm notları ve sürüm indirmeleri.
 - Favoriler, son görüntülenenler ve yoksayılan güncelleme modülleri.
-- Kanalları güncelle: kararlı, beta ve gecelik.
-- İsteğe bağlı kök sessiz kurulum ve otomatik arka plan güncellemeleri.
+- Güncelleme kanalları: kararlı, ön sürüm ve tümü.
+- İsteğe bağlı root ile sessiz kurulum.
 - Ayna seçimi ve çeviri sağlayıcıları.
 - Kütüphane verilerini JSON olarak yedekleyin ve geri yükleyin.
 - 14 dil, koyu tema, AMOLED siyah ve Material You renkleri.

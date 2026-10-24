@@ -1,15 +1,15 @@
 LSP Store est un navigateur, un installateur et un programme de mise à jour pour les modules LSPosed, utilisant le même référentiel que LSPosed Manager (modules.lsposed.org).
 
 Caractéristiques:
-- Parcourez les modules récemment mis à jour, les plus appréciés et les modules bêta.
+- Parcourez les modules récemment mis à jour et les plus appréciés.
 - Recherchez avec des filtres de tri, de chaîne et de favoris.
 - Installez, mettez à jour ou réinstallez les modules avec vérification de la signature APK.
 - Voir les modules installés regroupés en mises à jour, à jour et non dans le référentiel.
 - Mise à jour par lots avec confirmations système séquentielles et sans chevauchement.
 - Lisez-moi, portée du hook, notes de version et téléchargements de versions sur la page du module.
 - Favoris, récemment consultés et modules aux mises à jour ignorées.
-- Canaux de mise à jour : stable, bêta et nocturne.
-- Installation silencieuse root en option et mises à jour automatiques en arrière-plan.
+- Canaux de mise à jour : stable, préversion et tous.
+- Installation silencieuse root en option.
 - Sélection de miroirs et fournisseurs de traduction.
 - Sauvegardez et restaurez les données de la bibliothèque au format JSON.
 - 14 langues, thème sombre, noir AMOLED et couleurs Material You.

@@ -1,15 +1,12 @@
-LSP Store is a browser, installer and updater for LSPosed modules, using the same repository as LSPosed Manager (modules.lsposed.org).
+LSP Store is an updater and browser for LSPosed modules. It reads the same repository as LSPosed Manager (modules.lsposed.org), so the updates it offers match what Manager shows.
 
 Features:
-- Browse recently updated, most starred and beta modules.
-- Favourites, recently viewed and ignored update modules.
-- Install, update or reinstall modules with APK signature verification.
-- See installed modules grouped into updates, up to date and not in the repository.
-- Batch update with sequential, non-overlapping system confirmations.
-- Readme, hook scope, release notes and release downloads on the module page.
-- Favourites, recently viewed and ignored update modules.
-- Update channels: stable, beta and nightly.
-- Optional root silent install and automatic background updates.
-- Mirror selection and translation providers.
-- Backup and restore library data as JSON.
-- 14 languages, dark theme, AMOLED black and Material You colours.
+- Browse and search the repository, with recently updated and most starred tabs.
+- Installed modules grouped into updates, up to date and not in the repository; update one or all of them.
+- Module pages with readme, hook scope, release notes and release history, plus a stable / pre-release / all channel switch.
+- Downloads that pause, resume and keep going when you leave the page; install with any registered APK installer, or silently with root.
+- Favourites, recently viewed, ignored updates, and linking repository modules to installed apps that are not in it.
+- Mirror selection with a latency test.
+- Module description translation (Google, LibreTranslate, DeepL, Microsoft).
+- Library backup and restore as JSON.
+- 14 languages, light and dark themes, AMOLED black and Material You colours.
