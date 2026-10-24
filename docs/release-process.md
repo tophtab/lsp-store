@@ -69,9 +69,9 @@ convert app/src/main/res/drawable-xxxhdpi/ic_launcher_icon.png \
 
 `assets/icon.png` 就是 fastlane 的 `images/icon.png`，两份必须一致。
 
-仓库描述（索引里模块名下面那行）只有组织管理员能改：API 会 403，脚本会打印
-提示，请到 `https://github.com/Xposed-Modules-Repo/io.github.tophtab.lspstore`
-的 About 里手动改成 `LSPosed 模块的更新与浏览工具`。
+索引仓库的仓库描述**不要动**：索引网站和 LSPosed Manager 把它当作模块在列表里
+显示的名称，所以它必须是应用名 `LSP Store`。它也确实只有组织管理员能改
+（API 对 maintain 返回 403），正好避免手滑把它改成介绍文字。
 
 ## 自测渠道
 
@@ -126,7 +126,8 @@ Manager 里的展示都正常，再依赖自动化。
 - 同一 tag 不能重复发：重跑工作流会撞上已存在的 release，脚本会直接失败（这是故意的，
   因为 `softprops/action-gh-release` 遇到已存在的 tag 是**更新**而不是新建，会把上一版
   覆盖掉）。要重发就提高版本号。
-- 索引仓库的**仓库描述/名称不能通过 API 修改**，只能在浏览器里改；release 本身可以
+- 索引仓库的**仓库描述 = 索引/Manager 里显示的模块名称**，必须保持应用名
+  `LSP Store`，不能改成介绍文字；它也改不了（需要组织管理员）。release 本身可以
   通过 API 建，这就是 CI 能自动发的原因。
 - 组织仓库里不要提交源码（官方 README 明确要求），源码只在 `tophtab/lsp-store`。
 - `minSdk` 27 是 LSPosed 的下限，别为了兼容 8.0 降下去。

@@ -17,7 +17,6 @@
 set -euo pipefail
 
 REPO="Xposed-Modules-Repo/io.github.tophtab.lspstore"
-DESCRIPTION="LSPosed 模块的更新与浏览工具"
 
 cd "$(dirname "$0")/.."
 
@@ -66,12 +65,6 @@ for pair in "${PAIRS[@]}"; do
   echo "updated: $dst"
 done
 
-# The repository description is shown next to the module in the index, but only
-# an org admin can change it, and the account publishing releases is a maintainer.
-# Try anyway, and say what to do when it is refused.
-if gh api --method PATCH "repos/$REPO" -f "description=$DESCRIPTION" > /dev/null 2>&1; then
-  echo "updated: repository description"
-else
-  echo "note: cannot change the repository description (needs org admin)."
-  echo "      Set it in the browser to: $DESCRIPTION"
-fi
+# The repository description is deliberately left alone: the index and LSPosed
+# Manager show it as the module's *name*, so it has to stay the app name
+# ("LSP Store"). It is also admin-only, which this workflow's token is not.
