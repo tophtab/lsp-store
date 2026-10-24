@@ -1,0 +1,32 @@
+# F-Droid build metadata for io.github.tophtab.lspstore.
+#
+# This file is NOT read from this repository: it has to be copied to
+# fdroiddata as metadata/io.github.tophtab.lspstore.yml (see store-listing.md).
+# Keep it in sync with the versionName/versionCode in app/build.gradle.kts and
+# with the tag that was actually released.
+
+Categories:
+  - Internet
+License: Apache-2.0
+AuthorName: tophtab
+SourceCode: https://github.com/tophtab/lsp-store
+IssueTracker: https://github.com/tophtab/lsp-store/issues
+Changelog: https://github.com/tophtab/lsp-store/blob/HEAD/CHANGELOG.md
+
+AutoName: LSP Store
+
+RepoType: git
+Repo: https://github.com/tophtab/lsp-store.git
+
+Builds:
+  - versionName: 1.0.0
+    versionCode: 10000
+    commit: v1.0.0
+    subdir: app
+    gradle:
+      - yes
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags
+CurrentVersion: 1.0.0
+CurrentVersionCode: 10000
