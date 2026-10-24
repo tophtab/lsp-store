@@ -86,8 +86,14 @@ android {
         warningsAsErrors = false
         abortOnError = true
         // A missing or stale translation fails the build instead of silently
-        // shipping English text in a localized UI.
+        // shipping English text in a localized UI. Promoted to `fatal` as well so
+        // that `lintVitalRelease` - which CI runs as part of `assembleRelease`,
+        // and which only reports fatal checks - enforces the same rule. Without
+        // the promotion CI would have to run the full ~150s lint on every push to
+        // catch a missing translation; with it the release build itself is the
+        // gate, in ~40s.
         error += setOf("MissingTranslation", "ExtraTranslation")
+        fatal += setOf("MissingTranslation", "ExtraTranslation")
     }
 }
 

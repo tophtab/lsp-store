@@ -4,14 +4,37 @@ on:
   push:
     branches: [master]
     tags: ['v*']
+    # A docs or store-metadata commit cannot change the APK, so don't spend a
+    # runner on it. Path filters are ignored for tag pushes (GitHub workflow
+    # syntax: "Path filters are not evaluated for pushes of tags"), so tagging
+    # always builds, even when the tag points at a commit that only touched
+    # release notes.
+    paths-ignore:
+      - '**.md'
+      - 'assets/**'
+      - 'docs/**'
+      - 'fastlane/**'
+      - 'module-repo/**'
+      - 'release-notes/**'
   pull_request:
+    paths-ignore:
+      - '**.md'
+      - 'assets/**'
+      - 'docs/**'
+      - 'fastlane/**'
+      - 'module-repo/**'
+      - 'release-notes/**'
 
 concurrency:
   group: android-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  build:
+  # Pull requests: compile and test everything, but never in the same job as the
+  # signing key or a write token. Secrets are only referenced by the `build` job
+  # below, so a PR (fork or not) can never reach them.
+  checks:
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -19,95 +42,44 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      - uses: android-actions/setup-android@v4
-      - name: Install SDK platform used by compileSdk
-        run: sdkmanager "platforms;android-37.1" "build-tools;36.0.0"
+      - name: Install the SDK packages compileSdk needs
+        # The runner image ships the SDK, build-tools and the accepted licences,
+        # so android-actions/setup-android@v4 only added ~12s per job here.
+        run: |
+          command -v sdkmanager > /dev/null || {
+            echo "::error::sdkmanager is not on PATH any more; the runner image changed. Restore android-actions/setup-android@v4."
+            exit 1
+          }
+          sdkmanager --install "platforms;android-37.1" "build-tools;36.0.0" > /dev/null
       - uses: gradle/actions/setup-gradle@v4
-      - name: Lint
-        run: ./gradlew :app:lintDebug --stacktrace
-      - name: Unit tests
-        run: ./gradlew :app:testDebugUnitTest --stacktrace
-      - name: Build debug APK
-        run: ./gradlew :app:assembleDebug --stacktrace
-      - name: Build release APK (unsigned here; the release job signs it)
+      - name: Lint, unit tests and debug APK
+        run: ./gradlew :app:lintDebug :app:testDebugUnitTest :app:assembleDebug --stacktrace
+      # Kept separate so a lint/test failure is reported before the slow R8 run,
+      # but it still catches proguard/R8-only breakage before it reaches master.
+      - name: Compile-check the minified release build
         run: ./gradlew :app:assembleRelease --stacktrace
-      - name: Upload unsigned release APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-release-unsigned
-          path: app/build/outputs/apk/release/*.apk
-          if-no-files-found: error
 
-  # Rolling pre-release for self-testing: every push to master replaces a single
-  # `dev` release, so there is one stable URL to install from a phone. Signed with
-  # the same key as releases, so it installs over them (and vice versa) without an
-  # uninstall. The version code stays at the release value on purpose.
-  snapshot:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-    needs: build
+  # Every push: one job that produces *one* signed APK and then either refreshes
+  # the rolling `dev` pre-release (master) or publishes it as a tagged release.
+  #
+  # The APK built for a commit is never rebuilt for its tag. A master push uploads
+  # the signed APK as an artifact, and a tag pointing at a commit that already has
+  # one skips Gradle entirely and reuses it - which is both the fastest release
+  # path (~1 min) and the reason the version name no longer carries a `.dev.<sha>`
+  # suffix: the artifact has to report the version the tag names. If no artifact
+  # exists (tag on an old or never-built commit, or it expired) the job falls back
+  # to a full build.
+  #
+  # This used to be two jobs (`build` + `snapshot`/`release`) that each built the
+  # app from a cold Gradle User Home, so R8 and lint ran twice per push and the
+  # second job could not start until the first had finished: ~6m20s for a commit
+  # that touched code, ~10m for the tag of the same commit.
+  build:
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
-      contents: write
-    concurrency:
-      group: snapshot
-      cancel-in-progress: true
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '21'
-      - uses: android-actions/setup-android@v4
-      - name: Install SDK platform used by compileSdk
-        run: sdkmanager "platforms;android-37.1" "build-tools;36.0.0"
-      - uses: gradle/actions/setup-gradle@v4
-      - name: Decode keystore
-        env:
-          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
-        run: |
-          if [ -z "$SIGNING_KEY" ]; then
-            echo "::error::SIGNING_KEY secret is missing"; exit 1
-          fi
-          echo "$SIGNING_KEY" | base64 --decode > "$RUNNER_TEMP/release.keystore.jks"
-          echo "KEYSTORE_FILE=$RUNNER_TEMP/release.keystore.jks" >> "$GITHUB_ENV"
-      - name: Build signed snapshot
-        env:
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        run: ./gradlew :app:assembleRelease -PbuildSuffix=".dev.${GITHUB_SHA:0:8}" --stacktrace
-      - name: Collect and checksum
-        run: |
-          set -euo pipefail
-          APK="app/build/outputs/apk/release/app-release.apk"
-          test -f "$APK" || { echo "::error::signed APK not found"; exit 1; }
-          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --print-certs "$APK"             | grep -q "Signer #1 certificate DN"
-          mkdir -p out
-          cp "$APK" out/LSP-Store-dev.apk
-          (cd out && sha256sum LSP-Store-dev.apk > SHA256SUMS)
-          cat out/SHA256SUMS
-      - name: Remove keystore
-        if: always()
-        run: rm -f "$RUNNER_TEMP/release.keystore.jks"
-      - name: Publish dev pre-release
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -euo pipefail
-          if gh release view dev > /dev/null 2>&1; then
-            gh release upload dev out/LSP-Store-dev.apk out/SHA256SUMS --clobber
-          else
-            gh release create dev --prerelease --title "Development build" \
-              --notes "Signed snapshot of \`master\`. The asset is replaced on every push." \
-              out/LSP-Store-dev.apk out/SHA256SUMS
-          fi
-
-  release:
-    if: startsWith(github.ref, 'refs/tags/v')
-    needs: build
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
+      contents: write # publish the release / update the `dev` pre-release
+      actions: read # look up the artifact a master push left behind
     env:
       XPOSED_REPO_TOKEN: ${{ secrets.XPOSED_REPO_TOKEN }}
     steps:
@@ -116,69 +88,190 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      - uses: android-actions/setup-android@v4
-      - name: Install SDK platform used by compileSdk
-        run: sdkmanager "platforms;android-37.1" "build-tools;36.0.0"
+      - name: Install the SDK packages compileSdk needs
+        run: |
+          command -v sdkmanager > /dev/null || {
+            echo "::error::sdkmanager is not on PATH any more; the runner image changed. Restore android-actions/setup-android@v4."
+            exit 1
+          }
+          sdkmanager --install "platforms;android-37.1" "build-tools;36.0.0" > /dev/null
+
+      # Tagging a commit that master already built means the APK exists: grab it
+      # and skip the build. The version check below still runs, so a mismatch is a
+      # hard failure rather than a silently different release.
+      - name: Reuse the APK built for this commit
+        id: prebuilt
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -uo pipefail
+          RUNS="$(gh run list --workflow android.yml --commit "$GITHUB_SHA" \
+            --json databaseId,conclusion \
+            --jq '.[] | select(.conclusion == "success") | .databaseId' 2>/dev/null)"
+          for RUN in $RUNS; do
+            rm -rf "$RUNNER_TEMP/prebuilt"
+            if gh run download "$RUN" --name app-release --dir "$RUNNER_TEMP/prebuilt" 2>/dev/null; then
+              APK="$(find "$RUNNER_TEMP/prebuilt" -name '*.apk' -print -quit)"
+              if [ -n "$APK" ]; then
+                echo "Reusing $APK from run $RUN"
+                echo "PREBUILT_APK=$APK" >> "$GITHUB_ENV"
+                exit 0
+              fi
+            fi
+          done
+          echo "::notice::no APK artifact for ${GITHUB_SHA:0:8}; building from source"
+
       - uses: gradle/actions/setup-gradle@v4
+        if: env.PREBUILT_APK == ''
 
       # The release keystore lives in secrets as base64. Losing it means every
       # installed copy can never be updated again, so keep an offline backup.
+      # Decoded before the build because the signing config is read (through the
+      # environment) at configuration time.
       - name: Decode keystore
+        if: env.PREBUILT_APK == ''
         env:
           SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
         run: |
           if [ -z "$SIGNING_KEY" ]; then
-            echo "::error::SIGNING_KEY secret is missing; refusing to publish an unsigned APK"
+            echo "::error::SIGNING_KEY secret is missing; refusing to build an unsigned APK"
             exit 1
           fi
           echo "$SIGNING_KEY" | base64 --decode > "$RUNNER_TEMP/release.keystore.jks"
           echo "KEYSTORE_FILE=$RUNNER_TEMP/release.keystore.jks" >> "$GITHUB_ENV"
 
-      - name: Build signed release APK
+      - name: Unit tests and signed APK
+        if: env.PREBUILT_APK == ''
         env:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        run: ./gradlew :app:assembleRelease --stacktrace
-
-      - name: Collect, verify and checksum
-        id: artifact
         run: |
           set -euo pipefail
-          VERSION="${GITHUB_REF_NAME#v}"
-          APK="app/build/outputs/apk/release/app-release.apk"
-          test -f "$APK" || { echo "::error::signed APK not found"; exit 1; }
-
-          # The module repository renames our tag from what the APK reports, so a
-          # version mismatch here would silently publish the wrong version.
-          BADGING="$("$ANDROID_HOME/build-tools/36.0.0/aapt2" dump badging "$APK" | head -1)"
-          echo "$BADGING"
-          echo "$BADGING" | grep -q "versionName='${VERSION}'" || {
-            echo "::error::tag $VERSION does not match the APK versionName"; exit 1; }
-
-          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --print-certs "$APK" \
-            | tee "$RUNNER_TEMP/certs.txt"
-          grep -q "Signer #1 certificate DN" "$RUNNER_TEMP/certs.txt" || {
-            echo "::error::APK is not signed"; exit 1; }
-
-          mkdir -p out
-          cp "$APK" "out/LSP-Store-${VERSION}.apk"
-          (cd out && sha256sum "LSP-Store-${VERSION}.apk" > SHA256SUMS)
-          cat out/SHA256SUMS
-
-          VERSION_CODE="$("$ANDROID_HOME/build-tools/36.0.0/aapt2" dump badging "$APK" \
-            | head -1 | sed -E "s/.*versionCode='([0-9]+)'.*/\1/")"
-          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
-          echo "version_code=${VERSION_CODE}" >> "$GITHUB_OUTPUT"
+          # No separate :app:lintDebug here. assembleRelease already runs
+          # lintVitalRelease, and app/build.gradle.kts promotes the project's own
+          # error policy (MissingTranslation/ExtraTranslation) to fatal checks, so
+          # the APK that gets published is gated by exactly the checks a full lint
+          # would fail on - for ~40s instead of ~150s. The full lint, warnings
+          # included, runs on pull requests.
+          #
+          # The version name is left alone (no `.dev` suffix) so this APK can be
+          # published as-is when this commit is tagged; the commit is stamped into
+          # BuildConfig.BUILD_SHA instead, which the About screen shows.
+          ./gradlew :app:testDebugUnitTest :app:assembleRelease \
+            -PbuildSha="${GITHUB_SHA:0:8}" --stacktrace
 
       - name: Remove keystore
         if: always()
         run: rm -f "$RUNNER_TEMP/release.keystore.jks"
 
-      - name: Publish GitHub release
+      - name: Verify and collect the APK
+        id: apk
+        env:
+          EXPECTED_CERT: ${{ vars.SIGNING_CERT_SHA256 }}
+        run: |
+          set -euo pipefail
+          APK="${PREBUILT_APK:-app/build/outputs/apk/release/app-release.apk}"
+          test -f "$APK" || { echo "::error::signed APK not found"; exit 1; }
+          BUILD_TOOLS="$ANDROID_HOME/build-tools/36.0.0"
+
+          # Same key as every previous release, or the update chain breaks and
+          # the phone would install a second copy instead of upgrading.
+          "$BUILD_TOOLS/apksigner" verify --print-certs "$APK" | tee "$RUNNER_TEMP/certs.txt"
+          grep -q "Signer #1 certificate DN" "$RUNNER_TEMP/certs.txt" || {
+            echo "::error::APK is not signed"; exit 1; }
+
+          # Optional pin: with the repository variable SIGNING_CERT_SHA256 set,
+          # a keystore mix-up fails here instead of on users' phones.
+          if [ -n "${EXPECTED_CERT}" ]; then
+            ACTUAL="$(sed -nE 's/^Signer #1 certificate SHA-256 digest: ([0-9a-f]+)$/\1/p' "$RUNNER_TEMP/certs.txt")"
+            [ "$ACTUAL" = "$EXPECTED_CERT" ] || {
+              echo "::error::APK is signed with ${ACTUAL}, expected ${EXPECTED_CERT}"
+              exit 1
+            }
+          else
+            echo "::notice::SIGNING_CERT_SHA256 is not set; skipping the certificate pin"
+          fi
+
+          BADGING="$("$BUILD_TOOLS/aapt2" dump badging "$APK" | head -1)"
+          echo "$BADGING"
+          VERSION_NAME="$(echo "$BADGING" | sed -E "s/.*versionName='([^']*)'.*/\1/")"
+          VERSION_CODE="$(echo "$BADGING" | sed -E "s/.*versionCode='([0-9]+)'.*/\1/")"
+
+          if [ "$GITHUB_REF_TYPE" = "tag" ]; then
+            # The module repository renames our tag from what the APK reports, so
+            # a version mismatch here would silently publish the wrong version.
+            EXPECTED="${GITHUB_REF_NAME#v}"
+            echo "$BADGING" | grep -q "versionName='${EXPECTED}'" || {
+              echo "::error::tag ${EXPECTED} does not match the APK versionName ${VERSION_NAME}"
+              exit 1
+            }
+            ASSET="LSP-Store-${EXPECTED}.apk"
+          else
+            ASSET="LSP-Store-dev.apk"
+          fi
+
+          mkdir -p out
+          cp "$APK" "out/${ASSET}"
+          (cd out && sha256sum "${ASSET}" > SHA256SUMS)
+          cat out/SHA256SUMS
+
+          {
+            echo "asset=${ASSET}"
+            echo "version=${VERSION_NAME}"
+            echo "version_code=${VERSION_CODE}"
+          } >> "$GITHUB_OUTPUT"
+
+      # A tag for this commit reads this back instead of rebuilding: the release
+      # is then literally the artifact the master push produced and verified.
+      - name: Keep the APK for the release of this commit
+        if: github.ref_type == 'branch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release
+          path: out/*.apk
+          retention-days: 30
+          if-no-files-found: error
+
+      # Rolling pre-release for self-testing: every push to master replaces a
+      # single `dev` release, so there is one stable URL to install from a phone.
+      # Signed with the same key as releases, so it installs over them (and vice
+      # versa) without an uninstall. The version code and name stay at the release
+      # values on purpose - this APK is what gets published when the commit is
+      # tagged - so the commit lives in BuildConfig.BUILD_SHA (shown on the About
+      # screen) and in this release's notes.
+      - name: Publish dev pre-release
+        if: github.ref_type == 'branch'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VERSION: ${{ steps.artifact.outputs.version }}
+          ASSET: ${{ steps.apk.outputs.asset }}
+          VERSION: ${{ steps.apk.outputs.version }}
+        run: |
+          set -euo pipefail
+          {
+            echo "Signed snapshot of \`master\` at \`${GITHUB_SHA:0:8}\` (${VERSION})."
+            echo
+            echo "$(git log -1 --pretty=%s)"
+            echo
+            echo "The asset is replaced on every push to master."
+          } > "$RUNNER_TEMP/dev-notes.md"
+
+          if gh release view dev > /dev/null 2>&1; then
+            gh release upload dev "out/${ASSET}" out/SHA256SUMS --clobber
+            gh release edit dev --notes-file "$RUNNER_TEMP/dev-notes.md"
+          else
+            gh release create dev --prerelease --title "Development build" \
+              --notes-file "$RUNNER_TEMP/dev-notes.md" \
+              "out/${ASSET}" out/SHA256SUMS
+          fi
+
+      - name: Publish GitHub release
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.apk.outputs.version }}
+          ASSET: ${{ steps.apk.outputs.asset }}
         run: |
           set -euo pipefail
           NOTES="release-notes/${VERSION}.md"
@@ -189,7 +282,7 @@ jobs:
           gh release create "$GITHUB_REF_NAME" \
             --title "LSP Store ${VERSION}" \
             --notes-file "$NOTES" \
-            "out/LSP-Store-${VERSION}.apk" \
+            "out/${ASSET}" \
             "out/SHA256SUMS"
 
       # The module index only needs metadata plus the signed APK. Tag format is
@@ -203,10 +296,11 @@ jobs:
       # upload the assets, and publish last, which is one content change the bot
       # acts on with the APK already in place.
       - name: Mirror to Xposed-Modules-Repo
-        if: env.XPOSED_REPO_TOKEN != ''
+        if: github.ref_type == 'tag' && env.XPOSED_REPO_TOKEN != ''
         env:
-          VERSION: ${{ steps.artifact.outputs.version }}
-          VERSION_CODE: ${{ steps.artifact.outputs.version_code }}
+          VERSION: ${{ steps.apk.outputs.version }}
+          VERSION_CODE: ${{ steps.apk.outputs.version_code }}
+          ASSET: ${{ steps.apk.outputs.asset }}
         run: |
           set -euo pipefail
           REPO="Xposed-Modules-Repo/io.github.tophtab.lspstore"
@@ -216,8 +310,16 @@ jobs:
           JSON="Content-Type: application/json"
           RELEASE_JSON="$RUNNER_TEMP/release.json"
 
-          # A re-run must not stack a second release on the same tag.
-          if curl -sf -H "$AUTH" "${API}/releases/tags/${TAG}" > /dev/null; then
+          # A re-run must not stack a second release on the same tag. Drafts are
+          # invisible to /releases/tags/<tag> (404), and a failed run leaves
+          # exactly that, so match against the release list instead. If the list
+          # itself cannot be read, stop: a guard that fails open would happily
+          # create the duplicate release it exists to prevent.
+          RELEASES="$(curl -sf -H "$AUTH" "${API}/releases?per_page=100")" || {
+            echo "::error::could not list releases in ${REPO}; refusing to create one blindly"
+            exit 1
+          }
+          if jq -e --arg tag "$TAG" 'any(.[]; .tag_name == $tag)' <<< "$RELEASES" > /dev/null; then
             echo "::error::release ${TAG} already exists; bump the version instead of re-running"
             exit 1
           fi
@@ -234,8 +336,8 @@ jobs:
 
           # 2. Assets, while the release is still invisible to the index.
           curl -sf -X POST -H "$AUTH" -H "Content-Type: application/vnd.android.package-archive" \
-            "${UPLOAD_URL}?name=LSP-Store-${VERSION}.apk" \
-            --data-binary "out/LSP-Store-${VERSION}.apk" -o /dev/null
+            "${UPLOAD_URL}?name=${ASSET}" \
+            --data-binary "out/${ASSET}" -o /dev/null
           curl -sf -X POST -H "$AUTH" -H "Content-Type: text/plain" \
             "${UPLOAD_URL}?name=SHA256SUMS" \
             --data-binary "out/SHA256SUMS" -o /dev/null
