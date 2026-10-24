@@ -26,7 +26,7 @@ LSPosed 模块的更新与浏览工具
 ### 页面浏览
 
 <p align="center">
-  <img src="assets/screenshots/home.png" width="220" alt="首页" />
+  <img src="assets/screenshots/repository.png" width="220" alt="仓库" />
   <img src="assets/screenshots/module.png" width="220" alt="模块页" />
   <img src="assets/screenshots/installed.png" width="220" alt="已安装" />
 </p>
