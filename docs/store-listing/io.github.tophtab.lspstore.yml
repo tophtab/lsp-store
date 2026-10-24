@@ -21,7 +21,7 @@ Repo: https://github.com/tophtab/lsp-store.git
 Builds:
   - versionName: 1.0.1
     versionCode: 10001
-    commit: v1.0.1
+    commit: 727c413f8aed3e8ac6c5d5fae38f8ba50fa0953d
     subdir: app
     gradle:
       - yes
