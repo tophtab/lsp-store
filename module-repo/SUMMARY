@@ -1,0 +1,5 @@
+LSPosed 模块更新与浏览工具。
+LSPosed module updater and browser.
+
+声明为作用于自身的空模块，不 Hook 任何应用，无需激活。
+Declared as an empty module scoped to itself. It hooks nothing and needs no activation.

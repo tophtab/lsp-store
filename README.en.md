@@ -1,13 +1,13 @@
 <div align="center">
   <br/>
-  <img src="fastlane/metadata/android/en-US/images/icon.png" width="140" alt="LSP Store app icon" />
+  <img src="assets/icon.png" width="140" alt="LSP Store app icon" />
 
 # LSP Store
 
 </div>
 
 <p align="center">
-An Android app store and updater for LSPosed modules, inspired by
+An updater and browser for LSPosed modules, inspired by
 <a href="https://github.com/komi-store/komi-store">Komi Store</a>.
 </p>
 
@@ -30,9 +30,6 @@ An Android app store and updater for LSPosed modules, inspired by
   <a href="https://github.com/tophtab/lsp-store/releases/latest">
     <img src="https://img.shields.io/badge/Download-GitHub%20Releases-00A9A5?style=for-the-badge&logo=github" alt="Download from GitHub Releases" />
   </a>
-  <a href="https://modules.lsposed.org/module/io.github.tophtab.lspstore/">
-    <img src="https://img.shields.io/badge/LSPosed-Module%20Index-00A9A5?style=for-the-badge" alt="LSPosed module index" />
-  </a>
 </p>
 
 Release APKs are signed by this project, and every release ships a `SHA256SUMS`
@@ -49,11 +46,12 @@ Signing certificate SHA-256 fingerprint (identical for every release):
 b733f85831f27656fbbf0c424b0a76ceef74dd7ac3261423b0311dc6c8804fcb
 ```
 
-You can also install and update it straight from the LSPosed Manager module
-repository. **No module activation is needed and no app is hooked**: LSP Store
-declares itself as an empty module scoped to itself only, so that it can be listed
-in the official index and take part in Manager's install and update flow. Requires
-Android 8.1+ with LSPosed installed.
+You can also install and update it straight from the LSPosed Manager
+[module repository](https://modules.lsposed.org/module/io.github.tophtab.lspstore/).
+**No module activation is needed and no app is hooked**: LSP Store declares itself
+as an empty module scoped to itself only, so that it can be listed in the official
+index and take part in Manager's install and update flow. Requires Android 8.1+
+with LSPosed installed.
 
 > LSP Store is a third-party project, not affiliated with the LSPosed team.
 

@@ -39,18 +39,39 @@ bot 会建好 `Xposed-Modules-Repo/io.github.tophtab.lspstore` 并邀请你为 m
 
 ### 3. 索引仓库里的文件
 
-只放元数据，**不放源码**：
+只放元数据，**不放源码**。这些文件在本仓库各有唯一来源，由
+`tools/sync_module_repo.sh`（CI 里是 `module-repo` 工作流）原样推过去，
+不要在索引仓库里直接改，否则下次同步就会被覆盖：
 
-```
-SUMMARY     一句话简介（索引首页显示；中英双语各一段）
-SCOPE       ["io.github.tophtab.lspstore"]
-SOURCE_URL  https://github.com/tophtab/lsp-store
-README.md   本项目的 README（可精简）
-assets/     图标等图片
+| 索引仓库 | 本仓库来源 | 说明 |
+|---|---|---|
+| `SUMMARY` | `module-repo/SUMMARY` | 一句话简介（索引首页显示；中英双语各一段） |
+| `SCOPE` | `module-repo/SCOPE` | `["io.github.tophtab.lspstore"]` |
+| `SOURCE_URL` | `module-repo/SOURCE_URL` | 源码地址 |
+| `README.md` | `README.md` | 本项目的 README，原样复制 |
+| `README.en.md` | `README.en.md` | 同上（否则 README 里的语言切换是死链） |
+| `assets/icon.png` | `assets/icon.png` | 512×512 应用图标 |
+
+两条容易踩的坑：
+
+- README 里的图标必须写成 `assets/icon.png`。索引仓库没有 `fastlane/` 目录，
+  用 fastlane 的路径引图标，推过去就是一张裂图（这正是之前的现象）。
+- `SUMMARY` 里必须写明"无需激活模块即可使用全部功能"，否则用户会去 Manager 里
+  对着一个空模块找设置。
+
+图标和商店包装图都从 APK 自己用的图标（`app/src/main/res/drawable-xxxhdpi/`）
+导出，别再另外画一张：
+
+```bash
+convert app/src/main/res/drawable-xxxhdpi/ic_launcher_icon.png \
+  -filter Lanczos -resize 512x512 -strip assets/icon.png
 ```
 
-`SUMMARY` 里必须写明"无需激活模块即可使用全部功能"，否则用户会去 Manager 里
-对着一个空模块找设置。
+`assets/icon.png` 就是 fastlane 的 `images/icon.png`，两份必须一致。
+
+仓库描述（索引里模块名下面那行）只有组织管理员能改：API 会 403，脚本会打印
+提示，请到 `https://github.com/Xposed-Modules-Repo/io.github.tophtab.lspstore`
+的 About 里手动改成 `LSPosed 模块的更新与浏览工具`。
 
 ## 自测渠道
 
@@ -82,6 +103,8 @@ versionCode 与正式版相同（10000），所以 dev 包和正式包可以互�
    若配置了 `XPOSED_REPO_TOKEN`，再往组织仓库发一份 `versionCode-versionName` 的
    release。
 6. 索引仓库的 bot 会重写 tag 为 `10000-1.0.0`，索引在 5–60 分钟内刷新。
+7. 如果这次发版改了 README、图标或 `module-repo/` 里的元数据，确认 `module-repo`
+   工作流跑过了（或本地跑一次 `tools/sync_module_repo.sh`），否则索引页还是旧的。
 
 **第一个版本建议手动发一遍**（网页建 release、上传 APK），确认权限、索引构建、
 Manager 里的展示都正常，再依赖自动化。

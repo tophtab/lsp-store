@@ -1,13 +1,13 @@
 <div align="center">
   <br/>
-  <img src="fastlane/metadata/android/en-US/images/icon.png" width="140" alt="LSP Store 图标" />
+  <img src="assets/icon.png" width="140" alt="LSP Store 图标" />
 
 # LSP Store
 
 </div>
 
 <p align="center">
-面向 LSPosed 模块的 Android 应用商店与更新器，灵感来自
+LSPosed 模块的更新与浏览工具，灵感来自
 <a href="https://github.com/komi-store/komi-store">Komi Store</a>。
 </p>
 
@@ -30,9 +30,6 @@
   <a href="https://github.com/tophtab/lsp-store/releases/latest">
     <img src="https://img.shields.io/badge/Download-GitHub%20Releases-00A9A5?style=for-the-badge&logo=github" alt="从 GitHub Releases 下载" />
   </a>
-  <a href="https://modules.lsposed.org/module/io.github.tophtab.lspstore/">
-    <img src="https://img.shields.io/badge/LSPosed-模块索引-00A9A5?style=for-the-badge" alt="LSPosed 模块索引" />
-  </a>
 </p>
 
 APK 由本项目自行签名，每个版本附带 `SHA256SUMS`，可这样校验：
@@ -48,9 +45,11 @@ sha256sum -c SHA256SUMS
 b733f85831f27656fbbf0c424b0a76ceef74dd7ac3261423b0311dc6c8804fcb
 ```
 
-也可以直接在 LSPosed Manager 的模块仓库里安装与更新。**本应用不需要激活任何模块，
-也不 Hook 任何应用**：它只是把自己声明成一个空模块（作用域是自身），以便进入官方索引、
-参与 Manager 的安装与更新流程。需要 Android 8.1+ 并已安装 LSPosed。
+也可以直接在 LSPosed Manager 的
+[模块仓库](https://modules.lsposed.org/module/io.github.tophtab.lspstore/)里安装与更新。
+**本应用不需要激活任何模块，也不 Hook 任何应用**：它只是把自己声明成一个空模块
+（作用域是自身），以便进入官方索引、参与 Manager 的安装与更新流程。
+需要 Android 8.1+ 并已安装 LSPosed。
 
 > LSP Store 是第三方项目，与 LSPosed 团队没有隶属关系。
 

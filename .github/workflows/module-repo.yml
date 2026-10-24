@@ -1,0 +1,36 @@
+name: Module repository
+
+# The LSPosed index reads Xposed-Modules-Repo/io.github.tophtab.lspstore, a
+# separate metadata-only repository. Its README, icon and SUMMARY are copies of
+# the files here, so keep them in sync instead of pasting them over by hand
+# (last time the README arrived without the icon it references).
+on:
+  push:
+    branches: [master]
+    paths:
+      - README.md
+      - README.en.md
+      - assets/**
+      - module-repo/**
+      - tools/sync_module_repo.sh
+      - .github/workflows/module-repo.yml
+  workflow_dispatch:
+
+concurrency:
+  group: module-repo
+  cancel-in-progress: true
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Sync metadata to Xposed-Modules-Repo
+        env:
+          GH_TOKEN: ${{ secrets.XPOSED_REPO_TOKEN }}
+        run: |
+          if [ -z "${GH_TOKEN:-}" ]; then
+            echo "::notice::XPOSED_REPO_TOKEN is not set; skipping the module repository sync"
+            exit 0
+          fi
+          tools/sync_module_repo.sh

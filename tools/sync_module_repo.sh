@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+#
+# Mirror the module metadata this repository owns into
+# Xposed-Modules-Repo/io.github.tophtab.lspstore, which is the repository the
+# LSPosed index (modules.lsposed.org) reads. That repository holds metadata only,
+# never source: the README, the icon and the SUMMARY/SCOPE/SOURCE_URL files.
+#
+# Everything is copied verbatim, which is why the README references the icon as
+# `assets/icon.png`: the same relative path has to resolve in both repositories.
+#
+# Usage:
+#   GH_TOKEN=<pat with contents:write on the module repository> tools/sync_module_repo.sh
+#
+# Run by .github/workflows/module-repo.yml on every push that touches the files
+# below; safe to run by hand as well (it skips files that are already identical).
+
+set -euo pipefail
+
+REPO="Xposed-Modules-Repo/io.github.tophtab.lspstore"
+DESCRIPTION="LSPosed 模块的更新与浏览工具"
+
+cd "$(dirname "$0")/.."
+
+# local path -> path in the module repository
+PAIRS=(
+  "README.md:README.md"
+  "README.en.md:README.en.md"
+  "assets/icon.png:assets/icon.png"
+  "module-repo/SUMMARY:SUMMARY"
+  "module-repo/SCOPE:SCOPE"
+  "module-repo/SOURCE_URL:SOURCE_URL"
+)
+
+body_file="$(mktemp)"
+trap 'rm -f "$body_file"' EXIT
+
+for pair in "${PAIRS[@]}"; do
+  src="${pair%%:*}"
+  dst="${pair#*:}"
+
+  test -f "$src" || { echo "error: $src is missing" >&2; exit 1; }
+
+  # The contents API exposes the git blob id, which is exactly what
+  # `git hash-object` computes locally, so identical files need no upload.
+  local_sha="$(git hash-object "$src")"
+  if remote="$(gh api "repos/$REPO/contents/$dst" 2>/dev/null)"; then
+    remote_sha="$(printf '%s' "$remote" | jq -r '.sha')"
+  else
+    remote_sha=""
+  fi
+
+  if [ "$local_sha" = "$remote_sha" ]; then
+    echo "up to date: $dst"
+    continue
+  fi
+
+  # The body has to go through a file: the icon's base64 is far past the
+  # per-argument limit of exec(2).
+  base64 -w0 "$src" > "$body_file"
+  jq -n --rawfile content "$body_file" \
+    --arg message "Sync $dst from tophtab/lsp-store" \
+    --arg sha "$remote_sha" \
+    '{message: $message, content: $content}
+     + (if $sha == "" then {} else {sha: $sha} end)' \
+    | gh api --method PUT "repos/$REPO/contents/$dst" --input - > /dev/null
+  echo "updated: $dst"
+done
+
+# The repository description is shown next to the module in the index, but only
+# an org admin can change it, and the account publishing releases is a maintainer.
+# Try anyway, and say what to do when it is refused.
+if gh api --method PATCH "repos/$REPO" -f "description=$DESCRIPTION" > /dev/null 2>&1; then
+  echo "updated: repository description"
+else
+  echo "note: cannot change the repository description (needs org admin)."
+  echo "      Set it in the browser to: $DESCRIPTION"
+fi
