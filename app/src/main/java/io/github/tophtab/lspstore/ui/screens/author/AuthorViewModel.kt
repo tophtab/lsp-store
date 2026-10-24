@@ -55,7 +55,7 @@ class AuthorViewModel(
                 index = modules
                 val mine = modules
                     .filter { it.contributor.equals(author, ignoreCase = true) }
-                    .sortedByDescending { it.updatedAt ?: Instant.EPOCH }
+                    .sortedByDescending { it.lastPublishedAt ?: Instant.EPOCH }
                 _state.update {
                     it.copy(isLoading = false, modules = mine, installedPackages = installed)
                 }

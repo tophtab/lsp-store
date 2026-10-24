@@ -98,6 +98,25 @@ data class Module(
         get() = latestBetaRelease != null
 
     /**
+     * When the newest published build came out, or null when the module never
+     * published a release.
+     *
+     * [updatedAt] is LSPosed's copy of GitHub's repo-level `updated_at`, which
+     * GitHub also bumps for stars, README edits and metadata pushes; using it as
+     * the "updated" time made a star look like a release (53.9% of the index was
+     * more than a month newer than its last release). It is deliberately not a
+     * fallback: a module without a release has no publication time to show.
+     */
+    val lastPublishedAt: Instant?
+        get() = listOfNotNull(
+            latestReleaseTime.takeIf { latestRelease != null },
+            latestBetaReleaseTime.takeIf { latestBetaRelease != null },
+            latestSnapshotReleaseTime.takeIf { latestSnapshotRelease != null },
+        )
+            .mapNotNull { raw -> runCatching { Instant.parse(raw) }.getOrNull() }
+            .maxOrNull()
+
+    /**
      * Latest version to offer, optionally following the pre-release stream.
      *
      * Following pre-releases does **not** mean "beta wins": 24 of the 29 modules

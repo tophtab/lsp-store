@@ -136,7 +136,7 @@ fun ModuleCard(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     KomiStarValue(module.stars)
-                    formatRelativeTime(module.updatedAt).takeIf { it.isNotBlank() }?.let { relative ->
+                    formatRelativeTime(module.lastPublishedAt).takeIf { it.isNotBlank() }?.let { relative ->
                         KomiStat(
                             icon = Icons.Outlined.Schedule,
                             value = stringResource(R.string.module_updated_relative, relative),
@@ -210,7 +210,7 @@ fun ModuleCardCompact(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 KomiStarValue(module.stars)
-                formatRelativeTime(module.updatedAt).takeIf { it.isNotBlank() }?.let {
+                formatRelativeTime(module.lastPublishedAt).takeIf { it.isNotBlank() }?.let {
                     KomiText(
                         text = it,
                         role = KomiTextRole.Label,

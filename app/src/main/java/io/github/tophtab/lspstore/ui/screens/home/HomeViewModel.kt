@@ -163,7 +163,7 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
         // Zero-star modules stay at the end of the "Most starred" list instead
         // of being dropped.
         val recentlyUpdated = index
-            .sortedByDescending { it.updatedAt ?: Instant.EPOCH }
+            .sortedByDescending { it.lastPublishedAt ?: Instant.EPOCH }
         val mostStarred = index
             .sortedWith(compareByDescending<Module> { it.stars }.thenBy { it.title })
 
@@ -177,7 +177,7 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
                         module.packageName.contains(query, ignoreCase = true) ||
                         module.summary?.contains(query, ignoreCase = true) == true
                 }
-                .sortedByDescending { it.updatedAt ?: Instant.EPOCH }
+                .sortedByDescending { it.lastPublishedAt ?: Instant.EPOCH }
         }
 
         _state.update {

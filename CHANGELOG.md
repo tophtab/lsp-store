@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.0.4
+
+### Fixed
+
+- The "updated" time on module cards, the detail header and the "recently
+  updated" sort no longer comes from GitHub's repo-level `updated_at`, which a
+  star, a README edit or a metadata push refreshes. It now uses the publication
+  time of the newest release (stable, pre-release or snapshot); modules that
+  never published a release show no time and sort after the ones that did.
+  HyperClipFix, for example, showed "1 hour ago" because someone starred its
+  module repo; its last release was two days old.
+
 ## 1.0.3
 
 ### Changed

@@ -36,7 +36,7 @@
 | P1-6 自动更新约束/并发 | **待定** | 独立于本次更新检测改造。 |
 | P2-1 每模块预发布开关 | **不做** | 同 P0-1。 |
 | P2-2 已安装高于仓库 | **可不做** | 只影响作者回退 versionCode 的 2.5% 模块。 |
-| P2-3 按发版时间排序 | **待定** | 修正“最近更新”被 README 推送顶起的问题。 |
+| P2-3 按发版时间排序 | **已实现** | “最近更新”改用 `Module.lastPublishedAt`：取 stable/beta/snapshot 中最新的 `latest*Time`；无 release 的模块不显示时间、排在已发版模块之后，不再回退 `updatedAt`（GitHub 的 `updated_at` 会被 star/README 刷新）。 |
 | P2-4 诊断指标 / P2-5 pending 感知 | **可不做** | 可观测性/一致性优化。 |
 | P2-6 死代码清理 | **待定** | `ModuleVersion.isNewerThan` 仅测试使用；`hasChannel(NIGHTLY)` 仍保留兼容。 |
 

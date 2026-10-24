@@ -237,7 +237,7 @@ internal fun DetailHero(
                 )
             }
 
-            module.updatedAt?.let { updated ->
+            module.lastPublishedAt?.let { updated ->
                 Spacer(Modifier.height(10.dp))
                 Row(
                     modifier = Modifier
