@@ -174,9 +174,13 @@ resolveForUpdate(state)      : TRUSTED → 不探测、不重排；否则走 res
 | 同上 L573 `setPreferredVariant` | 存 asset 文件名 | 存 `VariantSignature` + 置 `TRUSTED` |
 | `domain/usecase/UpdateChecker.kt` | 只比较版本 | 新增参数 `variantStates`：过滤 `NOT_APPLICABLE`；`versionName` 仅因作者命名差异不同时不算更新 |
 | `data/work/UpdateCheckWorker.kt` L58 | `latestAssetFor(channel, abis)` | 用 resolver 的 `Pick`；`Choose/NotApplicable` 不计入“有更新” |
-| `data/install/ApkVerifier.kt` | 签名校验 | 保持不动；门禁独立成 `ApkGate`（职责分开） |
-| `data/repository/InstalledModulesRepositoryImpl.kt` | `InstalledModule` 只有 version/label | 增加 `minSdk`、`targetSdk`、`primaryCpuAbi`、`debuggable`、`hasLibXposedProvider`（都有默认值，注意缓存 JSON 兼容） |
 | `domain/model/Models.kt` | `bestForAbis` / `latestAssetFor` 公开 | 标 `@Deprecated`，P0 全部调用点迁走后删除；`AbiSelectionTest` 改成 resolver 测试 |
+
+> 后来删掉的：`data/install/ApkVerifier.kt`（安装前比对下载 APK 与已安装模块的签名
+> 证书）已整块移除，见 CHANGELOG「Removed」。能不能覆盖安装是安装器与
+> `PackageManager` 的判断（root 或改过的安装器本来就可能接受 stock installer 拒绝的包），
+> 所以本项目的门禁只做兼容性检查（`ApkGate`，下一节），不碰证书；
+> `VariantSignature` 里的 “signature” 是 ABI/minSdk 这类语义指纹，与加密签名无关。
 
 ## 7. 本地门禁（`ApkGate`）
 
