@@ -23,6 +23,16 @@ An updater and browser for LSPosed modules
 
 ---
 
+### Screenshots
+
+<p align="center">
+  <img src="assets/screenshots/home.png" width="220" alt="Home" />
+  <img src="assets/screenshots/module.png" width="220" alt="Module page" />
+  <img src="assets/screenshots/installed.png" width="220" alt="Installed, with updatable modules" />
+</p>
+
+---
+
 ### Download
 
 [GitHub Releases](https://github.com/tophtab/lsp-store/releases/latest)
