@@ -26,8 +26,8 @@ An updater and browser for LSPosed modules
 ### Screenshots
 
 <p align="center">
-  <img src="assets/screenshots/repository.png" width="220" alt="Repository" />
   <img src="assets/screenshots/module.png" width="220" alt="Module page" />
+  <img src="assets/screenshots/repository.png" width="220" alt="Repository" />
   <img src="assets/screenshots/installed.png" width="220" alt="Installed" />
 </p>
 
