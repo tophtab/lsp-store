@@ -252,9 +252,8 @@
     <!-- About -->
     <string name="about_version">版本 %1$s</string>
     <string name="about_body">LSPosed 模組更新與瀏覽工具。</string>
-    <string name="about_open_site">開啟 modules.lsposed.org</string>
-    <string name="about_open_repo">在 GitHub 開啟 Xposed-Modules-Repo</string>
-    <string name="about_disclaimer">與 LSPosed 專案無隸屬關係。</string>
+    <string name="about_source_title">GitHub 上的原始碼</string>
+    <string name="about_source_body">如果專案幫到了你，請在 GitHub 給個 Star，這對我意義重大。</string>
 
     <!-- Author -->
     <string name="author_no_modules">該作者沒有模組</string>

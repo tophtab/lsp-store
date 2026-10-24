@@ -228,9 +228,8 @@
     <string name="onboarding_get_started">শুরু করুন</string>
     <string name="about_version">সংস্করণ %1$s</string>
     <string name="about_body">LSPosed মডিউল আপডেট ও ব্রাউজ করার টুল।</string>
-    <string name="about_open_site">Modules.lsposed.org খুলুন</string>
-    <string name="about_open_repo">GitHub-এ Xposed-Modules-Repo খুলুন</string>
-    <string name="about_disclaimer">LSPosed প্রকল্পের সাথে অধিভুক্ত নয়।</string>
+    <string name="about_source_title">GitHub-এ সোর্স কোড</string>
+    <string name="about_source_body">এই প্রকল্পটি আপনার উপকারে এলে GitHub-এ একটি স্টার দিন। এটি আমার কাছে অনেক কিছু।</string>
     <string name="author_no_modules">এই লেখক থেকে কোন মডিউল</string>
     <string name="author_module_count">মডিউল: %1$d</string>
     <string name="author_load_failed">মডিউল লোড করতে ব্যর্থ হয়েছে৷</string>

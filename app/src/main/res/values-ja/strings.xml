@@ -228,9 +228,8 @@
     <string name="onboarding_get_started">はじめる</string>
     <string name="about_version">バージョン %1$s</string>
     <string name="about_body">LSPosed モジュールの更新と閲覧ツール。</string>
-    <string name="about_open_site">modules.lsused.org を開く</string>
-    <string name="about_open_repo">GitHub で Xused-Modules-Repo を開く</string>
-    <string name="about_disclaimer">LSPosed プロジェクトとは無関係です。</string>
+    <string name="about_source_title">GitHub のソースコード</string>
+    <string name="about_source_body">このプロジェクトが役に立ったら、GitHub でスターを付けてもらえると嬉しいです。</string>
     <string name="author_no_modules">この作者のモジュールはありません</string>
     <string name="author_module_count">モジュール: %1$d</string>
     <string name="author_load_failed">モジュールのロードに失敗しました</string>

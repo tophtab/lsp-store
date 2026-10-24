@@ -228,9 +228,8 @@
     <string name="onboarding_get_started">Inizia</string>
     <string name="about_version">Versione %1$s</string>
     <string name="about_body">Strumento per aggiornare e sfogliare i moduli LSPosed.</string>
-    <string name="about_open_site">Apri module.lsposed.org</string>
-    <string name="about_open_repo">Apri Xposed-Modules-Repo su GitHub</string>
-    <string name="about_disclaimer">Non affiliato al progetto LSPosed.</string>
+    <string name="about_source_title">Codice sorgente su GitHub</string>
+    <string name="about_source_body">Se questo progetto ti è utile, lascia una stella su GitHub. Per me conta molto.</string>
     <string name="author_no_modules">Nessun modulo di questo autore</string>
     <string name="author_module_count">Moduli: %1$d</string>
     <string name="author_load_failed">Impossibile caricare i moduli</string>

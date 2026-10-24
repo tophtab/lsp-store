@@ -31,9 +31,6 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.layout.padding
 import io.github.tophtab.lspstore.R
 import io.github.tophtab.lspstore.versionLabel
-import io.github.tophtab.lspstore.ui.design.KomiButton
-import io.github.tophtab.lspstore.ui.design.KomiButtonSize
-import io.github.tophtab.lspstore.ui.design.KomiButtonVariant
 import io.github.tophtab.lspstore.ui.design.KomiConstrainedContent
 import io.github.tophtab.lspstore.ui.design.KomiDivider
 import io.github.tophtab.lspstore.ui.design.KomiSurface
@@ -106,28 +103,22 @@ fun AboutScreen(onBack: () -> Unit) {
                     }
                 }
 
-                KomiSurface(contentPadding = PaddingValues(18.dp)) {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                KomiSurface(
+                    contentPadding = PaddingValues(18.dp),
+                    onClick = { uriHandler.openUri("https://github.com/tophtab/lsp-store") },
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         KomiText(
-                            text = stringResource(R.string.about_disclaimer),
-                            role = KomiTextRole.Label,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontSize = 12.sp,
+                            text = stringResource(R.string.about_source_title),
+                            role = KomiTextRole.Title,
+                            fontSize = 14.sp,
                         )
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            KomiButton(
-                                onClick = { uriHandler.openUri("https://modules.lsposed.org/") },
-                                label = stringResource(R.string.about_open_site),
-                                variant = KomiButtonVariant.Outline,
-                                size = KomiButtonSize.Small,
-                            )
-                            KomiButton(
-                                onClick = { uriHandler.openUri("https://github.com/Xposed-Modules-Repo") },
-                                label = stringResource(R.string.about_open_repo),
-                                variant = KomiButtonVariant.Outline,
-                                size = KomiButtonSize.Small,
-                            )
-                        }
+                        KomiText(
+                            text = stringResource(R.string.about_source_body),
+                            role = KomiTextRole.Body,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontSize = 12.5.sp,
+                        )
                     }
                 }
             }

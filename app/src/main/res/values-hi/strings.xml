@@ -228,9 +228,8 @@
     <string name="onboarding_get_started">शुरू करें</string>
     <string name="about_version">संस्करण %1$s</string>
     <string name="about_body">LSPosed मॉड्यूल अपडेट और ब्राउज़ करने का टूल।</string>
-    <string name="about_open_site">मॉड्यूल.lsposed.org खोलें</string>
-    <string name="about_open_repo">GitHub पर एक्सपोज़ड-मॉड्यूल-रेपो खोलें</string>
-    <string name="about_disclaimer">LSPosed प्रोजेक्ट से संबद्ध नहीं है।</string>
+    <string name="about_source_title">GitHub पर सोर्स कोड</string>
+    <string name="about_source_body">अगर यह प्रोजेक्ट आपके काम आया है, तो GitHub पर स्टार दें। इससे मुझे बहुत मदद मिलती है।</string>
     <string name="author_no_modules">इस लेखक का कोई मॉड्यूल नहीं</string>
     <string name="author_module_count">मॉड्यूल: %1$d</string>
     <string name="author_load_failed">मॉड्यूल लोड करने में विफल</string>

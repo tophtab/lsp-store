@@ -228,9 +228,8 @@
     <string name="onboarding_get_started">Başla</string>
     <string name="about_version">Sürüm %1$s</string>
     <string name="about_body">LSPosed modüllerini güncelleme ve tarama aracı.</string>
-    <string name="about_open_site">module.lsposed.org\'u açın</string>
-    <string name="about_open_repo">GitHub\'da Xposed-Modules-Repo\'yu açın</string>
-    <string name="about_disclaimer">LSPose projesine bağlı değildir.</string>
+    <string name="about_source_title">GitHub üzerinde kaynak kodu</string>
+    <string name="about_source_body">Bu proje işinize yaradıysa GitHub üzerinde yıldız verin. Bu benim için çok önemli.</string>
     <string name="author_no_modules">Bu yazara ait modül yok</string>
     <string name="author_module_count">Modüller: %1$d</string>
     <string name="author_load_failed">Modüller yüklenemedi</string>

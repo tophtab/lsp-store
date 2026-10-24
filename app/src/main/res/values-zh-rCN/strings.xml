@@ -250,9 +250,8 @@
     <!-- About -->
     <string name="about_version">版本 %1$s</string>
     <string name="about_body">LSPosed 模块更新与浏览工具。</string>
-    <string name="about_open_site">打开 modules.lsposed.org</string>
-    <string name="about_open_repo">在 GitHub 打开 Xposed-Modules-Repo</string>
-    <string name="about_disclaimer">与 LSPosed 项目无隶属关系。</string>
+    <string name="about_source_title">GitHub 上的源代码</string>
+    <string name="about_source_body">如果项目帮到了你，请在 GitHub 点个 Star，这对我意义重大。</string>
 
     <!-- Author -->
     <string name="author_no_modules">该作者没有模块</string>

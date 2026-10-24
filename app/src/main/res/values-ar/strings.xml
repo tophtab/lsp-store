@@ -228,9 +228,8 @@
     <string name="onboarding_get_started">البدء</string>
     <string name="about_version">الإصدار %1$s</string>
     <string name="about_body">أداة لتحديث وحدات LSPosed واستعراضها.</string>
-    <string name="about_open_site">افتح Modules.lspose.org</string>
-    <string name="about_open_repo">افتح Xpose-Modules-Repo على GitHub</string>
-    <string name="about_disclaimer">لا ينتمي إلى مشروع LSPosed.</string>
+    <string name="about_source_title">الشيفرة المصدرية على GitHub</string>
+    <string name="about_source_body">إن كان هذا المشروع مفيدًا لك، فضلًا أضف نجمة على GitHub. فهذا يعني لي الكثير.</string>
     <string name="author_no_modules">لا توجد وحدات من هذا المؤلف</string>
     <string name="author_module_count">الوحدات: %1$d</string>
     <string name="author_load_failed">فشل تحميل الوحدات</string>

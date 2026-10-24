@@ -266,9 +266,8 @@
     <!-- About -->
     <string name="about_version">Version %1$s</string>
     <string name="about_body">LSPosed module updater and browser.</string>
-    <string name="about_open_site">Open modules.lsposed.org</string>
-    <string name="about_open_repo">Open Xposed-Modules-Repo on GitHub</string>
-    <string name="about_disclaimer">Not affiliated with the LSPosed project.</string>
+    <string name="about_source_title">Source code on GitHub</string>
+    <string name="about_source_body">If this project helps you, please leave a star on GitHub. It means a lot to me.</string>
 
     <!-- Author -->
     <string name="author_no_modules">No modules from this author</string>

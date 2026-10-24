@@ -228,9 +228,8 @@
     <string name="onboarding_get_started">시작하기</string>
     <string name="about_version">버전 %1$s</string>
     <string name="about_body">LSPosed 모듈 업데이트 및 탐색 도구.</string>
-    <string name="about_open_site">module.lsposed.org를 엽니다.</string>
-    <string name="about_open_repo">GitHub에서 Xposed-Modules-Repo 열기</string>
-    <string name="about_disclaimer">LSPosed 프로젝트와 관련이 없습니다.</string>
+    <string name="about_source_title">GitHub 소스 코드</string>
+    <string name="about_source_body">이 프로젝트가 도움이 되었다면 GitHub에서 별을 눌러 주세요. 큰 힘이 됩니다.</string>
     <string name="author_no_modules">이 작성자의 모듈이 없습니다.</string>
     <string name="author_module_count">모듈: %1$d</string>
     <string name="author_load_failed">모듈을 로드하지 못했습니다.</string>
