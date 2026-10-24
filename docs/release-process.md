@@ -52,6 +52,18 @@ assets/     图标等图片
 `SUMMARY` 里必须写明"无需激活模块即可使用全部功能"，否则用户会去 Manager 里
 对着一个空模块找设置。
 
+## 自测渠道
+
+push 到 master 时，`snapshot` 任务会用同一把 key 签一个 `1.0.0.dev.<sha>` 的包，
+覆盖发布到 `dev` 预发布，固定直链可直接在手机上下载安装：
+
+```
+https://github.com/tophtab/lsp-store/releases/download/dev/LSP-Store-dev.apk
+```
+
+versionCode 与正式版相同（10000），所以 dev 包和正式包可以互相覆盖安装；
+不要为了"比正式版新"去提高 dev 的 versionCode，否则正式版会被系统当成降级而装不上。
+
 ## 每次发版
 
 1. 改 `app/build.gradle.kts` 的 `versionName` / `versionCode`

@@ -4,6 +4,11 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
 }
 
+// CI appends ".dev.<sha>" to the version name for snapshot builds (see the snapshot
+// job in .github/workflows/android.yml). The version code is deliberately left
+// alone: a higher code would turn the eventual release into a downgrade.
+val buildSuffix = providers.gradleProperty("buildSuffix").getOrElse("")
+
 android {
     // The application id is what the Xposed module repository keys everything on:
     // repo name, module identity and the update chain all follow it, so it cannot
@@ -25,7 +30,7 @@ android {
         // wider major just means more digits; there is nothing to zero-pad.
         // minor and patch must stay below 100 for this to remain monotonic.
         versionCode = 10000
-        versionName = "1.0.0"
+        versionName = "1.0.0" + buildSuffix
         vectorDrawables { useSupportLibrary = true }
     }
 

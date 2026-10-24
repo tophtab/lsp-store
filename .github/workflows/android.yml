@@ -38,6 +38,70 @@ jobs:
           path: app/build/outputs/apk/release/*.apk
           if-no-files-found: error
 
+  # Rolling pre-release for self-testing: every push to master replaces a single
+  # `dev` release, so there is one stable URL to install from a phone. Signed with
+  # the same key as releases, so it installs over them (and vice versa) without an
+  # uninstall. The version code stays at the release value on purpose.
+  snapshot:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency:
+      group: snapshot
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: android-actions/setup-android@v4
+      - name: Install SDK platform used by compileSdk
+        run: sdkmanager "platforms;android-37.1" "build-tools;36.0.0"
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Decode keystore
+        env:
+          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+        run: |
+          if [ -z "$SIGNING_KEY" ]; then
+            echo "::error::SIGNING_KEY secret is missing"; exit 1
+          fi
+          echo "$SIGNING_KEY" | base64 --decode > "$RUNNER_TEMP/release.keystore.jks"
+          echo "KEYSTORE_FILE=$RUNNER_TEMP/release.keystore.jks" >> "$GITHUB_ENV"
+      - name: Build signed snapshot
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: ./gradlew :app:assembleRelease -PbuildSuffix=".dev.${GITHUB_SHA:0:8}" --stacktrace
+      - name: Collect and checksum
+        run: |
+          set -euo pipefail
+          APK="app/build/outputs/apk/release/app-release.apk"
+          test -f "$APK" || { echo "::error::signed APK not found"; exit 1; }
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --print-certs "$APK"             | grep -q "Signer #1 certificate DN"
+          mkdir -p out
+          cp "$APK" out/LSP-Store-dev.apk
+          (cd out && sha256sum LSP-Store-dev.apk > SHA256SUMS)
+          cat out/SHA256SUMS
+      - name: Remove keystore
+        if: always()
+        run: rm -f "$RUNNER_TEMP/release.keystore.jks"
+      - name: Publish dev pre-release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if gh release view dev > /dev/null 2>&1; then
+            gh release upload dev out/LSP-Store-dev.apk out/SHA256SUMS --clobber
+          else
+            gh release create dev --prerelease --title "Development build" \
+              --notes "Signed snapshot of \`master\`. The asset is replaced on every push." \
+              out/LSP-Store-dev.apk out/SHA256SUMS
+          fi
+
   release:
     if: startsWith(github.ref, 'refs/tags/v')
     needs: build
