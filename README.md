@@ -26,19 +26,15 @@ LSPosed 模块的更新与浏览工具
 ### 下载
 
 <p align="center">
-  <a href="https://github.com/tophtab/lsp-store/releases/latest">
-    <img src="https://img.shields.io/badge/Download-GitHub%20Releases-00A9A5?style=for-the-badge&logo=github" alt="从 GitHub Releases 下载" />
-  </a>
+  <a href="https://github.com/tophtab/lsp-store/releases/latest">GitHub Releases</a>
 </p>
 
 ---
 
 ### 功能
 
-- **更新模块**：读取 LSPosed 官方仓库，把已安装模块分成「可更新 / 已是最新 / 不在仓库中」，
-  可单个更新或一键全部更新；默认按正式版判定，可切到预发布版，支持断点续传与 root 静默安装。
-- **浏览模块**：浏览并搜索仓库（最近更新、最多星标），模块页展示 readme、Hook 作用域、
-  更新日志与发布历史；可收藏、忽略更新，也能把仓库模块关联到已安装应用。
+- 更新模块
+- 浏览模块
 
 ---
 

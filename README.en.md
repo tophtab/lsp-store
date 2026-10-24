@@ -26,22 +26,15 @@ An updater and browser for LSPosed modules
 ### Download
 
 <p align="center">
-  <a href="https://github.com/tophtab/lsp-store/releases/latest">
-    <img src="https://img.shields.io/badge/Download-GitHub%20Releases-00A9A5?style=for-the-badge&logo=github" alt="Download from GitHub Releases" />
-  </a>
+  <a href="https://github.com/tophtab/lsp-store/releases/latest">GitHub Releases</a>
 </p>
 
 ---
 
 ### Features
 
-- **Updating modules**: reads the official LSPosed repository and sorts installed modules into
-  updates / up to date / not in the repository, then updates them one by one or all at once;
-  stable releases by default with an opt-in pre-release channel, resumable downloads and silent
-  root installs.
-- **Browsing modules**: browse and search the repository (recently updated, most starred), with
-  module pages showing the readme, hook scope, release notes and release history; favourites,
-  ignored updates, and links from repository modules to installed apps.
+- Updating modules
+- Browsing modules
 
 ---
 
