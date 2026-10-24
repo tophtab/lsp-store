@@ -6,6 +6,7 @@ release.keystore*
 # Build output
 *.iml
 .gradle/
+.kotlin/
 build/
 app/build/
 local.properties
