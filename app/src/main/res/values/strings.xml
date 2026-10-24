@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name" translatable="false">LSP Store</string>
     <!-- Module description read by LSPosed Manager (libxposed uses android:description). -->
-    <string name="module_description" translatable="false">Unofficial store and updater for LSPosed modules. Hooks nothing; works without being activated.</string>
+    <string name="module_description" translatable="false">LSPosed module updater and browser. Declared as a module so managers can install and update it; it hooks nothing and needs no activation.</string>
 
     <!-- Common actions -->
     <string name="action_retry">Retry</string>
