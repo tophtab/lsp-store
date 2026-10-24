@@ -47,4 +47,4 @@ LSPosed 模块的更新与浏览工具
 - [Komi Store](https://github.com/komi-store/komi-store) — 灵感来源与原型参考，界面设计、布局与交互方式均借鉴于此
 - [LSPosed](https://github.com/LSPosed/LSPosed) — 模块框架，以及商店中所有模块所依赖的公共仓库
 - [域见 ScopeView](https://github.com/Xposed-Modules-Repo/io.github.zhongjitianqianguai.scopeview) — 同类项目，他山之石，可以攻玉
-- [LINUX DO 社区](https://linux.do/) — 学 AI 上 L 站吧
+- [LINUX DO 社区](https://linux.do/) — 学AI，上L站

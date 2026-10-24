@@ -50,4 +50,4 @@ An updater and browser for LSPosed modules
 - [Komi Store](https://github.com/komi-store/komi-store) — the inspiration and prototype reference; the design language, layout and interaction patterns are borrowed from it
 - [LSPosed](https://github.com/LSPosed/LSPosed) — the module framework and the public repository behind every module in the store
 - [ScopeView](https://github.com/Xposed-Modules-Repo/io.github.zhongjitianqianguai.scopeview) — a similar project; iron sharpens iron
-- [LINUX DO 社区](https://linux.do/) — 学 AI 上 L 站吧
+- [LINUX DO 社区](https://linux.do/) — 学AI，上L站
