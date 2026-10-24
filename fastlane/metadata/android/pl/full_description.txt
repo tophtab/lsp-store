@@ -3,7 +3,7 @@ LSP Store to przeglądarka, instalator i aktualizator modułów LSPosed, korzyst
 Cechy:
 - Przeglądaj ostatnio zaktualizowane i najczęściej oznaczone gwiazdką moduły.
 - Wyszukuj za pomocą filtrów sortowania, kanałów i ulubionych.
-- Instaluj, aktualizuj lub ponownie instaluj moduły z weryfikacją podpisu APK.
+- Instaluj, aktualizuj lub ponownie instaluj moduły.
 - Zobacz zainstalowane moduły pogrupowane w aktualizacje, aktualne i nie znajdujące się w repozytorium.
 - Aktualizacja zbiorcza z sekwencyjnymi, nienakładającymi się potwierdzeniami systemowymi.
 - Plik Readme, zakres haków, informacje o wersji i pliki do pobrania na stronie modułu.

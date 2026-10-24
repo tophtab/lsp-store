@@ -3,7 +3,7 @@ LSP Store, LSPosed Manager (modules.lsposed.org) ile aynı havuzu kullanan, LSPo
 Özellikler:
 - Yakın zamanda güncellenen ve en çok yıldızlı modüllere göz atın.
 - Sıralama, kanal ve favori filtreleriyle arama yapın.
-- APK imza doğrulamasıyla modülleri yükleyin, güncelleyin veya yeniden yükleyin.
+- Modülleri yükleyin, güncelleyin veya yeniden yükleyin.
 - Güncel ve depoda olmayan, güncellemeler halinde gruplandırılmış yüklü modülleri görün.
 - Sıralı, örtüşmeyen sistem onaylarıyla toplu güncelleme.
 - Modül sayfasında benioku, kanca kapsamı, sürüm notları ve sürüm indirmeleri.

@@ -3,7 +3,7 @@ LSP Store è un browser, programma di installazione e aggiornamento per i moduli
 Caratteristiche:
 - Sfoglia i moduli aggiornati di recente e quelli più speciali.
 - Ricerca con filtri di ordinamento, canali e preferiti.
-- Installa, aggiorna o reinstalla i moduli con la verifica della firma APK.
+- Installa, aggiorna o reinstalla i moduli.
 - Visualizza i moduli installati raggruppati in aggiornamenti, aggiornati e non nel repository.
 - Aggiornamento batch con conferme di sistema sequenziali e non sovrapposte.
 - Leggimi, ambito dell'hook, note sulla versione e download della versione nella pagina del modulo.
