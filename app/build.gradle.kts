@@ -4,10 +4,16 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
 }
 
-// CI appends ".dev.<sha>" to the version name for snapshot builds (see the snapshot
-// job in .github/workflows/android.yml). The version code is deliberately left
-// alone: a higher code would turn the eventual release into a downgrade.
-val buildSuffix = providers.gradleProperty("buildSuffix").getOrElse("")
+// CI stamps the commit it built from into BuildConfig.BUILD_SHA (see the build job
+// in .github/workflows/android.yml). The version name deliberately stays the plain
+// release version even for a `dev` build: the APK built for a commit is the APK
+// that gets published when that commit is tagged, so its versionName has to match
+// the tag. About/Diagnostics show the stamped sha, which is what tells a dev build
+// and a released build apart on a phone.
+val buildSha = providers.gradleProperty("buildSha")
+    .getOrElse("")
+    .takeIf { it.matches(Regex("[0-9a-fA-F]{7,40}")) }
+    .orEmpty()
 
 android {
     // The application id is what the Xposed module repository keys everything on:
@@ -30,7 +36,8 @@ android {
         // wider major just means more digits; there is nothing to zero-pad.
         // minor and patch must stay below 100 for this to remain monotonic.
         versionCode = 10002
-        versionName = "1.0.2" + buildSuffix
+        versionName = "1.0.2"
+        buildConfigField("String", "BUILD_SHA", "\"$buildSha\"")
         vectorDrawables { useSupportLibrary = true }
     }
 

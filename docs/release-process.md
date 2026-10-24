@@ -25,6 +25,16 @@ keytool -genkeypair -v \
 | `KEY_PASSWORD` | 私钥口令 |
 | `XPOSED_REPO_TOKEN` | 可选。对 `Xposed-Modules-Repo/io.github.tophtab.lspstore` 有 `contents: write` 的 PAT（fine-grained）。没有就跳过镜像步骤，手动发 |
 
+另外建议加一个**仓库变量**（不是 secret，`Variables` 标签页）`SIGNING_CERT_SHA256`，值是 release 证书的
+SHA-256 指纹——CI 会在发布前比对，签名用错 keystore 时当场失败，而不是等用户手机上装出第二个 app：
+
+```bash
+keytool -list -v -keystore release.keystore.jks -alias lspstore | grep SHA256:
+# 取冒号后的 64 位小写 hex，去掉冒号
+```
+
+没设这个变量也能发版，只是少一道校验（日志里会有 `::notice::`）。
+
 ### 2. 模块索引仓库
 
 在 `Xposed-Modules-Repo/submission` 开一个 issue，标题：
@@ -75,12 +85,17 @@ convert app/src/main/res/drawable-xxxhdpi/ic_launcher_icon.png \
 
 ## 自测渠道
 
-push 到 master 时，`snapshot` 任务会用同一把 key 签一个 `1.0.0.dev.<sha>` 的包，
-覆盖发布到 `dev` 预发布，固定直链可直接在手机上下载安装：
+push 到 master 时，`build` 任务会构建一次、用同一把 key 签名，产物既上传成构建产物
+（artifact），也覆盖发布到 `dev` 预发布，固定直链可直接在手机上下载安装：
 
 ```
 https://github.com/tophtab/lsp-store/releases/download/dev/LSP-Store-dev.apk
 ```
+
+这个包**就是**该提交将来发版用的那个 APK：versionName 不做任何后缀（否则它不可能
+通过 tag 与 `versionName` 一致的校验），提交号由 CI 写进 `BuildConfig.BUILD_SHA`，
+在关于页/诊断页显示为 `1.0.2 · 3f2a91c`，同时写在 `dev` 那个 release 的说明里。
+「这是 dev 还是正式版」就看这个后缀有没有、以及 release 页面上的 SHA。
 
 versionCode 与正式版相同（10000），所以 dev 包和正式包可以互相覆盖安装；
 不要为了"比正式版新"去提高 dev 的 versionCode，否则正式版会被系统当成降级而装不上。
@@ -92,16 +107,36 @@ versionCode 与正式版相同（10000），所以 dev 包和正式包可以互�
 2. 写 `release-notes/<version>.md`——这份内容就是 GitHub Release 正文，也会被索引页
    当作该版本的更新说明展示。中文在前、英文在后，3–5 条面向用户的改动。
 3. 在 `CHANGELOG.md` 里加一节。
-4. 打 tag 并推送：
+4. 先推 master，等 `build` 任务绿了（它会把这次的 APK 上传成构建产物），再打 tag：
 
    ```bash
-   git tag v1.0.0 && git push origin master --tags
+   git push origin master
+   # 等 CI 的 build 任务跑完（约 5 分钟，顺手把 dev 包换了）
+   git tag v1.0.0
+   git push origin v1.0.0
    ```
 
-5. CI 依次执行：lint → 单测 → debug/release 构建 → 解 keystore → 签名 → 校验
-   tag 与 APK 的 `versionName` 一致 → 建 GitHub Release（APK + `SHA256SUMS`）→
-   若配置了 `XPOSED_REPO_TOKEN`，再往组织仓库发一份 `versionCode-versionName` 的
-   release。
+   发版任务会**复用** master 那次跑出来、已经验过的那个 APK，不再编译：整条发布链
+   （下载 → 校验版本/签名 → 建 Release → 镜像）大约 1 分钟。
+   如果 tag 和 master 是一起推的（`git push origin master --tags`），同一提交的构建还
+   没跑完，找不到产物，就直接从源码构建一次（约 5 分钟）——代码一样，只是没省下这次
+   编译。tag 打在很早、已经被清理（30 天）的提交上也是同样的回退路径。
+
+5. 发版任务（`build`，push 触发）依次执行：找该提交的构建产物（有就复用，不再编译）→
+   没有就解 keystore → 单测 + `assembleRelease`（`assembleRelease` 里本来就跑
+   `lintVitalRelease`，它按项目的 error 策略把关，见下一条）→ 校验签名与 APK 信息 →
+   建 GitHub Release（APK + `SHA256SUMS`）→ 若配置了 `XPOSED_REPO_TOKEN`，再往组织仓库
+   发一份 `versionCode-versionName` 的 release（先建 draft、传完 APK 再发布，否则索引
+   bot 看不到，见「坑」）。tag 与 APK 的 `versionName` 必须一致，否则任务在发布前失败。
+   PR 走独立的 `checks` 任务：全量 `lintDebug`（含所有 warning）、单测、debug 包、
+   release 编译检查，碰不到签名密钥；只改文档、`docs/`、`assets/`、`module-repo/`、
+   `release-notes/` 的提交不触发构建（tag push 不受路径过滤影响，发版照常）。
+
+   **push 上不单独跑全量 lint**，只靠 `assembleRelease` 里的 `lintVitalRelease`：
+   `app/build.gradle.kts` 把 `MissingTranslation` / `ExtraTranslation` 从 error 提升成了
+   fatal，所以这条 40s 的 vital 检查能捕获全量 lint 会拦下的全部 error，而全量 lint 要
+   ~150s。全量 lint（包括 warning 级别）留给 PR。给这两个检查加上 `fatal` 是这套流水线
+   的前提，不要随手删掉。
 6. 索引仓库的 bot 会重写 tag 为 `10000-1.0.0`，索引在 5–60 分钟内刷新。
 7. 如果这次发版改了 README、图标或 `module-repo/` 里的元数据，确认 `module-repo`
    工作流跑过了（或本地跑一次 `tools/sync_module_repo.sh`），否则索引页还是旧的。

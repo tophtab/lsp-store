@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import io.github.tophtab.lspstore.BuildConfig
+import io.github.tophtab.lspstore.versionLabel
 import io.github.tophtab.lspstore.R
 import io.github.tophtab.lspstore.di.AppContainer
 
@@ -98,7 +99,7 @@ class DiagnosticsViewModel(private val container: AppContainer) : ViewModel() {
 
             _state.update {
                 it.copy(
-                    appVersion = "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
+                    appVersion = "$versionLabel (${BuildConfig.VERSION_CODE})",
                     androidVersion = "Android ${Build.VERSION.RELEASE} (SDK ${Build.VERSION.SDK_INT})",
                     device = "${Build.MANUFACTURER} ${Build.MODEL}",
                     installedModules = installed,

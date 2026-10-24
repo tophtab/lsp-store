@@ -29,8 +29,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.layout.padding
-import io.github.tophtab.lspstore.BuildConfig
 import io.github.tophtab.lspstore.R
+import io.github.tophtab.lspstore.versionLabel
 import io.github.tophtab.lspstore.ui.design.KomiButton
 import io.github.tophtab.lspstore.ui.design.KomiButtonSize
 import io.github.tophtab.lspstore.ui.design.KomiButtonVariant
@@ -90,7 +90,7 @@ fun AboutScreen(onBack: () -> Unit) {
                                     maxLines = 1,
                                 )
                                 KomiText(
-                                    text = stringResource(R.string.about_version, BuildConfig.VERSION_NAME),
+                                    text = stringResource(R.string.about_version, versionLabel),
                                     role = KomiTextRole.Mono,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     fontSize = 12.sp,
