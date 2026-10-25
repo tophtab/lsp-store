@@ -175,9 +175,11 @@ fun InstalledScreen(
 
     // A finished refresh returns to the top (newest updates first). The startup
     // refresh counts too, so opening the app always lands at the top instead of
-    // wherever the list was left last time.
+    // wherever the list was left last time. The view model hands that scroll out
+    // once per refresh, so coming back from a module page keeps the position.
     LaunchedEffect(state.refreshTick) {
-        if (state.refreshTick > 0 && segments.isNotEmpty()) listState.animateScrollToItem(0)
+        if (!viewModel.consumeRefreshScroll()) return@LaunchedEffect
+        if (segments.isNotEmpty()) listState.animateScrollToItem(0)
     }
 
     Scaffold(

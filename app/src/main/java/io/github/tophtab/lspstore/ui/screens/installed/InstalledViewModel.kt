@@ -43,6 +43,7 @@ import io.github.tophtab.lspstore.domain.variant.VariantSignature
 import io.github.tophtab.lspstore.domain.variant.onEvaluatedNoCandidate
 import io.github.tophtab.lspstore.domain.variant.onUserPicked
 import io.github.tophtab.lspstore.domain.variant.parseTraits
+import io.github.tophtab.lspstore.ui.RefreshScrollGate
 import io.github.tophtab.lspstore.ui.toUserMessage
 import io.github.tophtab.lspstore.ui.variant.variantReasonText
 import java.io.File
@@ -115,6 +116,7 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
     private var pending: Map<String, PendingInstall> = emptyMap()
     private var batchJob: Job? = null
     private var loadJob: Job? = null
+    private val refreshScrollGate = RefreshScrollGate()
 
     /**
      * Invalidates state writes from a cancelled/replaced batch. Batch
@@ -179,6 +181,16 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
     }
 
     fun refresh() = load(force = true)
+
+    /**
+     * Whether the finished refresh that produced the current
+     * [InstalledUiState.refreshTick] still owes the list a scroll back to the
+     * top. Asking the view model (which outlives the composition) rather than
+     * remembering the tick in the screen is what keeps a trip to a module page
+     * from scrolling the list: the screen comes back as a fresh composition and
+     * launches its effect with the same tick again.
+     */
+    fun consumeRefreshScroll(): Boolean = refreshScrollGate.consume(_state.value.refreshTick)
 
     fun clearMessage() {
         _state.update { it.copy(message = null) }
