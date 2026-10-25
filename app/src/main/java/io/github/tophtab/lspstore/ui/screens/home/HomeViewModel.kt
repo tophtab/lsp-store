@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import io.github.tophtab.lspstore.R
 import io.github.tophtab.lspstore.di.AppContainer
+import io.github.tophtab.lspstore.ui.RefreshScrollGate
 import io.github.tophtab.lspstore.ui.toUserMessage
 import io.github.tophtab.lspstore.domain.model.InstalledModule
 import io.github.tophtab.lspstore.domain.model.Module
@@ -25,6 +26,12 @@ data class HomeUiState(
     val installedPackages: Set<String> = emptySet(),
     val searchQuery: String = "",
     val searchResults: List<Module> = emptyList(),
+    /**
+     * Which shelf the user picked. Kept here rather than in the screen's
+     * `remember`: it decides which list the scroll position belongs to, so it
+     * has to survive the trip to a module page along with the position itself.
+     */
+    val selectedTabIndex: Int = 0,
     /**
      * Bumped whenever a load finishes, silent startup refresh included, so the
      * list jumps back to the top: the newest modules are the reason the refresh
@@ -46,6 +53,7 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
     private var installed: List<InstalledModule> = emptyList()
     private var links: Map<String, String> = emptyMap()
     private var loadJob: Job? = null
+    private val refreshScrollGate = RefreshScrollGate()
 
     init {
         viewModelScope.launch {
@@ -55,6 +63,20 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
     }
 
     fun refresh() = load(force = true)
+
+    fun selectTab(index: Int) {
+        _state.update { it.copy(selectedTabIndex = index.coerceAtLeast(0)) }
+    }
+
+    /**
+     * Whether the finished refresh that produced the current
+     * [HomeUiState.refreshTick] still owes the list a scroll back to the top.
+     * Asking the view model (which outlives the composition) rather than
+     * remembering the tick in the screen is what keeps a trip to a module page
+     * from scrolling the list: the screen comes back as a fresh composition and
+     * launches its effect with the same tick again.
+     */
+    fun consumeRefreshScroll(): Boolean = refreshScrollGate.consume(_state.value.refreshTick)
 
     fun onSearchQueryChange(query: String) {
         _state.update { it.copy(searchQuery = query) }

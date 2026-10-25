@@ -24,9 +24,6 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -73,9 +70,11 @@ fun HomeScreen(
     // A finished refresh returns to the top: the newest modules are there, and
     // staying on the old offset made the refresh look like a no-op. The startup
     // refresh counts too, so opening the app always lands on the newest modules
-    // instead of wherever the list was left last time.
+    // instead of wherever the list was left last time. The view model hands that
+    // scroll out once per refresh, so coming back from a module page (same tick,
+    // fresh composition) keeps the position the user left.
     LaunchedEffect(state.refreshTick) {
-        if (state.refreshTick == 0) return@LaunchedEffect
+        if (!viewModel.consumeRefreshScroll()) return@LaunchedEffect
         if (state.searchQuery.isNotBlank()) {
             if (state.searchResults.isNotEmpty()) searchListState.animateScrollToItem(0)
         } else if (state.recentlyUpdated.isNotEmpty()) {
@@ -99,8 +98,7 @@ fun HomeScreen(
             ),
         )
     }
-    var selectedTab by remember { mutableIntStateOf(0) }
-    val resolvedTab = selectedTab.coerceIn(0, (tabs.size - 1).coerceAtLeast(0))
+    val resolvedTab = state.selectedTabIndex.coerceIn(0, (tabs.size - 1).coerceAtLeast(0))
     val searching = state.searchQuery.isNotBlank()
 
     Scaffold(
@@ -150,7 +148,7 @@ fun HomeScreen(
                     KomiSegmented(
                         segments = tabs.map { KomiSegment(it.label) },
                         selectedIndex = resolvedTab,
-                        onSelect = { selectedTab = it },
+                        onSelect = viewModel::selectTab,
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 12.dp, vertical = 6.dp),
