@@ -56,6 +56,7 @@ internal fun VariantPickerDialog(
         title = stringResource(R.string.variant_picker_title),
         dismissLabel = stringResource(R.string.action_cancel),
         onDismiss = onDismiss,
+        scrollable = true,
     ) {
         Column {
             KomiText(
