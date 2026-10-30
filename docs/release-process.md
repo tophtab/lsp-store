@@ -87,8 +87,10 @@ convert app/src/main/res/drawable-xxxhdpi/ic_launcher_icon.png \
 
 ## 自测渠道
 
-push 到 master 时，`build` 任务会构建一次、用同一把 key 签名，产物既上传成构建产物
-（artifact），也覆盖发布到 `dev` 预发布，固定直链可直接在手机上下载安装：
+手动触发 `Android` workflow（Actions 页面 Run workflow，或
+`gh workflow run android.yml --ref master`）时，`build` 任务会取用该提交已有的构建
+产物（master push 留下的，没有就现场构建并签名）、覆盖发布到 `dev` 预发布，固定直链
+可直接在手机上下载安装：
 
 ```
 https://github.com/tophtab/lsp-store/releases/download/dev/LSP-Store-dev.apk
@@ -114,7 +116,7 @@ versionCode 与正式版相同（10000），所以 dev 包和正式包可以互�
 
    ```bash
    git push origin master
-   # 等 CI 的 build 任务跑完（约 5 分钟，顺手把 dev 包换了）
+   # 等 CI 的 build 任务跑完（约 5 分钟）
    git tag v1.0.0
    git push origin v1.0.0
    ```
