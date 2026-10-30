@@ -174,6 +174,17 @@ fun InstalledScreen(
     }
     val selectedIndex = selected.coerceIn(0, (segments.size - 1).coerceAtLeast(0))
 
+    // Changing segments shows a different list, so start it at the top. The
+    // sentinel is saveable so returning from a module page (same segment, fresh
+    // composition) keeps the position instead.
+    var settledSegment by rememberSaveable { mutableIntStateOf(selected) }
+    LaunchedEffect(selected) {
+        if (selected != settledSegment) {
+            settledSegment = selected
+            listState.scrollToItem(0)
+        }
+    }
+
     var nextIndex = 0
     val repositoryIndex = if (repositoryCount > 0) nextIndex++ else -1
 
@@ -193,10 +204,12 @@ fun InstalledScreen(
         }
     }
 
-    // A finished refresh returns to the top (newest updates first). The startup
-    // refresh counts too, so opening the app always lands at the top instead of
-    // wherever the list was left last time. The view model hands that scroll out
-    // once per refresh, so coming back from a module page keeps the position.
+    // A completed load is a new dataset, so the list starts at its first item
+    // instead of keeping an offset that belonged to the old data. The first
+    // load of the process counts too. The view model hands that scroll out once
+    // per load; returning from a module page with the same tick does not replay
+    // it. If a load finishes while the user is on a module page, the new
+    // dataset is shown from the top when the list returns.
     LaunchedEffect(state.refreshTick) {
         if (!viewModel.consumeRefreshScroll()) return@LaunchedEffect
         if (segments.isNotEmpty()) listState.animateScrollToItem(0)

@@ -38,9 +38,9 @@ data class HomeUiState(
      */
     val selectedTabIndex: Int = 0,
     /**
-     * Bumped whenever a load finishes, silent startup refresh included, so the
-     * list jumps back to the top: the newest modules are the reason the refresh
-     * exists, and leaving the viewport where it was made it look like a no-op.
+     * Bumped whenever a load finishes, including the first load of the process.
+     * A completed load is a new dataset, so the screen shows it from its first
+     * item instead of keeping an offset that belonged to the previous data.
      */
     val refreshTick: Int = 0,
 )
