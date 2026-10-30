@@ -161,8 +161,13 @@ fun InstalledScreen(
             add(KomiSegment(stringResource(R.string.installed_section_unknown, unknown.size)))
         }
     }
-    var selected by remember(repositoryCount, unknown.size) {
-        mutableIntStateOf(0)
+    // The segment choice decides which list the restored offset belongs to, so
+    // it has to survive the trip to a module page (and a process death) just
+    // like the offset does. A query can make the unknown segment disappear;
+    // only then fall back to the first segment.
+    var selected by rememberSaveable { mutableIntStateOf(0) }
+    LaunchedEffect(segments.size) {
+        if (selected > segments.lastIndex) selected = 0
     }
     val selectedIndex = selected.coerceIn(0, (segments.size - 1).coerceAtLeast(0))
 

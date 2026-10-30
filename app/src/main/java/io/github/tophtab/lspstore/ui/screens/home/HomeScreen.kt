@@ -85,10 +85,12 @@ fun HomeScreen(
     // A new query is a new result list; the previous offset belongs to the old
     // one. The view model hands the reset out once per query change, so coming
     // back from a module page (same tick, fresh composition) keeps the position
-    // the user left, exactly like the refresh scroll above.
+    // the user left, exactly like the refresh scroll above. The reset also runs
+    // when the new query has no hits: the state is reset while the empty box is
+    // showing, so a later refresh that adds hits does not reveal them mid-list.
     LaunchedEffect(state.searchTick) {
         if (!viewModel.consumeSearchScroll()) return@LaunchedEffect
-        if (state.searchQuery.isNotBlank() && state.searchResults.isNotEmpty()) {
+        if (state.searchQuery.isNotBlank()) {
             searchListState.scrollToItem(0)
         }
     }
