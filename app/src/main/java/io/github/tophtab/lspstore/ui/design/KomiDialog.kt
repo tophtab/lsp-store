@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -21,6 +23,11 @@ import io.github.tophtab.lspstore.ui.theme.KomiTextRole
 /**
  * Panel dialog matching komi's `KomiDialog`: a [KomiSurface] panel with an
  * optional title, free-form content and text buttons along the bottom edge.
+ *
+ * Set [scrollable] when the content can be taller than a short window (a
+ * landscape phone, a long candidate list): the body then takes the height left
+ * between the title and the buttons and scrolls inside it, so the buttons stay
+ * on screen.
  */
 @Composable
 fun KomiDialog(
@@ -31,6 +38,7 @@ fun KomiDialog(
     onConfirm: (() -> Unit)? = null,
     dismissLabel: String? = null,
     onDismiss: (() -> Unit)? = null,
+    scrollable: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     Dialog(onDismissRequest = onDismissRequest) {
@@ -49,7 +57,17 @@ fun KomiDialog(
                         uppercase = false,
                     )
                 }
-                content()
+                if (scrollable) {
+                    Column(
+                        modifier = Modifier
+                            .weight(1f, fill = false)
+                            .verticalScroll(rememberScrollState()),
+                    ) {
+                        content()
+                    }
+                } else {
+                    content()
+                }
                 if (confirmLabel != null || dismissLabel != null) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
