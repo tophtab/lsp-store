@@ -418,10 +418,12 @@ internal fun InstallControls(
 ) {
     val run = state.activeInstall
     // A run that is already installing has nothing left to cancel, so the button
-    // shows the stage and stays inert (komi does the same).
+    // shows the stage and stays inert (komi does the same). A queued run has not
+    // started transferring yet but can still be cancelled.
+    val queued = run?.takeIf { it.stage == InstallStage.QUEUED }
     val downloading = run?.takeIf { it.stage == InstallStage.DOWNLOADING }
     val installing = run?.stage == InstallStage.INSTALLING
-    val active = downloading != null || installing
+    val active = queued != null || downloading != null || installing
 
     Column {
         if (showUpdateHint && targetVersion != null) {
@@ -439,6 +441,7 @@ internal fun InstallControls(
         }
 
         val buttonLabel = when {
+            queued != null -> stringResource(R.string.detail_queued)
             downloading != null -> stringResource(R.string.detail_downloading)
             installing -> stringResource(R.string.detail_installing)
             state.isBusy -> stringResource(R.string.detail_working)
@@ -464,10 +467,11 @@ internal fun InstallControls(
             label = buttonLabel,
             subtitle = buttonSubtitle,
             progress = downloading?.progress,
-            enabled = downloading != null ||
+            active = active,
+            enabled = queued != null || downloading != null ||
                 (!active && !state.isBusy && targetVersion != null && installEnabled),
             leadingIcon = if (active) null else Icons.Filled.Download,
-            onClick = if (downloading != null) onCancel else onInstall,
+            onClick = if (queued != null || downloading != null) onCancel else onInstall,
         )
 
         if (notApplicableReason != null) {
@@ -495,6 +499,7 @@ private fun InstallActionButton(
     label: String,
     subtitle: String?,
     progress: Float?,
+    active: Boolean,
     enabled: Boolean,
     leadingIcon: ImageVector?,
     onClick: () -> Unit,
@@ -502,7 +507,6 @@ private fun InstallActionButton(
 ) {
     val colors = MaterialTheme.colorScheme
     val shape = MaterialTheme.shapes.small
-    val active = progress != null
     val animatedProgress by animateFloatAsState(
         targetValue = progress ?: 0f,
         animationSpec = tween(durationMillis = 350),
@@ -518,7 +522,9 @@ private fun InstallActionButton(
             .clip(shape)
             .drawBehind {
                 drawRect(container.copy(alpha = if (active) 0.35f else 1f))
-                if (active) {
+                // Queued has no byte progress, so it only shows the dimmed
+                // active container; the fill starts with the transfer.
+                if (active && progress != null) {
                     drawRect(
                         color = container,
                         size = Size(width = size.width * animatedProgress, height = size.height),

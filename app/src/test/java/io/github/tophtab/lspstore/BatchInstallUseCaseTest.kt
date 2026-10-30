@@ -3,11 +3,13 @@ package io.github.tophtab.lspstore
 import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import io.github.tophtab.lspstore.data.install.DownloadSlots
 import io.github.tophtab.lspstore.data.install.InstallOutcome
 import io.github.tophtab.lspstore.domain.model.InstalledModule
 import io.github.tophtab.lspstore.domain.model.Module
@@ -90,6 +92,7 @@ class BatchInstallUseCaseTest {
         isActive: () -> Boolean = { true },
         onInstalled: (String) -> Unit = {},
         released: MutableList<String> = mutableListOf(),
+        downloadLimit: Int = 3,
     ): Pair<BatchInstallUseCase.Result, Recorder> {
         val recorder = Recorder()
         val preparer = object : ModuleInstallPreparer {
@@ -119,10 +122,12 @@ class BatchInstallUseCaseTest {
             awaitInstallSettled = { _, _ -> settled },
             releaseInstallSlot = { released += it },
             abandonDownload = {},
+            downloadSlots = DownloadSlots { downloadLimit },
         )
         val result = runBlocking {
             useCase.run(
                 targets = targets,
+                control = useCase.newControl(),
                 includePreReleases = { false },
                 variantStates = emptyMap(),
                 isActive = isActive,
@@ -132,7 +137,6 @@ class BatchInstallUseCaseTest {
                     )
                     recorder.phases[packageName] = transform(current).phase
                 },
-                onCurrent = { _, _ -> },
             )
         }
         return result to recorder
@@ -305,18 +309,130 @@ class BatchInstallUseCaseTest {
                 awaitInstallSettled = { _, _ -> true },
                 releaseInstallSlot = {},
                 abandonDownload = {},
+                downloadSlots = DownloadSlots { 3 },
             )
             useCase.run(
                 targets = targets,
+                control = useCase.newControl(),
                 includePreReleases = { false },
                 variantStates = emptyMap(),
                 isActive = { true },
                 onItem = { _, _ -> },
-                onCurrent = { _, _ -> },
             )
         }
 
         assertEquals(1, maxConcurrent.get())
+    }
+
+    @Test
+    fun downloadLimitCapsConcurrentDownloads() {
+        val targets = (1..6).map { updateInfo("com.example.$it") }
+
+        for (limit in 1..3) {
+            val concurrent = AtomicInteger()
+            val maxConcurrent = AtomicInteger()
+            runBlocking {
+                val preparer = object : ModuleInstallPreparer {
+                    override suspend fun prepare(
+                        info: UpdateInfo,
+                        includePreReleases: Boolean,
+                        state: ModuleVariantState,
+                        onAssetResolved: (ReleaseAsset) -> Unit,
+                        onProgress: (downloaded: Long, total: Long) -> Unit,
+                    ): PreparedInstall {
+                        onAssetResolved(asset)
+                        val now = concurrent.incrementAndGet()
+                        maxConcurrent.updateAndGet { previous -> maxOf(previous, now) }
+                        delay(20)
+                        concurrent.decrementAndGet()
+                        return ready(info)
+                    }
+                }
+                val installer = object : ModuleInstaller {
+                    override suspend fun install(prepared: PreparedInstall.Ready): InstallOutcome =
+                        InstallOutcome.Completed
+                }
+                val useCase = BatchInstallUseCase(
+                    prepareInstall = preparer,
+                    installPrepared = installer,
+                    awaitInstallSettled = { _, _ -> true },
+                    releaseInstallSlot = {},
+                    abandonDownload = {},
+                    downloadSlots = DownloadSlots { limit },
+                )
+                useCase.run(
+                    targets = targets,
+                    control = useCase.newControl(),
+                    includePreReleases = { false },
+                    variantStates = emptyMap(),
+                    isActive = { true },
+                    onItem = { _, _ -> },
+                )
+            }
+
+            assertEquals("limit $limit", limit, maxConcurrent.get())
+        }
+    }
+
+    @Test
+    fun cancellingOneRowLeavesTheRestOfTheBatchAlone() {
+        val targets = listOf(updateInfo("com.example.a"), updateInfo("com.example.b"))
+        val phases = mutableMapOf<String, BatchInstallPhase>()
+        val installs = mutableListOf<String>()
+
+        val result = runBlocking {
+            val preparer = object : ModuleInstallPreparer {
+                override suspend fun prepare(
+                    info: UpdateInfo,
+                    includePreReleases: Boolean,
+                    state: ModuleVariantState,
+                    onAssetResolved: (ReleaseAsset) -> Unit,
+                    onProgress: (downloaded: Long, total: Long) -> Unit,
+                ): PreparedInstall {
+                    onAssetResolved(asset)
+                    delay(50)
+                    return ready(info)
+                }
+            }
+            val installer = object : ModuleInstaller {
+                override suspend fun install(prepared: PreparedInstall.Ready): InstallOutcome {
+                    installs += prepared.info.module.packageName
+                    return InstallOutcome.Completed
+                }
+            }
+            val useCase = BatchInstallUseCase(
+                prepareInstall = preparer,
+                installPrepared = installer,
+                awaitInstallSettled = { _, _ -> true },
+                releaseInstallSlot = {},
+                abandonDownload = {},
+                downloadSlots = DownloadSlots { 3 },
+            )
+            val control = useCase.newControl()
+            launch {
+                delay(10)
+                control.cancel("com.example.a")
+            }
+            useCase.run(
+                targets = targets,
+                control = control,
+                includePreReleases = { false },
+                variantStates = emptyMap(),
+                isActive = { true },
+                onItem = { packageName, transform ->
+                    val current = BatchInstallState(
+                        phase = phases[packageName] ?: BatchInstallPhase.QUEUED,
+                    )
+                    phases[packageName] = transform(current).phase
+                },
+            )
+        }
+
+        assertEquals(BatchInstallPhase.CANCELLED, phases["com.example.a"])
+        assertEquals(BatchInstallPhase.COMPLETED, phases["com.example.b"])
+        assertEquals(listOf("com.example.b"), installs)
+        // A cancel is not a failure: nothing should reach the summary.
+        assertTrue(result.failures.isEmpty())
     }
 
     @Test

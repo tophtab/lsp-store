@@ -46,8 +46,16 @@
     <string name="installed_update_all">সব আপডেট করুন</string>
     <string name="installed_update_all_count">সব আপডেট করুন (%1$d)</string>
     <string name="installed_version_arrow">%1$s -&gt; %2$s</string>
-    <string name="installed_batch_progress">%1$d/%2$d: %3$s</string>
     <string name="installed_batch_cancelled">ব্যাচ আপডেট বাতিল করা হয়েছে</string>
+    <string name="installed_batch_stop">থামুন %1$d/%2$d</string>
+    <string name="installed_state_queued">সারিতে</string>
+    <string name="installed_state_preparing">প্রস্তুত হচ্ছে</string>
+    <string name="installed_state_waiting">অপেক্ষায়</string>
+    <string name="installed_state_installing">ইনস্টল হচ্ছে</string>
+    <string name="installed_state_done">আপডেট হয়েছে</string>
+    <string name="installed_state_failed">ব্যর্থ</string>
+    <string name="installed_cancel_download">ডাউনলোড বাতিল করুন</string>
+    <string name="installed_retry_update">আপডেট আবার চেষ্টা করুন</string>
     <string name="installed_all_updated">সমস্ত মডিউল সফলভাবে আপডেট হয়েছে</string>
     <string name="installed_finished_failures">ব্যর্থতা: %1$d</string>
     <string name="installed_batch_installer_busy">ইনস্টলার এখনও খোলা, %1$d আপডেট(গুলি) এড়িয়ে গেছে৷</string>
@@ -61,6 +69,7 @@
     <string name="detail_stable">স্থিতিশীল</string>
     <string name="detail_downloading">ডাউনলোড হচ্ছে…</string>
     <string name="detail_installing">ইনস্টল হচ্ছে…</string>
+    <string name="detail_queued">অপেক্ষায়…</string>
     <string name="detail_pre_releases">প্রি-রিলিজ</string>
     <string name="installed_ignore_update">আপডেট উপেক্ষা করুন</string>
     <string name="installed_unignore_update">আপডেটগুলি উপেক্ষা করুন</string>
@@ -136,6 +145,9 @@
     <string name="import_pick_module">একটি সংগ্রহস্থল মডিউল চয়ন করুন</string>
     <string name="import_search_hint">অনুসন্ধান মডিউল</string>
     <string name="import_load_failed">মডিউল লোড করতে ব্যর্থ হয়েছে৷</string>
+    <string name="settings_downloads">ডাউনলোড</string>
+    <string name="settings_max_downloads">একসাথে ডাউনলোড</string>
+    <string name="settings_max_downloads_desc">একসাথে কতগুলো APK ডাউনলোড হবে। ইনস্টল একবারে একটি।</string>
     <string name="settings_storage">স্টোরেজ</string>
     <string name="settings_downloaded">ডাউনলোড করা APK: %1$s</string>
     <string name="settings_clear_index">মডিউল ইনডেক্স ক্যাশে সাফ করুন</string>
@@ -208,6 +220,7 @@
     <string name="variant_not_applicable">এই ডিভাইসের জন্য উপলব্ধ নয়</string>
     <string name="variant_not_module">এই APK একটি Xposed মডিউল নয়</string>
     <string name="installed_finished_skipped">%1$d মডিউলগুলির একটি বৈকল্পিক পছন্দ প্রয়োজন - আপডেট করতে সেগুলি খুলুন</string>
+    <string name="installed_finished_cancelled">বাতিল: %1$d</string>
     <string name="settings_root_unavailable_msg">এই ডিভাইসে রুট (su) উপলব্ধ নেই</string>
     <string name="onboarding_welcome_title">LSP Store-এ স্বাগতম</string>
     <string name="onboarding_welcome_body">LSPosed মডিউল সংগ্রহস্থল ব্রাউজ করুন, মডিউল ইনস্টল করুন এবং আপনার ডিভাইসে ইতিমধ্যেই আপ টু ডেট রাখুন। সবকিছুই ওপেন সোর্স এবং মডিউল ডেটা modules.lsposed.org থেকে আসে।</string>

@@ -46,8 +46,16 @@
     <string name="installed_update_all">सभी अपडेट करें</string>
     <string name="installed_update_all_count">सभी अपडेट करें (%1$d)</string>
     <string name="installed_version_arrow">%1$s -&gt; %2$s</string>
-    <string name="installed_batch_progress">%1$d/%2$d: %3$s</string>
     <string name="installed_batch_cancelled">बैच अद्यतन रद्द कर दिया गया</string>
+    <string name="installed_batch_stop">रोकें %1$d/%2$d</string>
+    <string name="installed_state_queued">कतार में</string>
+    <string name="installed_state_preparing">तैयार हो रहा है</string>
+    <string name="installed_state_waiting">प्रतीक्षा</string>
+    <string name="installed_state_installing">इंस्टॉल हो रहा है</string>
+    <string name="installed_state_done">अपडेट हो गया</string>
+    <string name="installed_state_failed">विफल</string>
+    <string name="installed_cancel_download">डाउनलोड रद्द करें</string>
+    <string name="installed_retry_update">अपडेट फिर से आज़माएँ</string>
     <string name="installed_all_updated">सभी मॉड्यूल सफलतापूर्वक अपडेट हो गए</string>
     <string name="installed_finished_failures">विफलताएँ: %1$d</string>
     <string name="installed_batch_installer_busy">इंस्टॉलर अभी भी खुला है, %1$d अपडेट छोड़ दिया गया है</string>
@@ -61,6 +69,7 @@
     <string name="detail_stable">स्थिर</string>
     <string name="detail_downloading">डाउनलोड हो रहा है…</string>
     <string name="detail_installing">इंस्टॉल हो रहा है…</string>
+    <string name="detail_queued">प्रतीक्षा में…</string>
     <string name="detail_pre_releases">प्री-रिलीज़</string>
     <string name="installed_ignore_update">अद्यतनों पर ध्यान न दें</string>
     <string name="installed_unignore_update">अद्यतनों को अनदेखा करें</string>
@@ -136,6 +145,9 @@
     <string name="import_pick_module">एक रिपोजिटरी मॉड्यूल चुनें</string>
     <string name="import_search_hint">मॉड्यूल खोजें</string>
     <string name="import_load_failed">मॉड्यूल लोड करने में विफल</string>
+    <string name="settings_downloads">डाउनलोड</string>
+    <string name="settings_max_downloads">एक साथ डाउनलोड</string>
+    <string name="settings_max_downloads_desc">एक साथ कितने APK डाउनलोड हों। इंस्टॉल एक बार में एक ही रहते हैं।</string>
     <string name="settings_storage">भंडारण</string>
     <string name="settings_downloaded">डाउनलोड किए गए एपीके: %1$s</string>
     <string name="settings_clear_index">मॉड्यूल इंडेक्स कैश साफ़ करें</string>
@@ -208,6 +220,7 @@
     <string name="variant_not_applicable">इस डिवाइस के लिए उपलब्ध नहीं है</string>
     <string name="variant_not_module">यह एपीके एक एक्सपोज़ड मॉड्यूल नहीं है</string>
     <string name="installed_finished_skipped">%1$d मॉड्यूल को एक भिन्न विकल्प की आवश्यकता होती है - उन्हें अपडेट करने के लिए खोलें</string>
+    <string name="installed_finished_cancelled">रद्द किए गए: %1$d</string>
     <string name="settings_root_unavailable_msg">इस डिवाइस पर रूट (su) उपलब्ध नहीं है</string>
     <string name="onboarding_welcome_title">LSP Store में आपका स्वागत है</string>
     <string name="onboarding_welcome_body">LSposed मॉड्यूल रिपॉजिटरी ब्राउज़ करें, मॉड्यूल इंस्टॉल करें और अपने डिवाइस पर पहले से मौजूद मॉड्यूल को अपडेट रखें। सब कुछ खुला स्रोत है और मॉड्यूल डेटा मॉड्यूल.lsposed.org से आता है।</string>

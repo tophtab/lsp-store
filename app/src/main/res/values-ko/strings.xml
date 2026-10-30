@@ -46,8 +46,16 @@
     <string name="installed_update_all">모두 업데이트</string>
     <string name="installed_update_all_count">모두 업데이트 (%1$d)</string>
     <string name="installed_version_arrow">%1$s -&gt; %2$s</string>
-    <string name="installed_batch_progress">%1$d/%2$d: %3$s</string>
     <string name="installed_batch_cancelled">일괄 업데이트가 취소되었습니다.</string>
+    <string name="installed_batch_stop">중지 %1$d/%2$d</string>
+    <string name="installed_state_queued">대기 중</string>
+    <string name="installed_state_preparing">준비 중</string>
+    <string name="installed_state_waiting">설치 대기</string>
+    <string name="installed_state_installing">설치 중</string>
+    <string name="installed_state_done">업데이트됨</string>
+    <string name="installed_state_failed">실패</string>
+    <string name="installed_cancel_download">다운로드 취소</string>
+    <string name="installed_retry_update">업데이트 다시 시도</string>
     <string name="installed_all_updated">모든 모듈이 성공적으로 업데이트되었습니다.</string>
     <string name="installed_finished_failures">실패: %1$d</string>
     <string name="installed_batch_installer_busy">설치 프로그램이 아직 열려 있고 %1$d 업데이트를 건너뛰었습니다.</string>
@@ -61,6 +69,7 @@
     <string name="detail_stable">안정판</string>
     <string name="detail_downloading">다운로드 중…</string>
     <string name="detail_installing">설치 중…</string>
+    <string name="detail_queued">대기 중…</string>
     <string name="detail_pre_releases">사전 릴리스</string>
     <string name="installed_ignore_update">업데이트 무시</string>
     <string name="installed_unignore_update">업데이트 무시</string>
@@ -136,6 +145,9 @@
     <string name="import_pick_module">저장소 모듈 선택</string>
     <string name="import_search_hint">모듈 검색</string>
     <string name="import_load_failed">모듈을 로드하지 못했습니다.</string>
+    <string name="settings_downloads">다운로드</string>
+    <string name="settings_max_downloads">동시 다운로드</string>
+    <string name="settings_max_downloads_desc">한 번에 다운로드할 APK 수입니다. 설치는 한 번에 하나씩 진행됩니다.</string>
     <string name="settings_storage">저장</string>
     <string name="settings_downloaded">다운로드한 APK: %1$s</string>
     <string name="settings_clear_index">모듈 인덱스 캐시 지우기</string>
@@ -208,6 +220,7 @@
     <string name="variant_not_applicable">이 장치에서는 사용할 수 없습니다</string>
     <string name="variant_not_module">이 APK는 Xposed 모듈이 아닙니다.</string>
     <string name="installed_finished_skipped">%1$d 모듈에는 변형 선택이 필요합니다. 업데이트하려면 열어야 합니다.</string>
+    <string name="installed_finished_cancelled">취소됨: %1$d</string>
     <string name="settings_root_unavailable_msg">이 장치에서는 루트(su)를 사용할 수 없습니다.</string>
     <string name="onboarding_welcome_title">LSP Store에 오신 것을 환영합니다.</string>
     <string name="onboarding_welcome_body">LSPosed 모듈 저장소를 탐색하고, 모듈을 설치하고, 이미 장치에 있는 모듈을 최신 상태로 유지하세요. 모든 것이 오픈 소스이며 모듈 데이터는 module.lsposed.org에서 제공됩니다.</string>

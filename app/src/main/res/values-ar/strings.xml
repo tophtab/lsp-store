@@ -46,8 +46,16 @@
     <string name="installed_update_all">تحديث الكل</string>
     <string name="installed_update_all_count">تحديث الكل (%1$d)</string>
     <string name="installed_version_arrow">%1$s -&gt; %2$s</string>
-    <string name="installed_batch_progress">%1$d/%2$d: %3$s</string>
     <string name="installed_batch_cancelled">تم إلغاء التحديث الدفعي</string>
+    <string name="installed_batch_stop">إيقاف %1$d/%2$d</string>
+    <string name="installed_state_queued">في الانتظار</string>
+    <string name="installed_state_preparing">جارٍ التحضير</string>
+    <string name="installed_state_waiting">بانتظار</string>
+    <string name="installed_state_installing">جارٍ التثبيت</string>
+    <string name="installed_state_done">تم التحديث</string>
+    <string name="installed_state_failed">فشل</string>
+    <string name="installed_cancel_download">إلغاء التنزيل</string>
+    <string name="installed_retry_update">إعادة محاولة التحديث</string>
     <string name="installed_all_updated">تم تحديث كافة الوحدات بنجاح</string>
     <string name="installed_finished_failures">الفشل: %1$d</string>
     <string name="installed_batch_installer_busy">لا يزال برنامج التثبيت مفتوحًا، وتم تخطي %1$d التحديث (التحديثات).</string>
@@ -61,6 +69,7 @@
     <string name="detail_stable">الإصدار المستقر</string>
     <string name="detail_downloading">جارٍ التنزيل…</string>
     <string name="detail_installing">جارٍ التثبيت…</string>
+    <string name="detail_queued">في الانتظار…</string>
     <string name="detail_pre_releases">الإصدارات المسبقة</string>
     <string name="installed_ignore_update">تجاهل التحديثات</string>
     <string name="installed_unignore_update">إلغاء تجاهل التحديثات</string>
@@ -136,6 +145,9 @@
     <string name="import_pick_module">اختر وحدة المستودع</string>
     <string name="import_search_hint">وحدات البحث</string>
     <string name="import_load_failed">فشل تحميل الوحدات</string>
+    <string name="settings_downloads">التنزيلات</string>
+    <string name="settings_max_downloads">التنزيلات المتزامنة</string>
+    <string name="settings_max_downloads_desc">عدد ملفات APK التي يتم تنزيلها في وقت واحد. يبقى التثبيت واحدًا في كل مرة.</string>
     <string name="settings_storage">تخزين</string>
     <string name="settings_downloaded">ملفات APK التي تم تنزيلها: %1$s</string>
     <string name="settings_clear_index">مسح ذاكرة التخزين المؤقت لفهرس الوحدات</string>
@@ -208,6 +220,7 @@
     <string name="variant_not_applicable">غير متوفر لهذا الجهاز</string>
     <string name="variant_not_module">ملف APK هذا ليس وحدة Xpose</string>
     <string name="installed_finished_skipped">%1$d تحتاج الوحدات إلى خيار مختلف - افتحها للتحديث</string>
+    <string name="installed_finished_cancelled">تم الإلغاء: %1$d</string>
     <string name="settings_root_unavailable_msg">الجذر (su) غير متوفر على هذا الجهاز</string>
     <string name="onboarding_welcome_title">مرحبًا بك في LSP Store</string>
     <string name="onboarding_welcome_body">تصفح مستودع وحدات LSPosed، وقم بتثبيت الوحدات واحتفظ بالوحدات الموجودة بالفعل على جهازك محدثة. كل شيء مفتوح المصدر وبيانات الوحدة تأتي من Modules.lspose.org.</string>

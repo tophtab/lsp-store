@@ -5,6 +5,9 @@ package io.github.tophtab.lspstore.ui.screens.installed
 import android.app.Activity
 import android.content.Intent
 import android.text.format.Formatter
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,29 +22,30 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.Block
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Science
 import androidx.compose.material.icons.filled.RadioButtonChecked
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SkipNext
+import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
@@ -59,10 +63,17 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.progressBarRangeInfo
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -98,6 +109,7 @@ import io.github.tophtab.lspstore.ui.design.KomiTextField
 import io.github.tophtab.lspstore.ui.design.KomiTopBar
 import io.github.tophtab.lspstore.ui.design.topContentWindowInsets
 import io.github.tophtab.lspstore.ui.theme.KomiTextRole
+import java.text.NumberFormat
 
 @Composable
 fun InstalledScreen(
@@ -148,7 +160,16 @@ fun InstalledScreen(
             (repoPackageName != null && repoPackageName in state.ignoredUpdates)
     }
 
-    val updates = state.updates.filter(::matchUpdate)
+    val updates = state.updates
+        .filter(::matchUpdate)
+        .filterNot { info ->
+            // A finished row keeps its check for a moment, then leaves the
+            // updates list without waiting for the rest of the batch.
+            val row = state.rowStates[info.module.packageName]
+            row != null &&
+                row.phase == BatchInstallPhase.COMPLETED &&
+                !row.noticeVisible
+        }
     val upToDate = state.upToDate.filter { it.matches() }
     val unknown = state.unknown.filter { it.matches() }
 
@@ -188,14 +209,14 @@ fun InstalledScreen(
     var nextIndex = 0
     val repositoryIndex = if (repositoryCount > 0) nextIndex++ else -1
 
-    val batchProgress = state.batchProgress
-    val batchTotal = state.batchItems.size
-    val batchFinished = state.batchItems.values.count {
+    // The stop FAB counts every row that reached a terminal phase, including
+    // cancelled ones, so the fraction never stalls.
+    val doneCount = state.rowStates.values.count {
         it.phase == BatchInstallPhase.COMPLETED ||
             it.phase == BatchInstallPhase.FAILED ||
-            it.phase == BatchInstallPhase.SKIPPED
+            it.phase == BatchInstallPhase.SKIPPED ||
+            it.phase == BatchInstallPhase.CANCELLED
     }
-    val batchFraction = if (batchTotal > 0) batchFinished.toFloat() / batchTotal else null
 
     LaunchedEffect(reselectTick) {
         if (reselectTick > 0) {
@@ -219,30 +240,24 @@ fun InstalledScreen(
         containerColor = MaterialTheme.colorScheme.background,
         contentWindowInsets = topContentWindowInsets(),
         topBar = {
-            KomiTopBar(
-                title = stringResource(R.string.nav_installed),
-                // Batch progress lives next to the page title instead of in its
-                // own banner, so the list keeps its full height.
-                titleTrailing = if (batchProgress != null) {
-                    {
-                        InstalledBatchStatus(
-                            label = batchProgress,
-                            fraction = batchFraction,
-                            onCancel = viewModel::cancelBatch,
-                        )
-                    }
-                } else {
-                    null
-                },
-            )
+            KomiTopBar(title = stringResource(R.string.nav_installed))
         },
         floatingActionButton = {
-            // The updates list no longer carries its own header action; the
-            // page-level update trigger is this button. Hidden while busy (a
-            // single install shows its row spinner, a batch shows progress in
-            // the top bar) and while there is nothing to update.
-            if (batchProgress == null && state.busyPackage == null && state.updates.isNotEmpty()) {
-                KomiExtendedFab(
+            // While a batch runs the FAB is its only cancel-all control (the
+            // top bar no longer carries one). A single update shows its state
+            // in the row, so it gets no FAB.
+            when {
+                state.batchRunning && state.batchTotal > 1 -> KomiExtendedFab(
+                    onClick = viewModel::cancelBatch,
+                    label = stringResource(
+                        R.string.installed_batch_stop,
+                        doneCount,
+                        state.batchTotal,
+                    ),
+                    icon = Icons.Filled.Stop,
+                )
+
+                !state.batchRunning && state.updates.isNotEmpty() -> KomiExtendedFab(
                     onClick = viewModel::updateAll,
                     label = stringResource(
                         R.string.installed_update_all_count,
@@ -295,15 +310,18 @@ fun InstalledScreen(
                                 items(updates, key = { "u:${it.module.packageName}" }) { info ->
                                     UpdateRow(
                                         info = info,
-                                        busy = state.busyPackage == info.module.packageName,
-                                        batch = state.batchItems[info.module.packageName],
-                                        batchRunning = state.batchProgress != null,
+                                        install = state.rowStates[info.module.packageName]
+                                            ?: state.detailRuns[info.module.packageName],
+                                        batchRunning = state.batchRunning,
                                         isUpdateIgnored = isUpdateIgnored(
                                             info.installed.packageName,
                                             info.module.packageName,
                                         ),
                                         onOpen = { onOpenModule(info.module.packageName) },
                                         onUpdate = { viewModel.update(info) },
+                                        onCancel = {
+                                            viewModel.cancelRow(info.module.packageName)
+                                        },
                                         onChooseVariant = {
                                             viewModel.openVariantPicker(info.module.packageName)
                                         },
@@ -388,72 +406,15 @@ fun InstalledScreen(
 
 }
 
-/**
- * Batch status shown in the top bar, to the right of the page title: the
- * module currently being installed, the overall progress bar underneath it,
- * and the cancel action.
- */
-@Composable
-private fun InstalledBatchStatus(
-    label: String,
-    fraction: Float?,
-    onCancel: () -> Unit,
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Column(modifier = Modifier.weight(1f).padding(start = 12.dp)) {
-            KomiText(
-                text = label,
-                role = KomiTextRole.Label,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontSize = 10.5.sp,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.padding(bottom = 3.dp),
-            )
-            if (fraction != null) {
-                LinearProgressIndicator(
-                    progress = { fraction },
-                    modifier = Modifier.fillMaxWidth().height(4.dp),
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    trackColor = MaterialTheme.colorScheme.surfaceVariant,
-                    gapSize = 0.dp,
-                    drawStopIndicator = {},
-                )
-            } else {
-                LinearProgressIndicator(
-                    modifier = Modifier.fillMaxWidth().height(4.dp),
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    trackColor = MaterialTheme.colorScheme.surfaceVariant,
-                    gapSize = 0.dp,
-                )
-            }
-        }
-        IconButton(
-            onClick = onCancel,
-            modifier = Modifier.size(36.dp),
-        ) {
-            Icon(
-                Icons.Filled.Close,
-                contentDescription = stringResource(R.string.action_cancel),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(16.dp),
-            )
-        }
-    }
-}
-
 @Composable
 private fun UpdateRow(
     info: UpdateInfo,
-    busy: Boolean,
-    batch: BatchInstallState?,
+    install: BatchInstallState?,
     batchRunning: Boolean,
     isUpdateIgnored: Boolean,
     onOpen: () -> Unit,
     onUpdate: () -> Unit,
+    onCancel: () -> Unit,
     onChooseVariant: () -> Unit,
     onSkipVersion: () -> Unit,
     onToggleIgnoreUpdate: () -> Unit,
@@ -462,8 +423,9 @@ private fun UpdateRow(
     onTogglePreReleases: () -> Unit,
 ) {
     var actionsOpen by remember { mutableStateOf(false) }
-    val activeBatch = batch?.takeIf {
+    val active = install?.takeIf {
         it.phase == BatchInstallPhase.QUEUED ||
+            it.phase == BatchInstallPhase.PREPARING ||
             it.phase == BatchInstallPhase.DOWNLOADING ||
             it.phase == BatchInstallPhase.WAITING_TO_INSTALL ||
             it.phase == BatchInstallPhase.INSTALLING
@@ -502,25 +464,31 @@ private fun UpdateRow(
                 )
             }
             Spacer(Modifier.width(8.dp))
-            if (busy || activeBatch != null) {
-                // Determinate while the APK is actually transferring; spinning
-                // while queued / waiting for the install slot.
-                if (activeBatch?.phase == BatchInstallPhase.DOWNLOADING && activeBatch.total > 0L) {
-                    CircularProgressIndicator(
-                        progress = { activeBatch.progress },
-                        modifier = Modifier.size(20.dp),
-                        strokeWidth = 2.dp,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    )
-                } else {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        strokeWidth = 2.dp,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    )
-                }
-            } else {
-                KomiButton(
+            when {
+                active != null -> InstallPill(
+                    state = active,
+                    // Once the APK is downloaded and waiting for the installer
+                    // there is nothing left to cancel.
+                    onCancel = if (
+                        active.phase == BatchInstallPhase.QUEUED ||
+                        active.phase == BatchInstallPhase.PREPARING ||
+                        active.phase == BatchInstallPhase.DOWNLOADING
+                    ) {
+                        onCancel
+                    } else {
+                        null
+                    },
+                )
+
+                install?.phase == BatchInstallPhase.COMPLETED && install.noticeVisible ->
+                    InstallPill(state = install, onCancel = null)
+
+                install?.phase == BatchInstallPhase.FAILED && install.noticeVisible ->
+                    InstallPill(state = install, onCancel = onUpdate, retry = true)
+
+                // Cancelled/skipped rows, and terminal marks that already
+                // expired, go back to the normal action.
+                else -> KomiButton(
                     onClick = onUpdate,
                     label = stringResource(R.string.action_update),
                     variant = KomiButtonVariant.Primary,
@@ -547,6 +515,129 @@ private fun UpdateRow(
             preReleasesEnabled = if (canTrackPreReleases) preReleasesEnabled else null,
             onTogglePreReleases = onTogglePreReleases,
         )
+    }
+}
+
+/**
+ * The update button while a row is transferring or installing: its background
+ * fills left to right with the download and the label stays inside the pill.
+ * The pill doubles as the cancel button while the APK is still on the wire.
+ */
+@Composable
+private fun InstallPill(
+    state: BatchInstallState,
+    onCancel: (() -> Unit)?,
+    retry: Boolean = false,
+) {
+    val failed = state.phase == BatchInstallPhase.FAILED
+    val colors = MaterialTheme.colorScheme
+    // Tonal container + its on-color: the text stays legible on the unfilled
+    // part and on the progress tint alike, in both light and dark themes.
+    val container = if (failed) colors.errorContainer else colors.primaryContainer
+    val content = if (failed) colors.onErrorContainer else colors.onPrimaryContainer
+    // primary and primaryContainer are the same teal in the light theme, so the
+    // fill is a tint of the content colour instead: it stays visible in both
+    // themes and with dynamic colour.
+    val fillColor = colors.onPrimaryContainer.copy(alpha = 0.20f)
+    val filled = when (state.phase) {
+        BatchInstallPhase.DOWNLOADING -> state.progress
+        BatchInstallPhase.WAITING_TO_INSTALL,
+        BatchInstallPhase.INSTALLING,
+        BatchInstallPhase.COMPLETED,
+        -> 1f
+
+        else -> 0f
+    }
+    val animatedFill by animateFloatAsState(
+        targetValue = filled,
+        animationSpec = tween(durationMillis = 350),
+        label = "row-download-progress",
+    )
+    val percent = remember {
+        NumberFormat.getPercentInstance().apply { maximumFractionDigits = 0 }
+    }
+    val label = when (state.phase) {
+        BatchInstallPhase.QUEUED -> stringResource(R.string.installed_state_queued)
+        BatchInstallPhase.PREPARING -> stringResource(R.string.installed_state_preparing)
+        // 100% is the install stage's business; the transfer caps at 99 so a
+        // half-finished frame cannot claim completion.
+        BatchInstallPhase.DOWNLOADING ->
+            percent.format(state.progress.coerceIn(0f, 0.99f).toDouble())
+
+        BatchInstallPhase.WAITING_TO_INSTALL -> stringResource(R.string.installed_state_waiting)
+        BatchInstallPhase.INSTALLING -> stringResource(R.string.installed_state_installing)
+        BatchInstallPhase.COMPLETED -> stringResource(R.string.installed_state_done)
+        BatchInstallPhase.FAILED -> stringResource(R.string.installed_state_failed)
+        BatchInstallPhase.SKIPPED,
+        BatchInstallPhase.CANCELLED,
+        -> ""
+    }
+    val icon = when (state.phase) {
+        BatchInstallPhase.COMPLETED -> Icons.Filled.Check
+        BatchInstallPhase.FAILED -> Icons.Filled.Refresh
+        else -> null
+    }
+    val actionLabel = when {
+        retry -> stringResource(R.string.installed_retry_update)
+        onCancel != null -> stringResource(R.string.installed_cancel_download)
+        else -> null
+    }
+    // Same capsule as the small KomiButton this replaces.
+    val shape = CircleShape
+    Box(
+        modifier = Modifier
+            .widthIn(min = 90.dp)
+            .height(34.dp)
+            .clip(shape)
+            .background(container)
+            .drawBehind {
+                if (!failed && animatedFill > 0f) {
+                    drawRect(
+                        color = fillColor,
+                        size = Size(width = size.width * animatedFill, height = size.height),
+                    )
+                }
+            }
+            .then(
+                if (onCancel != null) {
+                    Modifier.clickable(
+                        onClickLabel = actionLabel,
+                        role = Role.Button,
+                        onClick = onCancel,
+                    )
+                } else {
+                    Modifier
+                },
+            )
+            .semantics {
+                if (state.phase == BatchInstallPhase.DOWNLOADING) {
+                    progressBarRangeInfo = ProgressBarRangeInfo(state.progress, 0f..1f)
+                }
+            }
+            .padding(horizontal = 10.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(5.dp),
+        ) {
+            if (icon != null) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = content,
+                    modifier = Modifier.size(14.dp),
+                )
+            }
+            KomiText(
+                text = label,
+                role = KomiTextRole.Mono,
+                color = content,
+                fontSize = 12.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Clip,
+            )
+        }
     }
 }
 

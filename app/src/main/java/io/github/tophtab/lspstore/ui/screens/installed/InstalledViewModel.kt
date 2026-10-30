@@ -4,22 +4,15 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.supervisorScope
-import kotlinx.coroutines.sync.Semaphore
-import kotlinx.coroutines.sync.withPermit
 import io.github.tophtab.lspstore.R
-import io.github.tophtab.lspstore.data.install.ApkGate
-import io.github.tophtab.lspstore.data.install.GateResult
-import io.github.tophtab.lspstore.data.install.InstallOutcome
+import io.github.tophtab.lspstore.data.install.InstallStage
+import io.github.tophtab.lspstore.data.install.ModuleInstallRun
 import io.github.tophtab.lspstore.data.repository.PendingInstallRepository
 import io.github.tophtab.lspstore.di.AppContainer
 import io.github.tophtab.lspstore.domain.model.InstalledModule
@@ -31,9 +24,10 @@ import io.github.tophtab.lspstore.domain.model.UpdateInfo
 import io.github.tophtab.lspstore.domain.model.sortedByLabel
 import io.github.tophtab.lspstore.domain.usecase.BatchFailure
 import io.github.tophtab.lspstore.domain.usecase.BatchFailureKind
+import io.github.tophtab.lspstore.domain.usecase.BatchInstallControl
 import io.github.tophtab.lspstore.domain.usecase.BatchInstallPhase
 import io.github.tophtab.lspstore.domain.usecase.BatchInstallState
-import io.github.tophtab.lspstore.domain.usecase.PreparedInstall
+import io.github.tophtab.lspstore.domain.usecase.BatchInstallUseCase
 import io.github.tophtab.lspstore.domain.usecase.UpdateChecker
 import io.github.tophtab.lspstore.domain.variant.ModuleVariantState
 import io.github.tophtab.lspstore.domain.variant.ScoredAsset
@@ -46,10 +40,15 @@ import io.github.tophtab.lspstore.domain.variant.parseTraits
 import io.github.tophtab.lspstore.ui.RefreshScrollGate
 import io.github.tophtab.lspstore.ui.toUserMessage
 import io.github.tophtab.lspstore.ui.variant.variantReasonText
-import java.io.File
 
 /** How many failed modules a batch summary names before it stops listing. */
 private const val MAX_LISTED_FAILURES = 3
+
+/** How long a finished row keeps its check before the row disappears. */
+private const val COMPLETED_NOTICE_MS = 1_200L
+
+/** How long a failed row keeps the failure mark before returning to Update. */
+private const val FAILED_NOTICE_MS = 3_000L
 
 data class InstalledVariantPicker(
     val repoPackageName: String,
@@ -78,9 +77,12 @@ data class InstalledUiState(
     val ignoredUpdates: Set<String> = emptySet(),
     val variantStates: Map<String, ModuleVariantState> = emptyMap(),
     val variantPicker: InstalledVariantPicker? = null,
-    val busyPackage: String? = null,
-    val batchProgress: String? = null,
-    val batchItems: Map<String, BatchInstallState> = emptyMap(),
+    /** Row states owned by the update run started on this screen. */
+    val rowStates: Map<String, BatchInstallState> = emptyMap(),
+    /** Installs started from a module page, mirrored so the row shows them too. */
+    val detailRuns: Map<String, BatchInstallState> = emptyMap(),
+    val batchRunning: Boolean = false,
+    val batchTotal: Int = 0,
     val message: String? = null,
     /**
      * Bumped whenever a load finishes, including the first load of the process.
@@ -99,9 +101,8 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
     private val pendingRepository: PendingInstallRepository = container.pendingInstallRepository
     private val installer = container.installer
 
-    private val prepareInstall = container.prepareModuleInstallUseCase
-    private val installApk = container.installPreparedApkUseCase
     private val batchInstall = container.batchInstallUseCase
+    private val coordinator = container.moduleInstallCoordinator
 
     private val _state = MutableStateFlow(InstalledUiState())
     val state = _state.asStateFlow()
@@ -115,6 +116,7 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
     private var preReleases: Set<String> = emptySet()
     private var pending: Map<String, PendingInstall> = emptyMap()
     private var batchJob: Job? = null
+    private var batchControl: BatchInstallControl? = null
     private var loadJob: Job? = null
     private val refreshScrollGate = RefreshScrollGate()
 
@@ -165,16 +167,24 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
                 reloadInstalled()
                 _state.update {
                     it.copy(
-                        busyPackage = null,
                         // During a batch these arrive once per module; the batch
                         // owns the status UI, so don't spam the snackbar.
-                        message = if (it.batchProgress == null) {
+                        message = if (!it.batchRunning) {
                             container.appContext.getString(R.string.detail_install_finished)
                         } else {
                             it.message
                         },
                     )
                 }
+            }
+        }
+        viewModelScope.launch {
+            // Installs started from a module page keep running after returning
+            // here, so the row has to show their progress too (and not offer a
+            // second update while they are active).
+            coordinator.runs.collect { runs ->
+                val mapped = runs.mapValues { (_, run) -> run.asRowState() }
+                _state.update { it.copy(detailRuns = mapped) }
             }
         }
         load(force = false)
@@ -222,87 +232,65 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
         BatchFailureKind.INSTALL -> failure.detail
             ?: container.appContext.getString(R.string.error_install_failed)
     }
-    private fun includePreReleases(info: UpdateInfo): Boolean =
-        info.module.packageName in preReleases || info.installed.packageName in preReleases
-
     fun update(info: UpdateInfo) {
-        if (_state.value.busyPackage != null || _state.value.batchProgress != null) return
-        viewModelScope.launch {
-            _state.update { it.copy(busyPackage = info.module.packageName, message = null) }
-            val prepared = prepareInstall.prepare(
-                info = info,
-                includePreReleases = includePreReleases(info),
-                state = variantStateFor(info),
-                onAssetResolved = {},
-                onProgress = { _, _ -> },
-            )
-            if (prepared is PreparedInstall.NeedsVariant) {
-                // No remembered choice and the name layer is ambiguous: ask.
-                _state.update { it.copy(busyPackage = null) }
-                openVariantPicker(info.module.packageName)
-                _state.update {
-                    it.copy(message = container.appContext.getString(R.string.installed_choose_variant))
-                }
-                return@launch
-            }
-            val outcome = when (prepared) {
-                is PreparedInstall.Ready -> installApk.install(prepared)
-                is PreparedInstall.Failed -> InstallOutcome.Failure(prepared.message)
-                is PreparedInstall.NeedsVariant -> InstallOutcome.Failure("")
-            }
-            reloadInstalled()
-            _state.update { it.copy(busyPackage = null, message = describe(outcome, info)) }
-        }
+        if (_state.value.batchRunning) return
+        // A module page may already be installing this package; do not start a
+        // second chain for it.
+        if (_state.value.detailRuns.containsKey(info.module.packageName)) return
+        startRun(targets = listOf(info), single = true)
     }
 
     /**
-     * Downloads run concurrently, installs stay serialized (installer dialogs
-     * must not stack), and the install queue follows download completion order
-     * rather than repository order. A slow download therefore no longer holds up
-     * modules whose APKs are already on disk. The queue itself lives in
-     * [BatchInstallUseCase]; this method only maps its progress to UI state.
+     * One module is just a one-target run, so the row pill, cancellation and
+     * failure handling have a single implementation.
      */
     fun updateAll() {
-        val targets = _state.value.updates
-        if (targets.isEmpty() || _state.value.batchProgress != null) return
+        val busy = _state.value.detailRuns.keys
+        // A module page install already owns its package; starting a second
+        // chain for it here would download and install it twice.
+        val targets = _state.value.updates.filterNot {
+            it.module.packageName in busy
+        }
+        if (targets.isEmpty() || _state.value.batchRunning) return
+        startRun(targets = targets, single = false)
+    }
+
+    private fun startRun(targets: List<UpdateInfo>, single: Boolean) {
         val generation = ++batchGeneration
         val total = targets.size
+        val control = batchInstall.newControl()
+        batchControl = control
         val initialItems = targets.associate {
             it.module.packageName to BatchInstallState(phase = BatchInstallPhase.QUEUED)
         }
-        // Publish the batch before launching so a second tap cannot start it again.
+        // Publish the run before launching so a second tap cannot start it again.
         _state.update {
             it.copy(
-                batchProgress = container.appContext.getString(
-                    R.string.installed_batch_progress,
-                    1,
-                    total,
-                    targets.first().module.title,
-                ),
-                batchItems = initialItems,
+                rowStates = initialItems,
+                batchRunning = true,
+                batchTotal = total,
                 message = null,
             )
         }
         batchJob = viewModelScope.launch {
             val result = batchInstall.run(
                 targets = targets,
+                control = control,
                 includePreReleases = { packageName -> preReleases.contains(packageName) },
                 variantStates = variantStates,
                 isActive = { isCurrentBatch(generation) },
                 onItem = { packageName, transform ->
-                    updateBatchItem(generation, packageName, transform)
-                },
-                onCurrent = { info, all ->
-                    showBatchInstallProgress(generation, info, all)
+                    applyItem(generation, packageName, transform)
                 },
             )
             if (result.installInterrupted) {
                 // Whatever the worker never dequeued stays installed at its old
                 // version; report it as skipped so the summary is honest.
-                _state.value.batchItems.keys.forEach { packageName ->
-                    updateBatchItem(generation, packageName) { item ->
+                _state.value.rowStates.keys.forEach { packageName ->
+                    applyItem(generation, packageName) { item ->
                         when (item.phase) {
                             BatchInstallPhase.QUEUED,
+                            BatchInstallPhase.PREPARING,
                             BatchInstallPhase.DOWNLOADING,
                             BatchInstallPhase.WAITING_TO_INSTALL,
                             -> item.copy(phase = BatchInstallPhase.SKIPPED)
@@ -313,35 +301,90 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
                 }
             }
             reloadInstalled()
-            if (isCurrentBatch(generation)) {
-                val items = _state.value.batchItems.values
-                val failures = items.count { it.phase == BatchInstallPhase.FAILED }
-                val skipped = items.count { it.phase == BatchInstallPhase.SKIPPED }
-                val message = when {
+            if (!isCurrentBatch(generation)) return@launch
+            val items = _state.value.rowStates.values
+            val failed = items.count { it.phase == BatchInstallPhase.FAILED }
+            val skipped = items.count { it.phase == BatchInstallPhase.SKIPPED }
+            val cancelled = items.count { it.phase == BatchInstallPhase.CANCELLED }
+            val message = if (single) {
+                singleRunMessage(targets.first(), result, skipped, control)
+            } else {
+                when {
                     result.installInterrupted -> container.appContext.getString(
                         R.string.installed_batch_installer_busy,
                         skipped,
                     )
 
-                    failures > 0 -> failureMessage(result.failures, failures)
+                    failed > 0 -> failureMessage(result.failures, failed)
 
                     skipped > 0 -> container.appContext.getString(
                         R.string.installed_finished_skipped,
                         skipped,
                     )
 
+                    // Per-row cancels are not failures, but "all modules
+                    // updated" would be a lie when some were stopped.
+                    cancelled > 0 -> container.appContext.getString(
+                        R.string.installed_finished_cancelled,
+                        cancelled,
+                    )
+
                     else -> container.appContext.getString(R.string.installed_all_updated)
                 }
-                _state.update {
-                    it.copy(
-                        message = message,
-                        batchProgress = null,
-                        batchItems = emptyMap(),
-                    )
-                }
-                batchJob = null
             }
+            if (single && skipped > 0 && !result.installInterrupted &&
+                !control.isCancelled(targets.first().module.packageName)
+            ) {
+                // No remembered choice and the name layer is ambiguous: ask.
+                openVariantPicker(targets.first().module.packageName)
+            }
+            _state.update {
+                it.copy(
+                    message = message,
+                    batchRunning = false,
+                    batchTotal = 0,
+                    rowStates = lingeringStates(it.rowStates),
+                )
+            }
+            maybeClearRowStates()
+            batchControl = null
+            batchJob = null
         }
+    }
+
+    /**
+     * A successful single update keeps its old sentence instead of the batch
+     * "all modules updated"; a delegated hand-off stays silent because the
+     * pending row is the feedback.
+     */
+    private fun singleRunMessage(
+        info: UpdateInfo,
+        result: BatchInstallUseCase.Result,
+        skipped: Int,
+        control: BatchInstallControl,
+    ): String? = when {
+        control.isCancelled(info.module.packageName) -> null
+        result.installInterrupted -> container.appContext.getString(
+            R.string.installed_batch_installer_busy,
+            1,
+        )
+        result.failures.isNotEmpty() -> result.failures.first().detail
+            ?: container.appContext.getString(R.string.error_install_failed)
+        result.delegated > 0 -> null
+        skipped > 0 -> container.appContext.getString(R.string.installed_choose_variant)
+        else -> container.appContext.getString(
+            R.string.installed_updated_one,
+            info.module.title,
+            info.latest.versionName,
+        )
+    }
+
+    /** Cancels one module of the running update; the row returns to Update. */
+    fun cancelRow(packageName: String) {
+        batchControl?.cancel(packageName)
+        // The same pill also fronts an install started from a module page, and
+        // that chain lives in the coordinator rather than in this batch.
+        coordinator.cancel(packageName)
     }
 
     fun cancelBatch() {
@@ -350,11 +393,14 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
         // progress of a batch the user starts right after this one.
         batchGeneration++
         batchJob = null
+        batchControl?.cancelAll()
+        batchControl = null
         job.cancel()
         _state.update {
             it.copy(
-                batchProgress = null,
-                batchItems = emptyMap(),
+                rowStates = emptyMap(),
+                batchRunning = false,
+                batchTotal = 0,
                 message = container.appContext.getString(R.string.installed_batch_cancelled),
             )
         }
@@ -362,62 +408,70 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
 
     private fun isCurrentBatch(generation: Int): Boolean = batchGeneration == generation
 
-    private fun updateBatchItem(
+    private fun applyItem(
         generation: Int,
         packageName: String,
         transform: (BatchInstallState) -> BatchInstallState,
     ) {
         if (!isCurrentBatch(generation)) return
+        val before = _state.value.rowStates[packageName]?.phase
         _state.update { current ->
             if (!isCurrentBatch(generation)) return@update current
-            val item = current.batchItems[packageName] ?: return@update current
-            current.copy(batchItems = current.batchItems + (packageName to transform(item)))
+            val item = current.rowStates[packageName] ?: return@update current
+            current.copy(rowStates = current.rowStates + (packageName to transform(item)))
+        }
+        val after = _state.value.rowStates[packageName]?.phase
+        if (after == null || after == before) return
+        val noticeMs = when (after) {
+            BatchInstallPhase.COMPLETED -> COMPLETED_NOTICE_MS
+            BatchInstallPhase.FAILED -> FAILED_NOTICE_MS
+            else -> return
+        }
+        viewModelScope.launch {
+            delay(noticeMs)
+            if (!isCurrentBatch(generation)) return@launch
+            _state.update { current ->
+                val item = current.rowStates[packageName] ?: return@update current
+                if (item.phase != after) return@update current
+                current.copy(
+                    rowStates = current.rowStates + (
+                        packageName to item.copy(noticeVisible = false)
+                        ),
+                )
+            }
+            maybeClearRowStates()
         }
     }
 
-    private fun showBatchInstallProgress(
-        generation: Int,
-        info: UpdateInfo,
-        total: Int,
-    ) {
-        if (!isCurrentBatch(generation)) return
-        val finished = _state.value.batchItems.values.count {
-            it.phase == BatchInstallPhase.COMPLETED || it.phase == BatchInstallPhase.FAILED
-        }
-        _state.update { current ->
-            if (!isCurrentBatch(generation)) return@update current
-            current.copy(
-                batchProgress = container.appContext.getString(
-                    R.string.installed_batch_progress,
-                    (finished + 1).coerceAtMost(total),
-                    total,
-                    info.module.title,
-                ),
-            )
+    /** Keeps only the terminal marks the user still needs to see. */
+    private fun lingeringStates(
+        states: Map<String, BatchInstallState>,
+    ): Map<String, BatchInstallState> = states.filterValues {
+        it.noticeVisible &&
+            (it.phase == BatchInstallPhase.COMPLETED || it.phase == BatchInstallPhase.FAILED)
+    }
+
+    private fun maybeClearRowStates() {
+        val current = _state.value
+        if (current.batchRunning) return
+        if (current.rowStates.values.any { it.noticeVisible }) return
+        if (current.rowStates.isNotEmpty()) {
+            _state.update { it.copy(rowStates = emptyMap()) }
         }
     }
 
-    private fun variantStateFor(info: UpdateInfo): ModuleVariantState =
-        variantStates[info.module.packageName]
-            ?: variantStates[info.installed.packageName]
-            ?: ModuleVariantState()
+    private fun ModuleInstallRun.asRowState(): BatchInstallState = BatchInstallState(
+        phase = when (stage) {
+            InstallStage.QUEUED -> BatchInstallPhase.QUEUED
+            InstallStage.DOWNLOADING -> BatchInstallPhase.DOWNLOADING
+            InstallStage.INSTALLING -> BatchInstallPhase.INSTALLING
+        },
+        downloaded = downloaded,
+        total = total,
+    )
 
     private fun signatureOf(asset: ReleaseAsset): VariantSignature =
         VariantSignature.of(parseTraits(asset.name))
-
-    private fun describe(outcome: InstallOutcome, info: UpdateInfo): String? = when (outcome) {
-        InstallOutcome.Completed -> container.appContext.getString(
-            R.string.installed_updated_one,
-            info.module.title,
-            info.latest.versionName,
-        )
-        // Like komi-store, a delegated install is shown as a pending row rather
-        // than a snackbar; the package broadcast reports completion.
-        InstallOutcome.DelegatedToSystem -> null
-        is InstallOutcome.Failure -> outcome.message.ifBlank {
-            container.appContext.getString(R.string.error_install_failed)
-        }
-    }
 
     private suspend fun reloadInstalled() {
         val modules = installedRepository.getInstalledModules(force = true)

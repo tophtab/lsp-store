@@ -4,12 +4,17 @@ import android.content.Context
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import io.ktor.client.HttpClient
 import kotlinx.serialization.json.Json
 import io.github.tophtab.lspstore.data.device.DeviceProfileProvider
 import io.github.tophtab.lspstore.data.install.ApkInstaller
 import io.github.tophtab.lspstore.data.install.DownloadManager
+import io.github.tophtab.lspstore.data.install.DownloadSlots
 import io.github.tophtab.lspstore.data.install.ModuleInstallCoordinator
 import io.github.tophtab.lspstore.data.install.SystemInstallSerializer
 import io.github.tophtab.lspstore.data.probe.RangeProbe
@@ -64,6 +69,17 @@ class AppContainer(context: Context) {
         ModuleRepositoryImpl(context, LsposedRepoApi(httpClient, mirrorState), json)
     val installedRepository: InstalledModulesRepository = InstalledModulesRepositoryImpl(context, json)
     val settingsRepository: SettingsRepository = SettingsRepositoryImpl(context)
+
+    /**
+     * Latest "max concurrent downloads" value, mirrored so [DownloadSlots] can
+     * read it without suspending at every acquire.
+     */
+    private val _maxConcurrentDownloads = MutableStateFlow(DownloadSlots.DEFAULT_LIMIT)
+    val maxConcurrentDownloads: StateFlow<Int> = _maxConcurrentDownloads.asStateFlow()
+
+    /** One gate for batch updates and module page installs. */
+    val downloadSlots: DownloadSlots = DownloadSlots { _maxConcurrentDownloads.value }
+
     val libraryRepository: LibraryRepository = LibraryRepositoryImpl(context)
     val pendingInstallRepository: PendingInstallRepository =
         PendingInstallRepositoryImpl(context)
@@ -78,11 +94,22 @@ class AppContainer(context: Context) {
      */
     private val installScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
+    init {
+        // Mirror the setting once at startup and whenever it changes. The gate
+        // itself is a plain lambda read, so no download waits on DataStore.
+        installScope.launch {
+            settingsRepository.maxConcurrentDownloads.collect { value ->
+                _maxConcurrentDownloads.value = value
+            }
+        }
+    }
+
     /** Download → gate → installer chain shared by every module page. */
     val moduleInstallCoordinator: ModuleInstallCoordinator = ModuleInstallCoordinator(
         context = appContext,
         scope = installScope,
         downloadManager = downloadManager,
+        downloadSlots = downloadSlots,
         installer = installer,
         settingsRepository = settingsRepository,
         libraryRepository = libraryRepository,
@@ -125,6 +152,7 @@ class AppContainer(context: Context) {
         awaitInstallSettled = ::awaitPendingInstallSettled,
         releaseInstallSlot = { packageName -> systemInstallSerializer.markCompleted(packageName) },
         abandonDownload = { asset -> downloadManager.cancel(downloadManager.keyOf(asset)) },
+        downloadSlots = downloadSlots,
     )
 
     /**
