@@ -1,8 +1,18 @@
 <resources>
     <style name="Theme.LspStore" parent="android:Theme.Material.Light.NoActionBar">
-        <item name="android:windowBackground">#F1FBFA</item>
+        <item name="android:windowBackground">@color/app_background</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+
+    <!-- Held from process start until the stored theme has been read (see
+         MainActivity), so the first frame the user sees is already the app's
+         own background instead of the system-night-only window colour. -->
+    <style name="Theme.LspStore.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/app_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+        <item name="postSplashScreenTheme">@style/Theme.LspStore</item>
         <item name="android:windowLightStatusBar">true</item>
     </style>
 </resources>

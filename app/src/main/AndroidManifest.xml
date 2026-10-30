@@ -34,7 +34,7 @@
             android:exported="true"
             android:launchMode="singleTop"
             android:windowSoftInputMode="adjustResize"
-            android:theme="@style/Theme.LspStore">
+            android:theme="@style/Theme.LspStore.Splash">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

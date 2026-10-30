@@ -36,6 +36,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -44,6 +45,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.core.content.ContextCompat
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -53,8 +55,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import io.github.tophtab.lspstore.R
+import io.github.tophtab.lspstore.data.install.DownloadStatus
 import io.github.tophtab.lspstore.di.AppContainer
 import io.github.tophtab.lspstore.domain.model.ThemeMode
 import io.github.tophtab.lspstore.ui.LocalAppContainer
@@ -78,9 +82,22 @@ import io.github.tophtab.lspstore.ui.theme.LspStoreTheme
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         val container = (application as LspStoreApp).container
+        // Keep the splash up until the stored theme has been read. Drawing the
+        // first frame before that used the XML window background, which only
+        // follows the system night mode and flashes white when the app itself
+        // is set to dark.
+        var themeReady = false
+        splashScreen.setKeepOnScreenCondition { !themeReady }
+        lifecycleScope.launch {
+            // A failed read must not leave the splash on screen forever; fall
+            // back to the Compose defaults.
+            runCatching { container.settingsRepository.onboardingComplete.first() }
+            themeReady = true
+        }
         setContent {
             AppTheme(container) {
                 CompositionLocalProvider(LocalAppContainer provides container) {
@@ -167,7 +184,7 @@ private fun MainContent() {
         if (currentRoute != reselectRoute) reselectRoute = null
     }
 
-    RequestNotificationPermission()
+    RequestNotificationPermissionOnDownload()
 
     // NavigationSuiteScaffold follows the window size class: a bottom bar on
     // phones (portrait and landscape), a rail on tablets and other wide
@@ -326,16 +343,24 @@ private fun MainContent() {
 }
 
 @Composable
-private fun RequestNotificationPermission() {
+private fun RequestNotificationPermissionOnDownload() {
+    val container = LocalAppContainer.current
     val context = LocalContext.current
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
-    LaunchedEffect(Unit) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            val granted = ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.POST_NOTIFICATIONS,
-            ) == PackageManager.PERMISSION_GRANTED
-            if (!granted) launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
-        }
+    val tasks by container.downloadManager.tasks.collectAsStateWithLifecycle()
+    val downloading = tasks.values.any { it.status == DownloadStatus.RUNNING }
+    var asked by rememberSaveable { mutableStateOf(false) }
+    // The prompt used to open on every launch, before the user asked for
+    // anything. The permission only gates the DownloadService progress
+    // notification, so ask the first time there is a download to show.
+    LaunchedEffect(downloading) {
+        if (!downloading || asked) return@LaunchedEffect
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return@LaunchedEffect
+        asked = true
+        val granted = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.POST_NOTIFICATIONS,
+        ) == PackageManager.PERMISSION_GRANTED
+        if (!granted) launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
     }
 }
