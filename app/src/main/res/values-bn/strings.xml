@@ -11,7 +11,6 @@
     <string name="action_update">আপডেট</string>
     <string name="action_unskip">উপেক্ষা বন্ধ করুন</string>
     <string name="action_restore_update">আপডেট পুনরুদ্ধার করুন</string>
-    <string name="action_save">সংরক্ষণ করুন</string>
     <string name="label_installed">ইনস্টল করা হয়েছে</string>
     <string name="label_beta">বিটা</string>
     <string name="theme_system">সিস্টেম</string>
@@ -147,7 +146,6 @@
     <string name="import_load_failed">মডিউল লোড করতে ব্যর্থ হয়েছে৷</string>
     <string name="settings_downloads">ডাউনলোড</string>
     <string name="settings_max_downloads">একসাথে ডাউনলোড</string>
-    <string name="settings_max_downloads_desc">একসাথে কতগুলো APK ডাউনলোড হবে। ইনস্টল একবারে একটি।</string>
     <string name="settings_storage">স্টোরেজ</string>
     <string name="settings_downloaded">ডাউনলোড করা APK: %1$s</string>
     <string name="settings_clear_index">মডিউল ইনডেক্স ক্যাশে সাফ করুন</string>

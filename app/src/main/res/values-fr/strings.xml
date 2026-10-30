@@ -11,7 +11,6 @@
     <string name="action_update">Mettre à jour</string>
     <string name="action_unskip">Ne plus ignorer</string>
     <string name="action_restore_update">Restaurer les mises à jour</string>
-    <string name="action_save">Enregistrer</string>
     <string name="label_installed">Installé</string>
     <string name="label_beta">bêta</string>
     <string name="theme_system">Système</string>
@@ -147,7 +146,6 @@
     <string name="import_load_failed">Échec du chargement des modules</string>
     <string name="settings_downloads">Téléchargements</string>
     <string name="settings_max_downloads">Téléchargements simultanés</string>
-    <string name="settings_max_downloads_desc">Combien d\'APK se téléchargent à la fois. Les installations restent une par une.</string>
     <string name="settings_storage">Stockage</string>
     <string name="settings_downloaded">APK téléchargés : %1$s</string>
     <string name="settings_clear_index">Effacer le cache de l\'index des modules</string>

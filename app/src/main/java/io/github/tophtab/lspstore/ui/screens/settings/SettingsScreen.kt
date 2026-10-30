@@ -34,7 +34,6 @@ import io.github.tophtab.lspstore.R
 import io.github.tophtab.lspstore.data.install.DownloadSlots
 import io.github.tophtab.lspstore.domain.model.ThemeMode
 import io.github.tophtab.lspstore.domain.model.TranslationProvider
-import io.github.tophtab.lspstore.domain.model.TranslationSettings
 import io.github.tophtab.lspstore.ui.LocalAppContainer
 import io.github.tophtab.lspstore.ui.design.KomiButton
 import io.github.tophtab.lspstore.ui.design.KomiButtonSize
@@ -72,29 +71,7 @@ fun SettingsScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val scrollState = rememberScrollState()
-    // Draft fields live in the composition until "Save", so they have to survive
-    // rotation and process death just like the values they mirror.
     var translationExpanded by rememberSaveable { mutableStateOf(false) }
-
-    var provider by rememberSaveable(state.translation.provider) { mutableStateOf(state.translation.provider) }
-    var autoTranslate by rememberSaveable(state.translation.autoTranslate) { mutableStateOf(state.translation.autoTranslate) }
-    var deeplKey by rememberSaveable(state.translation.deeplKey) { mutableStateOf(state.translation.deeplKey) }
-    var libreUrl by rememberSaveable(state.translation.libreUrl) { mutableStateOf(state.translation.libreUrl) }
-    var libreKey by rememberSaveable(state.translation.libreKey) { mutableStateOf(state.translation.libreKey) }
-    var msKey by rememberSaveable(state.translation.microsoftKey) { mutableStateOf(state.translation.microsoftKey) }
-    var msRegion by rememberSaveable(state.translation.microsoftRegion) { mutableStateOf(state.translation.microsoftRegion) }
-
-    fun saveTranslation() = viewModel.saveTranslation(
-        TranslationSettings(
-            provider = provider,
-            autoTranslate = autoTranslate,
-            deeplKey = deeplKey,
-            libreUrl = libreUrl,
-            libreKey = libreKey,
-            microsoftKey = msKey,
-            microsoftRegion = msRegion,
-        ),
-    )
 
     LaunchedEffect(state.message) {
         state.message?.let {
@@ -174,10 +151,10 @@ fun SettingsScreen(
                 KomiSettingsGroup {
                     KomiSettingsExpandableRow(
                         title = stringResource(R.string.settings_translation_provider),
-                        subtitle = stringResource(provider.labelRes()),
+                        subtitle = stringResource(state.translation.provider.labelRes()),
                         expanded = translationExpanded,
                         onToggle = { translationExpanded = !translationExpanded },
-                        last = provider == TranslationProvider.DISABLED,
+                        last = state.translation.provider == TranslationProvider.DISABLED,
                     ) {
                         Column(
                             modifier = Modifier.fillMaxWidth(),
@@ -190,15 +167,14 @@ fun SettingsScreen(
                                 TranslationProvider.entries.forEach { entry ->
                                     KomiFilterChip(
                                         label = stringResource(entry.labelRes()),
-                                        selected = provider == entry,
+                                        selected = state.translation.provider == entry,
                                         onClick = {
-                                            provider = entry
-                                            saveTranslation()
+                                            viewModel.updateTranslation { it.copy(provider = entry) }
                                         },
                                     )
                                 }
                             }
-                            when (provider) {
+                            when (state.translation.provider) {
                                 TranslationProvider.GOOGLE -> KomiText(
                                     text = stringResource(R.string.settings_translation_note),
                                     role = KomiTextRole.Label,
@@ -207,8 +183,10 @@ fun SettingsScreen(
                                 )
 
                                 TranslationProvider.DEEPL -> KomiTextField(
-                                    value = deeplKey,
-                                    onValueChange = { deeplKey = it },
+                                    value = state.translation.deeplKey,
+                                    onValueChange = { value ->
+                                        viewModel.updateTranslation { it.copy(deeplKey = value) }
+                                    },
                                     label = stringResource(R.string.settings_translation_deepl_key),
                                     singleLine = true,
                                     modifier = Modifier.fillMaxWidth(),
@@ -216,8 +194,10 @@ fun SettingsScreen(
 
                                 TranslationProvider.LIBRE_TRANSLATE -> {
                                     KomiTextField(
-                                        value = libreUrl,
-                                        onValueChange = { libreUrl = it },
+                                        value = state.translation.libreUrl,
+                                        onValueChange = { value ->
+                                            viewModel.updateTranslation { it.copy(libreUrl = value) }
+                                        },
                                         label = stringResource(R.string.settings_translation_libre_url),
                                         singleLine = true,
                                         modifier = Modifier.fillMaxWidth(),
@@ -229,8 +209,10 @@ fun SettingsScreen(
                                         fontSize = 12.sp,
                                     )
                                     KomiTextField(
-                                        value = libreKey,
-                                        onValueChange = { libreKey = it },
+                                        value = state.translation.libreKey,
+                                        onValueChange = { value ->
+                                            viewModel.updateTranslation { it.copy(libreKey = value) }
+                                        },
                                         label = stringResource(R.string.settings_translation_libre_key),
                                         singleLine = true,
                                         modifier = Modifier.fillMaxWidth(),
@@ -239,15 +221,19 @@ fun SettingsScreen(
 
                                 TranslationProvider.MICROSOFT -> {
                                     KomiTextField(
-                                        value = msKey,
-                                        onValueChange = { msKey = it },
+                                        value = state.translation.microsoftKey,
+                                        onValueChange = { value ->
+                                            viewModel.updateTranslation { it.copy(microsoftKey = value) }
+                                        },
                                         label = stringResource(R.string.settings_translation_ms_key),
                                         singleLine = true,
                                         modifier = Modifier.fillMaxWidth(),
                                     )
                                     KomiTextField(
-                                        value = msRegion,
-                                        onValueChange = { msRegion = it },
+                                        value = state.translation.microsoftRegion,
+                                        onValueChange = { value ->
+                                            viewModel.updateTranslation { it.copy(microsoftRegion = value) }
+                                        },
                                         label = stringResource(R.string.settings_translation_ms_region),
                                         singleLine = true,
                                         modifier = Modifier.fillMaxWidth(),
@@ -256,25 +242,18 @@ fun SettingsScreen(
 
                                 TranslationProvider.DISABLED -> Unit
                             }
-                            if (provider != TranslationProvider.DISABLED) {
-                                KomiButton(
-                                    onClick = { saveTranslation() },
-                                    label = stringResource(R.string.action_save),
-                                )
-                            }
                         }
                     }
                     // The target follows the app language, so there is no target
                     // field; the only translation choice left is whether a module
                     // page translates itself.
-                    if (provider != TranslationProvider.DISABLED) {
+                    if (state.translation.provider != TranslationProvider.DISABLED) {
                         KomiSettingsSwitchRow(
                             title = stringResource(R.string.settings_translation_auto),
                             subtitle = stringResource(R.string.settings_translation_auto_desc),
-                            checked = autoTranslate,
-                            onCheckedChange = {
-                                autoTranslate = it
-                                saveTranslation()
+                            checked = state.translation.autoTranslate,
+                            onCheckedChange = { checked ->
+                                viewModel.updateTranslation { it.copy(autoTranslate = checked) }
                             },
                             last = true,
                         )
@@ -306,7 +285,6 @@ fun SettingsScreen(
                 KomiSettingsGroup {
                     KomiSettingsRow(
                         title = stringResource(R.string.settings_max_downloads),
-                        subtitle = stringResource(R.string.settings_max_downloads_desc),
                         trailing = {
                             KomiCompactSegmented(
                                 segments = (1..DownloadSlots.MAX_LIMIT).map {

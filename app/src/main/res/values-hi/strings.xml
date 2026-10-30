@@ -11,7 +11,6 @@
     <string name="action_update">अपडेट करें</string>
     <string name="action_unskip">अनदेखा करना बंद करें</string>
     <string name="action_restore_update">अद्यतन पुनर्स्थापित करें</string>
-    <string name="action_save">सहेजें</string>
     <string name="label_installed">इंस्टॉल किया गया</string>
     <string name="label_beta">बीटा</string>
     <string name="theme_system">सिस्टम</string>
@@ -147,7 +146,6 @@
     <string name="import_load_failed">मॉड्यूल लोड करने में विफल</string>
     <string name="settings_downloads">डाउनलोड</string>
     <string name="settings_max_downloads">एक साथ डाउनलोड</string>
-    <string name="settings_max_downloads_desc">एक साथ कितने APK डाउनलोड हों। इंस्टॉल एक बार में एक ही रहते हैं।</string>
     <string name="settings_storage">भंडारण</string>
     <string name="settings_downloaded">डाउनलोड किए गए एपीके: %1$s</string>
     <string name="settings_clear_index">मॉड्यूल इंडेक्स कैश साफ़ करें</string>

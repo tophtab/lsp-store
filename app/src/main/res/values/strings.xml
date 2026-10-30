@@ -16,7 +16,6 @@
     <string name="action_update">Update</string>
     <string name="action_unskip">Unignore</string>
     <string name="action_restore_update">Restore updates</string>
-    <string name="action_save">Save</string>
     <string name="label_installed">Installed</string>
     <string name="label_beta">beta</string>
 
@@ -171,7 +170,6 @@
     <string name="import_load_failed">Failed to load modules</string>
     <string name="settings_downloads">Downloads</string>
     <string name="settings_max_downloads">Concurrent downloads</string>
-    <string name="settings_max_downloads_desc">How many APKs download at once. Installs still run one at a time.</string>
     <string name="settings_storage">Storage</string>
     <string name="settings_downloaded">Downloaded APKs: %1$s</string>
     <string name="settings_clear_index">Clear module index cache</string>

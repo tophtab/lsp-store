@@ -11,7 +11,6 @@
     <string name="action_update">アップデート</string>
     <string name="action_unskip">無視を解除</string>
     <string name="action_restore_update">アップデートを復元する</string>
-    <string name="action_save">保存</string>
     <string name="label_installed">インストール済み</string>
     <string name="label_beta">ベータ</string>
     <string name="theme_system">システム</string>
@@ -147,7 +146,6 @@
     <string name="import_load_failed">モジュールのロードに失敗しました</string>
     <string name="settings_downloads">ダウンロード</string>
     <string name="settings_max_downloads">同時ダウンロード数</string>
-    <string name="settings_max_downloads_desc">同時にダウンロードする APK の数。インストールは 1 件ずつ行われます。</string>
     <string name="settings_storage">ストレージ</string>
     <string name="settings_downloaded">ダウンロードしたAPK: %1$s</string>
     <string name="settings_clear_index">モジュールインデックスのキャッシュを削除</string>
