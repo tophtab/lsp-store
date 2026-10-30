@@ -40,6 +40,7 @@ import io.github.tophtab.lspstore.domain.variant.parseTraits
 import io.github.tophtab.lspstore.ui.RefreshScrollGate
 import io.github.tophtab.lspstore.ui.toUserMessage
 import io.github.tophtab.lspstore.ui.variant.variantReasonText
+import kotlin.coroutines.cancellation.CancellationException
 
 /** How many failed modules a batch summary names before it stops listing. */
 private const val MAX_LISTED_FAILURES = 3
@@ -748,6 +749,10 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
 
     private fun load(force: Boolean) {
         loadJob?.cancel()
+        // The entry load is automatic, but it still hits the network on the
+        // first screen of the session, so it gets the same indicator as a
+        // manual refresh. A screen that reuses the in-memory index shows none.
+        val showRefresh = force || !moduleRepository.hasFetchedIndexThisSession()
         loadJob = viewModelScope.launch {
             var paintedFromCache = false
 
@@ -762,9 +767,7 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
                     _state.update {
                         it.copy(
                             isLoading = false,
-                            // Automatic startup refresh is silent; only a user
-                            // pull-to-refresh shows the spinner.
-                            isRefreshing = force,
+                            isRefreshing = showRefresh,
                             error = null,
                         )
                     }
@@ -776,7 +779,7 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
                 _state.update {
                     it.copy(
                         isLoading = index.isEmpty(),
-                        isRefreshing = force && index.isNotEmpty(),
+                        isRefreshing = showRefresh && index.isNotEmpty(),
                         error = null,
                     )
                 }
@@ -804,12 +807,19 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
                         it.copy(
                             isLoading = false,
                             isRefreshing = false,
+                            // Clear a failure from an earlier attempt, so a
+                            // successful retry never leaves the error box up.
+                            error = null,
                             refreshTick = it.refreshTick + 1,
                         )
                     }
                     recompute()
                 }
                 .onFailure { error ->
+                    // A cancelled load was replaced by the one that cancelled
+                    // it. Writing "failed" here would flash its indicator off
+                    // and could leave an error over data the new load fetches.
+                    if (error is CancellationException) return@onFailure
                     _state.update {
                         it.copy(
                             isLoading = false,
