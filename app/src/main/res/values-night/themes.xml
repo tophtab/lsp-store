@@ -1,8 +1,15 @@
 <resources>
     <style name="Theme.LspStore" parent="android:Theme.Material.NoActionBar">
-        <item name="android:windowBackground">#0C1515</item>
+        <item name="android:windowBackground">@color/app_background</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+
+    <style name="Theme.LspStore.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/app_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+        <item name="postSplashScreenTheme">@style/Theme.LspStore</item>
         <item name="android:windowLightStatusBar">false</item>
     </style>
 </resources>
