@@ -16,15 +16,18 @@ import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Storefront
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationItemColors
+import androidx.compose.material3.Text
+import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteItem
+import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
+import androidx.compose.material3.adaptive.navigationsuite.rememberNavigationSuiteScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -40,8 +43,6 @@ import androidx.annotation.StringRes
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
-import io.github.tophtab.lspstore.ui.design.KomiBottomBar
-import io.github.tophtab.lspstore.ui.design.KomiNavItem
 import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -127,16 +128,16 @@ private fun AppTheme(container: AppContainer, content: @Composable () -> Unit) {
     }
 }
 
-private data class BottomItem(
+private data class NavItem(
     val route: String,
     @param:StringRes val labelRes: Int,
     val icon: ImageVector,
 )
 
-private val bottomItems = listOf(
-    BottomItem(Routes.INSTALLED, R.string.nav_installed, Icons.Filled.Apps),
-    BottomItem(Routes.HOME, R.string.nav_repository, Icons.Filled.Storefront),
-    BottomItem(Routes.SETTINGS, R.string.nav_settings, Icons.Filled.Settings),
+private val navItems = listOf(
+    NavItem(Routes.INSTALLED, R.string.nav_installed, Icons.Filled.Apps),
+    NavItem(Routes.HOME, R.string.nav_repository, Icons.Filled.Storefront),
+    NavItem(Routes.SETTINGS, R.string.nav_settings, Icons.Filled.Settings),
 )
 
 @Composable
@@ -156,7 +157,7 @@ private fun MainContent() {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
-    val showBottomBar = currentRoute in bottomItems.map { it.route }
+    val showNavigation = currentRoute in navItems.map { it.route }
     var reselectRoute by remember { mutableStateOf<String?>(null) }
     var reselectTick by remember { mutableIntStateOf(0) }
 
@@ -168,34 +169,44 @@ private fun MainContent() {
 
     RequestNotificationPermission()
 
-    val navItems = bottomItems.map { item ->
-        KomiNavItem(
-            id = item.route,
-            label = stringResource(item.labelRes),
-            icon = item.icon,
-        )
+    // NavigationSuiteScaffold follows the window size class: a bottom bar on
+    // phones (portrait and landscape), a rail on tablets and other wide
+    // windows. Screens that are not a root tab (details, settings pages) get
+    // the full width, as they did when the bottom bar was hidden.
+    val navigationSuiteState = rememberNavigationSuiteScaffoldState()
+    LaunchedEffect(showNavigation) {
+        if (showNavigation) navigationSuiteState.show() else navigationSuiteState.hide()
     }
 
-    Scaffold(
-        containerColor = androidx.compose.material3.MaterialTheme.colorScheme.background,
-        // The screens own the status bar inset via their own top bar; only the
-        // bottom bar's height is passed on to the nav host. Without this every
-        // page gets the status bar inset twice (Scaffold + KomiTopBar).
-        contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        bottomBar = {
-            if (showBottomBar) {
-                KomiBottomBar(
-                    items = navItems,
-                    selectedId = currentRoute,
-                    onSelect = { route ->
-                        if (route == currentRoute) {
+    // Keep the palette the hand-rolled bar used. In dark mode primary differs
+    // from the stock secondaryContainer indicator color.
+    val navigationItemColors = NavigationItemColors(
+        selectedIconColor = MaterialTheme.colorScheme.onPrimary,
+        selectedTextColor = MaterialTheme.colorScheme.onSurface,
+        selectedIndicatorColor = MaterialTheme.colorScheme.primary,
+        unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        disabledIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        disabledTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+
+    NavigationSuiteScaffold(
+        state = navigationSuiteState,
+        navigationItems = {
+            navItems.forEach { item ->
+                val selected = item.route == currentRoute
+                val label = stringResource(item.labelRes)
+                NavigationSuiteItem(
+                    selected = selected,
+                    onClick = {
+                        if (selected) {
                             // Re-selecting the current tab scrolls back to the top
                             // (and refreshes on Home/Installed).
-                            reselectRoute = route
+                            reselectRoute = item.route
                             reselectTick++
                         } else {
                             reselectRoute = null
-                            navController.navigate(route) {
+                            navController.navigate(item.route) {
                                 popUpTo(navController.graph.findStartDestination().id) {
                                     saveState = true
                                 }
@@ -204,14 +215,16 @@ private fun MainContent() {
                             }
                         }
                     },
+                    icon = { Icon(imageVector = item.icon, contentDescription = label) },
+                    label = { Text(text = label, maxLines = 1) },
+                    colors = navigationItemColors,
                 )
             }
         },
-    ) { innerPadding ->
+    ) {
         NavHost(
             navController = navController,
             startDestination = Routes.INSTALLED,
-            modifier = Modifier.padding(innerPadding),
             // Page switches are instant on purpose. The stock NavHost defaults
             // (700 ms cross-fade plus an animated content-size change with
             // TopStart alignment) made every switch to or from a screen without
