@@ -111,7 +111,6 @@ import io.github.tophtab.lspstore.ui.design.KomiSegmented
 import io.github.tophtab.lspstore.ui.design.KomiSurface
 import io.github.tophtab.lspstore.ui.design.KomiText
 import io.github.tophtab.lspstore.ui.design.KomiTextField
-import io.github.tophtab.lspstore.ui.design.KomiTopBar
 import io.github.tophtab.lspstore.ui.design.topContentWindowInsets
 import io.github.tophtab.lspstore.ui.theme.KomiTextRole
 import java.text.NumberFormat
@@ -245,9 +244,6 @@ fun InstalledScreen(
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         contentWindowInsets = topContentWindowInsets(),
-        topBar = {
-            KomiTopBar(title = stringResource(R.string.nav_installed))
-        },
         floatingActionButton = {
             // While a batch runs the FAB is its only cancel-all control (the
             // top bar no longer carries one). A single update shows its state
@@ -284,7 +280,9 @@ fun InstalledScreen(
             KomiTextField(
                 value = query,
                 onValueChange = { query = it },
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 12.dp, top = 8.dp, end = 12.dp, bottom = 4.dp),
                 placeholder = stringResource(R.string.installed_search_hint),
                 leadingIcon = Icons.Filled.Search,
                 singleLine = true,

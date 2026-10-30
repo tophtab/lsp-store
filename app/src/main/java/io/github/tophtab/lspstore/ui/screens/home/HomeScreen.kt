@@ -49,7 +49,6 @@ import io.github.tophtab.lspstore.ui.design.KomiSegment
 import io.github.tophtab.lspstore.ui.design.KomiSegmented
 import io.github.tophtab.lspstore.ui.design.KomiText
 import io.github.tophtab.lspstore.ui.design.KomiTextField
-import io.github.tophtab.lspstore.ui.design.KomiTopBar
 import io.github.tophtab.lspstore.ui.design.topContentWindowInsets
 import io.github.tophtab.lspstore.ui.theme.KomiTextRole
 
@@ -140,11 +139,6 @@ fun HomeScreen(
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         contentWindowInsets = topContentWindowInsets(),
-        topBar = {
-            KomiTopBar(
-                title = stringResource(R.string.nav_repository),
-            )
-        },
     ) { innerPadding ->
         when {
             state.isLoading -> LoadingBox(Modifier.padding(innerPadding))
@@ -170,7 +164,7 @@ fun HomeScreen(
                         onValueChange = viewModel::onSearchQueryChange,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 12.dp, vertical = 4.dp),
+                            .padding(start = 12.dp, top = 8.dp, end = 12.dp, bottom = 4.dp),
                         placeholder = stringResource(R.string.import_search_hint),
                         leadingIcon = Icons.Filled.Search,
                         singleLine = true,
