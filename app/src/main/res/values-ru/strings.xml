@@ -11,7 +11,6 @@
     <string name="action_update">Обновить</string>
     <string name="action_unskip">Не игнорировать</string>
     <string name="action_restore_update">Восстановление обновлений</string>
-    <string name="action_save">Сохранить</string>
     <string name="label_installed">Установлено</string>
     <string name="label_beta">бета</string>
     <string name="theme_system">Системная</string>
@@ -147,7 +146,6 @@
     <string name="import_load_failed">Не удалось загрузить модули</string>
     <string name="settings_downloads">Загрузки</string>
     <string name="settings_max_downloads">Одновременные загрузки</string>
-    <string name="settings_max_downloads_desc">Сколько APK скачивается одновременно. Установка по-прежнему идёт по одному.</string>
     <string name="settings_storage">Хранилище</string>
     <string name="settings_downloaded">Скачано APK: %1$s</string>
     <string name="settings_clear_index">Очистить кэш индекса модулей</string>

@@ -11,7 +11,6 @@
     <string name="action_update">Aktualizuj</string>
     <string name="action_unskip">Przestań ignorować</string>
     <string name="action_restore_update">Przywróć aktualizacje</string>
-    <string name="action_save">Zapisz</string>
     <string name="label_installed">Zainstalowano</string>
     <string name="label_beta">beta</string>
     <string name="theme_system">Systemowy</string>
@@ -147,7 +146,6 @@
     <string name="import_load_failed">Nie udało się załadować modułów</string>
     <string name="settings_downloads">Pobierania</string>
     <string name="settings_max_downloads">Równoczesne pobierania</string>
-    <string name="settings_max_downloads_desc">Ile plików APK pobiera się naraz. Instalacje nadal odbywają się pojedynczo.</string>
     <string name="settings_storage">Składowanie</string>
     <string name="settings_downloaded">Pobrane pliki APK: %1$s</string>
     <string name="settings_clear_index">Wyczyść pamięć podręczną indeksu modułów</string>

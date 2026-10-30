@@ -11,7 +11,6 @@
     <string name="action_update">업데이트</string>
     <string name="action_unskip">무시 해제</string>
     <string name="action_restore_update">업데이트 복원</string>
-    <string name="action_save">저장</string>
     <string name="label_installed">설치됨</string>
     <string name="label_beta">베타</string>
     <string name="theme_system">시스템</string>
@@ -147,7 +146,6 @@
     <string name="import_load_failed">모듈을 로드하지 못했습니다.</string>
     <string name="settings_downloads">다운로드</string>
     <string name="settings_max_downloads">동시 다운로드</string>
-    <string name="settings_max_downloads_desc">한 번에 다운로드할 APK 수입니다. 설치는 한 번에 하나씩 진행됩니다.</string>
     <string name="settings_storage">저장</string>
     <string name="settings_downloaded">다운로드한 APK: %1$s</string>
     <string name="settings_clear_index">모듈 인덱스 캐시 지우기</string>

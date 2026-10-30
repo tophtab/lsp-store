@@ -13,7 +13,6 @@
     <string name="action_update">更新</string>
     <string name="action_unskip">取消忽略</string>
     <string name="action_restore_update">恢復更新</string>
-    <string name="action_save">儲存</string>
     <string name="label_installed">已安裝</string>
     <string name="label_beta">beta</string>
 
@@ -155,7 +154,6 @@
     <string name="import_load_failed">載入模組失敗</string>
     <string name="settings_downloads">下載</string>
     <string name="settings_max_downloads">同時下載數</string>
-    <string name="settings_max_downloads_desc">同時下載的 APK 數量。安裝仍逐一進行。</string>
     <string name="settings_storage">儲存</string>
     <string name="settings_downloaded">已下載的 APK：%1$s</string>
     <string name="settings_clear_index">清除模組索引快取</string>

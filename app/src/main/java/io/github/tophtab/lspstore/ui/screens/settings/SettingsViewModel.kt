@@ -35,6 +35,9 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
     private val installer = container.installer
     private val appContext = container.appContext
 
+    /** True once the user has changed a translation field, so the load cannot overwrite it. */
+    private var translationEdited = false
+
     private val _state = MutableStateFlow(
         SettingsUiState(
             downloadsSize = installer.downloadsSizeBytes(),
@@ -57,9 +60,10 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
             settingsRepository.dynamicColor.collect { enabled -> _state.update { it.copy(dynamicColor = enabled) } }
         }
         viewModelScope.launch {
-            settingsRepository.translationSettings.collect { settings ->
-                _state.update { it.copy(translation = settings) }
-            }
+            // The translation fields are edited in place, so this is the only
+            // time the stored settings are read into the UI state.
+            val stored = settingsRepository.translationSettings.first()
+            _state.update { if (translationEdited) it else it.copy(translation = stored) }
         }
         viewModelScope.launch {
             settingsRepository.maxConcurrentDownloads.collect { value ->
@@ -68,8 +72,15 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
         }
     }
 
-    fun saveTranslation(settings: TranslationSettings) {
-        viewModelScope.launch { settingsRepository.setTranslationSettings(settings) }
+    /**
+     * Applies one translation change and persists it at once. There is no Save
+     * button: every tap and keystroke is the stored value.
+     */
+    fun updateTranslation(transform: (TranslationSettings) -> TranslationSettings) {
+        translationEdited = true
+        val updated = transform(_state.value.translation)
+        _state.update { it.copy(translation = updated) }
+        viewModelScope.launch { settingsRepository.setTranslationSettings(updated) }
     }
 
     fun setThemeMode(mode: ThemeMode) {

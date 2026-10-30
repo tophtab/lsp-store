@@ -11,7 +11,6 @@
     <string name="action_update">تحديث</string>
     <string name="action_unskip">إلغاء التجاهل</string>
     <string name="action_restore_update">استعادة التحديثات</string>
-    <string name="action_save">حفظ</string>
     <string name="label_installed">مثبت</string>
     <string name="label_beta">بيتا</string>
     <string name="theme_system">النظام</string>
@@ -147,7 +146,6 @@
     <string name="import_load_failed">فشل تحميل الوحدات</string>
     <string name="settings_downloads">التنزيلات</string>
     <string name="settings_max_downloads">التنزيلات المتزامنة</string>
-    <string name="settings_max_downloads_desc">عدد ملفات APK التي يتم تنزيلها في وقت واحد. يبقى التثبيت واحدًا في كل مرة.</string>
     <string name="settings_storage">تخزين</string>
     <string name="settings_downloaded">ملفات APK التي تم تنزيلها: %1$s</string>
     <string name="settings_clear_index">مسح ذاكرة التخزين المؤقت لفهرس الوحدات</string>

@@ -11,7 +11,6 @@
     <string name="action_update">Güncelle</string>
     <string name="action_unskip">Yoksaymayı bırak</string>
     <string name="action_restore_update">Güncellemeleri geri yükle</string>
-    <string name="action_save">Kaydet</string>
     <string name="label_installed">Yüklü</string>
     <string name="label_beta">beta</string>
     <string name="theme_system">Sistem</string>
@@ -147,7 +146,6 @@
     <string name="import_load_failed">Modüller yüklenemedi</string>
     <string name="settings_downloads">İndirmeler</string>
     <string name="settings_max_downloads">Eşzamanlı indirmeler</string>
-    <string name="settings_max_downloads_desc">Aynı anda kaç APK indirileceği. Yükleme işlemleri sırayla yapılır.</string>
     <string name="settings_storage">Depolamak</string>
     <string name="settings_downloaded">İndirilen APK\'lar: %1$s</string>
     <string name="settings_clear_index">Modül dizini önbelleğini temizle</string>
