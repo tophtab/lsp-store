@@ -68,6 +68,18 @@ jobs:
           :app:assembleDebug
           :app:assembleRelease
           --stacktrace
+      # TEMPORARY experiment: measures what resource shrinking costs and saves.
+      # Not to be merged.
+      - name: A/B resource shrinking
+        run: |
+          set -euo pipefail
+          APK=app/build/outputs/apk/release/app-release-unsigned.apk
+          mkdir -p "$RUNNER_TEMP/ab"
+          cp "$APK" "$RUNNER_TEMP/ab/shrink-on.apk"
+          ./gradlew :app:assembleRelease -PnoShrinkResources --stacktrace
+          cp "$APK" "$RUNNER_TEMP/ab/shrink-off.apk"
+          stat -c '%s %n' "$RUNNER_TEMP/ab/"*.apk
+          echo "RESULT on=$(stat -c%s "$RUNNER_TEMP/ab/shrink-on.apk") off=$(stat -c%s "$RUNNER_TEMP/ab/shrink-off.apk")"
 
   # Every push: one job that produces *one* signed APK and then either refreshes
   # the rolling `dev` pre-release (master) or publishes it as a tagged release.
