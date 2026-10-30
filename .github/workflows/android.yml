@@ -24,15 +24,14 @@ on:
       - 'fastlane/**'
       - 'module-repo/**'
       - 'release-notes/**'
-  # The `dev` pre-release is published on demand rather than on every master
-  # push, so installing an intermediate build is a deliberate choice. A manual
-  # run reuses the APK a master push already built for the selected commit when
-  # one exists (30-day artifact retention), and builds from source otherwise.
+  # A manual run builds the selected branch and leaves the APK as an artifact
+  # (same 30-day retention as a master push). It never publishes a release:
+  # releases are created only by pushing a tag.
   workflow_dispatch:
 
 concurrency:
-  # Keyed by event as well as ref: a manual dev release must not cancel the
-  # master build whose artifact it is about to reuse, and vice versa.
+  # Keyed by event as well as ref: a manual build must not cancel the master
+  # build whose artifact it is about to reuse, and vice versa.
   group: android-${{ github.ref }}-${{ github.event_name }}
   cancel-in-progress: true
 
@@ -76,9 +75,9 @@ jobs:
           :app:assembleRelease
           --stacktrace
 
-  # Every push, plus manual dev releases: one job that produces *one* signed APK
-  # and then either publishes it as a tagged release (tag push) or refreshes the
-  # rolling `dev` pre-release (workflow_dispatch on a branch).
+  # Every push, plus manual builds: one job that produces *one* signed APK and
+  # publishes it as a release when the push is a tag. A branch build (master push
+  # or manual run) only leaves the APK as an artifact for that commit's tag.
   #
   # The APK built for a commit is never rebuilt for its tag. A master push uploads
   # the signed APK as an artifact, and a tag pointing at a commit that already has
@@ -86,7 +85,7 @@ jobs:
   # path (~1 min) and the reason the version name no longer carries a `.dev.<sha>`
   # suffix: the artifact has to report the version the tag names. If no artifact
   # exists (tag on an old or never-built commit, or it expired) the job falls back
-  # to a full build. A manual dev release takes the same reuse-then-build path.
+  # to a full build. A manual build takes the same reuse-then-build path.
   #
   # This used to be two jobs (`build` + `snapshot`/`release`) that each built the
   # app from a cold Gradle User Home, so R8 and lint ran twice per push and the
@@ -96,8 +95,8 @@ jobs:
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-24.04
     permissions:
-      contents: write # publish the release / update the `dev` pre-release
-      actions: read # look up the artifact a master push left behind (tag / dev run)
+      contents: write # publish the release
+      actions: read # look up the artifact a master push left behind
     env:
       XPOSED_REPO_TOKEN: ${{ secrets.XPOSED_REPO_TOKEN }}
     steps:
@@ -119,10 +118,10 @@ jobs:
           packages: 'platforms;android-37.1 build-tools;36.0.0'
           log-accepted-android-sdk-licenses: false
 
-      # Tagging a commit that master already built - or asking for a dev build of
-      # one - means the APK exists: grab it and skip the build. For a tag the
-      # version check below still runs, so a mismatch is a hard failure rather
-      # than a silently different release.
+      # Tagging a commit that master already built - or manually building one -
+      # means the APK exists: grab it and skip the build. For a tag the version
+      # check below still runs, so a mismatch is a hard failure rather than a
+      # silently different release.
       - name: Reuse the APK built for this commit
         id: prebuilt
         if: github.ref_type == 'tag' || github.event_name == 'workflow_dispatch'
@@ -258,7 +257,9 @@ jobs:
             }
             ASSET="LSP-Store-${EXPECTED}.apk"
           else
-            ASSET="LSP-Store-dev.apk"
+            # A branch build only feeds the artifact; name it after the version
+            # the APK reports, same as a release asset.
+            ASSET="LSP-Store-${VERSION_NAME}.apk"
           fi
 
           mkdir -p out
@@ -274,49 +275,15 @@ jobs:
 
       # A tag for this commit reads this back instead of rebuilding: the release
       # is then literally the artifact the master push produced and verified.
-      # Push-only: a dev run reuses this artifact rather than leaving a second
-      # copy of the same commit behind.
+      # Manual builds upload here too, so any branch can be tested from a phone.
       - name: Keep the APK for the release of this commit
-        if: github.event_name == 'push' && github.ref_type == 'branch'
+        if: github.ref_type == 'branch'
         uses: actions/upload-artifact@v4
         with:
           name: app-release
           path: out/*.apk
           retention-days: 30
           if-no-files-found: error
-
-      # Rolling pre-release for self-testing: a manual dispatch replaces a single
-      # `dev` release, so there is one stable URL to install from a phone without
-      # publishing a package on every master push.
-      # Signed with the same key as releases, so it installs over them (and vice
-      # versa) without an uninstall. The version code and name stay at the release
-      # values on purpose - this APK is what gets published when the commit is
-      # tagged - so the commit lives in BuildConfig.BUILD_SHA (shown on the About
-      # screen) and in this release's notes.
-      - name: Publish dev pre-release
-        if: github.event_name == 'workflow_dispatch' && github.ref_type == 'branch'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ASSET: ${{ steps.apk.outputs.asset }}
-          VERSION: ${{ steps.apk.outputs.version }}
-        run: |
-          set -euo pipefail
-          {
-            echo "Signed snapshot of \`${GITHUB_REF_NAME}\` at \`${GITHUB_SHA:0:8}\` (${VERSION})."
-            echo
-            echo "$(git log -1 --pretty=%s)"
-            echo
-            echo "The asset is replaced when a dev release is dispatched."
-          } > "$RUNNER_TEMP/dev-notes.md"
-
-          if gh release view dev > /dev/null 2>&1; then
-            gh release upload dev "out/${ASSET}" out/SHA256SUMS --clobber
-            gh release edit dev --notes-file "$RUNNER_TEMP/dev-notes.md"
-          else
-            gh release create dev --prerelease --title "Development build" \
-              --notes-file "$RUNNER_TEMP/dev-notes.md" \
-              "out/${ASSET}" out/SHA256SUMS
-          fi
 
       - name: Publish GitHub release
         if: github.event_name == 'push' && github.ref_type == 'tag'

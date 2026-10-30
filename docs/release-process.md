@@ -87,22 +87,19 @@ convert app/src/main/res/drawable-xxxhdpi/ic_launcher_icon.png \
 
 ## 自测渠道
 
-手动触发 `Android` workflow（Actions 页面 Run workflow，或
-`gh workflow run android.yml --ref master`）时，`build` 任务会取用该提交已有的构建
-产物（master push 留下的，没有就现场构建并签名）、覆盖发布到 `dev` 预发布，固定直链
-可直接在手机上下载安装：
+没有常设的 dev 预发布。master 每次 push 都会构建并签名 release APK，上传成 Actions
+构建产物（artifact，保留 30 天），需要真机自测时取下来安装；手动运行 workflow
+（Actions 页面 Run workflow，或 `gh workflow run android.yml --ref <branch>`）也能
+为任意分支构建一份，同样只留 artifact，不会创建或改动任何 Release：
 
+```bash
+gh run download <run-id> -n app-release --dir /tmp/lsp-store-apk
+adb install -r /tmp/lsp-store-apk/LSP-Store-<version>.apk
 ```
-https://github.com/tophtab/lsp-store/releases/download/dev/LSP-Store-dev.apk
-```
 
-这个包**就是**该提交将来发版用的那个 APK：versionName 不做任何后缀（否则它不可能
-通过 tag 与 `versionName` 一致的校验），提交号由 CI 写进 `BuildConfig.BUILD_SHA`，
-在关于页/诊断页显示为 `1.0.2 · 3f2a91c`，同时写在 `dev` 那个 release 的说明里。
-「这是 dev 还是正式版」就看这个后缀有没有、以及 release 页面上的 SHA。
-
-versionCode 与正式版相同（10000），所以 dev 包和正式包可以互相覆盖安装；
-不要为了"比正式版新"去提高 dev 的 versionCode，否则正式版会被系统当成降级而装不上。
+master push 产出的包**就是**该提交将来发版用的那个 APK（打 tag 时直接复用，不重新
+编译）：versionName 不做任何后缀，提交号由 CI 写进 `BuildConfig.BUILD_SHA`，在关于页
+/诊断页显示为 `1.0.2 · 3f2a91c`。
 
 ## 每次发版
 
