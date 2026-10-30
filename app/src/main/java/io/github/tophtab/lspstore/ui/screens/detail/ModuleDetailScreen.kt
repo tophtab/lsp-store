@@ -70,6 +70,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -369,7 +370,13 @@ private fun DetailContent(
 ) {
     val releases = detail.releasesFor(state.channel)
     val latestRelease = detail.latestReleaseFor(state.channel)
-    var selectedRelease by remember(state.channel) { mutableStateOf(latestRelease) }
+    // The release and asset are kept by name, not by object: the lists are
+    // rebuilt whenever the detail or the probes change, and a saved object
+    // would not survive the trip through the saved-state registry.
+    var selectedReleaseTag by rememberSaveable(state.channel) {
+        mutableStateOf(latestRelease?.tagName.orEmpty())
+    }
+    val selectedRelease = releases.firstOrNull { it.tagName == selectedReleaseTag } ?: latestRelease
     val context = LocalContext.current
     val container = LocalAppContainer.current
     val device by container.deviceProfileFlow.collectAsStateWithLifecycle()
@@ -398,10 +405,11 @@ private fun DetailContent(
         }
         base.map { it.copy(recommended = it.asset.name == recommendedName) }
     }
-    var selectedAsset by remember(selectedRelease, variantState) {
-        mutableStateOf(decision?.defaultAsset())
+    var selectedAssetName by rememberSaveable(selectedRelease?.tagName, variantState) {
+        mutableStateOf(decision?.defaultAsset()?.name.orEmpty())
     }
-    var userPickedAsset by remember(selectedRelease, variantState) { mutableStateOf(false) }
+    val selectedAsset = candidates.firstOrNull { it.asset.name == selectedAssetName }?.asset
+    var userPickedAsset by rememberSaveable(selectedRelease?.tagName, variantState) { mutableStateOf(false) }
     val storedNotApplicable = variantState.isNotApplicable &&
         selectedRelease?.tagName == latestRelease?.tagName
     val notApplicableReason = (decision as? VariantDecision.NotApplicable)
@@ -411,10 +419,10 @@ private fun DetailContent(
         candidates.firstOrNull { it.asset.name == asset.name }?.debug
             ?: parseTraits(asset.name).debugName
     } == true
-    var versionSheetVisible by remember { mutableStateOf(false) }
-    var assetSheetVisible by remember { mutableStateOf(false) }
+    var versionSheetVisible by rememberSaveable { mutableStateOf(false) }
+    var assetSheetVisible by rememberSaveable { mutableStateOf(false) }
     val currentRelease = selectedRelease
-    var whatsNewExpanded by remember(currentRelease?.tagName) { mutableStateOf(false) }
+    var whatsNewExpanded by rememberSaveable(currentRelease?.tagName) { mutableStateOf(false) }
     val notes = currentRelease?.descriptionHtml?.takeIf { it.isNotBlank() }
 
     LazyColumn(
@@ -529,7 +537,7 @@ private fun DetailContent(
                 selectedRelease = selectedRelease,
                 latestRelease = latestRelease,
                 onSelect = { release ->
-                    selectedRelease = release
+                    selectedReleaseTag = release.tagName
                     versionSheetVisible = false
                 },
             )
@@ -542,7 +550,7 @@ private fun DetailContent(
                 candidates = candidates,
                 selectedAsset = selectedAsset,
                 onSelect = { asset ->
-                    selectedAsset = asset
+                    selectedAssetName = asset.name
                     userPickedAsset = true
                     assetSheetVisible = false
                 },

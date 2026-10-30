@@ -47,8 +47,18 @@ fun ErrorBox(message: String, onRetry: () -> Unit, modifier: Modifier = Modifier
 }
 
 @Composable
-fun EmptyBox(message: String, modifier: Modifier = Modifier) {
-    KomiEmpty(message = message, modifier = modifier)
+fun EmptyBox(
+    message: String,
+    modifier: Modifier = Modifier,
+    actionLabel: String? = null,
+    onAction: (() -> Unit)? = null,
+) {
+    KomiEmpty(
+        message = message,
+        modifier = modifier,
+        actionLabel = actionLabel,
+        onAction = onAction,
+    )
 }
 
 @Composable

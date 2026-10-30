@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -21,6 +22,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -71,15 +73,17 @@ fun SettingsScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val scrollState = rememberScrollState()
-    var translationExpanded by remember { mutableStateOf(false) }
+    // Draft fields live in the composition until "Save", so they have to survive
+    // rotation and process death just like the values they mirror.
+    var translationExpanded by rememberSaveable { mutableStateOf(false) }
 
-    var provider by remember(state.translation.provider) { mutableStateOf(state.translation.provider) }
-    var autoTranslate by remember(state.translation.autoTranslate) { mutableStateOf(state.translation.autoTranslate) }
-    var deeplKey by remember(state.translation.deeplKey) { mutableStateOf(state.translation.deeplKey) }
-    var libreUrl by remember(state.translation.libreUrl) { mutableStateOf(state.translation.libreUrl) }
-    var libreKey by remember(state.translation.libreKey) { mutableStateOf(state.translation.libreKey) }
-    var msKey by remember(state.translation.microsoftKey) { mutableStateOf(state.translation.microsoftKey) }
-    var msRegion by remember(state.translation.microsoftRegion) { mutableStateOf(state.translation.microsoftRegion) }
+    var provider by rememberSaveable(state.translation.provider) { mutableStateOf(state.translation.provider) }
+    var autoTranslate by rememberSaveable(state.translation.autoTranslate) { mutableStateOf(state.translation.autoTranslate) }
+    var deeplKey by rememberSaveable(state.translation.deeplKey) { mutableStateOf(state.translation.deeplKey) }
+    var libreUrl by rememberSaveable(state.translation.libreUrl) { mutableStateOf(state.translation.libreUrl) }
+    var libreKey by rememberSaveable(state.translation.libreKey) { mutableStateOf(state.translation.libreKey) }
+    var msKey by rememberSaveable(state.translation.microsoftKey) { mutableStateOf(state.translation.microsoftKey) }
+    var msRegion by rememberSaveable(state.translation.microsoftRegion) { mutableStateOf(state.translation.microsoftRegion) }
 
     fun saveTranslation() = viewModel.saveTranslation(
         TranslationSettings(
@@ -112,7 +116,12 @@ fun SettingsScreen(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { innerPadding ->
-        KomiConstrainedContent(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+        KomiConstrainedContent(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .imePadding(),
+        ) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
