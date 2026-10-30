@@ -55,6 +55,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -122,7 +123,18 @@ fun InstalledScreen(
         }
     }
 
-    var query by remember { mutableStateOf("") }
+    var query by rememberSaveable { mutableStateOf("") }
+    // The query the list was last reset for. Saveable for the same reason as the
+    // query: coming back from a module page restores both as a matching pair, so
+    // the restored query is not mistaken for an edit and the list keeps the
+    // position the user left.
+    var settledQuery by rememberSaveable { mutableStateOf(query) }
+    LaunchedEffect(query) {
+        if (query != settledQuery) {
+            settledQuery = query
+            listState.scrollToItem(0)
+        }
+    }
     fun InstalledModule.matches() = query.isBlank() ||
         label.contains(query, ignoreCase = true) || packageName.contains(query, ignoreCase = true)
     fun matchUpdate(info: UpdateInfo) = query.isBlank() ||

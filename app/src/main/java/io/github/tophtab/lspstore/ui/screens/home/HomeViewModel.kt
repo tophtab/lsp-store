@@ -27,6 +27,11 @@ data class HomeUiState(
     val searchQuery: String = "",
     val searchResults: List<Module> = emptyList(),
     /**
+     * Bumped whenever the search text changes, so a new result list starts at
+     * the top instead of inheriting the offset of the previous one.
+     */
+    val searchTick: Int = 0,
+    /**
      * Which shelf the user picked. Kept here rather than in the screen's
      * `remember`: it decides which list the scroll position belongs to, so it
      * has to survive the trip to a module page along with the position itself.
@@ -54,6 +59,7 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
     private var links: Map<String, String> = emptyMap()
     private var loadJob: Job? = null
     private val refreshScrollGate = RefreshScrollGate()
+    private val searchScrollGate = RefreshScrollGate()
 
     init {
         viewModelScope.launch {
@@ -78,8 +84,24 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
      */
     fun consumeRefreshScroll(): Boolean = refreshScrollGate.consume(_state.value.refreshTick)
 
+    /**
+     * Whether the current [HomeUiState.searchTick] still owes the result list a
+     * scroll back to the top. The gate lives here for the same reason as the
+     * refresh one: rebuilding the screen on the way back from a module page
+     * re-launches the effect with a tick it already acted on.
+     */
+    fun consumeSearchScroll(): Boolean = searchScrollGate.consume(_state.value.searchTick)
+
     fun onSearchQueryChange(query: String) {
-        _state.update { it.copy(searchQuery = query) }
+        if (query == _state.value.searchQuery) return
+        _state.update {
+            it.copy(
+                searchQuery = query,
+                // Clearing the field reveals the ordinary shelves again; only a
+                // new search owes the result list a reset.
+                searchTick = if (query.isNotBlank()) it.searchTick + 1 else it.searchTick,
+            )
+        }
         rebuild()
     }
 

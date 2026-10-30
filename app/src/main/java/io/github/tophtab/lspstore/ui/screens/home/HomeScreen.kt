@@ -82,6 +82,17 @@ fun HomeScreen(
         }
     }
 
+    // A new query is a new result list; the previous offset belongs to the old
+    // one. The view model hands the reset out once per query change, so coming
+    // back from a module page (same tick, fresh composition) keeps the position
+    // the user left, exactly like the refresh scroll above.
+    LaunchedEffect(state.searchTick) {
+        if (!viewModel.consumeSearchScroll()) return@LaunchedEffect
+        if (state.searchQuery.isNotBlank() && state.searchResults.isNotEmpty()) {
+            searchListState.scrollToItem(0)
+        }
+    }
+
     val tabs = buildList {
         add(
             HomeTab(
