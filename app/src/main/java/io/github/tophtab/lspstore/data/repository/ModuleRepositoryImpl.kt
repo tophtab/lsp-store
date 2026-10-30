@@ -26,6 +26,13 @@ interface ModuleRepository {
     suspend fun getCachedIndex(): List<Module>?
     suspend fun getIndex(force: Boolean = false): List<Module>
     suspend fun refreshIndexIfNeeded(force: Boolean): List<Module>
+
+    /**
+     * True once this process fetched the catalogue. A screen that finds it true
+     * reuses the in-memory index instead of fetching, so it shows no indicator.
+     */
+    fun hasFetchedIndexThisSession(): Boolean
+
     suspend fun getDetail(packageName: String): ModuleDetail
     fun clearCache()
     fun cacheSizeBytes(): Long
@@ -113,6 +120,8 @@ class ModuleRepositoryImpl(
         }
         fetchAndCache()
     }
+
+    override fun hasFetchedIndexThisSession(): Boolean = refreshedThisSession
 
     override suspend fun getDetail(packageName: String): ModuleDetail =
         withContext(Dispatchers.IO) { api.moduleDetail(packageName).toDetail() }
