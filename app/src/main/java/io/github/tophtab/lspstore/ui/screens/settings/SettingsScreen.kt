@@ -48,7 +48,6 @@ import io.github.tophtab.lspstore.ui.design.KomiSettingsSectionHead
 import io.github.tophtab.lspstore.ui.design.KomiSettingsSwitchRow
 import io.github.tophtab.lspstore.ui.design.KomiText
 import io.github.tophtab.lspstore.ui.design.KomiTextField
-import io.github.tophtab.lspstore.ui.design.KomiTopBar
 import io.github.tophtab.lspstore.ui.design.topContentWindowInsets
 import io.github.tophtab.lspstore.ui.labelRes
 import io.github.tophtab.lspstore.ui.theme.KomiTextRole
@@ -107,9 +106,6 @@ fun SettingsScreen(
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         contentWindowInsets = topContentWindowInsets(),
-        topBar = {
-            KomiTopBar(title = stringResource(R.string.nav_settings))
-        },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { innerPadding ->
         KomiConstrainedContent(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
@@ -118,7 +114,7 @@ fun SettingsScreen(
                     .fillMaxSize()
                     .verticalScroll(scrollState)
                     .padding(horizontal = 16.dp)
-                    .padding(top = 2.dp, bottom = 28.dp),
+                    .padding(top = 12.dp, bottom = 28.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 KomiSettingsSectionHead(stringResource(R.string.settings_appearance))
