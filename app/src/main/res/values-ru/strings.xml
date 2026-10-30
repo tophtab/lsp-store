@@ -175,7 +175,8 @@
     <string name="mirror_latency">%1$d мс</string>
     <string name="settings_translation">Перевод</string>
     <string name="settings_translation_provider">Поставщик переводов</string>
-    <string name="settings_translation_target">Целевой язык</string>
+    <string name="settings_translation_auto">Автоперевод</string>
+    <string name="settings_translation_auto_desc">Автоматически переводить описание модуля при открытии его страницы.</string>
     <string name="translation_disabled">Отключено</string>
     <string name="settings_translation_deepl_key">Ключ авторизации DeepL</string>
     <string name="settings_translation_libre_url">URL-адрес LibreTranslate</string>

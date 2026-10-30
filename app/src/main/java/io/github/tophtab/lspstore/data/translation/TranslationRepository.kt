@@ -23,6 +23,7 @@ import io.github.tophtab.lspstore.data.repository.SettingsRepository
 import io.github.tophtab.lspstore.domain.model.TranslationProvider
 import io.github.tophtab.lspstore.domain.model.TranslationSettings
 import java.net.URLEncoder
+import java.util.Locale
 
 class TranslationRepository(
     private val client: HttpClient,
@@ -43,20 +44,34 @@ class TranslationRepository(
             return Result.failure(IllegalStateException("Translation provider is not configured"))
         }
 
-        val cacheKey = "${settings.provider.name}|${settings.targetLang}|$text"
+        val target = targetLanguage()
+        val cacheKey = "${settings.provider.name}|$target|$text"
         synchronized(cache) { cache[cacheKey] }?.let { return Result.success(it) }
 
-        return runCatching { translateWith(settings, text) }
+        return runCatching { translateWith(settings, text, target) }
             .onSuccess { result -> synchronized(cache) { cache[cacheKey] = result } }
     }
 
-    private suspend fun translateWith(settings: TranslationSettings, text: String): String =
+    /**
+     * Komi-style target: always the app language. LSP Store has no in-app
+     * language picker, so that is the system language.
+     */
+    private fun targetLanguage(): String =
+        Locale.getDefault().language
+            .takeIf { it.isNotBlank() && it != "und" }
+            ?: "en"
+
+    private suspend fun translateWith(
+        settings: TranslationSettings,
+        text: String,
+        target: String,
+    ): String =
         when (settings.provider) {
             TranslationProvider.DISABLED -> text
-            TranslationProvider.GOOGLE -> google(text, settings.targetLang)
-            TranslationProvider.LIBRE_TRANSLATE -> libreTranslate(text, settings)
-            TranslationProvider.DEEPL -> deepl(text, settings)
-            TranslationProvider.MICROSOFT -> microsoft(text, settings)
+            TranslationProvider.GOOGLE -> google(text, target)
+            TranslationProvider.LIBRE_TRANSLATE -> libreTranslate(text, settings, target)
+            TranslationProvider.DEEPL -> deepl(text, settings, target)
+            TranslationProvider.MICROSOFT -> microsoft(text, settings, target)
         }
 
     private suspend fun google(text: String, target: String): String {
@@ -71,12 +86,16 @@ class TranslationRepository(
         return builder.toString().ifBlank { error("Empty translation") }
     }
 
-    private suspend fun libreTranslate(text: String, settings: TranslationSettings): String {
+    private suspend fun libreTranslate(
+        text: String,
+        settings: TranslationSettings,
+        target: String,
+    ): String {
         val base = settings.libreUrl.ifBlank { DEFAULT_LIBRE_URL }.trimEnd('/')
         val payload = buildJsonObject {
             put("q", text)
             put("source", "auto")
-            put("target", settings.targetLang)
+            put("target", target)
             put("format", "text")
             if (settings.libreKey.isNotBlank()) put("api_key", settings.libreKey)
         }
@@ -88,7 +107,11 @@ class TranslationRepository(
             ?: error("Empty translation")
     }
 
-    private suspend fun deepl(text: String, settings: TranslationSettings): String {
+    private suspend fun deepl(
+        text: String,
+        settings: TranslationSettings,
+        target: String,
+    ): String {
         val endpoint = if (settings.deeplKey.endsWith(":fx")) {
             "https://api-free.deepl.com/v2/translate"
         } else {
@@ -96,7 +119,7 @@ class TranslationRepository(
         }
         val payload = buildJsonObject {
             putJsonArray("text") { add(text) }
-            put("target_lang", settings.targetLang.uppercase())
+            put("target_lang", target.uppercase())
         }
         val response = client.post(endpoint) {
             header(HttpHeaders.Authorization, "DeepL-Auth-Key ${settings.deeplKey}")
@@ -113,9 +136,13 @@ class TranslationRepository(
             ?: error("Empty translation")
     }
 
-    private suspend fun microsoft(text: String, settings: TranslationSettings): String {
+    private suspend fun microsoft(
+        text: String,
+        settings: TranslationSettings,
+        target: String,
+    ): String {
         val endpoint =
-            "https://api.cognitive.microsofttranslator.com/translate?api-version=3.0&to=${settings.targetLang}"
+            "https://api.cognitive.microsofttranslator.com/translate?api-version=3.0&to=$target"
         val payload = buildJsonArray {
             add(buildJsonObject { put("Text", text) })
         }

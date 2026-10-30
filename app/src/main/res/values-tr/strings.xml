@@ -175,7 +175,8 @@
     <string name="mirror_latency">%1$d ms</string>
     <string name="settings_translation">Çeviri</string>
     <string name="settings_translation_provider">Çeviri sağlayıcı</string>
-    <string name="settings_translation_target">Hedef dil</string>
+    <string name="settings_translation_auto">Otomatik çeviri</string>
+    <string name="settings_translation_auto_desc">Bir modül sayfasını açtığınızda açıklamayı otomatik olarak çevirir.</string>
     <string name="translation_disabled">Devre dışı</string>
     <string name="settings_translation_deepl_key">DeepL kimlik doğrulama anahtarı</string>
     <string name="settings_translation_libre_url">LibreTranslate URL\'si</string>

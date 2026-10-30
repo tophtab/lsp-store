@@ -175,7 +175,8 @@
     <string name="mirror_latency">%1$d밀리초</string>
     <string name="settings_translation">번역</string>
     <string name="settings_translation_provider">번역 제공업체</string>
-    <string name="settings_translation_target">대상 언어</string>
+    <string name="settings_translation_auto">자동 번역</string>
+    <string name="settings_translation_auto_desc">모듈 페이지를 열면 설명을 자동으로 번역합니다.</string>
     <string name="translation_disabled">사용 안 함</string>
     <string name="settings_translation_deepl_key">DeepL 인증 키</string>
     <string name="settings_translation_libre_url">자유번역 URL</string>

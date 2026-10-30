@@ -175,7 +175,8 @@
     <string name="mirror_latency">%1$d ms</string>
     <string name="settings_translation">Traduzione</string>
     <string name="settings_translation_provider">Fornitore di traduzioni</string>
-    <string name="settings_translation_target">Lingua di destinazione</string>
+    <string name="settings_translation_auto">Traduzione automatica</string>
+    <string name="settings_translation_auto_desc">Traduce automaticamente la descrizione del modulo quando apri la sua pagina.</string>
     <string name="translation_disabled">Disattivato</string>
     <string name="settings_translation_deepl_key">Chiave di autenticazione DeepL</string>
     <string name="settings_translation_libre_url">URL di LibreTranslate</string>

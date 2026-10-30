@@ -175,7 +175,8 @@
     <string name="mirror_latency">%1$dミリ秒</string>
     <string name="settings_translation">翻訳</string>
     <string name="settings_translation_provider">翻訳プロバイダー</string>
-    <string name="settings_translation_target">対象言語</string>
+    <string name="settings_translation_auto">自動翻訳</string>
+    <string name="settings_translation_auto_desc">モジュールページを開いたときに説明を自動翻訳します。</string>
     <string name="translation_disabled">無効</string>
     <string name="settings_translation_deepl_key">DeepL認証キー</string>
     <string name="settings_translation_libre_url">LibreURLを翻訳する</string>

@@ -175,7 +175,8 @@
     <string name="mirror_latency">%1$d মি.সে</string>
     <string name="settings_translation">অনুবাদ</string>
     <string name="settings_translation_provider">অনুবাদ প্রদানকারী</string>
-    <string name="settings_translation_target">লক্ষ্য ভাষা</string>
+    <string name="settings_translation_auto">স্বয়ংক্রিয় অনুবাদ</string>
+    <string name="settings_translation_auto_desc">মডিউলের পৃষ্ঠা খুললে বিবরণ স্বয়ংক্রিয়ভাবে অনুবাদ করুন।</string>
     <string name="translation_disabled">নিষ্ক্রিয়</string>
     <string name="settings_translation_deepl_key">DeepL auth key</string>
     <string name="settings_translation_libre_url">LibreTranslate URL</string>

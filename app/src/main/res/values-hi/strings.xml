@@ -175,7 +175,8 @@
     <string name="mirror_latency">%1$d एमएस</string>
     <string name="settings_translation">अनुवाद</string>
     <string name="settings_translation_provider">अनुवाद प्रदाता</string>
-    <string name="settings_translation_target">लक्ष्य भाषा</string>
+    <string name="settings_translation_auto">स्वचालित अनुवाद</string>
+    <string name="settings_translation_auto_desc">मॉड्यूल पेज खोलने पर विवरण अपने आप अनुवादित करें।</string>
     <string name="translation_disabled">अक्षम</string>
     <string name="settings_translation_deepl_key">डीपएल प्रमाणीकरण कुंजी</string>
     <string name="settings_translation_libre_url">लिबरट्रांसलेट यूआरएल</string>

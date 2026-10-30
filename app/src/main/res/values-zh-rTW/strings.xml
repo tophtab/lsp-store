@@ -198,7 +198,8 @@
     <string name="mirror_latency">%1$d 毫秒</string>
     <string name="settings_translation">翻譯</string>
     <string name="settings_translation_provider">翻譯服務</string>
-    <string name="settings_translation_target">目標語言</string>
+    <string name="settings_translation_auto">自動翻譯</string>
+    <string name="settings_translation_auto_desc">開啟模組頁面時自動翻譯簡介。</string>
     <string name="translation_disabled">已禁用</string>
     <string name="settings_translation_deepl_key">DeepL 金鑰</string>
     <string name="settings_translation_libre_url">LibreTranslate 地址</string>

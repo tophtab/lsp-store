@@ -175,7 +175,8 @@
     <string name="mirror_latency">%1$d مللي ثانية</string>
     <string name="settings_translation">ترجمة</string>
     <string name="settings_translation_provider">مزود الترجمة</string>
-    <string name="settings_translation_target">اللغة المستهدفة</string>
+    <string name="settings_translation_auto">ترجمة تلقائية</string>
+    <string name="settings_translation_auto_desc">ترجمة وصف الوحدة تلقائيًا عند فتح صفحتها.</string>
     <string name="translation_disabled">معطل</string>
     <string name="settings_translation_deepl_key">مفتاح مصادقة DeepL</string>
     <string name="settings_translation_libre_url">عنوان URL الخاص بـ LibreTranslate</string>

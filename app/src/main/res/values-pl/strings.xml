@@ -175,7 +175,8 @@
     <string name="mirror_latency">%1$d ms</string>
     <string name="settings_translation">Tłumaczenie</string>
     <string name="settings_translation_provider">Dostawca tłumaczeń</string>
-    <string name="settings_translation_target">Język docelowy</string>
+    <string name="settings_translation_auto">Automatyczne tłumaczenie</string>
+    <string name="settings_translation_auto_desc">Automatycznie tłumacz opis modułu po otwarciu jego strony.</string>
     <string name="translation_disabled">Wyłączone</string>
     <string name="settings_translation_deepl_key">Klucz autoryzacyjny DeepL</string>
     <string name="settings_translation_libre_url">LibreTranslate URL</string>

@@ -196,7 +196,8 @@
     <string name="mirror_latency">%1$d 毫秒</string>
     <string name="settings_translation">翻译</string>
     <string name="settings_translation_provider">翻译服务</string>
-    <string name="settings_translation_target">目标语言</string>
+    <string name="settings_translation_auto">自动翻译</string>
+    <string name="settings_translation_auto_desc">打开模块页时自动翻译简介。</string>
     <string name="translation_disabled">已禁用</string>
     <string name="settings_translation_deepl_key">DeepL 密钥</string>
     <string name="settings_translation_libre_url">LibreTranslate 地址</string>

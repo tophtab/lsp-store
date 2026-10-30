@@ -205,7 +205,8 @@
     <string name="mirror_latency">%1$d ms</string>
     <string name="settings_translation">Translation</string>
     <string name="settings_translation_provider">Translation provider</string>
-    <string name="settings_translation_target">Target language</string>
+    <string name="settings_translation_auto">Auto-translate</string>
+    <string name="settings_translation_auto_desc">Translate a module\'s description automatically when you open its page.</string>
     <string name="translation_disabled">Disabled</string>
     <string name="translation_google" translatable="false">Google</string>
     <string name="translation_libre" translatable="false">LibreTranslate</string>
