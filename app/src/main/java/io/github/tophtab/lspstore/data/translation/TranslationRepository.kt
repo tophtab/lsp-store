@@ -44,22 +44,13 @@ class TranslationRepository(
             return Result.failure(IllegalStateException("Translation provider is not configured"))
         }
 
-        val target = targetLanguage()
+        val target = translationTarget(settings.provider)
         val cacheKey = "${settings.provider.name}|$target|$text"
         synchronized(cache) { cache[cacheKey] }?.let { return Result.success(it) }
 
         return runCatching { translateWith(settings, text, target) }
             .onSuccess { result -> synchronized(cache) { cache[cacheKey] = result } }
     }
-
-    /**
-     * Komi-style target: always the app language. LSP Store has no in-app
-     * language picker, so that is the system language.
-     */
-    private fun targetLanguage(): String =
-        Locale.getDefault().language
-            .takeIf { it.isNotBlank() && it != "und" }
-            ?: "en"
 
     private suspend fun translateWith(
         settings: TranslationSettings,
@@ -119,7 +110,7 @@ class TranslationRepository(
         }
         val payload = buildJsonObject {
             putJsonArray("text") { add(text) }
-            put("target_lang", target.uppercase())
+            put("target_lang", target)
         }
         val response = client.post(endpoint) {
             header(HttpHeaders.Authorization, "DeepL-Auth-Key ${settings.deeplKey}")
@@ -180,5 +171,41 @@ class TranslationRepository(
     private companion object {
         const val MAX_CACHE_ENTRIES = 256
         const val DEFAULT_LIBRE_URL = "https://translate.disroot.org"
+    }
+}
+
+/**
+ * Target language for [provider], following the app language the way Komi does.
+ * LSP Store has no in-app language picker, so the app language is the system
+ * language.
+ *
+ * Providers disagree on the spelling of the same language: DeepL wants `PT-BR`
+ * and `ZH-HANS`, Microsoft wants `zh-Hant`, and LibreTranslate only knows
+ * two-letter codes. Resolving that here is what lets the settings drop the
+ * hand-typed language code.
+ */
+internal fun translationTarget(
+    provider: TranslationProvider,
+    locale: Locale = Locale.getDefault(),
+): String {
+    val language = locale.language.takeIf { it.isNotBlank() && it != "und" } ?: "en"
+    val traditionalChinese = locale.country in setOf("TW", "HK", "MO")
+    return when (provider) {
+        TranslationProvider.DEEPL -> when (language) {
+            "en" -> if (locale.country == "GB") "EN-GB" else "EN-US"
+            "pt" -> if (locale.country == "BR") "PT-BR" else "PT-PT"
+            "zh" -> if (traditionalChinese) "ZH-HANT" else "ZH-HANS"
+            "no", "nb" -> "NB"
+            else -> language.uppercase()
+        }
+        TranslationProvider.GOOGLE -> when (language) {
+            "zh" -> if (traditionalChinese) "zh-TW" else "zh-CN"
+            else -> language
+        }
+        TranslationProvider.MICROSOFT -> when (language) {
+            "zh" -> if (traditionalChinese) "zh-Hant" else "zh-Hans"
+            else -> language
+        }
+        TranslationProvider.LIBRE_TRANSLATE, TranslationProvider.DISABLED -> language
     }
 }
