@@ -5,21 +5,29 @@ import java.io.IOException
 import java.net.InetAddress
 import java.net.ServerSocket
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.atomic.AtomicInteger
+import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertThrows
+import org.junit.Assert.assertTrue
 import org.junit.Test
+import io.github.tophtab.lspstore.data.install.DownloadRetry
+import io.github.tophtab.lspstore.data.install.HttpStatusException
 import io.github.tophtab.lspstore.data.install.contentRangeStart
 import io.github.tophtab.lspstore.data.install.contentRangeTotal
 import io.github.tophtab.lspstore.data.install.fetchResumable
 import io.github.tophtab.lspstore.data.install.resumeOffset
 
 /**
- * The store resumes paused APK downloads with `Range`. These tests cover the
- * cases that used to end in a bare "HTTP 416" error: a partial file that already
- * covers the asset, a server that refuses the range, and a 206 for the wrong
- * slice.
+ * The store resumes APK downloads with `Range`, both after an explicit pause and
+ * after a transfer dies mid-stream. These tests cover the cases that used to end
+ * in a bare "HTTP 416" error (a partial file that already covers the asset, a
+ * server that refuses the range, a 206 for the wrong slice) and the retry path
+ * that a dropped Wi-Fi connection now takes: the next request asks only for the
+ * tail that never arrived.
  */
 class ResumableFetchTest {
 
@@ -27,10 +35,15 @@ class ResumableFetchTest {
 
     private val payload = ByteArray(250) { (it % 251).toByte() }
 
+    /** Retries without waiting; the policy's timing is tested separately. */
+    private val fastRetry = DownloadRetry(sleep = {})
+
     private data class Response(
         val code: Int,
         val body: ByteArray? = null,
         val headers: Map<String, String> = emptyMap(),
+        /** Advertise the full body but write only this many bytes, then close. */
+        val truncateAt: Int? = null,
     )
 
     /**
@@ -88,7 +101,9 @@ class ResumableFetchTest {
             }
             val output = client.getOutputStream()
             output.write(headers.toByteArray())
-            response.body?.let { output.write(it) }
+            response.body?.let { body ->
+                output.write(body, 0, response.truncateAt?.coerceAtMost(body.size) ?: body.size)
+            }
             output.flush()
         }
 
@@ -104,23 +119,27 @@ class ResumableFetchTest {
         return File(dir, name).apply { writeBytes(prefix) }
     }
 
-    private fun download(
+    private suspend fun download(
         server: TestServer,
         target: File,
         expectedSize: Long = payload.size.toLong(),
+        retry: DownloadRetry = fastRetry,
     ): Pair<Long, List<Pair<Long, Long>>> {
         val progress = mutableListOf<Pair<Long, Long>>()
-        val serverSize = fetchResumable(client, server.url, target, target.length(), expectedSize) {
-                downloaded,
-                total,
-            ->
-            progress += downloaded to total
-        }
+        val serverSize = fetchResumable(
+            client = client,
+            url = server.url,
+            target = target,
+            resumeFrom = target.length(),
+            expectedSize = expectedSize,
+            onProgress = { downloaded, total -> progress += downloaded to total },
+            retry = retry,
+        )
         return serverSize to progress
     }
 
     @Test
-    fun resumesFromPartialFileWhenServerHonoursTheRange() {
+    fun resumesFromPartialFileWhenServerHonoursTheRange() = runBlocking {
         TestServer { range ->
             if (range == "bytes=100-") {
                 Response(
@@ -145,7 +164,7 @@ class ResumableFetchTest {
     }
 
     @Test
-    fun completePartialFileIsNotResumedWithAnEmptyRange() {
+    fun completePartialFileIsNotResumedWithAnEmptyRange() = runBlocking {
         TestServer { range ->
             if (range != null) {
                 Response(416, null, mapOf("Content-Range" to "bytes */250"))
@@ -163,7 +182,7 @@ class ResumableFetchTest {
     }
 
     @Test
-    fun partialFilePastTheExpectedSizeRestartsFromZero() {
+    fun partialFilePastTheExpectedSizeRestartsFromZero() = runBlocking {
         TestServer { range ->
             if (range != null) {
                 Response(416, null, mapOf("Content-Range" to "bytes */250"))
@@ -180,7 +199,7 @@ class ResumableFetchTest {
     }
 
     @Test
-    fun rangeRejectedWith416FallsBackToAFreshRequest() {
+    fun rangeRejectedWith416FallsBackToAFreshRequest() = runBlocking {
         TestServer { range ->
             if (range != null) {
                 Response(416)
@@ -197,7 +216,7 @@ class ResumableFetchTest {
     }
 
     @Test
-    fun ignoredRangeTruncatesThePartialFile() {
+    fun ignoredRangeTruncatesThePartialFile() = runBlocking {
         TestServer { _ -> Response(200, payload) }.use { server ->
             val target = tempFile("ignored.apk", payload.copyOfRange(0, 100))
             val (serverSize, _) = download(server, target)
@@ -209,7 +228,7 @@ class ResumableFetchTest {
     }
 
     @Test
-    fun partialContentStartingElsewhereIsDiscarded() {
+    fun partialContentStartingElsewhereIsDiscarded() = runBlocking {
         TestServer { range ->
             if (range != null) {
                 Response(206, payload, mapOf("Content-Range" to "bytes 0-249/250"))
@@ -222,6 +241,96 @@ class ResumableFetchTest {
 
             assertArrayEquals(payload, target.readBytes())
             assertEquals(listOf("bytes=100-", null), server.ranges)
+        }
+    }
+
+    @Test
+    fun droppedConnectionResumesFromTheBytesAlreadyWritten() = runBlocking {
+        TestServer { range ->
+            if (range == "bytes=100-") {
+                Response(
+                    206,
+                    payload.copyOfRange(100, payload.size),
+                    mapOf("Content-Range" to "bytes 100-249/250"),
+                )
+            } else {
+                // The Wi-Fi drops after 100 of the 250 advertised bytes.
+                Response(200, payload, truncateAt = 100)
+            }
+        }.use { server ->
+            val target = tempFile("dropped.apk")
+            val (serverSize, progress) = download(server, target)
+
+            assertArrayEquals(payload, target.readBytes())
+            assertEquals(listOf(null, "bytes=100-"), server.ranges)
+            // The retry reports the bytes already on disk instead of restarting
+            // the progress bar at zero.
+            assertTrue(progress.contains(100L to 250L))
+            assertEquals(250L to 250L, progress.last())
+            assertEquals(250L, serverSize)
+        }
+    }
+
+    @Test
+    fun serverErrorIsRetried() = runBlocking {
+        val calls = AtomicInteger()
+        TestServer {
+            if (calls.getAndIncrement() < 2) Response(503) else Response(200, payload)
+        }.use { server ->
+            val target = tempFile("retry.apk")
+            download(server, target)
+
+            assertArrayEquals(payload, target.readBytes())
+            assertEquals(3, server.ranges.size)
+        }
+    }
+
+    @Test
+    fun clientErrorIsNotRetried() = runBlocking {
+        TestServer { Response(404) }.use { server ->
+            val target = tempFile("gone.apk")
+            val error = assertThrows(HttpStatusException::class.java) {
+                runBlocking { download(server, target) }
+            }
+
+            assertEquals(404, error.code)
+            assertEquals(1, server.ranges.size)
+        }
+    }
+
+    @Test
+    fun retriesStopAtTheAttemptLimitAndKeepThePartialFile() = runBlocking {
+        TestServer { range ->
+            val start = range
+                ?.substringAfter("bytes=")
+                ?.substringBefore('-')
+                ?.toIntOrNull() ?: 0
+            if (start == 0) {
+                Response(200, payload, truncateAt = 100)
+            } else {
+                // Each resume gets 25 more bytes and then the connection dies.
+                Response(
+                    206,
+                    payload.copyOfRange(start, payload.size),
+                    mapOf("Content-Range" to "bytes $start-249/250"),
+                    truncateAt = 25,
+                )
+            }
+        }.use { server ->
+            val target = tempFile("exhausted.apk")
+            assertThrows(IOException::class.java) {
+                runBlocking { download(server, target) }
+            }
+
+            // Four attempts: the initial one plus three retries.
+            assertEquals(4, server.ranges.size)
+            assertEquals(
+                listOf(null, "bytes=100-", "bytes=125-", "bytes=150-"),
+                server.ranges,
+            )
+            // The bytes are kept for the user's next attempt instead of being
+            // thrown away, so that retry only fetches the missing tail.
+            assertEquals(175L, target.length())
         }
     }
 

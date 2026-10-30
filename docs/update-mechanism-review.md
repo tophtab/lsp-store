@@ -225,7 +225,7 @@ curl -sS "https://backup.modules.lsposed.org/modules.json"
 
 已做对的部分：
 
-- 资产缓存键包含下载身份，避免同名覆盖；Range 断点续传；镜像回退到 GitHub asset；前台下载服务。
+- 资产缓存键包含下载身份，避免同名覆盖；Range 断点续传（传输中断会重试，断网时等待网络恢复，并从已落盘字节继续；进程被杀后同样续传）；镜像回退到 GitHub asset；前台下载服务。
 - 变体解析器有评分/探针/记忆签名，后台不静默选歧义项；ABI 启发式；串行安装；pending 状态；root 静默安装。
 - `ApkGate` 只拒绝“完全跑不起来”的包（minSdk/ABI/API/非 APK）。
 
