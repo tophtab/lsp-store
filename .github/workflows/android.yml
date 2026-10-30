@@ -36,9 +36,15 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Pull requests: compile and test everything, but never in the same job as the
-  # signing key or a write token. Secrets are only referenced by the `build` job
-  # below, so a PR (fork or not) can never reach them.
+  # Pull requests: lint and unit tests, but never in the same job as the signing
+  # key or a write token. Secrets are only referenced by the `build` job below,
+  # so a PR (fork or not) can never reach them.
+  #
+  # No APK is assembled here on purpose. The unsigned debug and release builds
+  # were never consumed by anything, and R8 alone cost ~95s per PR; the signed
+  # release that ships is built and verified by `build` on the push that follows.
+  # A release-only failure (R8/proguard keep rules) therefore surfaces on master
+  # after the merge instead of on the PR.
   checks:
     if: github.event_name == 'pull_request'
     # Pinned instead of ubuntu-latest: the preinstalled SDK, cmdline-tools and JDK
@@ -61,18 +67,14 @@ jobs:
           packages: 'platforms;android-37.1 build-tools;36.0.0'
           log-accepted-android-sdk-licenses: false
       - uses: gradle/actions/setup-gradle@v4
-      # One invocation on purpose. Split into two calls, lint analysis (~90s) and
-      # the R8 run (~95s) ran strictly one after the other; in a single build
-      # Gradle overlaps them across its workers at no extra runner cost. The
-      # price is failure ordering: a lint or test failure is no longer reliably
-      # reported before R8 starts.
-      - name: Lint, unit tests and both APKs
+      # One invocation on purpose: lint analysis and the unit-test compile share
+      # configuration and dependency resolution, so Gradle overlaps them rather
+      # than paying for both separately.
+      - name: Lint and unit tests
         run: >-
           ./gradlew
           :app:lintDebug
           :app:testDebugUnitTest
-          :app:assembleDebug
-          :app:assembleRelease
           --stacktrace
 
   # Every push, plus manual builds: one job that produces *one* signed APK and

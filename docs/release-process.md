@@ -130,9 +130,9 @@ master push 产出的包**就是**该提交将来发版用的那个 APK（打 ta
    建 GitHub Release（APK + `SHA256SUMS`）→ 若配置了 `XPOSED_REPO_TOKEN`，再往组织仓库
    发一份 `versionCode-versionName` 的 release（先建 draft、传完 APK 再发布，否则索引
    bot 看不到，见「坑」）。tag 与 APK 的 `versionName` 必须一致，否则任务在发布前失败。
-   PR 走独立的 `checks` 任务：全量 `lintDebug`（含所有 warning）、单测、debug 包、
-   release 编译检查，碰不到签名密钥；只改文档、`docs/`、`assets/`、`module-repo/`、
-   `release-notes/` 的提交不触发构建（tag push 不受路径过滤影响，发版照常）。
+   PR 走独立的 `checks` 任务：全量 `lintDebug`（含所有 warning）和单测，不产 APK，
+   碰不到签名密钥；只改文档、`docs/`、`assets/`、`module-repo/`、`release-notes/` 的
+   提交不触发构建（tag push 不受路径过滤影响，发版照常）。
 
    **push 上不单独跑全量 lint**，只靠 `assembleRelease` 里的 `lintVitalRelease`：
    `app/build.gradle.kts` 把 `MissingTranslation` / `ExtraTranslation` 从 error 提升成了

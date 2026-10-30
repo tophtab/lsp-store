@@ -16,8 +16,9 @@ it straight to `master`.
 
    `Fixes`, `Closes` and `Resolves` all work. One keyword per issue; the merge
    commit then shows "closed this as completed in #<pr>".
-3. Let the `checks` workflow pass: full `lintDebug` (warnings included), unit
-   tests, debug build and release compile. A master push only runs `lintVital`.
+3. Let the `checks` workflow pass: full `lintDebug` (warnings included) and unit
+   tests. A PR builds no APK; the master push that follows builds and signs the
+   release, with `lintVital` as its only lint gate.
 4. Merge with **Squash and merge**. The PR body keeps the keyword even when the
    squash commit message is rewritten.
 5. If the issue needs a released build before it can be verified, still merge the

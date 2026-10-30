@@ -58,8 +58,9 @@ android {
 
     buildTypes {
         release {
-            // Without KEYSTORE_FILE the APK stays unsigned (CI uses that to compile-
-            // check release builds); publishing jobs verify the signature separately.
+            // Without KEYSTORE_FILE the APK stays unsigned, so a local
+            // `assembleRelease` works without the release key; publishing jobs
+            // verify the signature separately.
             signingConfig = if (System.getenv("KEYSTORE_FILE").isNullOrEmpty()) {
                 null
             } else {
