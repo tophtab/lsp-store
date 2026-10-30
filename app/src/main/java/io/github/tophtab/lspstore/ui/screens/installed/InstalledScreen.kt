@@ -167,7 +167,10 @@ fun InstalledScreen(
     // only then fall back to the first segment.
     var selected by rememberSaveable { mutableIntStateOf(0) }
     LaunchedEffect(segments.size) {
-        if (selected > segments.lastIndex) selected = 0
+        // While the data is still loading there is no segment to validate
+        // against; resetting on the empty list would wipe the restored choice
+        // before the lists arrive.
+        if (segments.isNotEmpty() && selected > segments.lastIndex) selected = 0
     }
     val selectedIndex = selected.coerceIn(0, (segments.size - 1).coerceAtLeast(0))
 
