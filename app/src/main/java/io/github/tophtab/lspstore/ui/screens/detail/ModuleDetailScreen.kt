@@ -31,7 +31,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
@@ -67,6 +69,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -148,6 +151,13 @@ fun ModuleDetailScreen(packageName: String, onBack: () -> Unit, onOpenAuthor: (S
     val context = LocalContext.current
     val uriHandler = LocalUriHandler.current
     var menuOpen by remember { mutableStateOf(false) }
+    val listState = rememberLazyListState()
+    // komi's detail bar keeps the title empty while the hero is on screen, since
+    // the module identity is in the hero. Once the hero scrolls away the bar
+    // takes the name over, so the page never loses its context.
+    val heroScrolledAway by remember {
+        derivedStateOf { listState.firstVisibleItemIndex > 0 }
+    }
     val shareTitle = stringResource(R.string.detail_share_module)
     val installedPackage = state.installed?.packageName ?: packageName
     val sourceUrl = state.detail?.sourceUrl ?: state.detail?.module?.url
@@ -161,11 +171,15 @@ fun ModuleDetailScreen(packageName: String, onBack: () -> Unit, onOpenAuthor: (S
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            // komi's detail bar keeps the title empty; the module identity lives
-            // in the hero below. A single action plus the overflow menu mirrors
-            // KomiActionRow(maxVisible = 1).
+            // komi's detail bar keeps the title empty while the hero is visible;
+            // the module identity lives in the hero below. A single action plus
+            // the overflow menu mirrors KomiActionRow(maxVisible = 1).
             KomiTopBar(
-                title = "",
+                title = if (heroScrolledAway) {
+                    state.detail?.module?.title.orEmpty()
+                } else {
+                    ""
+                },
                 onBack = onBack,
                 backContentDescription = stringResource(R.string.action_back),
                 actions = {
@@ -200,6 +214,7 @@ fun ModuleDetailScreen(packageName: String, onBack: () -> Unit, onOpenAuthor: (S
                 DetailContent(
                     state = state,
                     detail = detail,
+                    listState = listState,
                     onInstallLatest = viewModel::installLatest,
                     onInstallAsset = viewModel::installAsset,
                     onProbeAssets = viewModel::probeRelease,
@@ -358,6 +373,7 @@ private fun ActionSheetRow(
 private fun DetailContent(
     state: ModuleDetailUiState,
     detail: ModuleDetail,
+    listState: LazyListState,
     onInstallLatest: () -> Unit,
     onInstallAsset: (ReleaseAsset) -> Unit,
     onProbeAssets: (Release) -> Unit,
@@ -426,6 +442,7 @@ private fun DetailContent(
     val notes = currentRelease?.descriptionHtml?.takeIf { it.isNotBlank() }
 
     LazyColumn(
+        state = listState,
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp),

@@ -43,7 +43,6 @@ fun AuthorScreen(author: String, onBack: () -> Unit, onOpenModule: (String) -> U
         topBar = {
             KomiTopBar(
                 title = state.author,
-                subtitle = stringResource(R.string.detail_contributors),
                 onBack = onBack,
                 backContentDescription = stringResource(R.string.action_back),
             )
