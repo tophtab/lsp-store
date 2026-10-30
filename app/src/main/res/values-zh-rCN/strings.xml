@@ -59,7 +59,6 @@
     <string name="installed_update_all">全部更新</string>
     <string name="installed_update_all_count">全部更新(%1$d)</string>
     <string name="installed_version_arrow">%1$s -&gt; %2$s</string>
-    <string name="installed_batch_progress">%1$d/%2$d：%3$s</string>
     <string name="installed_all_updated">全部模块更新完成</string>
     <string name="installed_finished_failures">失败：%1$d</string>
     <string name="installed_batch_installer_busy">安装器仍处于打开状态，已跳过 %1$d 个更新</string>
@@ -73,6 +72,7 @@
     <string name="detail_stable">稳定版</string>
     <string name="detail_downloading">下载中…</string>
     <string name="detail_installing">安装中…</string>
+    <string name="detail_queued">等待中…</string>
     <string name="detail_pre_releases">预发布版</string>
     <string name="installed_ignore_update">永久忽略更新</string>
     <string name="installed_unignore_update">恢复更新检查</string>
@@ -151,6 +151,9 @@
     <string name="import_pick_module">选择仓库模块</string>
     <string name="import_search_hint">搜索模块</string>
     <string name="import_load_failed">加载模块失败</string>
+    <string name="settings_downloads">下载</string>
+    <string name="settings_max_downloads">同时下载数</string>
+    <string name="settings_max_downloads_desc">同时下载的 APK 数量。安装仍逐个进行。</string>
     <string name="settings_storage">存储</string>
     <string name="settings_downloaded">已下载的 APK：%1$s</string>
     <string name="settings_clear_index">清除模块索引缓存</string>
@@ -228,6 +231,7 @@
     <string name="variant_not_applicable">此设备不可用</string>
     <string name="variant_not_module">此 APK 不是 Xposed 模块</string>
     <string name="installed_finished_skipped">%1$d 个模块需要选择变体，请打开它们进行更新</string>
+    <string name="installed_finished_cancelled">已取消: %1$d</string>
     <string name="variant_picker_subtitle">该版本包含多个 APK。</string>
     <string name="settings_root_unavailable_msg">此设备没有 root (su)</string>
 
@@ -277,6 +281,15 @@
     <string name="installer_silent_failed">静默安装失败（su）</string>
     <string name="settings_translation_https_note">LibreTranslate 端点请使用 HTTPS 地址。</string>
     <string name="installed_batch_cancelled">已取消批量更新</string>
+    <string name="installed_batch_stop">停止 %1$d/%2$d</string>
+    <string name="installed_state_queued">等待中</string>
+    <string name="installed_state_preparing">准备中</string>
+    <string name="installed_state_waiting">等待安装</string>
+    <string name="installed_state_installing">安装中</string>
+    <string name="installed_state_done">已更新</string>
+    <string name="installed_state_failed">失败</string>
+    <string name="installed_cancel_download">取消下载</string>
+    <string name="installed_retry_update">重试更新</string>
     <string name="error_network">网络不可用，请检查网络连接</string>
     <string name="error_timeout">请求超时</string>
     <string name="error_http">服务器错误（%1$d）</string>

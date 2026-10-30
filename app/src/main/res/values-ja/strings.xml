@@ -46,8 +46,16 @@
     <string name="installed_update_all">すべて更新</string>
     <string name="installed_update_all_count">すべて更新 (%1$d)</string>
     <string name="installed_version_arrow">%1$s -&gt; %2$s</string>
-    <string name="installed_batch_progress">%1$d/%2$d: %3$s</string>
     <string name="installed_batch_cancelled">バッチ更新がキャンセルされました</string>
+    <string name="installed_batch_stop">停止 %1$d/%2$d</string>
+    <string name="installed_state_queued">待機中</string>
+    <string name="installed_state_preparing">準備中</string>
+    <string name="installed_state_waiting">導入待ち</string>
+    <string name="installed_state_installing">インストール中</string>
+    <string name="installed_state_done">更新済み</string>
+    <string name="installed_state_failed">失敗</string>
+    <string name="installed_cancel_download">ダウンロードをキャンセル</string>
+    <string name="installed_retry_update">更新を再試行</string>
     <string name="installed_all_updated">すべてのモジュールが正常に更新されました</string>
     <string name="installed_finished_failures">失敗: %1$d</string>
     <string name="installed_batch_installer_busy">インストーラーはまだ開いていますが、%1$d 個のアップデートがスキップされました</string>
@@ -61,6 +69,7 @@
     <string name="detail_stable">安定版</string>
     <string name="detail_downloading">ダウンロード中…</string>
     <string name="detail_installing">インストール中…</string>
+    <string name="detail_queued">待機中…</string>
     <string name="detail_pre_releases">プレリリース</string>
     <string name="installed_ignore_update">更新を無視する</string>
     <string name="installed_unignore_update">更新を無視する</string>
@@ -136,6 +145,9 @@
     <string name="import_pick_module">リポジトリモジュールを選択してください</string>
     <string name="import_search_hint">検索モジュール</string>
     <string name="import_load_failed">モジュールのロードに失敗しました</string>
+    <string name="settings_downloads">ダウンロード</string>
+    <string name="settings_max_downloads">同時ダウンロード数</string>
+    <string name="settings_max_downloads_desc">同時にダウンロードする APK の数。インストールは 1 件ずつ行われます。</string>
     <string name="settings_storage">ストレージ</string>
     <string name="settings_downloaded">ダウンロードしたAPK: %1$s</string>
     <string name="settings_clear_index">モジュールインデックスのキャッシュを削除</string>
@@ -208,6 +220,7 @@
     <string name="variant_not_applicable">このデバイスでは利用できません</string>
     <string name="variant_not_module">この APK は Xowned モジュールではありません</string>
     <string name="installed_finished_skipped">%1$d モジュールにはバリアントの選択が必要です - モジュールを開いて更新します</string>
+    <string name="installed_finished_cancelled">キャンセル: %1$d</string>
     <string name="settings_root_unavailable_msg">このデバイスではルート (su) を使用できません</string>
     <string name="onboarding_welcome_title">LSP Storeへようこそ</string>
     <string name="onboarding_welcome_body">LSPosed モジュール リポジトリを参照し、モジュールをインストールし、デバイス上にすでにあるモジュールを最新の状態に保ちます。すべてがオープンソースであり、モジュールデータは modules.lsused.org から取得されます。</string>

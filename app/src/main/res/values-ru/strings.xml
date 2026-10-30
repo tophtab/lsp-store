@@ -46,8 +46,16 @@
     <string name="installed_update_all">Обновить все</string>
     <string name="installed_update_all_count">Обновить все (%1$d)</string>
     <string name="installed_version_arrow">%1$s -&gt; %2$s</string>
-    <string name="installed_batch_progress">%1$d/%2$d: %3$s</string>
     <string name="installed_batch_cancelled">Пакетное обновление отменено</string>
+    <string name="installed_batch_stop">Остановить %1$d/%2$d</string>
+    <string name="installed_state_queued">В очереди</string>
+    <string name="installed_state_preparing">Подготовка</string>
+    <string name="installed_state_waiting">Ожидание</string>
+    <string name="installed_state_installing">Установка</string>
+    <string name="installed_state_done">Обновлено</string>
+    <string name="installed_state_failed">Ошибка</string>
+    <string name="installed_cancel_download">Отменить загрузку</string>
+    <string name="installed_retry_update">Повторить обновление</string>
     <string name="installed_all_updated">Все модули успешно обновлены</string>
     <string name="installed_finished_failures">Неудачи: %1$d</string>
     <string name="installed_batch_installer_busy">Установщик все еще открыт, %1$d обновлений пропущено</string>
@@ -61,6 +69,7 @@
     <string name="detail_stable">Стабильная</string>
     <string name="detail_downloading">Загрузка…</string>
     <string name="detail_installing">Установка…</string>
+    <string name="detail_queued">Ожидание…</string>
     <string name="detail_pre_releases">Предрелизы</string>
     <string name="installed_ignore_update">Игнорировать обновления</string>
     <string name="installed_unignore_update">Игнорировать обновления</string>
@@ -136,6 +145,9 @@
     <string name="import_pick_module">Выберите модуль репозитория</string>
     <string name="import_search_hint">Поиск модулей</string>
     <string name="import_load_failed">Не удалось загрузить модули</string>
+    <string name="settings_downloads">Загрузки</string>
+    <string name="settings_max_downloads">Одновременные загрузки</string>
+    <string name="settings_max_downloads_desc">Сколько APK скачивается одновременно. Установка по-прежнему идёт по одному.</string>
     <string name="settings_storage">Хранилище</string>
     <string name="settings_downloaded">Скачано APK: %1$s</string>
     <string name="settings_clear_index">Очистить кэш индекса модулей</string>
@@ -208,6 +220,7 @@
     <string name="variant_not_applicable">Недоступно для этого устройства</string>
     <string name="variant_not_module">Этот APK не является модулем Xposed.</string>
     <string name="installed_finished_skipped">%1$d модулям нужен выбор варианта — откройте их для обновления</string>
+    <string name="installed_finished_cancelled">Отменено: %1$d</string>
     <string name="settings_root_unavailable_msg">Root (su) недоступен на этом устройстве</string>
     <string name="onboarding_welcome_title">Добро пожаловать в LSP Store</string>
     <string name="onboarding_welcome_body">Просмотрите репозиторий модулей LSPosed, установите модули и обновляйте те, которые уже есть на вашем устройстве. Все имеет открытый исходный код, а данные модулей поступают с сайта groups.lspose.org.</string>

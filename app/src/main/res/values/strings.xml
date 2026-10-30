@@ -63,8 +63,16 @@
     <string name="installed_update_all">Update all</string>
     <string name="installed_update_all_count">Update all (%1$d)</string>
     <string name="installed_version_arrow">%1$s -&gt; %2$s</string>
-    <string name="installed_batch_progress">%1$d/%2$d: %3$s</string>
     <string name="installed_batch_cancelled">Batch update cancelled</string>
+    <string name="installed_batch_stop">Stop %1$d/%2$d</string>
+    <string name="installed_state_queued">Queued</string>
+    <string name="installed_state_preparing">Preparing</string>
+    <string name="installed_state_waiting">Waiting</string>
+    <string name="installed_state_installing">Installing</string>
+    <string name="installed_state_done">Updated</string>
+    <string name="installed_state_failed">Failed</string>
+    <string name="installed_cancel_download">Cancel download</string>
+    <string name="installed_retry_update">Retry update</string>
     <string name="installed_all_updated">All modules updated successfully</string>
     <string name="installed_finished_failures">Failures: %1$d</string>
     <string name="installed_batch_installer_busy">Installer still open, %1$d update(s) skipped</string>
@@ -78,6 +86,7 @@
     <string name="detail_stable">Stable</string>
     <string name="detail_downloading">Downloading…</string>
     <string name="detail_installing">Installing…</string>
+    <string name="detail_queued">Waiting…</string>
     <string name="detail_pre_releases">Pre-release</string>
     <string name="installed_ignore_update">Permanently ignore updates</string>
     <string name="installed_unignore_update">Resume update checks</string>
@@ -160,6 +169,9 @@
     <string name="import_pick_module">Pick a repository module</string>
     <string name="import_search_hint">Search modules</string>
     <string name="import_load_failed">Failed to load modules</string>
+    <string name="settings_downloads">Downloads</string>
+    <string name="settings_max_downloads">Concurrent downloads</string>
+    <string name="settings_max_downloads_desc">How many APKs download at once. Installs still run one at a time.</string>
     <string name="settings_storage">Storage</string>
     <string name="settings_downloaded">Downloaded APKs: %1$s</string>
     <string name="settings_clear_index">Clear module index cache</string>
@@ -242,6 +254,7 @@
     <string name="variant_not_applicable">Not available for this device</string>
     <string name="variant_not_module">This APK is not an Xposed module</string>
     <string name="installed_finished_skipped">%1$d modules need a variant choice - open them to update</string>
+    <string name="installed_finished_cancelled">Cancelled: %1$d</string>
     <string name="settings_root_unavailable_msg">Root (su) is not available on this device</string>
 
     <!-- Onboarding -->

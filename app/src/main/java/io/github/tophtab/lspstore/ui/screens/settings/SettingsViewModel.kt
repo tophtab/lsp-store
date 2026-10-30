@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import io.github.tophtab.lspstore.R
+import io.github.tophtab.lspstore.data.install.DownloadSlots
 import io.github.tophtab.lspstore.di.AppContainer
 import io.github.tophtab.lspstore.domain.model.ThemeMode
 import io.github.tophtab.lspstore.domain.model.TranslationSettings
@@ -21,6 +22,7 @@ data class SettingsUiState(
     val amoled: Boolean = false,
     val dynamicColor: Boolean = false,
     val translation: TranslationSettings = TranslationSettings(),
+    val maxConcurrentDownloads: Int = DownloadSlots.DEFAULT_LIMIT,
     val downloadsSize: Long = 0,
     val indexCacheSize: Long = 0,
     val message: String? = null,
@@ -59,6 +61,11 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
                 _state.update { it.copy(translation = settings) }
             }
         }
+        viewModelScope.launch {
+            settingsRepository.maxConcurrentDownloads.collect { value ->
+                _state.update { it.copy(maxConcurrentDownloads = value) }
+            }
+        }
     }
 
     fun saveTranslation(settings: TranslationSettings) {
@@ -75,6 +82,10 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
 
     fun setDynamicColor(enabled: Boolean) {
         viewModelScope.launch { settingsRepository.setDynamicColor(enabled) }
+    }
+
+    fun setMaxConcurrentDownloads(count: Int) {
+        viewModelScope.launch { settingsRepository.setMaxConcurrentDownloads(count) }
     }
 
     fun setRootInstall(enabled: Boolean) {

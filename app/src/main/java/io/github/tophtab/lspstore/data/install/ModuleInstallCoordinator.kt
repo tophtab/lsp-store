@@ -26,8 +26,8 @@ import io.github.tophtab.lspstore.domain.variant.VariantSignature
 import io.github.tophtab.lspstore.domain.variant.parseTraits
 import io.github.tophtab.lspstore.ui.variant.variantReasonText
 
-/** Which half of a module install is currently running. */
-enum class InstallStage { DOWNLOADING, INSTALLING }
+/** Which part of a module install is currently running. */
+enum class InstallStage { QUEUED, DOWNLOADING, INSTALLING }
 
 /**
  * One in-flight install started from a module page. Progress is published so the
@@ -36,7 +36,7 @@ enum class InstallStage { DOWNLOADING, INSTALLING }
 data class ModuleInstallRun(
     val repoPackageName: String,
     val asset: ReleaseAsset,
-    val stage: InstallStage = InstallStage.DOWNLOADING,
+    val stage: InstallStage = InstallStage.QUEUED,
     val downloaded: Long = 0L,
     val total: Long = 0L,
     /** Same mono log the module page shows under "Logs". */
@@ -74,6 +74,7 @@ class ModuleInstallCoordinator(
     private val context: Context,
     private val scope: CoroutineScope,
     private val downloadManager: DownloadManager,
+    private val downloadSlots: DownloadSlots,
     private val installer: ApkInstaller,
     private val settingsRepository: SettingsRepository,
     private val libraryRepository: LibraryRepository,
@@ -111,6 +112,9 @@ class ModuleInstallCoordinator(
             try {
                 execute(request)
             } catch (cancellation: CancellationException) {
+                // A queued run is cancelled by cancelling its job, so the run
+                // has to be removed here instead of in execute().
+                finish(request.repoPackageName, context.getString(R.string.download_cancelled))
                 throw cancellation
             } catch (error: Throwable) {
                 // Never leave a run behind: a stuck entry would disable the
@@ -129,44 +133,57 @@ class ModuleInstallCoordinator(
      */
     fun cancel(repoPackageName: String) {
         val run = _runs.value[repoPackageName] ?: return
-        if (run.stage != InstallStage.DOWNLOADING) return
-        // The awaiting coroutine observes CANCELLED and produces the message, so
-        // there is exactly one place that finishes a run.
-        downloadManager.cancel(downloadManager.keyOf(run.asset))
+        when (run.stage) {
+            // Nothing is transferring yet, so there is no download task to
+            // cancel: stopping the job releases the slot and removes the run.
+            InstallStage.QUEUED -> jobs[repoPackageName]?.cancel()
+            // The awaiting coroutine observes CANCELLED and produces the
+            // message, so there is exactly one place that finishes a run.
+            InstallStage.DOWNLOADING ->
+                downloadManager.cancel(downloadManager.keyOf(run.asset))
+
+            InstallStage.INSTALLING -> Unit
+        }
     }
 
     private suspend fun execute(request: ModuleInstallRequest) {
         val repo = request.repoPackageName
-        val key = downloadManager.keyOf(request.asset)
-        log(repo, "Downloading ${request.asset.name}")
-        downloadManager.start(request.asset)
-        val progressJob = scope.launch {
-            downloadManager.tasks.collect { tasks ->
-                tasks[key]?.let { task ->
-                    update(repo) { run ->
-                        if (run.stage == InstallStage.INSTALLING) {
-                            run
-                        } else {
-                            run.copy(
-                                stage = InstallStage.DOWNLOADING,
-                                downloaded = task.downloaded,
-                                total = if (task.total > 0L) task.total else run.total,
-                            )
+        log(repo, "Waiting for a download slot")
+        // The transfer, not the install, holds the slot: once the APK is on
+        // disk another module may start downloading while this one installs.
+        val task = downloadSlots.withSlot {
+            val key = downloadManager.keyOf(request.asset)
+            log(repo, "Downloading ${request.asset.name}")
+            update(repo) { it.copy(stage = InstallStage.DOWNLOADING) }
+            downloadManager.start(request.asset)
+            val progressJob = scope.launch {
+                downloadManager.tasks.collect { tasks ->
+                    tasks[key]?.let { task ->
+                        update(repo) { run ->
+                            if (run.stage == InstallStage.INSTALLING) {
+                                run
+                            } else {
+                                run.copy(
+                                    stage = InstallStage.DOWNLOADING,
+                                    downloaded = task.downloaded,
+                                    total = if (task.total > 0L) task.total else run.total,
+                                )
+                            }
                         }
                     }
                 }
             }
-        }
-        val task = try {
-            downloadManager.tasks
-                .mapNotNull { it[key] }
-                .first {
-                    it.status == DownloadStatus.COMPLETED ||
-                        it.status == DownloadStatus.FAILED ||
-                        it.status == DownloadStatus.CANCELLED
-                }
-        } finally {
-            progressJob.cancel()
+            try {
+                downloadManager.tasks
+                    .mapNotNull { it[key] }
+                    .first {
+                        it.status == DownloadStatus.COMPLETED ||
+                            it.status == DownloadStatus.FAILED ||
+                            it.status == DownloadStatus.CANCELLED
+                    }
+            } finally {
+                progressJob.cancel()
+            }
         }
 
         when (task.status) {

@@ -1,19 +1,41 @@
 package io.github.tophtab.lspstore.domain.usecase
 
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.cancellation.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
-import kotlinx.coroutines.sync.Semaphore
-import kotlinx.coroutines.sync.withPermit
+import io.github.tophtab.lspstore.data.install.DownloadSlots
 import io.github.tophtab.lspstore.data.install.InstallOutcome
 import io.github.tophtab.lspstore.domain.model.ReleaseAsset
 import io.github.tophtab.lspstore.domain.model.UpdateInfo
 import io.github.tophtab.lspstore.domain.variant.ModuleVariantState
 
 /** Per-module progress of a batch update. */
-enum class BatchInstallPhase { QUEUED, DOWNLOADING, WAITING_TO_INSTALL, INSTALLING, COMPLETED, FAILED, SKIPPED }
+enum class BatchInstallPhase {
+    /** Waiting for a download slot. */
+    QUEUED,
+
+    /** Resolving the release/variant; no byte progress yet. */
+    PREPARING,
+
+    /** Transferring the APK. */
+    DOWNLOADING,
+
+    /** Downloaded; waiting for the serialized install slot. */
+    WAITING_TO_INSTALL,
+
+    INSTALLING,
+    COMPLETED,
+    FAILED,
+    SKIPPED,
+
+    /** The user cancelled this module before it reached the installer. */
+    CANCELLED,
+}
 
 /** Why one module of a batch did not land. */
 enum class BatchFailureKind {
@@ -41,6 +63,13 @@ data class BatchInstallState(
     val phase: BatchInstallPhase,
     val downloaded: Long = 0L,
     val total: Long = 0L,
+    /**
+     * Whether a terminal notice (the check after an update, the failure mark)
+     * is still being shown. The row falls back to its idle Update button once
+     * this is false; the entry itself stays until the run is cleared so the
+     * batch summary can still count it.
+     */
+    val noticeVisible: Boolean = true,
 ) {
     val progress: Float
         get() = if (total <= 0L) 0f else (downloaded.toFloat() / total).coerceIn(0f, 1f)
@@ -63,13 +92,58 @@ interface ModuleInstaller {
 }
 
 /**
+ * Per-run cancellation and file cleanup for one batch.
+ *
+ * The row that shows a download is also its cancel button, so cancelling has to
+ * reach the coroutine waiting for a slot, the transfer inside DownloadManager
+ * and the file it already wrote. A cancelled target is reported as
+ * [BatchInstallPhase.CANCELLED] rather than a failure, so it never lands in the
+ * failure summary.
+ */
+class BatchInstallControl(
+    private val abandonDownload: (ReleaseAsset) -> Unit,
+) {
+    private val cancelled = ConcurrentHashMap.newKeySet<String>()
+    private val assets = ConcurrentHashMap<String, ReleaseAsset>()
+    private val jobs = ConcurrentHashMap<String, Job>()
+
+    fun cancel(packageName: String) {
+        cancelled += packageName
+        assets[packageName]?.let(abandonDownload)
+        jobs[packageName]?.cancel()
+    }
+
+    fun cancelAll() {
+        jobs.keys.toList().forEach(::cancel)
+    }
+
+    fun isCancelled(packageName: String): Boolean = packageName in cancelled
+
+    internal fun attach(packageName: String, job: Job) {
+        jobs[packageName] = job
+        if (isCancelled(packageName)) job.cancel()
+    }
+
+    internal fun detach(packageName: String, job: Job) {
+        jobs.remove(packageName, job)
+    }
+
+    internal fun assetResolved(packageName: String, asset: ReleaseAsset) {
+        assets[packageName] = asset
+        if (isCancelled(packageName)) abandonDownload(asset)
+    }
+}
+
+/**
  * Runs "update all": downloads run concurrently, installs stay serialized
  * (installer dialogs must not stack), and the install queue follows download
  * completion order rather than repository order. A slow download therefore no
  * longer holds up modules whose APKs are already on disk.
  *
- * The caller owns the UI: it receives item transitions through [onItem] and the
- * "currently installing" label through [onCurrent].
+ * Downloads take their slots from the shared [DownloadSlots], which module page
+ * installs use for their transfer too, so the maximum concurrent download
+ * setting applies app-wide. The caller owns the UI: it receives item transitions
+ * through [onItem].
  */
 class BatchInstallUseCase(
     private val prepareInstall: ModuleInstallPreparer,
@@ -77,6 +151,7 @@ class BatchInstallUseCase(
     private val awaitInstallSettled: suspend (packageName: String, timeoutMs: Long) -> Boolean,
     private val releaseInstallSlot: (packageName: String) -> Unit,
     private val abandonDownload: (asset: ReleaseAsset) -> Unit,
+    private val downloadSlots: DownloadSlots,
 ) {
 
     data class Result(
@@ -84,21 +159,26 @@ class BatchInstallUseCase(
         val installInterrupted: Boolean,
         /** Every module that did not install, in the order the failures surfaced. */
         val failures: List<BatchFailure> = emptyList(),
+        /** Installs handed to an external installer; completion arrives later. */
+        val delegated: Int = 0,
     )
+
+    /** One control per run; the UI keeps it so a row can cancel itself. */
+    fun newControl(): BatchInstallControl = BatchInstallControl(abandonDownload)
 
     suspend fun run(
         targets: List<UpdateInfo>,
+        control: BatchInstallControl,
         includePreReleases: (packageName: String) -> Boolean,
         variantStates: Map<String, ModuleVariantState>,
         isActive: () -> Boolean,
         onItem: (packageName: String, transform: (BatchInstallState) -> BatchInstallState) -> Unit,
-        onCurrent: (info: UpdateInfo, total: Int) -> Unit,
     ): Result {
-        val total = targets.size
         var installInterrupted = false
         // Downloads and installs run in different coroutines, so the collector
         // is shared: the caller gets the list only after supervisorScope joins.
         val failures = java.util.Collections.synchronizedList(mutableListOf<BatchFailure>())
+        val delegated = AtomicInteger()
         fun recordFailure(info: UpdateInfo, kind: BatchFailureKind, detail: String? = null) {
             failures += BatchFailure(
                 packageName = info.module.packageName,
@@ -110,16 +190,22 @@ class BatchInstallUseCase(
         val installQueue = Channel<PreparedInstall.Ready>(Channel.UNLIMITED)
         try {
             supervisorScope {
-                val downloadSlots = Semaphore(MAX_CONCURRENT_BATCH_DOWNLOADS)
-
                 // Single consumer: wait for the global install slot, hand the
                 // APK over, then take the next finished download.
                 val installWorker = launch {
                     for (prepared in installQueue) {
                         if (!isActive()) break
                         val packageName = prepared.info.installed.packageName
+                        // A cancel can land after the download finished and the
+                        // APK was queued: drop it instead of installing.
+                        if (control.isCancelled(packageName)) {
+                            onItem(packageName) {
+                                it.copy(phase = BatchInstallPhase.CANCELLED)
+                            }
+                            abandonDownload(prepared.asset)
+                            continue
+                        }
                         onItem(packageName) { it.copy(phase = BatchInstallPhase.INSTALLING) }
-                        onCurrent(prepared.info, total)
                         val outcome = try {
                             installPrepared.install(prepared)
                         } catch (cancellation: CancellationException) {
@@ -146,6 +232,7 @@ class BatchInstallUseCase(
                         // screen (and silently drop that update), so wait for
                         // the hand-off to resolve before dequeuing.
                         if (outcome is InstallOutcome.DelegatedToSystem) {
+                            delegated.incrementAndGet()
                             val settled = awaitInstallSettled(packageName, INSTALL_SETTLE_TIMEOUT_MS)
                             if (!settled) {
                                 // Give the slot back even though the hand-off
@@ -168,14 +255,30 @@ class BatchInstallUseCase(
                 }
 
                 val downloads = targets.map { info ->
+                    val packageName = info.module.packageName
                     launch {
-                        val packageName = info.module.packageName
+                        val self = coroutineContext[Job]
+                        if (self != null) control.attach(packageName, self)
                         var asset: ReleaseAsset? = null
                         var preparedNormally = false
                         try {
-                            downloadSlots.withPermit {
+                            if (control.isCancelled(packageName)) {
                                 onItem(packageName) {
-                                    it.copy(phase = BatchInstallPhase.DOWNLOADING)
+                                    it.copy(phase = BatchInstallPhase.CANCELLED)
+                                }
+                                return@launch
+                            }
+                            downloadSlots.withSlot {
+                                // A queued target may have been cancelled while
+                                // it waited for the slot; never start it then.
+                                if (control.isCancelled(packageName)) {
+                                    onItem(packageName) {
+                                        it.copy(phase = BatchInstallPhase.CANCELLED)
+                                    }
+                                    return@withSlot
+                                }
+                                onItem(packageName) {
+                                    it.copy(phase = BatchInstallPhase.PREPARING)
                                 }
                                 val prepared = prepareInstall.prepare(
                                     info = info,
@@ -183,13 +286,28 @@ class BatchInstallUseCase(
                                     state = variantStates[packageName]
                                         ?: variantStates[info.installed.packageName]
                                         ?: ModuleVariantState(),
-                                    onAssetResolved = { asset = it },
+                                    onAssetResolved = { resolved ->
+                                        asset = resolved
+                                        control.assetResolved(packageName, resolved)
+                                    },
                                     onProgress = { downloaded, bytes ->
                                         onItem(packageName) {
-                                            it.copy(downloaded = downloaded, total = bytes)
+                                            it.copy(
+                                                phase = BatchInstallPhase.DOWNLOADING,
+                                                downloaded = downloaded,
+                                                total = bytes,
+                                            )
                                         }
                                     },
                                 )
+                                // The cancel may have landed after the last
+                                // byte: do not queue an APK the user stopped.
+                                if (control.isCancelled(packageName)) {
+                                    onItem(packageName) {
+                                        it.copy(phase = BatchInstallPhase.CANCELLED)
+                                    }
+                                    return@withSlot
+                                }
                                 preparedNormally = true
                                 when (prepared) {
                                     is PreparedInstall.Ready -> {
@@ -203,13 +321,19 @@ class BatchInstallUseCase(
                                     }
 
                                     is PreparedInstall.Failed -> {
-                                        recordFailure(
-                                            info,
-                                            BatchFailureKind.DOWNLOAD,
-                                            prepared.message,
-                                        )
-                                        onItem(packageName) {
-                                            it.copy(phase = BatchInstallPhase.FAILED)
+                                        if (control.isCancelled(packageName)) {
+                                            onItem(packageName) {
+                                                it.copy(phase = BatchInstallPhase.CANCELLED)
+                                            }
+                                        } else {
+                                            recordFailure(
+                                                info,
+                                                BatchFailureKind.DOWNLOAD,
+                                                prepared.message,
+                                            )
+                                            onItem(packageName) {
+                                                it.copy(phase = BatchInstallPhase.FAILED)
+                                            }
                                         }
                                     }
 
@@ -219,16 +343,30 @@ class BatchInstallUseCase(
                                 }
                             }
                         } catch (cancellation: CancellationException) {
+                            if (control.isCancelled(packageName)) {
+                                onItem(packageName) {
+                                    it.copy(phase = BatchInstallPhase.CANCELLED)
+                                }
+                            }
                             throw cancellation
                         } catch (error: Throwable) {
-                            recordFailure(info, BatchFailureKind.DOWNLOAD, error.message)
-                            onItem(packageName) { it.copy(phase = BatchInstallPhase.FAILED) }
+                            if (control.isCancelled(packageName)) {
+                                onItem(packageName) {
+                                    it.copy(phase = BatchInstallPhase.CANCELLED)
+                                }
+                            } else {
+                                recordFailure(info, BatchFailureKind.DOWNLOAD, error.message)
+                                onItem(packageName) {
+                                    it.copy(phase = BatchInstallPhase.FAILED)
+                                }
+                            }
                         } finally {
                             // A cancelled batch must also stop the transfer; the
                             // actual download lives in DownloadManager's scope.
                             if (!preparedNormally) {
                                 asset?.let(abandonDownload)
                             }
+                            if (self != null) control.detach(packageName, self)
                         }
                     }
                 }
@@ -243,13 +381,11 @@ class BatchInstallUseCase(
         return Result(
             installInterrupted = installInterrupted,
             failures = synchronized(failures) { failures.toList() },
+            delegated = delegated.get(),
         )
     }
 
     companion object {
-        /** Parallel APK transfers; installs remain one-at-a-time. */
-        private const val MAX_CONCURRENT_BATCH_DOWNLOADS = 3
-
         /**
          * How long a batch waits for the external installer to finish one hand-off
          * before giving up on the rest of the queue.

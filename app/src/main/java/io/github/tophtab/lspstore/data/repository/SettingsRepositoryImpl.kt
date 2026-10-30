@@ -3,11 +3,13 @@ package io.github.tophtab.lspstore.data.repository
 import android.content.Context
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import io.github.tophtab.lspstore.data.install.DownloadSlots
 import io.github.tophtab.lspstore.domain.model.SortOrder
 import io.github.tophtab.lspstore.domain.model.ThemeMode
 import io.github.tophtab.lspstore.domain.model.TranslationProvider
@@ -25,6 +27,9 @@ interface SettingsRepository {
     val preferredMirror: Flow<String>
     val translationSettings: Flow<TranslationSettings>
 
+    /** APK transfers allowed to run at once, shared by batches and module pages. */
+    val maxConcurrentDownloads: Flow<Int>
+
     suspend fun setSortOrder(order: SortOrder)
     suspend fun setRootInstall(enabled: Boolean)
     suspend fun setThemeMode(mode: ThemeMode)
@@ -33,6 +38,7 @@ interface SettingsRepository {
     suspend fun setOnboardingComplete(complete: Boolean)
     suspend fun setTranslationSettings(settings: TranslationSettings)
     suspend fun setPreferredMirror(host: String)
+    suspend fun setMaxConcurrentDownloads(count: Int)
 }
 
 class SettingsRepositoryImpl(private val context: Context) : SettingsRepository {
@@ -52,6 +58,7 @@ class SettingsRepositoryImpl(private val context: Context) : SettingsRepository 
         val MICROSOFT_KEY = stringPreferencesKey("microsoft_key")
         val MICROSOFT_REGION = stringPreferencesKey("microsoft_region")
         val PREFERRED_MIRROR = stringPreferencesKey("preferred_mirror")
+        val MAX_CONCURRENT_DOWNLOADS = intPreferencesKey("max_concurrent_downloads")
     }
 
     override val sortOrder: Flow<SortOrder> = context.settingsDataStore.data
@@ -74,6 +81,12 @@ class SettingsRepositoryImpl(private val context: Context) : SettingsRepository 
 
     override val preferredMirror: Flow<String> = context.settingsDataStore.data
         .map { it[Keys.PREFERRED_MIRROR] ?: "" }
+
+    override val maxConcurrentDownloads: Flow<Int> = context.settingsDataStore.data
+        .map { prefs ->
+            (prefs[Keys.MAX_CONCURRENT_DOWNLOADS] ?: DownloadSlots.DEFAULT_LIMIT)
+                .coerceIn(1, DownloadSlots.MAX_LIMIT)
+        }
 
     override val translationSettings: Flow<TranslationSettings> = context.settingsDataStore.data.map { prefs ->
         TranslationSettings(
@@ -127,5 +140,11 @@ class SettingsRepositoryImpl(private val context: Context) : SettingsRepository 
 
     override suspend fun setPreferredMirror(host: String) {
         context.settingsDataStore.edit { it[Keys.PREFERRED_MIRROR] = host }
+    }
+
+    override suspend fun setMaxConcurrentDownloads(count: Int) {
+        context.settingsDataStore.edit {
+            it[Keys.MAX_CONCURRENT_DOWNLOADS] = count.coerceIn(1, DownloadSlots.MAX_LIMIT)
+        }
     }
 }

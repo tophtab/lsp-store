@@ -46,8 +46,16 @@
     <string name="installed_update_all">Aggiorna tutto</string>
     <string name="installed_update_all_count">Aggiorna tutto (%1$d)</string>
     <string name="installed_version_arrow">%1$s -&gt; %2$s</string>
-    <string name="installed_batch_progress">%1$d/%2$d: %3$s</string>
     <string name="installed_batch_cancelled">Aggiornamento batch annullato</string>
+    <string name="installed_batch_stop">Interrompi %1$d/%2$d</string>
+    <string name="installed_state_queued">In coda</string>
+    <string name="installed_state_preparing">Preparazione</string>
+    <string name="installed_state_waiting">In attesa</string>
+    <string name="installed_state_installing">Installazione</string>
+    <string name="installed_state_done">Aggiornato</string>
+    <string name="installed_state_failed">Errore</string>
+    <string name="installed_cancel_download">Annulla download</string>
+    <string name="installed_retry_update">Riprova aggiornamento</string>
     <string name="installed_all_updated">Tutti i moduli aggiornati correttamente</string>
     <string name="installed_finished_failures">Fallimenti: %1$d</string>
     <string name="installed_batch_installer_busy">Programma di installazione ancora aperto, %1$d aggiornamenti saltati</string>
@@ -61,6 +69,7 @@
     <string name="detail_stable">Stabile</string>
     <string name="detail_downloading">Download in corso…</string>
     <string name="detail_installing">Installazione…</string>
+    <string name="detail_queued">In attesa…</string>
     <string name="detail_pre_releases">Pre-release</string>
     <string name="installed_ignore_update">Ignora gli aggiornamenti</string>
     <string name="installed_unignore_update">Non ignorare gli aggiornamenti</string>
@@ -136,6 +145,9 @@
     <string name="import_pick_module">Scegli un modulo del repository</string>
     <string name="import_search_hint">Moduli di ricerca</string>
     <string name="import_load_failed">Impossibile caricare i moduli</string>
+    <string name="settings_downloads">Download</string>
+    <string name="settings_max_downloads">Download simultanei</string>
+    <string name="settings_max_downloads_desc">Quanti APK vengono scaricati contemporaneamente. Le installazioni restano una alla volta.</string>
     <string name="settings_storage">Magazzinaggio</string>
     <string name="settings_downloaded">APK scaricati: %1$s</string>
     <string name="settings_clear_index">Cancella la cache dell\'indice dei moduli</string>
@@ -208,6 +220,7 @@
     <string name="variant_not_applicable">Non disponibile per questo dispositivo</string>
     <string name="variant_not_module">Questo APK non è un modulo Xposed</string>
     <string name="installed_finished_skipped">%1$d i moduli richiedono una scelta di variante: aprili per l\'aggiornamento</string>
+    <string name="installed_finished_cancelled">Annullati: %1$d</string>
     <string name="settings_root_unavailable_msg">Root (su) non è disponibile su questo dispositivo</string>
     <string name="onboarding_welcome_title">Benvenuto in LSP Store</string>
     <string name="onboarding_welcome_body">Sfoglia il repository dei moduli LSPosed, installa i moduli e mantieni aggiornati quelli già presenti sul tuo dispositivo. Tutto è open source e i dati dei moduli provengono da modules.lsposed.org.</string>

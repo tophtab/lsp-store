@@ -46,8 +46,16 @@
     <string name="installed_update_all">Tümünü güncelle</string>
     <string name="installed_update_all_count">Tümünü güncelle (%1$d)</string>
     <string name="installed_version_arrow">%1$s -&gt; %2$s</string>
-    <string name="installed_batch_progress">%1$d/%2$d: %3$s</string>
     <string name="installed_batch_cancelled">Toplu güncelleme iptal edildi</string>
+    <string name="installed_batch_stop">Durdur %1$d/%2$d</string>
+    <string name="installed_state_queued">Sırada</string>
+    <string name="installed_state_preparing">Hazırlanıyor</string>
+    <string name="installed_state_waiting">Bekliyor</string>
+    <string name="installed_state_installing">Yükleniyor</string>
+    <string name="installed_state_done">Güncellendi</string>
+    <string name="installed_state_failed">Başarısız</string>
+    <string name="installed_cancel_download">İndirmeyi iptal et</string>
+    <string name="installed_retry_update">Güncellemeyi yeniden dene</string>
     <string name="installed_all_updated">Tüm modüller başarıyla güncellendi</string>
     <string name="installed_finished_failures">Arızalar: %1$d</string>
     <string name="installed_batch_installer_busy">Yükleyici hâlâ açık, %1$d güncelleme atlandı</string>
@@ -61,6 +69,7 @@
     <string name="detail_stable">Kararlı</string>
     <string name="detail_downloading">İndiriliyor…</string>
     <string name="detail_installing">Yükleniyor…</string>
+    <string name="detail_queued">Bekleniyor…</string>
     <string name="detail_pre_releases">Ön sürümler</string>
     <string name="installed_ignore_update">Güncellemeleri yoksay</string>
     <string name="installed_unignore_update">Güncellemeleri yoksay</string>
@@ -136,6 +145,9 @@
     <string name="import_pick_module">Bir depo modülü seçin</string>
     <string name="import_search_hint">Arama modülleri</string>
     <string name="import_load_failed">Modüller yüklenemedi</string>
+    <string name="settings_downloads">İndirmeler</string>
+    <string name="settings_max_downloads">Eşzamanlı indirmeler</string>
+    <string name="settings_max_downloads_desc">Aynı anda kaç APK indirileceği. Yükleme işlemleri sırayla yapılır.</string>
     <string name="settings_storage">Depolamak</string>
     <string name="settings_downloaded">İndirilen APK\'lar: %1$s</string>
     <string name="settings_clear_index">Modül dizini önbelleğini temizle</string>
@@ -208,6 +220,7 @@
     <string name="variant_not_applicable">Bu cihazda mevcut değil</string>
     <string name="variant_not_module">Bu APK bir Xposed modülü değil</string>
     <string name="installed_finished_skipped">%1$d modülün farklı bir seçeneğe ihtiyacı var - güncellemek için bunları açın</string>
+    <string name="installed_finished_cancelled">İptal edildi: %1$d</string>
     <string name="settings_root_unavailable_msg">Kök (su) bu cihazda mevcut değil</string>
     <string name="onboarding_welcome_title">LSP Store\'a Hoş Geldiniz</string>
     <string name="onboarding_welcome_body">LSPosed modül deposuna göz atın, modülleri yükleyin ve halihazırda cihazınızda bulunanları güncel tutun. Her şey açık kaynaktır ve modül verileri module.lsposed.org\'dan gelir.</string>
