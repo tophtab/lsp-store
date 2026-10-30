@@ -55,6 +55,6 @@ class DownloadSlots(
 
     companion object {
         const val DEFAULT_LIMIT = 3
-        const val MAX_LIMIT = 3
+        const val MAX_LIMIT = 5
     }
 }
