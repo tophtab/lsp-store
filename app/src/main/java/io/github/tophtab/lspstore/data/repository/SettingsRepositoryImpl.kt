@@ -45,13 +45,13 @@ class SettingsRepositoryImpl(private val context: Context) : SettingsRepository 
         val DYNAMIC_COLOR = booleanPreferencesKey("dynamic_color")
         val ONBOARDING_DONE = booleanPreferencesKey("onboarding_done")
         val TRANSLATION_PROVIDER = stringPreferencesKey("translation_provider")
+        val TRANSLATION_AUTO = booleanPreferencesKey("translation_auto")
         val DEEPL_KEY = stringPreferencesKey("deepl_key")
         val LIBRE_URL = stringPreferencesKey("libre_url")
         val LIBRE_KEY = stringPreferencesKey("libre_key")
         val MICROSOFT_KEY = stringPreferencesKey("microsoft_key")
         val MICROSOFT_REGION = stringPreferencesKey("microsoft_region")
         val PREFERRED_MIRROR = stringPreferencesKey("preferred_mirror")
-        val TRANSLATION_TARGET = stringPreferencesKey("translation_target")
     }
 
     override val sortOrder: Flow<SortOrder> = context.settingsDataStore.data
@@ -80,8 +80,7 @@ class SettingsRepositoryImpl(private val context: Context) : SettingsRepository 
             provider = TranslationProvider.entries
                 .firstOrNull { it.name == prefs[Keys.TRANSLATION_PROVIDER] }
                 ?: TranslationProvider.DISABLED,
-            targetLang = prefs[Keys.TRANSLATION_TARGET]
-                ?: java.util.Locale.getDefault().language.take(2),
+            autoTranslate = prefs[Keys.TRANSLATION_AUTO] ?: false,
             deeplKey = prefs[Keys.DEEPL_KEY] ?: "",
             libreUrl = prefs[Keys.LIBRE_URL] ?: "",
             libreKey = prefs[Keys.LIBRE_KEY] ?: "",
@@ -117,7 +116,7 @@ class SettingsRepositoryImpl(private val context: Context) : SettingsRepository 
     override suspend fun setTranslationSettings(settings: TranslationSettings) {
         context.settingsDataStore.edit {
             it[Keys.TRANSLATION_PROVIDER] = settings.provider.name
-            it[Keys.TRANSLATION_TARGET] = settings.targetLang
+            it[Keys.TRANSLATION_AUTO] = settings.autoTranslate
             it[Keys.DEEPL_KEY] = settings.deeplKey.trim()
             it[Keys.LIBRE_URL] = settings.libreUrl.trim()
             it[Keys.LIBRE_KEY] = settings.libreKey.trim()

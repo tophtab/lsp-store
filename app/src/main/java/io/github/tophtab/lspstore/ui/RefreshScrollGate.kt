@@ -1,17 +1,19 @@
 package io.github.tophtab.lspstore.ui
 
 /**
- * One-shot gate for "a finished refresh returns the list to the top".
+ * One-shot gate for "a completed load starts the list at the top".
  *
- * The refresh counter lives in the view model, but the scroll itself is a
- * composition effect. Leaving the list for a module page and coming back builds
- * a *new* composition, which re-launches that effect with the counter it had
- * already acted on, so a plain `tick > 0` check threw the list back to the top
- * every time a module was closed.
+ * The counter lives in the view model, but the scroll is a composition effect.
+ * Leaving the list for a module page and coming back builds a *new* composition,
+ * which re-launches that effect with the counter it already acted on, so a plain
+ * `tick > 0` check threw the list back to the top every time a module was
+ * closed.
  *
  * The gate remembers the counter value it last acted on and lives in the view
  * model, next to the counter itself, so it outlives the composition that
- * consumed it: only a refresh that finishes while the screen is around counts.
+ * consumed it. A load that finishes while the user is on a module page is handed
+ * out when the list returns: that load produced a new dataset, and the top is
+ * where it starts.
  */
 class RefreshScrollGate {
 

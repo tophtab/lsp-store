@@ -10,7 +10,11 @@ enum class TranslationProvider {
 
 data class TranslationSettings(
     val provider: TranslationProvider = TranslationProvider.DISABLED,
-    val targetLang: String = "en",
+    /**
+     * Translate a module description automatically when its page opens. The
+     * target is always the app language, so there is no target setting.
+     */
+    val autoTranslate: Boolean = false,
     val deeplKey: String = "",
     val libreUrl: String = "",
     val libreKey: String = "",

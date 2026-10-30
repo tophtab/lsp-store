@@ -73,7 +73,7 @@ fun SettingsScreen(
     var translationExpanded by remember { mutableStateOf(false) }
 
     var provider by remember(state.translation.provider) { mutableStateOf(state.translation.provider) }
-    var targetLang by remember(state.translation.targetLang) { mutableStateOf(state.translation.targetLang) }
+    var autoTranslate by remember(state.translation.autoTranslate) { mutableStateOf(state.translation.autoTranslate) }
     var deeplKey by remember(state.translation.deeplKey) { mutableStateOf(state.translation.deeplKey) }
     var libreUrl by remember(state.translation.libreUrl) { mutableStateOf(state.translation.libreUrl) }
     var libreKey by remember(state.translation.libreKey) { mutableStateOf(state.translation.libreKey) }
@@ -83,7 +83,7 @@ fun SettingsScreen(
     fun saveTranslation() = viewModel.saveTranslation(
         TranslationSettings(
             provider = provider,
-            targetLang = targetLang,
+            autoTranslate = autoTranslate,
             deeplKey = deeplKey,
             libreUrl = libreUrl,
             libreKey = libreKey,
@@ -107,10 +107,7 @@ fun SettingsScreen(
         containerColor = MaterialTheme.colorScheme.background,
         contentWindowInsets = topContentWindowInsets(),
         topBar = {
-            KomiTopBar(
-                title = stringResource(R.string.nav_settings),
-                subtitle = stringResource(R.string.settings_masthead_subtitle),
-            )
+            KomiTopBar(title = stringResource(R.string.nav_settings))
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { innerPadding ->
@@ -174,7 +171,7 @@ fun SettingsScreen(
                         subtitle = stringResource(provider.labelRes()),
                         expanded = translationExpanded,
                         onToggle = { translationExpanded = !translationExpanded },
-                        last = true,
+                        last = provider == TranslationProvider.DISABLED,
                     ) {
                         Column(
                             modifier = Modifier.fillMaxWidth(),
@@ -195,13 +192,6 @@ fun SettingsScreen(
                                     )
                                 }
                             }
-                            KomiTextField(
-                                value = targetLang,
-                                onValueChange = { targetLang = it.take(5) },
-                                label = stringResource(R.string.settings_translation_target),
-                                singleLine = true,
-                                modifier = Modifier.fillMaxWidth(),
-                            )
                             when (provider) {
                                 TranslationProvider.GOOGLE -> KomiText(
                                     text = stringResource(R.string.settings_translation_note),
@@ -267,6 +257,21 @@ fun SettingsScreen(
                                 )
                             }
                         }
+                    }
+                    // The target follows the app language, so there is no target
+                    // field; the only translation choice left is whether a module
+                    // page translates itself.
+                    if (provider != TranslationProvider.DISABLED) {
+                        KomiSettingsSwitchRow(
+                            title = stringResource(R.string.settings_translation_auto),
+                            subtitle = stringResource(R.string.settings_translation_auto_desc),
+                            checked = autoTranslate,
+                            onCheckedChange = {
+                                autoTranslate = it
+                                saveTranslation()
+                            },
+                            last = true,
+                        )
                     }
                 }
 

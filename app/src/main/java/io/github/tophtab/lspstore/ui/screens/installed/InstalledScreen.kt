@@ -55,6 +55,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -122,7 +123,18 @@ fun InstalledScreen(
         }
     }
 
-    var query by remember { mutableStateOf("") }
+    var query by rememberSaveable { mutableStateOf("") }
+    // The query the list was last reset for. Saveable for the same reason as the
+    // query: coming back from a module page restores both as a matching pair, so
+    // the restored query is not mistaken for an edit and the list keeps the
+    // position the user left.
+    var settledQuery by rememberSaveable { mutableStateOf(query) }
+    LaunchedEffect(query) {
+        if (query != settledQuery) {
+            settledQuery = query
+            listState.scrollToItem(0)
+        }
+    }
     fun InstalledModule.matches() = query.isBlank() ||
         label.contains(query, ignoreCase = true) || packageName.contains(query, ignoreCase = true)
     fun matchUpdate(info: UpdateInfo) = query.isBlank() ||
@@ -149,10 +161,29 @@ fun InstalledScreen(
             add(KomiSegment(stringResource(R.string.installed_section_unknown, unknown.size)))
         }
     }
-    var selected by remember(repositoryCount, unknown.size) {
-        mutableIntStateOf(0)
+    // The segment choice decides which list the restored offset belongs to, so
+    // it has to survive the trip to a module page (and a process death) just
+    // like the offset does. A query can make the unknown segment disappear;
+    // only then fall back to the first segment.
+    var selected by rememberSaveable { mutableIntStateOf(0) }
+    LaunchedEffect(segments.size) {
+        // While the data is still loading there is no segment to validate
+        // against; resetting on the empty list would wipe the restored choice
+        // before the lists arrive.
+        if (segments.isNotEmpty() && selected > segments.lastIndex) selected = 0
     }
     val selectedIndex = selected.coerceIn(0, (segments.size - 1).coerceAtLeast(0))
+
+    // Changing segments shows a different list, so start it at the top. The
+    // sentinel is saveable so returning from a module page (same segment, fresh
+    // composition) keeps the position instead.
+    var settledSegment by rememberSaveable { mutableIntStateOf(selected) }
+    LaunchedEffect(selected) {
+        if (selected != settledSegment) {
+            settledSegment = selected
+            listState.scrollToItem(0)
+        }
+    }
 
     var nextIndex = 0
     val repositoryIndex = if (repositoryCount > 0) nextIndex++ else -1
@@ -173,10 +204,12 @@ fun InstalledScreen(
         }
     }
 
-    // A finished refresh returns to the top (newest updates first). The startup
-    // refresh counts too, so opening the app always lands at the top instead of
-    // wherever the list was left last time. The view model hands that scroll out
-    // once per refresh, so coming back from a module page keeps the position.
+    // A completed load is a new dataset, so the list starts at its first item
+    // instead of keeping an offset that belonged to the old data. The first
+    // load of the process counts too. The view model hands that scroll out once
+    // per load; returning from a module page with the same tick does not replay
+    // it. If a load finishes while the user is on a module page, the new
+    // dataset is shown from the top when the list returns.
     LaunchedEffect(state.refreshTick) {
         if (!viewModel.consumeRefreshScroll()) return@LaunchedEffect
         if (segments.isNotEmpty()) listState.animateScrollToItem(0)

@@ -32,14 +32,12 @@
     <string name="home_section_most_starred">Самые популярные</string>
     <string name="home_browse_all">Просмотреть все модули</string>
     <string name="home_load_failed">Не удалось загрузить модули</string>
-    <string name="home_masthead_subtitle">Индекс модуля LSPosed</string>
     <string name="search_placeholder">Поиск модулей: %1$d</string>
     <string name="search_favourites">Избранное</string>
     <string name="search_recent">Недавние поиски</string>
     <string name="search_empty">Нет модулей, соответствующих вашему запросу.</string>
     <string name="search_count">Найдено модулей: %1$d</string>
     <string name="installed_empty">На этом устройстве не обнаружено модулей LSPosed.</string>
-    <string name="installed_masthead_subtitle">%1$d Установлены модули LSPosed</string>
     <string name="installed_search_hint">Поиск установленных модулей</string>
     <string name="installed_section_updates">Обновления (%1$d)</string>
     <string name="installed_section_up_to_date">В репозитории (%1$d)</string>
@@ -114,7 +112,6 @@
     <string name="library_skipped_latest">, последний %1$s</string>
     <string name="library_ignored_module">Проверка обновлений отключена</string>
     <string name="library_load_failed">Не удалось загрузить</string>
-    <string name="settings_masthead_subtitle">Предпочтения</string>
     <string name="settings_appearance">Появление</string>
     <string name="settings_theme">Тема</string>
     <string name="settings_amoled">AMOLED черный</string>
@@ -178,7 +175,8 @@
     <string name="mirror_latency">%1$d мс</string>
     <string name="settings_translation">Перевод</string>
     <string name="settings_translation_provider">Поставщик переводов</string>
-    <string name="settings_translation_target">Целевой язык</string>
+    <string name="settings_translation_auto">Автоперевод</string>
+    <string name="settings_translation_auto_desc">Автоматически переводить описание модуля при открытии его страницы.</string>
     <string name="translation_disabled">Отключено</string>
     <string name="settings_translation_deepl_key">Ключ авторизации DeepL</string>
     <string name="settings_translation_libre_url">URL-адрес LibreTranslate</string>

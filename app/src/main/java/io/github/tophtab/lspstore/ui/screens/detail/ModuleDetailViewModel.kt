@@ -107,6 +107,7 @@ class ModuleDetailViewModel(
     private val installer = container.installer
     private val coordinator = container.moduleInstallCoordinator
     private val translationRepository = container.translationRepository
+    private val settingsRepository = container.settingsRepository
 
     private val _state = MutableStateFlow(ModuleDetailUiState())
     val state = _state.asStateFlow()
@@ -233,6 +234,7 @@ class ModuleDetailViewModel(
                 }
                 updatePendingState()
                 libraryRepository.addRecentlyViewed(packageName)
+                maybeAutoTranslate()
             }.onFailure { error ->
                 _state.update {
                     it.copy(
@@ -411,6 +413,22 @@ class ModuleDetailViewModel(
                     }
                     _state.update { it.copy(isTranslating = false, message = message) }
                 }
+        }
+    }
+
+    /**
+     * Opt-in auto translation of the description, Komi-style. The target is the
+     * app language, so there is nothing else to read from settings. A provider
+     * that is disabled or not configured is skipped silently instead of showing
+     * a failure every time a module page opens.
+     */
+    private fun maybeAutoTranslate() {
+        val summary = _state.value.detail?.module?.summary
+        if (summary.isNullOrBlank() || _state.value.translatedSummary != null) return
+        viewModelScope.launch {
+            val settings = settingsRepository.translationSettings.first()
+            if (!settings.autoTranslate || !settings.isConfigured) return@launch
+            translateSummary()
         }
     }
 

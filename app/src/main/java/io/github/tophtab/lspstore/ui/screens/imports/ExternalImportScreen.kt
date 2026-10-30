@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -202,6 +203,13 @@ private fun ModulePickerDialog(
     onSelect: (String) -> Unit,
     onDismiss: () -> Unit,
 ) {
+    val listState = rememberLazyListState()
+    // The picker is a search list too: a new query replaces the rows, and the
+    // previous offset would show the filtered hits halfway down (or past the
+    // end). The dialog is transient, so the state does not need saving.
+    LaunchedEffect(state.pickerQuery) {
+        listState.scrollToItem(0)
+    }
     Dialog(onDismissRequest = onDismiss) {
         KomiSurface(
             modifier = Modifier.fillMaxWidth(),
@@ -224,6 +232,7 @@ private fun ModulePickerDialog(
                 )
                 Spacer(Modifier.height(10.dp))
                 LazyColumn(
+                    state = listState,
                     modifier = Modifier.height(320.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {

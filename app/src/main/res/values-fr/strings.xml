@@ -32,14 +32,12 @@
     <string name="home_section_most_starred">Les plus étoilés</string>
     <string name="home_browse_all">Parcourez tous les modules</string>
     <string name="home_load_failed">Échec du chargement des modules</string>
-    <string name="home_masthead_subtitle">Index du module LSPosé</string>
     <string name="search_placeholder">Modules de recherche : %1$d</string>
     <string name="search_favourites">Favoris</string>
     <string name="search_recent">Recherches récentes</string>
     <string name="search_empty">Aucun module ne correspond à votre recherche</string>
     <string name="search_count">Modules trouvés : %1$d</string>
     <string name="installed_empty">Aucun module LSPosed détecté sur cet appareil</string>
-    <string name="installed_masthead_subtitle">%1$d Modules LSPosed installés</string>
     <string name="installed_search_hint">Rechercher les modules installés</string>
     <string name="installed_section_updates">Mises à jour (%1$d)</string>
     <string name="installed_section_up_to_date">Dans le référentiel (%1$d)</string>
@@ -114,7 +112,6 @@
     <string name="library_skipped_latest">, le dernier %1$s</string>
     <string name="library_ignored_module">Vérification des mises à jour désactivée</string>
     <string name="library_load_failed">Échec du chargement</string>
-    <string name="settings_masthead_subtitle">Préférences</string>
     <string name="settings_appearance">Apparence</string>
     <string name="settings_theme">Thème</string>
     <string name="settings_amoled">AMOLED noir</string>
@@ -178,7 +175,8 @@
     <string name="mirror_latency">%1$d ms</string>
     <string name="settings_translation">Traduction</string>
     <string name="settings_translation_provider">Fournisseur de traduction</string>
-    <string name="settings_translation_target">Langue cible</string>
+    <string name="settings_translation_auto">Traduction automatique</string>
+    <string name="settings_translation_auto_desc">Traduit automatiquement la description du module à l\'ouverture de sa page.</string>
     <string name="translation_disabled">Désactivé</string>
     <string name="settings_translation_deepl_key">Clé d\'authentification DeepL</string>
     <string name="settings_translation_libre_url">URL LibreTranslate</string>

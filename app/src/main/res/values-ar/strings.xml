@@ -32,14 +32,12 @@
     <string name="home_section_most_starred">الأكثر تألقًا</string>
     <string name="home_browse_all">تصفح كافة الوحدات</string>
     <string name="home_load_failed">فشل تحميل الوحدات</string>
-    <string name="home_masthead_subtitle">مؤشر الوحدة النمطية LSPosed</string>
     <string name="search_placeholder">وحدات البحث: %1$d</string>
     <string name="search_favourites">المفضلة</string>
     <string name="search_recent">عمليات البحث الأخيرة</string>
     <string name="search_empty">لا توجد وحدات تطابق بحثك</string>
     <string name="search_count">الوحدات التي تم العثور عليها: %1$d</string>
     <string name="installed_empty">لم يتم اكتشاف وحدات LSPosed على هذا الجهاز</string>
-    <string name="installed_masthead_subtitle">%1$d تم تثبيت وحدات LSPosed</string>
     <string name="installed_search_hint">البحث في الوحدات المثبتة</string>
     <string name="installed_section_updates">التحديثات (%1$d)</string>
     <string name="installed_section_up_to_date">في المستودع (%1$d)</string>
@@ -114,7 +112,6 @@
     <string name="library_skipped_latest">, الأحدث %1$s</string>
     <string name="library_ignored_module">تم تعطيل التحقق من التحديث</string>
     <string name="library_load_failed">فشل التحميل</string>
-    <string name="settings_masthead_subtitle">التفضيلات</string>
     <string name="settings_appearance">مظهر</string>
     <string name="settings_theme">السمة</string>
     <string name="settings_amoled">أموليد أسود</string>
@@ -178,7 +175,8 @@
     <string name="mirror_latency">%1$d مللي ثانية</string>
     <string name="settings_translation">ترجمة</string>
     <string name="settings_translation_provider">مزود الترجمة</string>
-    <string name="settings_translation_target">اللغة المستهدفة</string>
+    <string name="settings_translation_auto">ترجمة تلقائية</string>
+    <string name="settings_translation_auto_desc">ترجمة وصف الوحدة تلقائيًا عند فتح صفحتها.</string>
     <string name="translation_disabled">معطل</string>
     <string name="settings_translation_deepl_key">مفتاح مصادقة DeepL</string>
     <string name="settings_translation_libre_url">عنوان URL الخاص بـ LibreTranslate</string>

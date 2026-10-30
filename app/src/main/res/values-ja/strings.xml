@@ -32,14 +32,12 @@
     <string name="home_section_most_starred">最もスターが多い</string>
     <string name="home_browse_all">すべてのモジュールを参照する</string>
     <string name="home_load_failed">モジュールのロードに失敗しました</string>
-    <string name="home_masthead_subtitle">LSPosed モジュール インデックス</string>
     <string name="search_placeholder">検索モジュール: %1$d</string>
     <string name="search_favourites">お気に入り</string>
     <string name="search_recent">最近の検索</string>
     <string name="search_empty">検索に一致するモジュールはありません</string>
     <string name="search_count">見つかったモジュール: %1$d</string>
     <string name="installed_empty">このデバイスでは LSPosed モジュールが検出されませんでした</string>
-    <string name="installed_masthead_subtitle">%1$d LSPosed モジュールがインストールされています</string>
     <string name="installed_search_hint">インストールされているモジュールを検索する</string>
     <string name="installed_section_updates">更新情報 (%1$d)</string>
     <string name="installed_section_up_to_date">リポジトリ内 (%1$d)</string>
@@ -114,7 +112,6 @@
     <string name="library_skipped_latest">、最新 %1$s</string>
     <string name="library_ignored_module">更新チェックが無効になっています</string>
     <string name="library_load_failed">ロードに失敗しました</string>
-    <string name="settings_masthead_subtitle">設定</string>
     <string name="settings_appearance">外観</string>
     <string name="settings_theme">テーマ</string>
     <string name="settings_amoled">AMOLEDブラック</string>
@@ -178,7 +175,8 @@
     <string name="mirror_latency">%1$dミリ秒</string>
     <string name="settings_translation">翻訳</string>
     <string name="settings_translation_provider">翻訳プロバイダー</string>
-    <string name="settings_translation_target">対象言語</string>
+    <string name="settings_translation_auto">自動翻訳</string>
+    <string name="settings_translation_auto_desc">モジュールページを開いたときに説明を自動翻訳します。</string>
     <string name="translation_disabled">無効</string>
     <string name="settings_translation_deepl_key">DeepL認証キー</string>
     <string name="settings_translation_libre_url">LibreURLを翻訳する</string>

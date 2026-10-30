@@ -32,14 +32,12 @@
     <string name="home_section_most_starred">I più stellati</string>
     <string name="home_browse_all">Sfoglia tutti i moduli</string>
     <string name="home_load_failed">Impossibile caricare i moduli</string>
-    <string name="home_masthead_subtitle">Indice del modulo LSPosed</string>
     <string name="search_placeholder">Moduli di ricerca: %1$d</string>
     <string name="search_favourites">Preferiti</string>
     <string name="search_recent">Ricerche recenti</string>
     <string name="search_empty">Nessun modulo corrisponde alla tua ricerca</string>
     <string name="search_count">Moduli trovati: %1$d</string>
     <string name="installed_empty">Nessun modulo LSPose rilevato su questo dispositivo</string>
-    <string name="installed_masthead_subtitle">%1$d Moduli LSPosed installati</string>
     <string name="installed_search_hint">Cerca i moduli installati</string>
     <string name="installed_section_updates">Aggiornamenti (%1$d)</string>
     <string name="installed_section_up_to_date">Nel repository (%1$d)</string>
@@ -114,7 +112,6 @@
     <string name="library_skipped_latest">, ultimo %1$s</string>
     <string name="library_ignored_module">Controllo aggiornamenti disabilitato</string>
     <string name="library_load_failed">Impossibile caricare</string>
-    <string name="settings_masthead_subtitle">Preferenze</string>
     <string name="settings_appearance">Aspetto</string>
     <string name="settings_theme">Tema</string>
     <string name="settings_amoled">AMOLED nero</string>
@@ -178,7 +175,8 @@
     <string name="mirror_latency">%1$d ms</string>
     <string name="settings_translation">Traduzione</string>
     <string name="settings_translation_provider">Fornitore di traduzioni</string>
-    <string name="settings_translation_target">Lingua di destinazione</string>
+    <string name="settings_translation_auto">Traduzione automatica</string>
+    <string name="settings_translation_auto_desc">Traduce automaticamente la descrizione del modulo quando apri la sua pagina.</string>
     <string name="translation_disabled">Disattivato</string>
     <string name="settings_translation_deepl_key">Chiave di autenticazione DeepL</string>
     <string name="settings_translation_libre_url">URL di LibreTranslate</string>

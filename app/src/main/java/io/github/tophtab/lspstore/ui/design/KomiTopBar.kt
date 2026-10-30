@@ -25,7 +25,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.tophtab.lspstore.ui.theme.KomiTextRole
 
-/** Standard Material top bar with an optional lowercase subtitle. */
+/**
+ * Standard Material top bar with an optional lowercase subtitle.
+ *
+ * A blank subtitle is treated as absent: a caller that clears the text but still
+ * passes the string would otherwise keep an empty text line (and its padding) in
+ * the title column, which is the placeholder gap left behind by a removed
+ * subtitle.
+ */
 @Composable
 fun KomiTopBar(
     title: String,
@@ -41,6 +48,7 @@ fun KomiTopBar(
      */
     titleTrailing: (@Composable () -> Unit)? = null,
 ) {
+    val visibleSubtitle = subtitle?.takeIf { it.isNotBlank() }
     TopAppBar(
         modifier = modifier,
         title = {
@@ -52,7 +60,7 @@ fun KomiTopBar(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
-                    subtitle?.let {
+                    visibleSubtitle?.let {
                         KomiText(
                             text = it,
                             role = KomiTextRole.Label,
