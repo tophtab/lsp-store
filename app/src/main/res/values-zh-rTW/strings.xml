@@ -284,10 +284,7 @@
     <string name="download_notification_unknown">正在準備下載…</string>
     <string name="action_cancel_all">全部取消</string>
     <string name="action_close">關閉</string>
-    <string name="home_masthead_subtitle">LSPosed 模組索引</string>
-    <string name="installed_masthead_subtitle">已安裝 %1$d 個 LSPosed 模組</string>
     <string name="installed_search_hint">搜尋已安裝的模組</string>
-    <string name="settings_masthead_subtitle">偏好設定</string>
     <string name="detail_stats">統計</string>
     <string name="detail_stat_stars">星標</string>
     <string name="detail_stat_releases">發佈</string>

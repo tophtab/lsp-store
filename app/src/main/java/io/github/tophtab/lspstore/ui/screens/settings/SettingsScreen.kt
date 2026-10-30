@@ -107,10 +107,7 @@ fun SettingsScreen(
         containerColor = MaterialTheme.colorScheme.background,
         contentWindowInsets = topContentWindowInsets(),
         topBar = {
-            KomiTopBar(
-                title = stringResource(R.string.nav_settings),
-                subtitle = stringResource(R.string.settings_masthead_subtitle),
-            )
+            KomiTopBar(title = stringResource(R.string.nav_settings))
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { innerPadding ->

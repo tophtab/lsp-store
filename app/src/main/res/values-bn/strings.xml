@@ -32,14 +32,12 @@
     <string name="home_section_most_starred">সর্বাধিক তারকাখচিত</string>
     <string name="home_browse_all">সব মডিউল ব্রাউজ করুন</string>
     <string name="home_load_failed">মডিউল লোড করতে ব্যর্থ হয়েছে৷</string>
-    <string name="home_masthead_subtitle">এলএসপোজড মডিউল সূচক</string>
     <string name="search_placeholder">অনুসন্ধান মডিউল: %1$d</string>
     <string name="search_favourites">প্রিয়</string>
     <string name="search_recent">সাম্প্রতিক অনুসন্ধান</string>
     <string name="search_empty">কোনো মডিউল আপনার অনুসন্ধানের সাথে মেলে না</string>
     <string name="search_count">মডিউল পাওয়া গেছে: %1$d</string>
     <string name="installed_empty">এই ডিভাইসে কোনো LSPosed মডিউল সনাক্ত করা যায়নি</string>
-    <string name="installed_masthead_subtitle">%1$d এলএসপোজড মডিউল ইনস্টল করা হয়েছে</string>
     <string name="installed_search_hint">ইনস্টল করা মডিউল অনুসন্ধান করুন</string>
     <string name="installed_section_updates">আপডেট (%1$d)</string>
     <string name="installed_section_up_to_date">ভান্ডারে (%1$d)</string>
@@ -114,7 +112,6 @@
     <string name="library_skipped_latest">, সর্বশেষ %1$s</string>
     <string name="library_ignored_module">আপডেট চেক নিষ্ক্রিয়</string>
     <string name="library_load_failed">লোড করতে ব্যর্থ হয়েছে</string>
-    <string name="settings_masthead_subtitle">পছন্দসমূহ</string>
     <string name="settings_appearance">চেহারা</string>
     <string name="settings_theme">থিম</string>
     <string name="settings_amoled">AMOLED কালো</string>

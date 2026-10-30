@@ -32,14 +32,12 @@
     <string name="home_section_most_starred">सर्वाधिक तारांकित</string>
     <string name="home_browse_all">सभी मॉड्यूल ब्राउज़ करें</string>
     <string name="home_load_failed">मॉड्यूल लोड करने में विफल</string>
-    <string name="home_masthead_subtitle">एलएसपोज़्ड मॉड्यूल इंडेक्स</string>
     <string name="search_placeholder">खोज मॉड्यूल: %1$d</string>
     <string name="search_favourites">पसंदीदा</string>
     <string name="search_recent">हाल की खोजें</string>
     <string name="search_empty">कोई भी मॉड्यूल आपकी खोज से मेल नहीं खाता</string>
     <string name="search_count">मॉड्यूल मिले: %1$d</string>
     <string name="installed_empty">इस डिवाइस पर कोई LSPosed मॉड्यूल नहीं पाया गया</string>
-    <string name="installed_masthead_subtitle">%1$d एलएसपोज़्ड मॉड्यूल स्थापित</string>
     <string name="installed_search_hint">स्थापित मॉड्यूल खोजें</string>
     <string name="installed_section_updates">अपडेट (%1$d)</string>
     <string name="installed_section_up_to_date">भंडार में (%1$d)</string>
@@ -114,7 +112,6 @@
     <string name="library_skipped_latest">, नवीनतम %1$s</string>
     <string name="library_ignored_module">अद्यतन जाँच अक्षम किया गया</string>
     <string name="library_load_failed">लोड करने में विफल</string>
-    <string name="settings_masthead_subtitle">प्राथमिकताएँ</string>
     <string name="settings_appearance">उपस्थिति</string>
     <string name="settings_theme">थीम</string>
     <string name="settings_amoled">AMOLED काला</string>

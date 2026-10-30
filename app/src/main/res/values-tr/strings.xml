@@ -32,14 +32,12 @@
     <string name="home_section_most_starred">En çok yıldızlı</string>
     <string name="home_browse_all">Tüm modüllere göz atın</string>
     <string name="home_load_failed">Modüller yüklenemedi</string>
-    <string name="home_masthead_subtitle">LSPosed modül dizini</string>
     <string name="search_placeholder">Arama modülleri: %1$d</string>
     <string name="search_favourites">Favoriler</string>
     <string name="search_recent">Son aramalar</string>
     <string name="search_empty">Aramanızla eşleşen modül yok</string>
     <string name="search_count">Bulunan modüller: %1$d</string>
     <string name="installed_empty">Bu cihazda LSPosed modülü algılanmadı</string>
-    <string name="installed_masthead_subtitle">%1$d LSPose modülleri yüklü</string>
     <string name="installed_search_hint">Kurulu modülleri arayın</string>
     <string name="installed_section_updates">Güncellemeler (%1$d)</string>
     <string name="installed_section_up_to_date">Depoda (%1$d)</string>
@@ -114,7 +112,6 @@
     <string name="library_skipped_latest">, en son %1$s</string>
     <string name="library_ignored_module">Güncelleme kontrolü devre dışı bırakıldı</string>
     <string name="library_load_failed">Yüklenemedi</string>
-    <string name="settings_masthead_subtitle">Tercihler</string>
     <string name="settings_appearance">Dış görünüş</string>
     <string name="settings_theme">Tema</string>
     <string name="settings_amoled">AMOLED siyah</string>

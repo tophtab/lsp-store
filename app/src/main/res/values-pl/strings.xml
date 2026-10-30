@@ -32,14 +32,12 @@
     <string name="home_section_most_starred">Większość z gwiazdami</string>
     <string name="home_browse_all">Przeglądaj wszystkie moduły</string>
     <string name="home_load_failed">Nie udało się załadować modułów</string>
-    <string name="home_masthead_subtitle">Indeks modułu LSPozowanego</string>
     <string name="search_placeholder">Szukaj modułów: %1$d</string>
     <string name="search_favourites">Ulubione</string>
     <string name="search_recent">Ostatnie wyszukiwania</string>
     <string name="search_empty">Żaden moduł nie pasuje do Twojego wyszukiwania</string>
     <string name="search_count">Znaleziono moduły: %1$d</string>
     <string name="installed_empty">Na tym urządzeniu nie wykryto modułów LSPosed</string>
-    <string name="installed_masthead_subtitle">%1$d Zainstalowane moduły LSPose</string>
     <string name="installed_search_hint">Wyszukaj zainstalowane moduły</string>
     <string name="installed_section_updates">Aktualizacje (%1$d)</string>
     <string name="installed_section_up_to_date">W repozytorium (%1$d)</string>
@@ -114,7 +112,6 @@
     <string name="library_skipped_latest">, najnowsze %1$s</string>
     <string name="library_ignored_module">Sprawdzanie aktualizacji wyłączone</string>
     <string name="library_load_failed">Nie udało się załadować</string>
-    <string name="settings_masthead_subtitle">Preferencje</string>
     <string name="settings_appearance">Wygląd</string>
     <string name="settings_theme">Motyw</string>
     <string name="settings_amoled">AMOLED-owy czarny</string>
