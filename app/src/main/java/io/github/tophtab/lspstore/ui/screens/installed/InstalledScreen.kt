@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -27,6 +28,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.Block
@@ -69,12 +72,14 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -122,6 +127,7 @@ fun InstalledScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val listState = rememberLazyListState()
+    val focusManager = LocalFocusManager.current
 
     LaunchedEffect(state.message) {
         state.message?.let {
@@ -272,7 +278,7 @@ fun InstalledScreen(
         PullToRefreshBox(
             isRefreshing = state.isRefreshing,
             onRefresh = viewModel::refresh,
-            modifier = Modifier.fillMaxSize().padding(innerPadding),
+            modifier = Modifier.fillMaxSize().padding(innerPadding).imePadding(),
         ) {
         Column(modifier = Modifier.fillMaxSize()) {
             KomiTextField(
@@ -282,12 +288,34 @@ fun InstalledScreen(
                 placeholder = stringResource(R.string.installed_search_hint),
                 leadingIcon = Icons.Filled.Search,
                 singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
             )
             when {
                 state.isLoading -> LoadingBox()
                 state.error != null -> ErrorBox(state.error!!, viewModel::refresh)
-                state.installedCount == 0 && state.pendingInstalls.isEmpty() -> EmptyBox(stringResource(R.string.installed_empty))
-                segments.isEmpty() -> EmptyBox(stringResource(R.string.installed_empty))
+                state.installedCount == 0 && state.pendingInstalls.isEmpty() -> EmptyBox(
+                    message = stringResource(R.string.installed_empty),
+                    actionLabel = stringResource(R.string.action_refresh),
+                    onAction = viewModel::refresh,
+                )
+
+                segments.isEmpty() -> {
+                    val searching = query.isNotBlank()
+                    EmptyBox(
+                        message = stringResource(
+                            if (searching) R.string.search_empty else R.string.installed_empty,
+                        ),
+                        actionLabel = stringResource(
+                            if (searching) R.string.action_clear else R.string.action_refresh,
+                        ),
+                        onAction = if (searching) {
+                            { query = "" }
+                        } else {
+                            viewModel::refresh
+                        },
+                    )
+                }
                 else -> {
                     KomiSegmented(
                         segments = segments,

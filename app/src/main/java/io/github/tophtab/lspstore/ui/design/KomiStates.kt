@@ -80,6 +80,8 @@ fun KomiEmpty(
     message: String,
     modifier: Modifier = Modifier,
     icon: ImageVector = Icons.Filled.Extension,
+    actionLabel: String? = null,
+    onAction: (() -> Unit)? = null,
 ) {
     Box(
         modifier = modifier.fillMaxSize().padding(24.dp),
@@ -99,6 +101,15 @@ fun KomiEmpty(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
             )
+            if (actionLabel != null && onAction != null) {
+                Spacer(Modifier.height(16.dp))
+                KomiButton(
+                    onClick = onAction,
+                    label = actionLabel,
+                    variant = KomiButtonVariant.Tonal,
+                    size = KomiButtonSize.Small,
+                )
+            }
         }
     }
 }

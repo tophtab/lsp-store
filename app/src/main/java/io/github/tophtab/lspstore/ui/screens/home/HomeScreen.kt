@@ -7,11 +7,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
@@ -29,7 +32,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -58,6 +63,7 @@ fun HomeScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val listState = rememberLazyStaggeredGridState()
     val searchListState = rememberLazyStaggeredGridState()
+    val focusManager = LocalFocusManager.current
 
     LaunchedEffect(reselectTick) {
         if (reselectTick > 0) {
@@ -144,14 +150,19 @@ fun HomeScreen(
             state.isLoading -> LoadingBox(Modifier.padding(innerPadding))
             state.error != null ->
                 ErrorBox(state.error!!, viewModel::refresh, Modifier.padding(innerPadding))
-            state.recentlyUpdated.isEmpty() ->
-                EmptyBox(stringResource(R.string.home_no_modules), Modifier.padding(innerPadding))
+            state.recentlyUpdated.isEmpty() -> EmptyBox(
+                message = stringResource(R.string.home_no_modules),
+                modifier = Modifier.padding(innerPadding),
+                actionLabel = stringResource(R.string.action_refresh),
+                onAction = viewModel::refresh,
+            )
             else -> PullToRefreshBox(
                 isRefreshing = state.isRefreshing,
                 onRefresh = viewModel::refresh,
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(innerPadding),
+                    .padding(innerPadding)
+                    .imePadding(),
             ) {
                 Column(modifier = Modifier.fillMaxSize()) {
                     KomiTextField(
@@ -163,6 +174,8 @@ fun HomeScreen(
                         placeholder = stringResource(R.string.import_search_hint),
                         leadingIcon = Icons.Filled.Search,
                         singleLine = true,
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                        keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
                         trailing = {
                             if (state.searchQuery.isNotEmpty()) {
                                 IconButton(onClick = viewModel::clearSearch) {

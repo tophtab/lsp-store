@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -28,7 +30,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -204,6 +208,7 @@ private fun ModulePickerDialog(
     onDismiss: () -> Unit,
 ) {
     val listState = rememberLazyListState()
+    val focusManager = LocalFocusManager.current
     // The picker is a search list too: a new query replaces the rows, and the
     // previous offset would show the filtered hits halfway down (or past the
     // end). The dialog is transient, so the state does not need saving.
@@ -229,6 +234,8 @@ private fun ModulePickerDialog(
                     leadingIcon = Icons.Filled.Search,
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                    keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
                 )
                 Spacer(Modifier.height(10.dp))
                 LazyColumn(

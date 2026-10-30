@@ -26,7 +26,7 @@ fun KomiTextField(
     singleLine: Boolean = true,
     label: String? = null,
     enabled: Boolean = true,
-    keyboardOptions: KeyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+    keyboardOptions: KeyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
     keyboardActions: KeyboardActions = KeyboardActions(),
     visualTransformation: VisualTransformation = VisualTransformation.None,
 ) {
