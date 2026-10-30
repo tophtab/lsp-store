@@ -37,6 +37,11 @@ data class DownloadTask(
  * Resumable APK downloader. Uses HTTP Range so a paused download can continue
  * when the server supports it (assets.lsposed.org and GitHub both do usually);
  * otherwise it restarts from zero.
+ *
+ * Partial files are never discarded just because a transfer failed: a dropped
+ * connection, a mirror switch or even process death leaves the bytes on disk,
+ * and the next attempt resumes from them. [fetchResumable] handles transient
+ * failures on its own, waiting briefly for the network to return.
  */
 class DownloadManager(
     private val context: Context,
@@ -45,6 +50,8 @@ class DownloadManager(
         .connectTimeout(20, java.util.concurrent.TimeUnit.SECONDS)
         .readTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
         .build()
+
+    private val retry = DownloadRetry(network = AndroidNetworkMonitor(context))
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val jobs = ConcurrentHashMap<String, Job>()
@@ -60,7 +67,9 @@ class DownloadManager(
         val existing = _tasks.value[key]
         if (existing?.status == DownloadStatus.RUNNING) return key
         if (existing?.status == DownloadStatus.COMPLETED && existing.file?.exists() == true) return key
-        launchDownload(key, asset, resume = existing?.status == DownloadStatus.PAUSED)
+        // A previously failed or interrupted transfer keeps its partial file;
+        // launchDownload resumes from whatever is on disk.
+        launchDownload(key, asset)
         return key
     }
 
@@ -72,7 +81,7 @@ class DownloadManager(
     fun resume(asset: ReleaseAsset) {
         val key = keyOf(asset)
         if (_tasks.value[key]?.status == DownloadStatus.PAUSED) {
-            launchDownload(key, asset, resume = true)
+            launchDownload(key, asset)
         }
     }
 
@@ -125,24 +134,28 @@ class DownloadManager(
         }
     }
 
-    private fun launchDownload(key: String, asset: ReleaseAsset, resume: Boolean) {
+    private fun launchDownload(key: String, asset: ReleaseAsset) {
         val target = targetFile(key, asset.name)
-        val existingBytes = if (resume && target.exists()) target.length() else 0L
-        if (!resume) runCatching { target.delete() }
-
-        DownloadService.start(context)
+        val existingBytes = if (target.exists()) target.length() else 0L
+        // A file that already covers the asset is a finished transfer whose
+        // completion could not be recorded (process death right after the last
+        // write). There is nothing left to ask the network for.
+        val complete = asset.size > 0L && existingBytes == asset.size
 
         updateTask(key, create = true) {
             it.copy(
                 key = key,
                 assetName = asset.name,
                 downloaded = existingBytes,
-                total = asset.size,
-                status = DownloadStatus.RUNNING,
+                total = if (complete) existingBytes else asset.size,
+                status = if (complete) DownloadStatus.COMPLETED else DownloadStatus.RUNNING,
                 file = target,
                 error = null,
             )
         }
+        if (complete) return
+
+        DownloadService.start(context)
 
         jobs[key] = scope.launch {
             try {
@@ -151,23 +164,26 @@ class DownloadManager(
                 var lastError: Throwable? = null
                 for (url in urls) {
                     try {
-                        // Continue from whatever a previous mirror attempt actually
-                        // wrote, so a mid-stream fallback cannot leave stale bytes.
+                        // Continue from whatever an earlier attempt or mirror
+                        // wrote, so a retry and a mid-stream fallback both cost
+                        // only the bytes that were in flight.
                         val offset = if (target.exists()) target.length() else 0L
                         val serverSize = fetchResumable(
-                            client,
-                            url,
-                            target,
-                            offset,
-                            asset.size,
-                        ) { downloaded, total ->
-                            updateTask(key) {
-                                it.copy(
-                                    downloaded = downloaded,
-                                    total = if (total > 0) total else asset.size,
-                                )
-                            }
-                        }
+                            client = client,
+                            url = url,
+                            target = target,
+                            resumeFrom = offset,
+                            expectedSize = asset.size,
+                            onProgress = { downloaded, total ->
+                                updateTask(key) {
+                                    it.copy(
+                                        downloaded = downloaded,
+                                        total = if (total > 0) total else asset.size,
+                                    )
+                                }
+                            },
+                            retry = retry,
+                        )
                         // The server's own total wins over the index metadata, which
                         // can be stale after an asset is re-uploaded under the same URL.
                         val expectedSize = if (serverSize > 0) serverSize else asset.size
