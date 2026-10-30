@@ -35,7 +35,11 @@ jobs:
   # below, so a PR (fork or not) can never reach them.
   checks:
     if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
+    # Pinned instead of ubuntu-latest: the preinstalled SDK, cmdline-tools and JDK
+    # are part of what the steps below rely on, so an image rollover (which has
+    # broken setup here before - see the setup-android note) should be a
+    # deliberate change rather than something a workflow run discovers.
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -82,7 +86,7 @@ jobs:
   # that touched code, ~10m for the tag of the same commit.
   build:
     if: github.event_name == 'push'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: write # publish the release / update the `dev` pre-release
       actions: read # look up the artifact a master push left behind
