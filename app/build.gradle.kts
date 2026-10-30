@@ -98,6 +98,11 @@ android {
     lint {
         warningsAsErrors = false
         abortOnError = true
+        // Lint builds an analysis model for the unit-test source set on every run
+        // (~5s), but checkTestSources is off by default, so the report never
+        // contains a test-source finding. Skip that analysis; the tests themselves
+        // still run in CI.
+        ignoreTestSources = true
         // A missing or stale translation fails the build instead of silently
         // shipping English text in a localized UI. Promoted to `fatal` as well so
         // that `lintVitalRelease` - which CI runs as part of `assembleRelease`,

@@ -67,10 +67,31 @@ jobs:
           packages: 'platforms;android-37.1 build-tools;36.0.0'
           log-accepted-android-sdk-licenses: false
       - uses: gradle/actions/setup-gradle@v4
+      # setup-gradle caches Gradle User Home, but Gradle 9 keeps the configuration
+      # cache in the project's .gradle directory, so without this step every run
+      # recalculates the task graph (~15s). The key covers only build configuration
+      # (the source tree is not an input to configuration), so the pushes of one
+      # pull request share an entry; Gradle still validates it and recalculates on
+      # any mismatch. Keying on the workflow file invalidates the entry when the
+      # Gradle task list below changes.
+      #
+      # Gradle 9 encrypts the cache with a key taken from the Gradle User Home
+      # keystore, and that key is part of the cache entry's identity. Two runners
+      # have different keystores, so an entry restored from the cache is ignored
+      # unless GRADLE_ENCRYPTION_KEY (set on the step below) pins the key. Without
+      # the key - a fork PR, where secrets are not available - the step still works
+      # and the cache simply misses.
+      - name: Restore the Gradle configuration cache
+        uses: actions/cache@v4
+        with:
+          path: .gradle/configuration-cache
+          key: config-cache-v1-${{ runner.os }}-${{ hashFiles('build.gradle.kts', 'app/build.gradle.kts', 'settings.gradle.kts', 'gradle.properties', 'gradle/libs.versions.toml', 'gradle/wrapper/gradle-wrapper.properties', '.github/workflows/android.yml') }}
       # One invocation on purpose: lint analysis and the unit-test compile share
       # configuration and dependency resolution, so Gradle overlaps them rather
       # than paying for both separately.
       - name: Lint and unit tests
+        env:
+          GRADLE_ENCRYPTION_KEY: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
         run: >-
           ./gradlew
           :app:lintDebug
