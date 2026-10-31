@@ -189,12 +189,23 @@ jobs:
           # dependency files changed, or there is no base commit to diff against
           # (first push to a ref, tag built from scratch). Test-file changes are
           # not in that list: the pull request ran exactly those tests.
+          #
+          # When tests do run, refresh the dependency metadata too. Because this
+          # job skips tests most of the time, the Gradle dependency cache it saves
+          # can end up without the test-only jars while the cached module metadata
+          # still claims they are present; Gradle then fails with "Could not find
+          # junit-4.13.2.jar" instead of downloading it, and a re-run restores the
+          # same broken cache. Every release commit bumps app/build.gradle.kts, so
+          # this branch runs at least once per release - exactly when a stale
+          # cache would block publishing.
           TASKS=":app:assembleRelease"
+          FLAGS=""
           if [ -z "$PUSH_BEFORE" ] \
              || [ "$PUSH_BEFORE" = "0000000000000000000000000000000000000000" ] \
              || ! git cat-file -e "${PUSH_BEFORE}^{commit}" 2>/dev/null; then
             echo "::notice::base commit unknown; running unit tests"
             TASKS=":app:testDebugUnitTest $TASKS"
+            FLAGS="--refresh-dependencies"
           else
             # Command substitution rather than a pipe into grep: with pipefail a
             # grep that exits early can fail the whole pipeline.
@@ -202,6 +213,7 @@ jobs:
             if grep -qE '^(gradle/|build\.gradle|app/build\.gradle|settings\.gradle|gradle\.properties)' <<< "$CHANGED"; then
               echo "::notice::build files changed; running unit tests"
               TASKS=":app:testDebugUnitTest $TASKS"
+              FLAGS="--refresh-dependencies"
             else
               echo "::notice::pull-request checks covered this tree; skipping unit tests"
             fi
@@ -210,7 +222,7 @@ jobs:
           # The version name is left alone (no `.dev` suffix) so this APK can be
           # published as-is when this commit is tagged; the commit is stamped into
           # BuildConfig.BUILD_SHA instead, which the About screen shows.
-          ./gradlew $TASKS -PbuildSha="${GITHUB_SHA:0:8}" --stacktrace
+          ./gradlew $TASKS $FLAGS -PbuildSha="${GITHUB_SHA:0:8}" --stacktrace
 
       - name: Remove keystore
         if: always()
