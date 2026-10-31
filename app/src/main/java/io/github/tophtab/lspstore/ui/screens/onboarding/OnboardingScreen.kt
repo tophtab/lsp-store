@@ -3,7 +3,9 @@
 package io.github.tophtab.lspstore.ui.screens.onboarding
 
 import android.Manifest
+import android.app.Activity
 import android.content.Context
+import android.content.ContextWrapper
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
@@ -29,6 +31,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Extension
+import androidx.compose.material.icons.outlined.Apps
 import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -51,6 +54,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import androidx.lifecycle.Lifecycle
@@ -110,7 +114,6 @@ fun OnboardingScreen() {
         }
         ActionRow(
             state = state,
-            installPermissionGranted = permissions.installSourcesGranted,
             onBack = viewModel::back,
             onSkip = viewModel::skip,
             onNext = viewModel::next,
@@ -249,6 +252,14 @@ private fun PermissionsStep(permissions: OnboardingPermissions) {
                 description = stringResource(R.string.onboarding_install_desc),
                 granted = permissions.installSourcesGranted,
                 onRequest = permissions.requestInstallSources,
+            )
+            KomiDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            PermissionRow(
+                icon = Icons.Outlined.Apps,
+                title = stringResource(R.string.onboarding_apps),
+                description = stringResource(R.string.onboarding_apps_desc),
+                granted = permissions.installedAppsGranted,
+                onRequest = permissions.requestInstalledApps,
                 last = true,
             )
         }
@@ -312,7 +323,6 @@ private fun PermissionRow(
 @Composable
 private fun ActionRow(
     state: OnboardingUiState,
-    installPermissionGranted: Boolean,
     onBack: () -> Unit,
     onSkip: () -> Unit,
     onNext: () -> Unit,
@@ -345,9 +355,6 @@ private fun ActionRow(
                 if (state.isLast) R.string.onboarding_get_started else R.string.onboarding_next,
             ),
             size = KomiButtonSize.Medium,
-            // Installing modules is the point of the app, so onboarding does
-            // not finish until Android has allowed it for this app.
-            enabled = !state.isLast || installPermissionGranted,
         )
     }
 }
@@ -355,8 +362,10 @@ private fun ActionRow(
 private data class OnboardingPermissions(
     val notificationsGranted: Boolean,
     val installSourcesGranted: Boolean,
+    val installedAppsGranted: Boolean,
     val requestNotifications: () -> Unit,
     val requestInstallSources: () -> Unit,
+    val requestInstalledApps: () -> Unit,
 )
 
 @Composable
@@ -364,10 +373,19 @@ private fun rememberOnboardingPermissions(): OnboardingPermissions {
     val context = LocalContext.current
     var notifications by remember { mutableStateOf(readNotificationsGranted(context)) }
     var installSources by remember { mutableStateOf(readInstallSourcesGranted(context)) }
+    var installedApps by remember { mutableStateOf(readInstalledAppsGranted(context)) }
 
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
         notifications = it
     }
+    val installedAppsLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            val nowGranted = granted || readInstalledAppsGranted(context)
+            installedApps = nowGranted
+            // Some Chinese ROMs suppress the dialog. Once the system will no
+            // longer show it, send the user to the app's permission page.
+            if (!nowGranted) openPermissionSettingsIfUnavailable(context)
+        }
 
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
@@ -375,6 +393,7 @@ private fun rememberOnboardingPermissions(): OnboardingPermissions {
             if (event == Lifecycle.Event.ON_RESUME) {
                 notifications = readNotificationsGranted(context)
                 installSources = readInstallSourcesGranted(context)
+                installedApps = readInstalledAppsGranted(context)
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -384,6 +403,7 @@ private fun rememberOnboardingPermissions(): OnboardingPermissions {
     return OnboardingPermissions(
         notificationsGranted = notifications,
         installSourcesGranted = installSources,
+        installedAppsGranted = installedApps,
         requestNotifications = {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
@@ -398,6 +418,9 @@ private fun rememberOnboardingPermissions(): OnboardingPermissions {
             }
             runCatching { context.startActivity(intent) }
         },
+        requestInstalledApps = {
+            installedAppsLauncher.launch(GET_INSTALLED_APPS_PERMISSION)
+        },
     )
 }
 
@@ -411,3 +434,51 @@ private fun readNotificationsGranted(context: Context): Boolean {
 
 private fun readInstallSourcesGranted(context: Context): Boolean =
     context.packageManager.canRequestPackageInstalls()
+
+private const val GET_INSTALLED_APPS_PERMISSION = "com.android.permission.GET_INSTALLED_APPS"
+
+/**
+ * Chinese ROMs require this runtime permission before [PackageManager]
+ * returns the full installed-app list. Stock Android does not define it, so
+ * an unknown permission means the list is already unrestricted.
+ */
+private fun readInstalledAppsGranted(context: Context): Boolean {
+    val supported = runCatching {
+        context.packageManager.getPermissionInfo(GET_INSTALLED_APPS_PERMISSION, 0)
+    }.isSuccess
+    if (!supported) return true
+    return ContextCompat.checkSelfPermission(
+        context,
+        GET_INSTALLED_APPS_PERMISSION,
+    ) == PackageManager.PERMISSION_GRANTED
+}
+
+private fun openPermissionSettingsIfUnavailable(context: Context) {
+    val activity = context.findActivity() ?: return
+    // A rationale means the system will still show the dialog; nothing to
+    // send the user away for.
+    val canAskAgain = runCatching {
+        ActivityCompat.shouldShowRequestPermissionRationale(
+            activity,
+            GET_INSTALLED_APPS_PERMISSION,
+        )
+    }.getOrDefault(false)
+    if (canAskAgain) return
+    runCatching {
+        context.startActivity(
+            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                data = "package:${context.packageName}".toUri()
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            },
+        )
+    }
+}
+
+private fun Context.findActivity(): Activity? {
+    var current: Context = this
+    while (current is ContextWrapper) {
+        if (current is Activity) return current
+        current = current.baseContext
+    }
+    return null
+}

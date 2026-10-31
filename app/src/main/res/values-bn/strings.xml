@@ -222,12 +222,14 @@
     <string name="onboarding_welcome_body">LSPosed মডিউল আপডেট ও ব্রাউজ করার টুল</string>
     <string name="onboarding_appearance_title">আপনার চেহারা চয়ন করুন</string>
     <string name="onboarding_appearance_subtitle">আপনি পরে সেটিংস থেকে এই সব পরিবর্তন করতে পারেন।</string>
-    <string name="onboarding_permissions_title">দুটি দ্রুত প্রম্পট</string>
-    <string name="onboarding_permissions_subtitle">চালিয়ে যেতে ইনস্টল অনুমতি আবশ্যক। বিজ্ঞপ্তি ঐচ্ছিক।</string>
+    <string name="onboarding_permissions_title">অনুমতিসমূহ</string>
+    <string name="onboarding_permissions_subtitle">এগুলো এখনই দিন, অথবা পরে সেটিংসে পরিবর্তন করুন।</string>
     <string name="onboarding_notifications">বিজ্ঞপ্তি</string>
     <string name="onboarding_notifications_desc">সতর্কতা আপডেট করুন এবং অগ্রগতি ইনস্টল করুন</string>
     <string name="onboarding_install">অজানা অ্যাপ ইনস্টল করুন</string>
-    <string name="onboarding_install_desc">আবশ্যক: LSP Store Play স্টোরের বাইরে APK ইনস্টল করে</string>
+    <string name="onboarding_install_desc">LSP Store Play স্টোরের বাইরে APK ইনস্টল করে</string>
+    <string name="onboarding_apps">ইনস্টল করা অ্যাপ</string>
+    <string name="onboarding_apps_desc">আপনার ইনস্টল করা LSPosed মডিউল খুঁজতে; কিছু সিস্টেম এটি আলাদাভাবে চায়</string>
     <string name="onboarding_granted">দেওয়া হয়েছে</string>
     <string name="onboarding_allow">অনুমতি দিন</string>
     <string name="onboarding_skip">এড়িয়ে যান</string>

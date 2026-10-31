@@ -258,12 +258,14 @@
     <string name="onboarding_welcome_body">An updater and browser for LSPosed modules</string>
     <string name="onboarding_appearance_title">Pick your look</string>
     <string name="onboarding_appearance_subtitle">You can change all of this later in Settings.</string>
-    <string name="onboarding_permissions_title">Two quick prompts</string>
-    <string name="onboarding_permissions_subtitle">Install permission is required to continue. Notifications are optional.</string>
+    <string name="onboarding_permissions_title">Permissions</string>
+    <string name="onboarding_permissions_subtitle">You can grant these now or change them later in Settings.</string>
     <string name="onboarding_notifications">Notifications</string>
     <string name="onboarding_notifications_desc">Update alerts and install progress</string>
     <string name="onboarding_install">Install unknown apps</string>
-    <string name="onboarding_install_desc">Required: LSP Store installs APKs outside the Play Store</string>
+    <string name="onboarding_install_desc">LSP Store installs APKs outside the Play Store</string>
+    <string name="onboarding_apps">Installed apps</string>
+    <string name="onboarding_apps_desc">Find your installed LSPosed modules; some systems ask for this separately</string>
     <string name="onboarding_granted">Granted</string>
     <string name="onboarding_allow">Allow</string>
     <string name="onboarding_skip">Skip</string>

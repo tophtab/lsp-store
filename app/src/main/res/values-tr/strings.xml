@@ -222,12 +222,14 @@
     <string name="onboarding_welcome_body">LSPosed modüllerini güncelleme ve tarama aracı</string>
     <string name="onboarding_appearance_title">Görünümünüzü seçin</string>
     <string name="onboarding_appearance_subtitle">Tüm bunları daha sonra Ayarlar\'dan değiştirebilirsiniz.</string>
-    <string name="onboarding_permissions_title">İki hızlı istem</string>
-    <string name="onboarding_permissions_subtitle">Devam etmek için yükleme izni gerekir. Bildirimler isteğe bağlıdır.</string>
+    <string name="onboarding_permissions_title">İzinler</string>
+    <string name="onboarding_permissions_subtitle">Bunları şimdi verebilir veya daha sonra Ayarlar\'dan değiştirebilirsiniz.</string>
     <string name="onboarding_notifications">Bildirimler</string>
     <string name="onboarding_notifications_desc">Uyarıları güncelleme ve yükleme ilerlemesi</string>
     <string name="onboarding_install">Bilinmeyen uygulamaları yükleyin</string>
-    <string name="onboarding_install_desc">Gerekli: LSP Store, Play Store dışından APK yükler</string>
+    <string name="onboarding_install_desc">LSP Store, Play Store dışından APK yükler</string>
+    <string name="onboarding_apps">Yüklü uygulamalar</string>
+    <string name="onboarding_apps_desc">Yüklü LSPosed modüllerini bulmak için; bazı sistemler bunu ayrıca ister</string>
     <string name="onboarding_granted">Verildi</string>
     <string name="onboarding_allow">İzin ver</string>
     <string name="onboarding_skip">Atla</string>

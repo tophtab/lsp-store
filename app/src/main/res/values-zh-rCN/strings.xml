@@ -236,12 +236,14 @@
     <string name="onboarding_welcome_body">LSPosed 模块的更新与浏览工具</string>
     <string name="onboarding_appearance_title">选择你的外观</string>
     <string name="onboarding_appearance_subtitle">之后可在设置中修改。</string>
-    <string name="onboarding_permissions_title">两个快捷授权</string>
-    <string name="onboarding_permissions_subtitle">安装权限为必需项，通知权限可选。</string>
+    <string name="onboarding_permissions_title">权限</string>
+    <string name="onboarding_permissions_subtitle">现在授权即可，之后也可在设置中修改。</string>
     <string name="onboarding_notifications">通知</string>
     <string name="onboarding_notifications_desc">更新提醒和安装进度</string>
     <string name="onboarding_install">安装未知应用</string>
-    <string name="onboarding_install_desc">必需：LSP Store 需要安装 Play 商店以外的 APK</string>
+    <string name="onboarding_install_desc">LSP Store 需要安装 Play 商店以外的 APK</string>
+    <string name="onboarding_apps">读取应用列表</string>
+    <string name="onboarding_apps_desc">用于识别已安装的 LSPosed 模块；部分系统需要单独授权</string>
     <string name="onboarding_granted">已授权</string>
     <string name="onboarding_allow">允许</string>
     <string name="onboarding_skip">跳过</string>

@@ -222,12 +222,14 @@
     <string name="onboarding_welcome_body">Una herramienta para actualizar y explorar módulos de LSPosed</string>
     <string name="onboarding_appearance_title">Elige tu look</string>
     <string name="onboarding_appearance_subtitle">Puedes cambiar todo esto más tarde en Configuración.</string>
-    <string name="onboarding_permissions_title">Dos indicaciones rápidas</string>
-    <string name="onboarding_permissions_subtitle">El permiso de instalación es obligatorio para continuar. Las notificaciones son opcionales.</string>
+    <string name="onboarding_permissions_title">Permisos</string>
+    <string name="onboarding_permissions_subtitle">Puedes concederlos ahora o cambiarlos más tarde en Configuración.</string>
     <string name="onboarding_notifications">Notificaciones</string>
     <string name="onboarding_notifications_desc">Alertas de actualización y progreso de instalación.</string>
     <string name="onboarding_install">Instalar aplicaciones desconocidas</string>
-    <string name="onboarding_install_desc">Obligatorio: LSP Store instala APK fuera de Play Store</string>
+    <string name="onboarding_install_desc">LSP Store instala APK fuera de Play Store</string>
+    <string name="onboarding_apps">Aplicaciones instaladas</string>
+    <string name="onboarding_apps_desc">Para encontrar tus módulos LSPosed instalados; algunos sistemas lo piden por separado</string>
     <string name="onboarding_granted">Concedido</string>
     <string name="onboarding_allow">Permitir</string>
     <string name="onboarding_skip">Omitir</string>
