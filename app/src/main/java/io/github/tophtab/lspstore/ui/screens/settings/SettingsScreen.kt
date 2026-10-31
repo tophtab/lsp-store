@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -49,7 +50,7 @@ import io.github.tophtab.lspstore.ui.design.KomiSettingsSectionHead
 import io.github.tophtab.lspstore.ui.design.KomiSettingsSwitchRow
 import io.github.tophtab.lspstore.ui.design.KomiText
 import io.github.tophtab.lspstore.ui.design.KomiTextField
-import io.github.tophtab.lspstore.ui.design.topContentWindowInsets
+import io.github.tophtab.lspstore.ui.design.rootContentWindowInsets
 import io.github.tophtab.lspstore.ui.labelRes
 import io.github.tophtab.lspstore.ui.theme.KomiTextRole
 
@@ -86,13 +87,14 @@ fun SettingsScreen(
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
-        contentWindowInsets = topContentWindowInsets(),
+        contentWindowInsets = rootContentWindowInsets(),
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { innerPadding ->
         KomiConstrainedContent(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .consumeWindowInsets(innerPadding)
                 .imePadding(),
         ) {
             Column(

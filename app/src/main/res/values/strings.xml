@@ -255,15 +255,15 @@
 
     <!-- Onboarding -->
     <string name="onboarding_welcome_title">Welcome to LSP Store</string>
-    <string name="onboarding_welcome_body">Browse the LSPosed module repository, install modules and keep the ones already on your device up to date. Everything is open source and module data comes from modules.lsposed.org.</string>
+    <string name="onboarding_welcome_body">An updater and browser for LSPosed modules</string>
     <string name="onboarding_appearance_title">Pick your look</string>
     <string name="onboarding_appearance_subtitle">You can change all of this later in Settings.</string>
     <string name="onboarding_permissions_title">Two quick prompts</string>
-    <string name="onboarding_permissions_subtitle">Both are optional. You can change them later in Settings.</string>
+    <string name="onboarding_permissions_subtitle">Install permission is required to continue. Notifications are optional.</string>
     <string name="onboarding_notifications">Notifications</string>
     <string name="onboarding_notifications_desc">Update alerts and install progress</string>
     <string name="onboarding_install">Install unknown apps</string>
-    <string name="onboarding_install_desc">Required to install APKs outside the Play Store</string>
+    <string name="onboarding_install_desc">Required: LSP Store installs APKs outside the Play Store</string>
     <string name="onboarding_granted">Granted</string>
     <string name="onboarding_allow">Allow</string>
     <string name="onboarding_skip">Skip</string>

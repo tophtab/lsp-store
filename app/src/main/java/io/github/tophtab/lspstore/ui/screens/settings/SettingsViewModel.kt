@@ -19,7 +19,7 @@ data class SettingsUiState(
     val rootInstall: Boolean = false,
     val rootAvailable: Boolean? = null,
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
-    val amoled: Boolean = false,
+    val amoled: Boolean = true,
     val dynamicColor: Boolean = false,
     val translation: TranslationSettings = TranslationSettings(),
     val maxConcurrentDownloads: Int = DownloadSlots.DEFAULT_LIMIT,

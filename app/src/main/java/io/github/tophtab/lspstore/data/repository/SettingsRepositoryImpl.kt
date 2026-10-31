@@ -71,7 +71,7 @@ class SettingsRepositoryImpl(private val context: Context) : SettingsRepository 
         .map { prefs -> ThemeMode.entries.firstOrNull { it.name == prefs[Keys.THEME_MODE] } ?: ThemeMode.SYSTEM }
 
     override val amoled: Flow<Boolean> = context.settingsDataStore.data
-        .map { it[Keys.AMOLED] ?: false }
+        .map { it[Keys.AMOLED] ?: true }
 
     override val dynamicColor: Flow<Boolean> = context.settingsDataStore.data
         .map { it[Keys.DYNAMIC_COLOR] ?: false }

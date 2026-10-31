@@ -16,7 +16,14 @@ import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material.icons.filled.Settings
@@ -25,8 +32,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationItemColors
 import androidx.compose.material3.Text
+import androidx.compose.material3.VerticalDivider
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteItem
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
+import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffoldValue
+import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
 import androidx.compose.material3.adaptive.navigationsuite.rememberNavigationSuiteScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -39,8 +50,6 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.annotation.StringRes
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
@@ -49,6 +58,7 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -62,7 +72,12 @@ import io.github.tophtab.lspstore.data.install.DownloadStatus
 import io.github.tophtab.lspstore.di.AppContainer
 import io.github.tophtab.lspstore.domain.model.ThemeMode
 import io.github.tophtab.lspstore.ui.LocalAppContainer
+import io.github.tophtab.lspstore.ui.design.KomiNavItem
+import io.github.tophtab.lspstore.ui.design.KomiNavigationRail
+import io.github.tophtab.lspstore.ui.navigation.NavPlacement
 import io.github.tophtab.lspstore.ui.navigation.Routes
+import io.github.tophtab.lspstore.ui.navigation.navPlacement
+import io.github.tophtab.lspstore.ui.navigation.selectedTopLevelRoute
 import io.github.tophtab.lspstore.ui.screens.about.AboutScreen
 import io.github.tophtab.lspstore.ui.screens.author.AuthorScreen
 import io.github.tophtab.lspstore.ui.screens.detail.ModuleDetailScreen
@@ -121,7 +136,7 @@ private fun AppTheme(container: AppContainer, content: @Composable () -> Unit) {
     val mode by container.settingsRepository.themeMode
         .collectAsStateWithLifecycle(initialValue = ThemeMode.SYSTEM)
     val amoled by container.settingsRepository.amoled
-        .collectAsStateWithLifecycle(initialValue = false)
+        .collectAsStateWithLifecycle(initialValue = true)
     val dynamicColor by container.settingsRepository.dynamicColor
         .collectAsStateWithLifecycle(initialValue = false)
     val darkTheme = when (mode) {
@@ -145,17 +160,13 @@ private fun AppTheme(container: AppContainer, content: @Composable () -> Unit) {
     }
 }
 
-private data class NavItem(
-    val route: String,
-    @param:StringRes val labelRes: Int,
-    val icon: ImageVector,
+private val navItems = listOf(
+    KomiNavItem(Routes.INSTALLED, R.string.nav_installed, Icons.Filled.Apps),
+    KomiNavItem(Routes.HOME, R.string.nav_repository, Icons.Filled.Storefront),
+    KomiNavItem(Routes.SETTINGS, R.string.nav_settings, Icons.Filled.Settings),
 )
 
-private val navItems = listOf(
-    NavItem(Routes.INSTALLED, R.string.nav_installed, Icons.Filled.Apps),
-    NavItem(Routes.HOME, R.string.nav_repository, Icons.Filled.Storefront),
-    NavItem(Routes.SETTINGS, R.string.nav_settings, Icons.Filled.Settings),
-)
+private val rootRoutes = navItems.map { it.route }.toSet()
 
 @Composable
 private fun AppRoot() {
@@ -174,25 +185,50 @@ private fun MainContent() {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
-    val showNavigation = currentRoute in navItems.map { it.route }
     var reselectRoute by remember { mutableStateOf<String?>(null) }
     var reselectTick by remember { mutableIntStateOf(0) }
+    var lastRootRoute by rememberSaveable { mutableStateOf<String?>(null) }
 
     // Drop a pending reselect signal once the tab changes, so returning to the
-    // screen later does not trigger an unexpected scroll/refresh.
+    // screen later does not trigger an unexpected scroll/refresh. Keep the last
+    // root tab around so a detail page can still highlight the section it came
+    // from while the rail stays on screen.
     LaunchedEffect(currentRoute) {
         if (currentRoute != reselectRoute) reselectRoute = null
+        if (currentRoute in rootRoutes) lastRootRoute = currentRoute
     }
 
     RequestNotificationPermissionOnDownload()
 
-    // NavigationSuiteScaffold follows the window size class: a bottom bar on
-    // phones (portrait and landscape), a rail on tablets and other wide
-    // windows. Screens that are not a root tab (details, settings pages) get
-    // the full width, as they did when the bottom bar was hidden.
-    val navigationSuiteState = rememberNavigationSuiteScaffoldState()
-    LaunchedEffect(showNavigation) {
-        if (showNavigation) navigationSuiteState.show() else navigationSuiteState.hide()
+    // Ask the Material adaptive library which container the window calls for,
+    // then choose explicitly. The rail is our own composable so the destinations
+    // can be spread evenly down the full height; the suite's rail only supports
+    // top, center and bottom alignment.
+    val adaptiveInfo = currentWindowAdaptiveInfo()
+    val placement = navPlacement(
+        widthDp = adaptiveInfo.windowSizeClass.minWidthDp,
+        heightDp = adaptiveInfo.windowSizeClass.minHeightDp,
+        tabletop = adaptiveInfo.windowPosture.isTabletop,
+    )
+
+    val selectedRootRoute = selectedTopLevelRoute(currentRoute, lastRootRoute, rootRoutes)
+
+    fun onNavigate(route: String) {
+        if (currentRoute == route) {
+            // Re-selecting the current tab scrolls back to the top (and
+            // refreshes on Home/Installed).
+            reselectRoute = route
+            reselectTick++
+        } else {
+            reselectRoute = null
+            navController.navigate(route) {
+                popUpTo(navController.graph.findStartDestination().id) {
+                    saveState = true
+                }
+                launchSingleTop = true
+                restoreState = true
+            }
+        }
     }
 
     // Keep the palette the hand-rolled bar used. In dark mode primary differs
@@ -207,137 +243,177 @@ private fun MainContent() {
         disabledTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
     )
 
-    NavigationSuiteScaffold(
-        state = navigationSuiteState,
-        navigationItems = {
-            navItems.forEach { item ->
-                val selected = item.route == currentRoute
-                val label = stringResource(item.labelRes)
-                NavigationSuiteItem(
-                    selected = selected,
-                    onClick = {
-                        if (selected) {
-                            // Re-selecting the current tab scrolls back to the top
-                            // (and refreshes on Home/Installed).
-                            reselectRoute = item.route
-                            reselectTick++
-                        } else {
-                            reselectRoute = null
-                            navController.navigate(item.route) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
-                                }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        }
-                    },
-                    icon = { Icon(imageVector = item.icon, contentDescription = label) },
-                    label = { Text(text = label, maxLines = 1) },
-                    colors = navigationItemColors,
-                )
-            }
-        },
-    ) {
-        NavHost(
-            navController = navController,
-            startDestination = Routes.INSTALLED,
-            // Page switches are instant on purpose. The stock NavHost defaults
-            // (700 ms cross-fade plus an animated content-size change with
-            // TopStart alignment) made every switch to or from a screen without
-            // the bottom bar look like the new page growing out of the top-left
-            // corner.
-            enterTransition = { EnterTransition.None },
-            exitTransition = { ExitTransition.None },
-            popEnterTransition = { EnterTransition.None },
-            popExitTransition = { ExitTransition.None },
-            sizeTransform = null,
+    if (placement == NavPlacement.Rail) {
+        // The rail is the app's permanent navigation container on wide windows.
+        // It paints surfaceContainerLow against the pages' background, with a
+        // hairline seam, so it reads as its own column even behind a top bar.
+        Row(Modifier.fillMaxSize()) {
+            KomiNavigationRail(
+                items = navItems,
+                selectedRoute = selectedRootRoute,
+                onSelect = { onNavigate(it) },
+            )
+            VerticalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            AppNavHost(
+                navController = navController,
+                reselectRoute = reselectRoute,
+                reselectTick = reselectTick,
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    // The rail already pads for the start inset.
+                    .consumeWindowInsets(
+                        WindowInsets.safeDrawing.only(WindowInsetsSides.Start),
+                    ),
+            )
+        }
+    } else {
+        val navigationSuiteType = if (placement == NavPlacement.CompactBar) {
+            NavigationSuiteType.ShortNavigationBarCompact
+        } else {
+            NavigationSuiteType.ShortNavigationBarMedium
+        }
+        // Phones keep the old behaviour: the bottom bar steps aside on detail
+        // pages, where it would only eat height.
+        val keepNavigation = currentRoute in rootRoutes
+        val navigationSuiteState = rememberNavigationSuiteScaffoldState(
+            initialValue = NavigationSuiteScaffoldValue.Hidden,
+        )
+        LaunchedEffect(keepNavigation) {
+            if (keepNavigation) navigationSuiteState.show() else navigationSuiteState.hide()
+        }
+        NavigationSuiteScaffold(
+            state = navigationSuiteState,
+            navigationSuiteType = navigationSuiteType,
+            navigationItems = {
+                navItems.forEach { item ->
+                    NavigationSuiteItem(
+                        selected = item.route == selectedRootRoute,
+                        onClick = { onNavigate(item.route) },
+                        // The label is always visible, so it carries the name; a
+                        // content description here would make TalkBack say it twice.
+                        icon = { Icon(imageVector = item.icon, contentDescription = null) },
+                        label = { Text(text = stringResource(item.labelRes), maxLines = 1) },
+                        colors = navigationItemColors,
+                    )
+                }
+            },
         ) {
-            composable(Routes.HOME) {
-                HomeScreen(
-                    onOpenModule = { navController.navigate(Routes.detail(it)) },
-                    reselectTick = if (reselectRoute == Routes.HOME) reselectTick else 0,
-                )
-            }
-            composable(Routes.INSTALLED) {
-                InstalledScreen(
-                    onOpenModule = { navController.navigate(Routes.detail(it)) },
-                    onOpenImports = { navController.navigate(Routes.IMPORTS) },
-                    reselectTick = if (reselectRoute == Routes.INSTALLED) reselectTick else 0,
-                )
-            }
-            composable(Routes.SETTINGS) {
-                SettingsScreen(
-                    onOpenFavourites = { navController.navigate(Routes.FAVOURITES) },
-                    onOpenRecentlyViewed = { navController.navigate(Routes.RECENTLY_VIEWED) },
-                    onOpenSkipped = { navController.navigate(Routes.SKIPPED) },
-                    onOpenAbout = { navController.navigate(Routes.ABOUT) },
-                    onOpenImports = { navController.navigate(Routes.IMPORTS) },
-                    onOpenDiagnostics = { navController.navigate(Routes.DIAGNOSTICS) },
-                    onOpenMirrors = { navController.navigate(Routes.MIRRORS) },
-                    reselectTick = if (reselectRoute == Routes.SETTINGS) reselectTick else 0,
-                )
-            }
-            composable(Routes.MIRRORS) {
-                MirrorPickerScreen(onBack = { navController.popBackStack() })
-            }
-            composable(Routes.DIAGNOSTICS) {
-                DiagnosticsScreen(
-                    onBack = { navController.popBackStack() },
-                    onOpenLicenses = { navController.navigate(Routes.LICENSES) },
-                )
-            }
-            composable(Routes.LICENSES) {
-                LicensesScreen(onBack = { navController.popBackStack() })
-            }
-            composable(Routes.IMPORTS) {
-                ExternalImportScreen(
-                    onBack = { navController.popBackStack() },
-                    onOpenModule = { navController.navigate(Routes.detail(it)) },
-                )
-            }
-            composable(Routes.FAVOURITES) {
-                LibraryListScreen(
-                    kind = LibraryKind.FAVOURITES,
-                    onBack = { navController.popBackStack() },
-                    onOpenModule = { navController.navigate(Routes.detail(it)) },
-                )
-            }
-            composable(Routes.RECENTLY_VIEWED) {
-                LibraryListScreen(
-                    kind = LibraryKind.RECENTLY_VIEWED,
-                    onBack = { navController.popBackStack() },
-                    onOpenModule = { navController.navigate(Routes.detail(it)) },
-                )
-            }
-            composable(Routes.SKIPPED) {
-                SkippedUpdatesScreen(onBack = { navController.popBackStack() })
-            }
-            composable(Routes.ABOUT) {
-                AboutScreen(onBack = { navController.popBackStack() })
-            }
-            composable(
-                route = Routes.DETAIL,
-                arguments = listOf(navArgument(Routes.DETAIL_ARG) { type = NavType.StringType }),
-            ) { entry ->
-                val packageName = entry.arguments?.getString(Routes.DETAIL_ARG).orEmpty()
-                ModuleDetailScreen(
-                    packageName = packageName,
-                    onBack = { navController.popBackStack() },
-                    onOpenAuthor = { navController.navigate(Routes.author(it)) },
-                )
-            }
-            composable(
-                route = Routes.AUTHOR,
-                arguments = listOf(navArgument(Routes.AUTHOR_ARG) { type = NavType.StringType }),
-            ) { entry ->
-                val author = Uri.decode(entry.arguments?.getString(Routes.AUTHOR_ARG).orEmpty())
-                AuthorScreen(
-                    author = author,
-                    onBack = { navController.popBackStack() },
-                    onOpenModule = { navController.navigate(Routes.detail(it)) },
-                )
-            }
+            AppNavHost(
+                navController = navController,
+                reselectRoute = reselectRoute,
+                reselectTick = reselectTick,
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+    }
+}
+
+@Composable
+private fun AppNavHost(
+    navController: NavHostController,
+    reselectRoute: String?,
+    reselectTick: Int,
+    modifier: Modifier = Modifier,
+) {
+    NavHost(
+        navController = navController,
+        startDestination = Routes.INSTALLED,
+        modifier = modifier,
+        // Page switches are instant on purpose. The stock NavHost defaults
+        // (700 ms cross-fade plus an animated content-size change with TopStart
+        // alignment) made every switch to or from a screen without the bottom
+        // bar look like the new page growing out of the top-left corner.
+        enterTransition = { EnterTransition.None },
+        exitTransition = { ExitTransition.None },
+        popEnterTransition = { EnterTransition.None },
+        popExitTransition = { ExitTransition.None },
+        sizeTransform = null,
+    ) {
+        composable(Routes.HOME) {
+            HomeScreen(
+                onOpenModule = { navController.navigate(Routes.detail(it)) },
+                reselectTick = if (reselectRoute == Routes.HOME) reselectTick else 0,
+            )
+        }
+        composable(Routes.INSTALLED) {
+            InstalledScreen(
+                onOpenModule = { navController.navigate(Routes.detail(it)) },
+                onOpenImports = { navController.navigate(Routes.IMPORTS) },
+                reselectTick = if (reselectRoute == Routes.INSTALLED) reselectTick else 0,
+            )
+        }
+        composable(Routes.SETTINGS) {
+            SettingsScreen(
+                onOpenFavourites = { navController.navigate(Routes.FAVOURITES) },
+                onOpenRecentlyViewed = { navController.navigate(Routes.RECENTLY_VIEWED) },
+                onOpenSkipped = { navController.navigate(Routes.SKIPPED) },
+                onOpenAbout = { navController.navigate(Routes.ABOUT) },
+                onOpenImports = { navController.navigate(Routes.IMPORTS) },
+                onOpenDiagnostics = { navController.navigate(Routes.DIAGNOSTICS) },
+                onOpenMirrors = { navController.navigate(Routes.MIRRORS) },
+                reselectTick = if (reselectRoute == Routes.SETTINGS) reselectTick else 0,
+            )
+        }
+        composable(Routes.MIRRORS) {
+            MirrorPickerScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Routes.DIAGNOSTICS) {
+            DiagnosticsScreen(
+                onBack = { navController.popBackStack() },
+                onOpenLicenses = { navController.navigate(Routes.LICENSES) },
+            )
+        }
+        composable(Routes.LICENSES) {
+            LicensesScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Routes.IMPORTS) {
+            ExternalImportScreen(
+                onBack = { navController.popBackStack() },
+                onOpenModule = { navController.navigate(Routes.detail(it)) },
+            )
+        }
+        composable(Routes.FAVOURITES) {
+            LibraryListScreen(
+                kind = LibraryKind.FAVOURITES,
+                onBack = { navController.popBackStack() },
+                onOpenModule = { navController.navigate(Routes.detail(it)) },
+            )
+        }
+        composable(Routes.RECENTLY_VIEWED) {
+            LibraryListScreen(
+                kind = LibraryKind.RECENTLY_VIEWED,
+                onBack = { navController.popBackStack() },
+                onOpenModule = { navController.navigate(Routes.detail(it)) },
+            )
+        }
+        composable(Routes.SKIPPED) {
+            SkippedUpdatesScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Routes.ABOUT) {
+            AboutScreen(onBack = { navController.popBackStack() })
+        }
+        composable(
+            route = Routes.DETAIL,
+            arguments = listOf(navArgument(Routes.DETAIL_ARG) { type = NavType.StringType }),
+        ) { entry ->
+            val packageName = entry.arguments?.getString(Routes.DETAIL_ARG).orEmpty()
+            ModuleDetailScreen(
+                packageName = packageName,
+                onBack = { navController.popBackStack() },
+                onOpenAuthor = { navController.navigate(Routes.author(it)) },
+            )
+        }
+        composable(
+            route = Routes.AUTHOR,
+            arguments = listOf(navArgument(Routes.AUTHOR_ARG) { type = NavType.StringType }),
+        ) { entry ->
+            val author = Uri.decode(entry.arguments?.getString(Routes.AUTHOR_ARG).orEmpty())
+            AuthorScreen(
+                author = author,
+                onBack = { navController.popBackStack() },
+                onOpenModule = { navController.navigate(Routes.detail(it)) },
+            )
         }
     }
 }

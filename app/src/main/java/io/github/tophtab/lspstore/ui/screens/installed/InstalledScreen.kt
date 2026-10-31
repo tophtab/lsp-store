@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
@@ -105,6 +106,7 @@ import io.github.tophtab.lspstore.domain.usecase.BatchInstallPhase
 import io.github.tophtab.lspstore.domain.usecase.BatchInstallState
 import io.github.tophtab.lspstore.ui.design.KomiButtonSize
 import io.github.tophtab.lspstore.ui.design.KomiButtonVariant
+import io.github.tophtab.lspstore.ui.design.KomiConstrainedContent
 import io.github.tophtab.lspstore.ui.design.KomiDialog
 import io.github.tophtab.lspstore.ui.design.KomiExtendedFab
 import io.github.tophtab.lspstore.ui.design.KomiSectionHeader
@@ -113,7 +115,7 @@ import io.github.tophtab.lspstore.ui.design.KomiSegmented
 import io.github.tophtab.lspstore.ui.design.KomiSurface
 import io.github.tophtab.lspstore.ui.design.KomiText
 import io.github.tophtab.lspstore.ui.design.KomiTextField
-import io.github.tophtab.lspstore.ui.design.topContentWindowInsets
+import io.github.tophtab.lspstore.ui.design.rootContentWindowInsets
 import io.github.tophtab.lspstore.ui.theme.KomiTextRole
 import java.text.NumberFormat
 
@@ -245,7 +247,7 @@ fun InstalledScreen(
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
-        contentWindowInsets = topContentWindowInsets(),
+        contentWindowInsets = rootContentWindowInsets(),
         floatingActionButton = {
             // While a batch runs the FAB is its only cancel-all control (the
             // top bar no longer carries one). A single update shows its state
@@ -273,161 +275,168 @@ fun InstalledScreen(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { innerPadding ->
-        Column(
+        KomiConstrainedContent(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
-                .imePadding(),
+                .padding(innerPadding),
+            maxWidth = 1120.dp,
         ) {
-            KomiTextField(
-                value = query,
-                onValueChange = { query = it },
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 12.dp, top = 8.dp, end = 12.dp, bottom = 4.dp),
-                placeholder = stringResource(R.string.installed_search_hint),
-                leadingIcon = Icons.Filled.Search,
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
-            )
-            when {
-                state.isLoading -> LoadingBox(Modifier.weight(1f))
-                state.error != null ->
-                    ErrorBox(state.error!!, viewModel::refresh, Modifier.weight(1f))
-
-                state.installedCount == 0 && state.pendingInstalls.isEmpty() -> EmptyBox(
-                    message = stringResource(R.string.installed_empty),
-                    modifier = Modifier.weight(1f),
-                    actionLabel = stringResource(R.string.action_refresh),
-                    onAction = viewModel::refresh,
+                    .fillMaxSize()
+                    .consumeWindowInsets(innerPadding)
+                    .imePadding(),
+            ) {
+                KomiTextField(
+                    value = query,
+                    onValueChange = { query = it },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 12.dp, top = 8.dp, end = 12.dp, bottom = 4.dp),
+                    placeholder = stringResource(R.string.installed_search_hint),
+                    leadingIcon = Icons.Filled.Search,
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                    keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
                 )
+                when {
+                    state.isLoading -> LoadingBox(Modifier.weight(1f))
+                    state.error != null ->
+                        ErrorBox(state.error!!, viewModel::refresh, Modifier.weight(1f))
 
-                segments.isEmpty() -> {
-                    val searching = query.isNotBlank()
-                    EmptyBox(
-                        message = stringResource(
-                            if (searching) R.string.search_empty else R.string.installed_empty,
-                        ),
+                    state.installedCount == 0 && state.pendingInstalls.isEmpty() -> EmptyBox(
+                        message = stringResource(R.string.installed_empty),
                         modifier = Modifier.weight(1f),
-                        actionLabel = stringResource(
-                            if (searching) R.string.action_clear else R.string.action_refresh,
-                        ),
-                        onAction = if (searching) {
-                            { query = "" }
-                        } else {
-                            viewModel::refresh
-                        },
+                        actionLabel = stringResource(R.string.action_refresh),
+                        onAction = viewModel::refresh,
                     )
-                }
-                else -> {
-                    KomiSegmented(
-                        segments = segments,
-                        selectedIndex = selectedIndex,
-                        onSelect = { selected = it },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 12.dp, vertical = 6.dp),
-                    )
-                    // The refresh container starts below the segment row, so the
-                    // indicator appears between the capsules and the list and only
-                    // a pull on the list refreshes.
-                    PullToRefreshBox(
-                        isRefreshing = state.isRefreshing,
-                        onRefresh = viewModel::refresh,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f),
-                    ) {
-                        LazyColumn(
-                            state = listState,
-                            modifier = Modifier.fillMaxSize(),
-                            // Extra bottom room so the last row stays tappable
-                            // behind the update-all FAB.
-                            contentPadding = PaddingValues(start = 12.dp, end = 12.dp, bottom = 96.dp),
-                            verticalArrangement = Arrangement.spacedBy(10.dp),
-                        ) {
-                            when {
-                                selectedIndex == repositoryIndex && repositoryIndex >= 0 -> {
-                                    items(updates, key = { "u:${it.module.packageName}" }) { info ->
-                                        UpdateRow(
-                                            info = info,
-                                            install = state.rowStates[info.module.packageName]
-                                                ?: state.detailRuns[info.module.packageName],
-                                            batchRunning = state.batchRunning,
-                                            isUpdateIgnored = isUpdateIgnored(
-                                                info.installed.packageName,
-                                                info.module.packageName,
-                                            ),
-                                            onOpen = { onOpenModule(info.module.packageName) },
-                                            onUpdate = { viewModel.update(info) },
-                                            onCancel = {
-                                                viewModel.cancelRow(info.module.packageName)
-                                            },
-                                            onChooseVariant = {
-                                                viewModel.openVariantPicker(info.module.packageName)
-                                            },
-                                            onSkipVersion = { viewModel.skipVersion(info) },
-                                            onToggleIgnoreUpdate = {
-                                                viewModel.toggleIgnoreUpdate(info.module.packageName)
-                                            },
-                                            preReleasesEnabled =
-                                                info.module.packageName in state.preReleases,
-                                            canTrackPreReleases = info.module.hasPreReleases,
-                                            onTogglePreReleases = {
-                                                viewModel.togglePreReleases(info.module.packageName)
-                                            },
-                                        )
-                                    }
-                                    items(upToDate, key = { "c:${it.packageName}" }) { module ->
-                                        val repoPackage = state.repoPackageByInstalled[module.packageName]
-                                        InstalledRow(
-                                            module = module,
-                                            repoPackageName = repoPackage,
-                                            isUpdateIgnored = isUpdateIgnored(
-                                                module.packageName,
-                                                repoPackage,
-                                            ),
-                                            onClick = {
-                                                onOpenModule(
-                                                    repoPackage ?: module.packageName,
-                                                )
-                                            },
-                                            onChooseVariant = repoPackage?.let { name ->
-                                                { viewModel.openVariantPicker(name) }
-                                            },
-                                            onToggleIgnoreUpdate = repoPackage?.let { name ->
-                                                { viewModel.toggleIgnoreUpdate(name) }
-                                            },
-                                            preReleasesEnabled = repoPackage != null && repoPackage in state.preReleases,
-                                            canTrackPreReleases = repoPackage != null && repoPackage in state.preReleaseCapable,
-                                            onTogglePreReleases = repoPackage?.let { name ->
-                                                { viewModel.togglePreReleases(name) }
-                                            },
-                                        )
-                                    }
-                                }
 
-                                else -> {
-                                    item {
-                                        KomiSectionHeader(
-                                            title = stringResource(R.string.installed_section_unknown, unknown.size),
-                                            actionLabel = stringResource(R.string.import_link),
-                                            onAction = onOpenImports,
-                                        )
+                    segments.isEmpty() -> {
+                        val searching = query.isNotBlank()
+                        EmptyBox(
+                            message = stringResource(
+                                if (searching) R.string.search_empty else R.string.installed_empty,
+                            ),
+                            modifier = Modifier.weight(1f),
+                            actionLabel = stringResource(
+                                if (searching) R.string.action_clear else R.string.action_refresh,
+                            ),
+                            onAction = if (searching) {
+                                { query = "" }
+                            } else {
+                                viewModel::refresh
+                            },
+                        )
+                    }
+                    else -> {
+                        KomiSegmented(
+                            segments = segments,
+                            selectedIndex = selectedIndex,
+                            onSelect = { selected = it },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 12.dp, vertical = 6.dp),
+                        )
+                        // The refresh container starts below the segment row, so the
+                        // indicator appears between the capsules and the list and only
+                        // a pull on the list refreshes.
+                        PullToRefreshBox(
+                            isRefreshing = state.isRefreshing,
+                            onRefresh = viewModel::refresh,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f),
+                        ) {
+                            LazyColumn(
+                                state = listState,
+                                modifier = Modifier.fillMaxSize(),
+                                // Extra bottom room so the last row stays tappable
+                                // behind the update-all FAB.
+                                contentPadding = PaddingValues(start = 12.dp, end = 12.dp, bottom = 96.dp),
+                                verticalArrangement = Arrangement.spacedBy(10.dp),
+                            ) {
+                                when {
+                                    selectedIndex == repositoryIndex && repositoryIndex >= 0 -> {
+                                        items(updates, key = { "u:${it.module.packageName}" }) { info ->
+                                            UpdateRow(
+                                                info = info,
+                                                install = state.rowStates[info.module.packageName]
+                                                    ?: state.detailRuns[info.module.packageName],
+                                                batchRunning = state.batchRunning,
+                                                isUpdateIgnored = isUpdateIgnored(
+                                                    info.installed.packageName,
+                                                    info.module.packageName,
+                                                ),
+                                                onOpen = { onOpenModule(info.module.packageName) },
+                                                onUpdate = { viewModel.update(info) },
+                                                onCancel = {
+                                                    viewModel.cancelRow(info.module.packageName)
+                                                },
+                                                onChooseVariant = {
+                                                    viewModel.openVariantPicker(info.module.packageName)
+                                                },
+                                                onSkipVersion = { viewModel.skipVersion(info) },
+                                                onToggleIgnoreUpdate = {
+                                                    viewModel.toggleIgnoreUpdate(info.module.packageName)
+                                                },
+                                                preReleasesEnabled =
+                                                    info.module.packageName in state.preReleases,
+                                                canTrackPreReleases = info.module.hasPreReleases,
+                                                onTogglePreReleases = {
+                                                    viewModel.togglePreReleases(info.module.packageName)
+                                                },
+                                            )
+                                        }
+                                        items(upToDate, key = { "c:${it.packageName}" }) { module ->
+                                            val repoPackage = state.repoPackageByInstalled[module.packageName]
+                                            InstalledRow(
+                                                module = module,
+                                                repoPackageName = repoPackage,
+                                                isUpdateIgnored = isUpdateIgnored(
+                                                    module.packageName,
+                                                    repoPackage,
+                                                ),
+                                                onClick = {
+                                                    onOpenModule(
+                                                        repoPackage ?: module.packageName,
+                                                    )
+                                                },
+                                                onChooseVariant = repoPackage?.let { name ->
+                                                    { viewModel.openVariantPicker(name) }
+                                                },
+                                                onToggleIgnoreUpdate = repoPackage?.let { name ->
+                                                    { viewModel.toggleIgnoreUpdate(name) }
+                                                },
+                                                preReleasesEnabled = repoPackage != null && repoPackage in state.preReleases,
+                                                canTrackPreReleases = repoPackage != null && repoPackage in state.preReleaseCapable,
+                                                onTogglePreReleases = repoPackage?.let { name ->
+                                                    { viewModel.togglePreReleases(name) }
+                                                },
+                                            )
+                                        }
                                     }
-                                    items(unknown, key = { "x:${it.packageName}" }) { module ->
-                                        InstalledRow(
-                                            module = module,
-                                            repoPackageName = null,
-                                            isUpdateIgnored = false,
-                                            onClick = null,
-                                            onChooseVariant = null,
-                                            onToggleIgnoreUpdate = null,
-                                            preReleasesEnabled = false,
-                                            canTrackPreReleases = false,
-                                            onTogglePreReleases = null,
-                                        )
+
+                                    else -> {
+                                        item {
+                                            KomiSectionHeader(
+                                                title = stringResource(R.string.installed_section_unknown, unknown.size),
+                                                actionLabel = stringResource(R.string.import_link),
+                                                onAction = onOpenImports,
+                                            )
+                                        }
+                                        items(unknown, key = { "x:${it.packageName}" }) { module ->
+                                            InstalledRow(
+                                                module = module,
+                                                repoPackageName = null,
+                                                isUpdateIgnored = false,
+                                                onClick = null,
+                                                onChooseVariant = null,
+                                                onToggleIgnoreUpdate = null,
+                                                preReleasesEnabled = false,
+                                                canTrackPreReleases = false,
+                                                onTogglePreReleases = null,
+                                            )
+                                        }
                                     }
                                 }
                             }

@@ -41,6 +41,7 @@ import io.github.tophtab.lspstore.ui.components.ModuleAvatar
 import io.github.tophtab.lspstore.ui.design.KomiButton
 import io.github.tophtab.lspstore.ui.design.KomiButtonSize
 import io.github.tophtab.lspstore.ui.design.KomiButtonVariant
+import io.github.tophtab.lspstore.ui.design.KomiConstrainedContent
 import io.github.tophtab.lspstore.ui.design.KomiInfoChip
 import io.github.tophtab.lspstore.ui.design.KomiSurface
 import io.github.tophtab.lspstore.ui.design.KomiText
@@ -86,21 +87,26 @@ fun LibraryListScreen(
                 ErrorBox(state.error!!, viewModel::refresh, Modifier.padding(innerPadding))
             state.modules.isEmpty() ->
                 EmptyBox(stringResource(kind.emptyRes), Modifier.padding(innerPadding))
-            else -> LazyVerticalStaggeredGrid(
-                columns = StaggeredGridCells.Adaptive(minSize = 320.dp),
+            else -> KomiConstrainedContent(
                 modifier = Modifier.fillMaxSize().padding(innerPadding),
-                contentPadding = PaddingValues(start = 12.dp, end = 12.dp, bottom = 32.dp),
-                verticalItemSpacing = 10.dp,
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                maxWidth = 1120.dp,
             ) {
-                items(state.modules, key = { it.packageName }) { module ->
-                    LibraryRow(
-                        module = module,
-                        installed = module.packageName in state.installedPackages,
-                        kind = kind,
-                        onClick = { onOpenModule(module.packageName) },
-                        onRemove = { viewModel.remove(module.packageName) },
-                    )
+                LazyVerticalStaggeredGrid(
+                    columns = StaggeredGridCells.Adaptive(minSize = 320.dp),
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(start = 12.dp, end = 12.dp, bottom = 32.dp),
+                    verticalItemSpacing = 10.dp,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    items(state.modules, key = { it.packageName }) { module ->
+                        LibraryRow(
+                            module = module,
+                            installed = module.packageName in state.installedPackages,
+                            kind = kind,
+                            onClick = { onOpenModule(module.packageName) },
+                            onRemove = { viewModel.remove(module.packageName) },
+                        )
+                    }
                 }
             }
         }
@@ -203,65 +209,70 @@ fun SkippedUpdatesScreen(onBack: () -> Unit) {
                 ErrorBox(state.error!!, viewModel::refresh, Modifier.padding(innerPadding))
             state.items.isEmpty() ->
                 EmptyBox(stringResource(R.string.library_empty_skipped), Modifier.padding(innerPadding))
-            else -> LazyVerticalStaggeredGrid(
-                columns = StaggeredGridCells.Adaptive(minSize = 320.dp),
+            else -> KomiConstrainedContent(
                 modifier = Modifier.fillMaxSize().padding(innerPadding),
-                contentPadding = PaddingValues(start = 12.dp, end = 12.dp, bottom = 32.dp),
-                verticalItemSpacing = 10.dp,
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                maxWidth = 1120.dp,
             ) {
-                items(state.items, key = { it.packageName }) { item ->
-                    KomiSurface(
-                        modifier = Modifier.fillMaxWidth(),
-                        contentPadding = PaddingValues(14.dp),
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                KomiText(
-                                    text = item.title,
-                                    role = KomiTextRole.Title,
-                                    fontSize = 15.sp,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                                KomiText(
-                                    text = item.packageName,
-                                    role = KomiTextRole.Body,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    fontSize = 11.sp,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                    modifier = Modifier.padding(top = 2.dp),
-                                )
-                                KomiText(
-                                    text = if (item.isModuleIgnored) {
-                                        stringResource(R.string.library_ignored_module)
-                                    } else {
-                                        stringResource(
-                                            R.string.library_skipped_version,
-                                            item.skippedVersion ?: "?",
-                                        )
-                                    } + (item.latestVersion?.let {
-                                        stringResource(R.string.library_skipped_latest, it)
-                                    } ?: ""),
-                                    role = KomiTextRole.Label,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    fontSize = 12.sp,
-                                    modifier = Modifier.padding(top = 4.dp),
+                LazyVerticalStaggeredGrid(
+                    columns = StaggeredGridCells.Adaptive(minSize = 320.dp),
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(start = 12.dp, end = 12.dp, bottom = 32.dp),
+                    verticalItemSpacing = 10.dp,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    items(state.items, key = { it.packageName }) { item ->
+                        KomiSurface(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentPadding = PaddingValues(14.dp),
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    KomiText(
+                                        text = item.title,
+                                        role = KomiTextRole.Title,
+                                        fontSize = 15.sp,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                    KomiText(
+                                        text = item.packageName,
+                                        role = KomiTextRole.Body,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        fontSize = 11.sp,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        modifier = Modifier.padding(top = 2.dp),
+                                    )
+                                    KomiText(
+                                        text = if (item.isModuleIgnored) {
+                                            stringResource(R.string.library_ignored_module)
+                                        } else {
+                                            stringResource(
+                                                R.string.library_skipped_version,
+                                                item.skippedVersion ?: "?",
+                                            )
+                                        } + (item.latestVersion?.let {
+                                            stringResource(R.string.library_skipped_latest, it)
+                                        } ?: ""),
+                                        role = KomiTextRole.Label,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        fontSize = 12.sp,
+                                        modifier = Modifier.padding(top = 4.dp),
+                                    )
+                                }
+                                KomiButton(
+                                    onClick = { viewModel.restore(item) },
+                                    label = stringResource(
+                                        if (item.isModuleIgnored) {
+                                            R.string.action_restore_update
+                                        } else {
+                                            R.string.action_unskip
+                                        },
+                                    ),
+                                    variant = KomiButtonVariant.Outline,
+                                    size = KomiButtonSize.Small,
                                 )
                             }
-                            KomiButton(
-                                onClick = { viewModel.restore(item) },
-                                label = stringResource(
-                                    if (item.isModuleIgnored) {
-                                        R.string.action_restore_update
-                                    } else {
-                                        R.string.action_unskip
-                                    },
-                                ),
-                                variant = KomiButtonVariant.Outline,
-                                size = KomiButtonSize.Small,
-                            )
                         }
                     }
                 }
