@@ -201,7 +201,6 @@
     <string name="settings_translation_provider">翻譯服務</string>
     <string name="settings_translation_auto">自動翻譯</string>
     <string name="settings_translation_auto_desc">開啟模組頁面時自動翻譯簡介。</string>
-    <string name="translation_disabled">已禁用</string>
     <string name="settings_translation_deepl_key">DeepL 金鑰</string>
     <string name="settings_translation_libre_url">LibreTranslate 地址</string>
     <string name="settings_translation_libre_key">LibreTranslate API 金鑰（可選）</string>
@@ -212,7 +211,6 @@
     <string name="detail_clear_translation">清除翻譯</string>
     <string name="detail_translated">已翻譯</string>
     <string name="detail_translate_failed">翻譯失敗</string>
-    <string name="detail_translation_disabled">翻譯已在設定中禁用</string>
         <string name="download_tap_to_cancel">點擊取消</string>
 <string name="download_progress">%1$s / %2$s</string>
     <string name="download_cancelled">已取消下載</string>

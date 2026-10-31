@@ -37,9 +37,6 @@ class TranslationRepository(
     suspend fun translate(text: String): Result<String> {
         if (text.isBlank()) return Result.success(text)
         val settings = settingsRepository.translationSettings.first()
-        if (settings.provider == TranslationProvider.DISABLED) {
-            return Result.failure(IllegalStateException("Translation is disabled"))
-        }
         if (!settings.isConfigured) {
             return Result.failure(IllegalStateException("Translation provider is not configured"))
         }
@@ -58,7 +55,6 @@ class TranslationRepository(
         target: String,
     ): String =
         when (settings.provider) {
-            TranslationProvider.DISABLED -> text
             TranslationProvider.GOOGLE -> google(text, target)
             TranslationProvider.LIBRE_TRANSLATE -> libreTranslate(text, settings, target)
             TranslationProvider.DEEPL -> deepl(text, settings, target)
@@ -206,6 +202,6 @@ internal fun translationTarget(
             "zh" -> if (traditionalChinese) "zh-Hant" else "zh-Hans"
             else -> language
         }
-        TranslationProvider.LIBRE_TRANSLATE, TranslationProvider.DISABLED -> language
+        TranslationProvider.LIBRE_TRANSLATE -> language
     }
 }

@@ -405,13 +405,13 @@ class ModuleDetailViewModel(
                 .onSuccess { translated ->
                     _state.update { it.copy(isTranslating = false, translatedSummary = translated) }
                 }
-                .onFailure { error ->
-                    val message = if (error.message?.contains("disabled", ignoreCase = true) == true) {
-                        container.appContext.getString(R.string.detail_translation_disabled)
-                    } else {
-                        container.appContext.getString(R.string.detail_translate_failed)
+                .onFailure {
+                    _state.update {
+                        it.copy(
+                            isTranslating = false,
+                            message = container.appContext.getString(R.string.detail_translate_failed),
+                        )
                     }
-                    _state.update { it.copy(isTranslating = false, message = message) }
                 }
         }
     }
@@ -419,8 +419,8 @@ class ModuleDetailViewModel(
     /**
      * Opt-in auto translation of the description, Komi-style. The target is the
      * app language, so there is nothing else to read from settings. A provider
-     * that is disabled or not configured is skipped silently instead of showing
-     * a failure every time a module page opens.
+     * that is not configured is skipped silently instead of showing a failure
+     * every time a module page opens.
      */
     private fun maybeAutoTranslate() {
         val summary = _state.value.detail?.module?.summary

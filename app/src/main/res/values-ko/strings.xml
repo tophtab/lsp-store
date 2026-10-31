@@ -187,7 +187,6 @@
     <string name="settings_translation_provider">번역 제공업체</string>
     <string name="settings_translation_auto">자동 번역</string>
     <string name="settings_translation_auto_desc">모듈 페이지를 열면 설명을 자동으로 번역합니다.</string>
-    <string name="translation_disabled">사용 안 함</string>
     <string name="settings_translation_deepl_key">DeepL 인증 키</string>
     <string name="settings_translation_libre_url">자유번역 URL</string>
     <string name="settings_translation_https_note">LibreTranslate 엔드포인트에 HTTPS URL을 사용하십시오.</string>
@@ -199,7 +198,6 @@
     <string name="detail_clear_translation">번역 지우기</string>
     <string name="detail_translated">번역됨</string>
     <string name="detail_translate_failed">번역 실패</string>
-    <string name="detail_translation_disabled">설정에서 번역이 비활성화되었습니다.</string>
         <string name="download_tap_to_cancel">탭하여 취소</string>
 <string name="download_progress">%1$s / %2$s</string>
     <string name="download_cancelled">다운로드가 취소되었습니다.</string>

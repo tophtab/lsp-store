@@ -22,7 +22,6 @@ fun SortOrder.labelRes(): Int = when (this) {
 
 @StringRes
 fun TranslationProvider.labelRes(): Int = when (this) {
-    TranslationProvider.DISABLED -> R.string.translation_disabled
     TranslationProvider.GOOGLE -> R.string.translation_google
     TranslationProvider.LIBRE_TRANSLATE -> R.string.translation_libre
     TranslationProvider.DEEPL -> R.string.translation_deepl

@@ -92,7 +92,7 @@ class SettingsRepositoryImpl(private val context: Context) : SettingsRepository 
         TranslationSettings(
             provider = TranslationProvider.entries
                 .firstOrNull { it.name == prefs[Keys.TRANSLATION_PROVIDER] }
-                ?: TranslationProvider.DISABLED,
+                ?: TranslationProvider.GOOGLE,
             autoTranslate = prefs[Keys.TRANSLATION_AUTO] ?: false,
             deeplKey = prefs[Keys.DEEPL_KEY] ?: "",
             libreUrl = prefs[Keys.LIBRE_URL] ?: "",

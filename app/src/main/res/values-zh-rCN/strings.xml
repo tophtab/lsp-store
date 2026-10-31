@@ -199,7 +199,6 @@
     <string name="settings_translation_provider">翻译服务</string>
     <string name="settings_translation_auto">自动翻译</string>
     <string name="settings_translation_auto_desc">打开模块页时自动翻译简介。</string>
-    <string name="translation_disabled">已禁用</string>
     <string name="settings_translation_deepl_key">DeepL 密钥</string>
     <string name="settings_translation_libre_url">LibreTranslate 地址</string>
     <string name="settings_translation_libre_key">LibreTranslate API 密钥（可选）</string>
@@ -210,7 +209,6 @@
     <string name="detail_clear_translation">清除翻译</string>
     <string name="detail_translated">已翻译</string>
     <string name="detail_translate_failed">翻译失败</string>
-    <string name="detail_translation_disabled">翻译已在设置中禁用</string>
         <string name="download_tap_to_cancel">点击取消</string>
 <string name="download_progress">%1$s / %2$s</string>
     <string name="download_cancelled">已取消下载</string>

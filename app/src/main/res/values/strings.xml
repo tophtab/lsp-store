@@ -217,7 +217,6 @@
     <string name="settings_translation_provider">Translation provider</string>
     <string name="settings_translation_auto">Auto-translate</string>
     <string name="settings_translation_auto_desc">Translate a module\'s description automatically when you open its page.</string>
-    <string name="translation_disabled">Disabled</string>
     <string name="translation_google" translatable="false">Google</string>
     <string name="translation_libre" translatable="false">LibreTranslate</string>
     <string name="translation_deepl" translatable="false">DeepL</string>
@@ -233,7 +232,6 @@
     <string name="detail_clear_translation">Clear translation</string>
     <string name="detail_translated">Translated</string>
     <string name="detail_translate_failed">Translation failed</string>
-    <string name="detail_translation_disabled">Translation is disabled in Settings</string>
         <string name="download_tap_to_cancel">Tap to cancel</string>
 <string name="download_progress">%1$s / %2$s</string>
     <string name="download_cancelled">Download cancelled</string>

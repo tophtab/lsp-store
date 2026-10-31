@@ -187,7 +187,6 @@
     <string name="settings_translation_provider">مزود الترجمة</string>
     <string name="settings_translation_auto">ترجمة تلقائية</string>
     <string name="settings_translation_auto_desc">ترجمة وصف الوحدة تلقائيًا عند فتح صفحتها.</string>
-    <string name="translation_disabled">معطل</string>
     <string name="settings_translation_deepl_key">مفتاح مصادقة DeepL</string>
     <string name="settings_translation_libre_url">عنوان URL الخاص بـ LibreTranslate</string>
     <string name="settings_translation_https_note">استخدم عنوان URL HTTPS لنقطة نهاية LibreTranslate.</string>
@@ -199,7 +198,6 @@
     <string name="detail_clear_translation">مسح الترجمة</string>
     <string name="detail_translated">مترجم</string>
     <string name="detail_translate_failed">فشلت الترجمة</string>
-    <string name="detail_translation_disabled">تم تعطيل الترجمة في الإعدادات</string>
         <string name="download_tap_to_cancel">اضغط للإلغاء</string>
 <string name="download_progress">%1$s / %2$s</string>
     <string name="download_cancelled">تم إلغاء التنزيل</string>
