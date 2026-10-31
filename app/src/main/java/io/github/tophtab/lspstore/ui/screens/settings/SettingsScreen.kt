@@ -132,21 +132,6 @@ fun SettingsScreen(
                     )
                 }
 
-                KomiSettingsSectionHead(stringResource(R.string.settings_root_section))
-                KomiSettingsGroup {
-                    KomiSettingsSwitchRow(
-                        title = stringResource(R.string.settings_root),
-                        subtitle = when (state.rootAvailable) {
-                            true -> stringResource(R.string.settings_root_detected)
-                            false -> stringResource(R.string.settings_root_unavailable)
-                            null -> stringResource(R.string.settings_root_desc)
-                        },
-                        checked = state.rootInstall,
-                        onCheckedChange = viewModel::setRootInstall,
-                        last = true,
-                    )
-                }
-
                 KomiSettingsSectionHead(stringResource(R.string.settings_translation))
                 KomiSettingsGroup {
                     KomiSettingsExpandableRow(
@@ -260,6 +245,39 @@ fun SettingsScreen(
                     }
                 }
 
+                KomiSettingsSectionHead(stringResource(R.string.settings_downloads))
+                KomiSettingsGroup {
+                    KomiSettingsRow(
+                        title = stringResource(R.string.settings_max_downloads),
+                        trailing = {
+                            KomiCompactSegmented(
+                                segments = (1..DownloadSlots.MAX_LIMIT).map {
+                                    KomiSegment(it.toString())
+                                },
+                                selectedIndex = (state.maxConcurrentDownloads - 1)
+                                    .coerceIn(0, DownloadSlots.MAX_LIMIT - 1),
+                                onSelect = { viewModel.setMaxConcurrentDownloads(it + 1) },
+                            )
+                        },
+                        last = true,
+                    )
+                }
+
+                KomiSettingsSectionHead(stringResource(R.string.settings_root_section))
+                KomiSettingsGroup {
+                    KomiSettingsSwitchRow(
+                        title = stringResource(R.string.settings_root),
+                        subtitle = when (state.rootAvailable) {
+                            true -> stringResource(R.string.settings_root_detected)
+                            false -> stringResource(R.string.settings_root_unavailable)
+                            null -> stringResource(R.string.settings_root_desc)
+                        },
+                        checked = state.rootInstall,
+                        onCheckedChange = viewModel::setRootInstall,
+                        last = true,
+                    )
+                }
+
                 KomiSettingsSectionHead(stringResource(R.string.settings_library))
                 KomiSettingsGroup {
                     KomiSettingsRow(
@@ -277,24 +295,6 @@ fun SettingsScreen(
                     KomiSettingsRow(
                         title = stringResource(R.string.import_title),
                         onClick = onOpenImports,
-                        last = true,
-                    )
-                }
-
-                KomiSettingsSectionHead(stringResource(R.string.settings_downloads))
-                KomiSettingsGroup {
-                    KomiSettingsRow(
-                        title = stringResource(R.string.settings_max_downloads),
-                        trailing = {
-                            KomiCompactSegmented(
-                                segments = (1..DownloadSlots.MAX_LIMIT).map {
-                                    KomiSegment(it.toString())
-                                },
-                                selectedIndex = (state.maxConcurrentDownloads - 1)
-                                    .coerceIn(0, DownloadSlots.MAX_LIMIT - 1),
-                                onSelect = { viewModel.setMaxConcurrentDownloads(it + 1) },
-                            )
-                        },
                         last = true,
                     )
                 }
