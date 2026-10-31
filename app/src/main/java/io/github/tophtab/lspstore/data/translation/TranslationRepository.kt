@@ -2,14 +2,17 @@ package io.github.tophtab.lspstore.data.translation
 
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
-import io.ktor.client.request.get
+import io.ktor.client.request.forms.submitForm
 import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
+import io.ktor.http.Parameters
 import io.ktor.http.contentType
 import kotlinx.coroutines.flow.first
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.add
 import kotlinx.serialization.json.buildJsonArray
@@ -22,7 +25,6 @@ import kotlinx.serialization.json.putJsonArray
 import io.github.tophtab.lspstore.data.repository.SettingsRepository
 import io.github.tophtab.lspstore.domain.model.TranslationProvider
 import io.github.tophtab.lspstore.domain.model.TranslationSettings
-import java.net.URLEncoder
 import java.util.Locale
 
 class TranslationRepository(
@@ -61,11 +63,23 @@ class TranslationRepository(
             TranslationProvider.MICROSOFT -> microsoft(text, settings, target)
         }
 
+    /**
+     * komi posts the public endpoint as a form instead of putting the text in a
+     * query string: same service, but long READMEs no longer hit URL limits and
+     * the request leaves the app without the store's JSON headers.
+     */
     private suspend fun google(text: String, target: String): String {
-        val encoded = URLEncoder.encode(text, "UTF-8")
-        val url = "https://translate.googleapis.com/translate_a/single" +
-            "?client=gtx&sl=auto&tl=$target&dt=t&q=$encoded"
-        val root = client.get(url).body<JsonElement>()
+        val body = client.submitForm(
+            url = "https://translate.googleapis.com/translate_a/single",
+            formParameters = Parameters.build {
+                append("client", "gtx")
+                append("sl", "auto")
+                append("tl", target)
+                append("dt", "t")
+                append("q", text)
+            },
+        ).bodyAsText()
+        val root = Json.parseToJsonElement(body)
         val builder = StringBuilder()
         root.arrayOrEmpty().firstOrNull()?.arrayOrEmpty()?.forEach { part ->
             part.arrayOrEmpty().firstOrNull()?.stringOrNull()?.let { builder.append(it) }

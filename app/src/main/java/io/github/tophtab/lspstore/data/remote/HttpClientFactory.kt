@@ -38,6 +38,27 @@ fun createHttpClient(json: Json): HttpClient = HttpClient(OkHttp) {
     }
 }
 
+/**
+ * Translation endpoints are not the module repository: no JSON Accept, no app
+ * User-Agent. komi gives translation its own client for the same reason, so the
+ * public Google endpoint sees a plain form request.
+ */
+fun createTranslationHttpClient(): HttpClient = HttpClient(OkHttp) {
+    expectSuccess = true
+
+    // The other providers still decode JSON through ContentNegotiation; Google
+    // reads its own body as text so the form request stays untouched.
+    install(ContentNegotiation) {
+        json(createJson())
+    }
+
+    install(HttpTimeout) {
+        connectTimeoutMillis = 15_000
+        requestTimeoutMillis = 60_000
+        socketTimeoutMillis = 60_000
+    }
+}
+
 /** Ranged APK probing: never throws on 4xx/5xx, short timeouts, no JSON. */
 fun createProbeHttpClient(): HttpClient = HttpClient(OkHttp) {
     expectSuccess = false

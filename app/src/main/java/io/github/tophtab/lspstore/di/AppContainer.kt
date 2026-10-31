@@ -24,6 +24,7 @@ import io.github.tophtab.lspstore.data.remote.MirrorTester
 import io.github.tophtab.lspstore.data.remote.createHttpClient
 import io.github.tophtab.lspstore.data.remote.createJson
 import io.github.tophtab.lspstore.data.remote.createProbeHttpClient
+import io.github.tophtab.lspstore.data.remote.createTranslationHttpClient
 import io.github.tophtab.lspstore.data.repository.InstalledModulesRepository
 import io.github.tophtab.lspstore.data.repository.InstalledModulesRepositoryImpl
 import io.github.tophtab.lspstore.data.repository.LibraryRepository
@@ -118,7 +119,9 @@ class AppContainer(context: Context) {
         deviceProfile = { deviceProfile },
     )
 
-    val translationRepository: TranslationRepository = TranslationRepository(httpClient, settingsRepository)
+    private val translationHttpClient: HttpClient = createTranslationHttpClient()
+    val translationRepository: TranslationRepository =
+        TranslationRepository(translationHttpClient, settingsRepository)
     val mirrorTester: MirrorTester = MirrorTester(httpClient)
 
     /** Resolves the release asset for a device and downloads it (no install). */
