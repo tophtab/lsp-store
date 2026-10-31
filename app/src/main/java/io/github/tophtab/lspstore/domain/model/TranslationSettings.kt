@@ -9,7 +9,7 @@ enum class TranslationProvider {
 }
 
 data class TranslationSettings(
-    val provider: TranslationProvider = TranslationProvider.DISABLED,
+    val provider: TranslationProvider = TranslationProvider.GOOGLE,
     /**
      * Translate a module description automatically when its page opens. The
      * target is always the app language, so there is no target setting.
