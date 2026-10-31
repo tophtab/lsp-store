@@ -110,6 +110,7 @@ fun OnboardingScreen() {
         }
         ActionRow(
             state = state,
+            installPermissionGranted = permissions.installSourcesGranted,
             onBack = viewModel::back,
             onSkip = viewModel::skip,
             onNext = viewModel::next,
@@ -311,6 +312,7 @@ private fun PermissionRow(
 @Composable
 private fun ActionRow(
     state: OnboardingUiState,
+    installPermissionGranted: Boolean,
     onBack: () -> Unit,
     onSkip: () -> Unit,
     onNext: () -> Unit,
@@ -343,6 +345,9 @@ private fun ActionRow(
                 if (state.isLast) R.string.onboarding_get_started else R.string.onboarding_next,
             ),
             size = KomiButtonSize.Medium,
+            // Installing modules is the point of the app, so onboarding does
+            // not finish until Android has allowed it for this app.
+            enabled = !state.isLast || installPermissionGranted,
         )
     }
 }

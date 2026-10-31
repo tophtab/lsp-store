@@ -5,6 +5,7 @@ package io.github.tophtab.lspstore.ui.screens.home
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
@@ -45,11 +46,12 @@ import io.github.tophtab.lspstore.ui.components.EmptyBox
 import io.github.tophtab.lspstore.ui.components.ErrorBox
 import io.github.tophtab.lspstore.ui.components.LoadingBox
 import io.github.tophtab.lspstore.ui.components.ModuleCard
+import io.github.tophtab.lspstore.ui.design.KomiConstrainedContent
 import io.github.tophtab.lspstore.ui.design.KomiSegment
 import io.github.tophtab.lspstore.ui.design.KomiSegmented
 import io.github.tophtab.lspstore.ui.design.KomiText
 import io.github.tophtab.lspstore.ui.design.KomiTextField
-import io.github.tophtab.lspstore.ui.design.topContentWindowInsets
+import io.github.tophtab.lspstore.ui.design.rootContentWindowInsets
 import io.github.tophtab.lspstore.ui.theme.KomiTextRole
 
 @Composable
@@ -138,7 +140,7 @@ fun HomeScreen(
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
-        contentWindowInsets = topContentWindowInsets(),
+        contentWindowInsets = rootContentWindowInsets(),
     ) { innerPadding ->
         when {
             state.isLoading -> LoadingBox(Modifier.padding(innerPadding))
@@ -150,68 +152,104 @@ fun HomeScreen(
                 actionLabel = stringResource(R.string.action_refresh),
                 onAction = viewModel::refresh,
             )
-            else -> Column(
+            else -> KomiConstrainedContent(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(innerPadding)
-                    .imePadding(),
+                    .padding(innerPadding),
+                maxWidth = 1120.dp,
             ) {
-                KomiTextField(
-                    value = state.searchQuery,
-                    onValueChange = viewModel::onSearchQueryChange,
+                Column(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 12.dp, top = 8.dp, end = 12.dp, bottom = 4.dp),
-                    placeholder = stringResource(R.string.import_search_hint),
-                    leadingIcon = Icons.Filled.Search,
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                    keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
-                    trailing = {
-                        if (state.searchQuery.isNotEmpty()) {
-                            IconButton(onClick = viewModel::clearSearch) {
-                                Icon(
-                                    Icons.Filled.Clear,
-                                    contentDescription = stringResource(R.string.action_clear),
-                                )
+                        .fillMaxSize()
+                        .consumeWindowInsets(innerPadding)
+                        .imePadding(),
+                ) {
+                    KomiTextField(
+                        value = state.searchQuery,
+                        onValueChange = viewModel::onSearchQueryChange,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 12.dp, top = 8.dp, end = 12.dp, bottom = 4.dp),
+                        placeholder = stringResource(R.string.import_search_hint),
+                        leadingIcon = Icons.Filled.Search,
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                        keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
+                        trailing = {
+                            if (state.searchQuery.isNotEmpty()) {
+                                IconButton(onClick = viewModel::clearSearch) {
+                                    Icon(
+                                        Icons.Filled.Clear,
+                                        contentDescription = stringResource(R.string.action_clear),
+                                    )
+                                }
+                            }
+                        },
+                    )
+
+                    KomiSegmented(
+                        segments = tabs.map { KomiSegment(it.label) },
+                        selectedIndex = resolvedTab,
+                        onSelect = viewModel::selectTab,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                    )
+
+                    // The refresh container starts below the segment row, so the
+                    // indicator appears between the capsules and the list and only a
+                    // pull on the list refreshes. Pulling on the header does not.
+                    if (searching) {
+                        val searchResults = if (resolvedTab == 1) {
+                            // The "Most starred" tab also controls search ordering.
+                            state.searchResults.sortedByDescending { it.stars }
+                        } else {
+                            // HomeViewModel already sorts by last update.
+                            state.searchResults
+                        }
+                        if (searchResults.isEmpty()) {
+                            EmptyBox(
+                                message = stringResource(R.string.search_empty),
+                                modifier = Modifier.weight(1f),
+                            )
+                        } else {
+                            KomiText(
+                                text = stringResource(R.string.search_count, searchResults.size),
+                                role = KomiTextRole.Label,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 4.dp),
+                                maxLines = 1,
+                            )
+                            PullToRefreshBox(
+                                isRefreshing = state.isRefreshing,
+                                onRefresh = viewModel::refresh,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f),
+                            ) {
+                                LazyVerticalStaggeredGrid(
+                                    state = searchListState,
+                                    columns = StaggeredGridCells.Adaptive(minSize = 320.dp),
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentPadding = PaddingValues(
+                                        start = 12.dp,
+                                        end = 12.dp,
+                                        bottom = 32.dp,
+                                    ),
+                                    verticalItemSpacing = 10.dp,
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                ) {
+                                    items(searchResults, key = { it.packageName }) { module ->
+                                        ModuleCard(
+                                            module = module,
+                                            installed = module.packageName in state.installedPackages,
+                                            onOpen = { onOpenModule(module.packageName) },
+                                        )
+                                    }
+                                }
                             }
                         }
-                    },
-                )
-
-                KomiSegmented(
-                    segments = tabs.map { KomiSegment(it.label) },
-                    selectedIndex = resolvedTab,
-                    onSelect = viewModel::selectTab,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 6.dp),
-                )
-
-                // The refresh container starts below the segment row, so the
-                // indicator appears between the capsules and the list and only a
-                // pull on the list refreshes. Pulling on the header does not.
-                if (searching) {
-                    val searchResults = if (resolvedTab == 1) {
-                        // The "Most starred" tab also controls search ordering.
-                        state.searchResults.sortedByDescending { it.stars }
                     } else {
-                        // HomeViewModel already sorts by last update.
-                        state.searchResults
-                    }
-                    if (searchResults.isEmpty()) {
-                        EmptyBox(
-                            message = stringResource(R.string.search_empty),
-                            modifier = Modifier.weight(1f),
-                        )
-                    } else {
-                        KomiText(
-                            text = stringResource(R.string.search_count, searchResults.size),
-                            role = KomiTextRole.Label,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 4.dp),
-                            maxLines = 1,
-                        )
                         PullToRefreshBox(
                             isRefreshing = state.isRefreshing,
                             onRefresh = viewModel::refresh,
@@ -220,7 +258,7 @@ fun HomeScreen(
                                 .weight(1f),
                         ) {
                             LazyVerticalStaggeredGrid(
-                                state = searchListState,
+                                state = listState,
                                 columns = StaggeredGridCells.Adaptive(minSize = 320.dp),
                                 modifier = Modifier.fillMaxSize(),
                                 contentPadding = PaddingValues(
@@ -231,42 +269,13 @@ fun HomeScreen(
                                 verticalItemSpacing = 10.dp,
                                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                             ) {
-                                items(searchResults, key = { it.packageName }) { module ->
+                                items(tabs[resolvedTab].modules, key = { it.packageName }) { module ->
                                     ModuleCard(
                                         module = module,
                                         installed = module.packageName in state.installedPackages,
                                         onOpen = { onOpenModule(module.packageName) },
                                     )
                                 }
-                            }
-                        }
-                    }
-                } else {
-                    PullToRefreshBox(
-                        isRefreshing = state.isRefreshing,
-                        onRefresh = viewModel::refresh,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f),
-                    ) {
-                        LazyVerticalStaggeredGrid(
-                            state = listState,
-                            columns = StaggeredGridCells.Adaptive(minSize = 320.dp),
-                            modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(
-                                start = 12.dp,
-                                end = 12.dp,
-                                bottom = 32.dp,
-                            ),
-                            verticalItemSpacing = 10.dp,
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        ) {
-                            items(tabs[resolvedTab].modules, key = { it.packageName }) { module ->
-                                ModuleCard(
-                                    module = module,
-                                    installed = module.packageName in state.installedPackages,
-                                    onOpen = { onOpenModule(module.packageName) },
-                                )
                             }
                         }
                     }

@@ -8,8 +8,10 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -24,6 +26,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -39,7 +42,6 @@ import io.github.tophtab.lspstore.ui.design.KomiButton
 import io.github.tophtab.lspstore.ui.design.KomiButtonSize
 import io.github.tophtab.lspstore.ui.design.KomiButtonVariant
 import io.github.tophtab.lspstore.ui.design.KomiCompactSegmented
-import io.github.tophtab.lspstore.ui.design.KomiConstrainedContent
 import io.github.tophtab.lspstore.ui.design.KomiFilterChip
 import io.github.tophtab.lspstore.ui.design.KomiSegment
 import io.github.tophtab.lspstore.ui.design.KomiSettingsExpandableRow
@@ -49,7 +51,7 @@ import io.github.tophtab.lspstore.ui.design.KomiSettingsSectionHead
 import io.github.tophtab.lspstore.ui.design.KomiSettingsSwitchRow
 import io.github.tophtab.lspstore.ui.design.KomiText
 import io.github.tophtab.lspstore.ui.design.KomiTextField
-import io.github.tophtab.lspstore.ui.design.topContentWindowInsets
+import io.github.tophtab.lspstore.ui.design.rootContentWindowInsets
 import io.github.tophtab.lspstore.ui.labelRes
 import io.github.tophtab.lspstore.ui.theme.KomiTextRole
 
@@ -86,19 +88,25 @@ fun SettingsScreen(
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
-        contentWindowInsets = topContentWindowInsets(),
+        contentWindowInsets = rootContentWindowInsets(),
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { innerPadding ->
-        KomiConstrainedContent(
+        // The scroll container spans the whole page so a drag in the empty
+        // margin either side of the 640dp column still scrolls; only the
+        // content itself is width-capped and centered.
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .imePadding(),
+                .consumeWindowInsets(innerPadding)
+                .imePadding()
+                .verticalScroll(scrollState),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Column(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(scrollState)
+                    .widthIn(max = 640.dp)
+                    .fillMaxWidth()
                     .padding(horizontal = 16.dp)
                     .padding(top = 12.dp, bottom = 28.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),

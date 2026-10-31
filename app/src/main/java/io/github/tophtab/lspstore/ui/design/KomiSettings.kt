@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.tophtab.lspstore.ui.theme.KomiTextRole
@@ -225,10 +226,11 @@ fun KomiSettingsValuePill(value: String) {
 @Composable
 fun KomiConstrainedContent(
     modifier: Modifier = Modifier,
+    maxWidth: Dp = 640.dp,
     content: @Composable () -> Unit,
 ) {
     Box(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
-        Box(modifier = Modifier.widthIn(max = 640.dp).fillMaxWidth()) {
+        Box(modifier = Modifier.widthIn(max = maxWidth).fillMaxWidth()) {
             content()
         }
     }
