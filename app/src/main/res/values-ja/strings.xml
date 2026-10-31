@@ -222,12 +222,14 @@
     <string name="onboarding_welcome_body">LSPosed モジュールの更新と閲覧ツール</string>
     <string name="onboarding_appearance_title">見た目を選んでください</string>
     <string name="onboarding_appearance_subtitle">これらはすべて、後で [設定] で変更できます。</string>
-    <string name="onboarding_permissions_title">2 つの簡単なプロンプト</string>
-    <string name="onboarding_permissions_subtitle">続行するにはインストールの許可が必要です。通知は任意です。</string>
+    <string name="onboarding_permissions_title">権限</string>
+    <string name="onboarding_permissions_subtitle">今すぐ許可することも、後で設定から変更することもできます。</string>
     <string name="onboarding_notifications">通知</string>
     <string name="onboarding_notifications_desc">更新アラートとインストールの進行状況</string>
     <string name="onboarding_install">不明なアプリをインストールする</string>
-    <string name="onboarding_install_desc">必須：LSP Store は Play ストア以外から APK をインストールします</string>
+    <string name="onboarding_install_desc">LSP Store は Play ストア以外から APK をインストールします</string>
+    <string name="onboarding_apps">インストール済みアプリ</string>
+    <string name="onboarding_apps_desc">インストール済みの LSPosed モジュールを検出します。一部のシステムでは個別に許可が必要です</string>
     <string name="onboarding_granted">許可済み</string>
     <string name="onboarding_allow">許可</string>
     <string name="onboarding_skip">スキップ</string>

@@ -222,12 +222,14 @@
     <string name="onboarding_welcome_body">LSPosed 모듈 업데이트 및 탐색 도구</string>
     <string name="onboarding_appearance_title">당신의 스타일을 선택하세요</string>
     <string name="onboarding_appearance_subtitle">나중에 설정에서 이 모든 내용을 변경할 수 있습니다.</string>
-    <string name="onboarding_permissions_title">두 가지 빠른 프롬프트</string>
-    <string name="onboarding_permissions_subtitle">계속하려면 설치 권한이 필요합니다. 알림은 선택 사항입니다.</string>
+    <string name="onboarding_permissions_title">권한</string>
+    <string name="onboarding_permissions_subtitle">지금 허용하거나 나중에 설정에서 변경할 수 있습니다.</string>
     <string name="onboarding_notifications">알림</string>
     <string name="onboarding_notifications_desc">알림 업데이트 및 설치 진행 상황</string>
     <string name="onboarding_install">알 수 없는 앱 설치</string>
-    <string name="onboarding_install_desc">필수: LSP Store는 Play 스토어 외부에서 APK를 설치합니다</string>
+    <string name="onboarding_install_desc">LSP Store는 Play 스토어 외부에서 APK를 설치합니다</string>
+    <string name="onboarding_apps">설치된 앱</string>
+    <string name="onboarding_apps_desc">설치된 LSPosed 모듈을 찾는 데 사용됩니다. 일부 시스템에서는 별도로 요청합니다</string>
     <string name="onboarding_granted">허용됨</string>
     <string name="onboarding_allow">허용</string>
     <string name="onboarding_skip">건너뛰기</string>
