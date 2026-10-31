@@ -19,11 +19,19 @@ class NavigationLayoutTest {
     }
 
     @Test
-    fun normalWideWindowGetsTheRail() {
-        assertEquals(NavPlacement.Rail, navPlacement(widthDp = 600, heightDp = 800, tabletop = false))
-        assertEquals(NavPlacement.Rail, navPlacement(widthDp = 839, heightDp = 800, tabletop = false))
-        assertEquals(NavPlacement.Rail, navPlacement(widthDp = 840, heightDp = 800, tabletop = false))
+    fun wideLandscapeWindowGetsTheRail() {
+        assertEquals(NavPlacement.Rail, navPlacement(widthDp = 600, heightDp = 480, tabletop = false))
+        assertEquals(NavPlacement.Rail, navPlacement(widthDp = 839, heightDp = 600, tabletop = false))
+        assertEquals(NavPlacement.Rail, navPlacement(widthDp = 840, heightDp = 600, tabletop = false))
         assertEquals(NavPlacement.Rail, navPlacement(widthDp = 1280, heightDp = 800, tabletop = false))
+    }
+
+    @Test
+    fun portraitTabletKeepsThePhoneLayout() {
+        assertEquals(NavPlacement.MediumBar, navPlacement(widthDp = 800, heightDp = 1280, tabletop = false))
+        assertEquals(NavPlacement.MediumBar, navPlacement(widthDp = 1280, heightDp = 1600, tabletop = false))
+        // Square windows are not worth a rail either.
+        assertEquals(NavPlacement.MediumBar, navPlacement(widthDp = 900, heightDp = 900, tabletop = false))
     }
 
     @Test

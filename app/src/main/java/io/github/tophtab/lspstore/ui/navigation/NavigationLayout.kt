@@ -5,17 +5,18 @@ enum class NavPlacement {
     /** Compact width: bottom navigation bar. */
     CompactBar,
 
-    /** Wide but short window, or tabletop posture: compact bottom bar. */
+    /** Wide but short window, portrait window, or tabletop posture: bottom bar. */
     MediumBar,
 
-    /** Wide, tall window: Material 3 navigation rail on the start edge. */
+    /** Wide, landscape window: Material 3 navigation rail on the start edge. */
     Rail,
 }
 
 /**
  * Mirrors the window-size rules of Material 3's adaptive navigation guidance:
  * compact width always gets a bottom bar; a compact height or tabletop posture
- * keeps a bottom bar even when the window is wide; everything else gets a rail.
+ * keeps a bottom bar even when the window is wide; a tablet held in portrait
+ * keeps the phone layout too. Only a wide, landscape window gets the rail.
  */
 fun navPlacement(
     widthDp: Int,
@@ -24,6 +25,7 @@ fun navPlacement(
 ): NavPlacement = when {
     widthDp < 600 -> NavPlacement.CompactBar
     heightDp < 480 || tabletop -> NavPlacement.MediumBar
+    widthDp <= heightDp -> NavPlacement.MediumBar
     else -> NavPlacement.Rail
 }
 
