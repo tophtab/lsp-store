@@ -1,7 +1,6 @@
 package io.github.tophtab.lspstore.domain.model
 
 enum class TranslationProvider {
-    DISABLED,
     GOOGLE,
     LIBRE_TRANSLATE,
     DEEPL,
@@ -23,7 +22,6 @@ data class TranslationSettings(
 ) {
     val isConfigured: Boolean
         get() = when (provider) {
-            TranslationProvider.DISABLED -> false
             TranslationProvider.GOOGLE -> true
             TranslationProvider.LIBRE_TRANSLATE -> true
             TranslationProvider.DEEPL -> deeplKey.isNotBlank()

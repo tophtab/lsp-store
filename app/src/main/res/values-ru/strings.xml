@@ -187,7 +187,6 @@
     <string name="settings_translation_provider">Поставщик переводов</string>
     <string name="settings_translation_auto">Автоперевод</string>
     <string name="settings_translation_auto_desc">Автоматически переводить описание модуля при открытии его страницы.</string>
-    <string name="translation_disabled">Отключено</string>
     <string name="settings_translation_deepl_key">Ключ авторизации DeepL</string>
     <string name="settings_translation_libre_url">URL-адрес LibreTranslate</string>
     <string name="settings_translation_https_note">Используйте URL-адрес HTTPS для конечной точки LibreTranslate.</string>
@@ -199,7 +198,6 @@
     <string name="detail_clear_translation">Очистить перевод</string>
     <string name="detail_translated">Переведено</string>
     <string name="detail_translate_failed">Перевод не выполнен</string>
-    <string name="detail_translation_disabled">Перевод отключен в настройках</string>
         <string name="download_tap_to_cancel">Нажмите, чтобы отменить</string>
 <string name="download_progress">%1$s / %2$s</string>
     <string name="download_cancelled">Загрузка отменена</string>

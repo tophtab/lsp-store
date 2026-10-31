@@ -154,7 +154,6 @@ fun SettingsScreen(
                         subtitle = stringResource(state.translation.provider.labelRes()),
                         expanded = translationExpanded,
                         onToggle = { translationExpanded = !translationExpanded },
-                        last = state.translation.provider == TranslationProvider.DISABLED,
                     ) {
                         Column(
                             modifier = Modifier.fillMaxWidth(),
@@ -239,25 +238,21 @@ fun SettingsScreen(
                                         modifier = Modifier.fillMaxWidth(),
                                     )
                                 }
-
-                                TranslationProvider.DISABLED -> Unit
                             }
                         }
                     }
                     // The target follows the app language, so there is no target
                     // field; the only translation choice left is whether a module
                     // page translates itself.
-                    if (state.translation.provider != TranslationProvider.DISABLED) {
-                        KomiSettingsSwitchRow(
-                            title = stringResource(R.string.settings_translation_auto),
-                            subtitle = stringResource(R.string.settings_translation_auto_desc),
-                            checked = state.translation.autoTranslate,
-                            onCheckedChange = { checked ->
-                                viewModel.updateTranslation { it.copy(autoTranslate = checked) }
-                            },
-                            last = true,
-                        )
-                    }
+                    KomiSettingsSwitchRow(
+                        title = stringResource(R.string.settings_translation_auto),
+                        subtitle = stringResource(R.string.settings_translation_auto_desc),
+                        checked = state.translation.autoTranslate,
+                        onCheckedChange = { checked ->
+                            viewModel.updateTranslation { it.copy(autoTranslate = checked) }
+                        },
+                        last = true,
+                    )
                 }
 
                 KomiSettingsSectionHead(stringResource(R.string.settings_library))

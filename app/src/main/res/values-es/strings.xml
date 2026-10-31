@@ -187,7 +187,6 @@
     <string name="settings_translation_provider">Proveedor de traducción</string>
     <string name="settings_translation_auto">Traducción automática</string>
     <string name="settings_translation_auto_desc">Traduce la descripción del módulo automáticamente al abrir su página.</string>
-    <string name="translation_disabled">Desactivado</string>
     <string name="settings_translation_deepl_key">Clave de autenticación DeepL</string>
     <string name="settings_translation_libre_url">LibreTraducir URL</string>
     <string name="settings_translation_https_note">Utilice una URL HTTPS para el punto final de LibreTranslate.</string>
@@ -199,7 +198,6 @@
     <string name="detail_clear_translation">Borrar traducción</string>
     <string name="detail_translated">Traducido</string>
     <string name="detail_translate_failed">La traducción falló</string>
-    <string name="detail_translation_disabled">La traducción está deshabilitada en Configuración</string>
         <string name="download_tap_to_cancel">Toca para cancelar</string>
 <string name="download_progress">%1$s / %2$s</string>
     <string name="download_cancelled">Descarga cancelada</string>

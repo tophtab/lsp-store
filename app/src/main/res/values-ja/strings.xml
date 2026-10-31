@@ -187,7 +187,6 @@
     <string name="settings_translation_provider">翻訳プロバイダー</string>
     <string name="settings_translation_auto">自動翻訳</string>
     <string name="settings_translation_auto_desc">モジュールページを開いたときに説明を自動翻訳します。</string>
-    <string name="translation_disabled">無効</string>
     <string name="settings_translation_deepl_key">DeepL認証キー</string>
     <string name="settings_translation_libre_url">LibreURLを翻訳する</string>
     <string name="settings_translation_https_note">LibreTranslate エンドポイントには HTTPS URL を使用します。</string>
@@ -199,7 +198,6 @@
     <string name="detail_clear_translation">翻訳をクリア</string>
     <string name="detail_translated">翻訳済み</string>
     <string name="detail_translate_failed">翻訳に失敗しました</string>
-    <string name="detail_translation_disabled">設定で翻訳が無効になっています</string>
         <string name="download_tap_to_cancel">タップでキャンセル</string>
 <string name="download_progress">%1$s / %2$s</string>
     <string name="download_cancelled">ダウンロードがキャンセルされました</string>
