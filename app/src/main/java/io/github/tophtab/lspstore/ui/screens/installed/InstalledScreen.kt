@@ -58,7 +58,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -101,6 +100,7 @@ import io.github.tophtab.lspstore.ui.components.ErrorBox
 import io.github.tophtab.lspstore.ui.components.LoadingBox
 import io.github.tophtab.lspstore.ui.components.ModuleAvatar
 import io.github.tophtab.lspstore.ui.components.PackageAvatar
+import io.github.tophtab.lspstore.ui.components.PullToRefreshBox
 import io.github.tophtab.lspstore.ui.design.KomiButton
 import io.github.tophtab.lspstore.domain.usecase.BatchInstallPhase
 import io.github.tophtab.lspstore.domain.usecase.BatchInstallState
