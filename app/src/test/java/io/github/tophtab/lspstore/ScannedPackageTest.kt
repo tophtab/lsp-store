@@ -17,6 +17,7 @@ class ScannedPackageTest {
     private fun pkg(
         hasLegacyXposedMeta: Boolean = false,
         hasLibXposedProvider: Boolean = false,
+        hasModernMarker: Boolean = false,
         reflectedPrimaryCpuAbi: String? = null,
         nativeLibraryDir: String? = null,
         apiLevel: Int = 30,
@@ -32,6 +33,7 @@ class ScannedPackageTest {
         versionName = "1.0",
         hasLegacyXposedMeta = hasLegacyXposedMeta,
         hasLibXposedProvider = hasLibXposedProvider,
+        hasModernMarker = hasModernMarker,
         description = "does things",
         minSdk = 26,
         targetSdk = 34,
@@ -49,6 +51,12 @@ class ScannedPackageTest {
     @Test
     fun libXposedProviderMarksAModule() {
         assertTrue(pkg(hasLibXposedProvider = true).isXposedModule)
+    }
+
+    @Test
+    fun libXposedMarkersMarkAModule() {
+        // Modern modules have no manifest declaration at all; Wren is one.
+        assertTrue(pkg(hasModernMarker = true).isXposedModule)
     }
 
     @Test
