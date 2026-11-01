@@ -24,7 +24,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -46,6 +45,7 @@ import io.github.tophtab.lspstore.ui.components.EmptyBox
 import io.github.tophtab.lspstore.ui.components.ErrorBox
 import io.github.tophtab.lspstore.ui.components.LoadingBox
 import io.github.tophtab.lspstore.ui.components.ModuleCard
+import io.github.tophtab.lspstore.ui.components.PullToRefreshBox
 import io.github.tophtab.lspstore.ui.design.KomiConstrainedContent
 import io.github.tophtab.lspstore.ui.design.KomiSegment
 import io.github.tophtab.lspstore.ui.design.KomiSegmented
