@@ -24,6 +24,11 @@ data class ScannedPackage(
     val hasLegacyXposedMeta: Boolean,
     /** Modern libxposed modules declare a provider instead of meta-data. */
     val hasLibXposedProvider: Boolean,
+    /**
+     * libxposed modules carry files under `META-INF/xposed/` instead of
+     * declaring anything in the manifest (see [ModuleMarker]).
+     */
+    val hasModernMarker: Boolean = false,
     val description: String?,
     val minSdk: Int,
     val targetSdk: Int,
@@ -36,7 +41,7 @@ data class ScannedPackage(
 ) {
 
     val isXposedModule: Boolean
-        get() = hasLegacyXposedMeta || hasLibXposedProvider
+        get() = hasLegacyXposedMeta || hasLibXposedProvider || hasModernMarker
 
     val versionCode: Long
         get() = if (apiLevel >= 28) {

@@ -9,6 +9,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import io.github.tophtab.lspstore.data.device.ModuleMarker
 import io.github.tophtab.lspstore.data.device.ScannedPackage
 import io.github.tophtab.lspstore.domain.model.InstalledModule
 import java.io.File
@@ -77,6 +78,11 @@ class InstalledModulesRepositoryImpl(
             packages.mapNotNull { pkg ->
                 val app = pkg.applicationInfo ?: return@mapNotNull null
                 val meta = app.metaData
+                val hasLegacyXposedMeta = meta != null &&
+                    (meta.containsKey("xposedmodule") || meta.containsKey("xposedminversion"))
+                val hasLibXposedProvider = pkg.providers?.any {
+                    it.name == "io.github.libxposed.service.XposedProvider"
+                } == true
                 // The framework half of the scan; the module/ABI rules live in
                 // ScannedPackage so they can be tested on the JVM.
                 ScannedPackage(
@@ -87,13 +93,16 @@ class InstalledModulesRepositoryImpl(
                     longVersionCode = if (supportsLongVersionCode) pkg.longVersionCode else null,
                     legacyVersionCode = pkg.versionCode,
                     versionName = pkg.versionName,
-                    hasLegacyXposedMeta = meta != null &&
-                        (meta.containsKey("xposedmodule") || meta.containsKey("xposedminversion")),
+                    hasLegacyXposedMeta = hasLegacyXposedMeta,
                     // Modern libxposed modules expose a provider instead of the
                     // legacy xposedmodule meta-data.
-                    hasLibXposedProvider = pkg.providers?.any {
-                        it.name == "io.github.libxposed.service.XposedProvider"
-                    } == true,
+                    hasLibXposedProvider = hasLibXposedProvider,
+                    // Modern modules declare nothing in the manifest, so the
+                    // APK archive (base and splits) has to be checked. Only for
+                    // packages that did not already identify themselves: opening
+                    // an archive per installed app is the expensive part of a scan.
+                    hasModernMarker = !hasLegacyXposedMeta && !hasLibXposedProvider &&
+                        ModuleMarker.isModernModule(app.sourceDir, app.splitSourceDirs),
                     description = meta?.getString("xposeddescription"),
                     minSdk = app.minSdkVersion,
                     targetSdk = app.targetSdkVersion,
