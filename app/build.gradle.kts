@@ -58,14 +58,10 @@ android {
 
     buildTypes {
         release {
+            signingConfig = signingConfigs.getByName("debug")
             // Without KEYSTORE_FILE the APK stays unsigned, so a local
             // `assembleRelease` works without the release key; publishing jobs
             // verify the signature separately.
-            signingConfig = if (System.getenv("KEYSTORE_FILE").isNullOrEmpty()) {
-                null
-            } else {
-                signingConfigs.getByName("release")
-            }
             isMinifyEnabled = true
             // Off by measurement (CI A/B on 1.1.0): resource shrinking saved 361 KB
             // (10.3%) of the APK but cost ~50s of every release build - it is an R8

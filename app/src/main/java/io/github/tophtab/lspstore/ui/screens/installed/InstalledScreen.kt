@@ -362,7 +362,6 @@ fun InstalledScreen(
                                                 info = info,
                                                 install = state.rowStates[info.module.packageName]
                                                     ?: state.detailRuns[info.module.packageName],
-                                                batchRunning = state.batchRunning,
                                                 isUpdateIgnored = isUpdateIgnored(
                                                     info.installed.packageName,
                                                     info.module.packageName,
@@ -461,7 +460,6 @@ fun InstalledScreen(
 private fun UpdateRow(
     info: UpdateInfo,
     install: BatchInstallState?,
-    batchRunning: Boolean,
     isUpdateIgnored: Boolean,
     onOpen: () -> Unit,
     onUpdate: () -> Unit,
@@ -538,13 +536,13 @@ private fun UpdateRow(
                     InstallPill(state = install, onCancel = onUpdate, retry = true)
 
                 // Cancelled/skipped rows, and terminal marks that already
-                // expired, go back to the normal action.
+                // expired, go back to the normal action. Other rows installing
+                // never disables this one: each update runs on its own chain.
                 else -> KomiButton(
                     onClick = onUpdate,
                     label = stringResource(R.string.action_update),
                     variant = KomiButtonVariant.Primary,
                     size = KomiButtonSize.Small,
-                    enabled = !batchRunning,
                     leadingIcon = Icons.Filled.SystemUpdate,
                 )
             }

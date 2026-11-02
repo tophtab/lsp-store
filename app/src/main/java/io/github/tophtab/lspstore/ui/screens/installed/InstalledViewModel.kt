@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import io.github.tophtab.lspstore.R
 import io.github.tophtab.lspstore.data.install.InstallStage
+import io.github.tophtab.lspstore.data.install.ModuleInstallRequest
 import io.github.tophtab.lspstore.data.install.ModuleInstallRun
 import io.github.tophtab.lspstore.data.repository.PendingInstallRepository
 import io.github.tophtab.lspstore.di.AppContainer
@@ -27,7 +28,6 @@ import io.github.tophtab.lspstore.domain.usecase.BatchFailureKind
 import io.github.tophtab.lspstore.domain.usecase.BatchInstallControl
 import io.github.tophtab.lspstore.domain.usecase.BatchInstallPhase
 import io.github.tophtab.lspstore.domain.usecase.BatchInstallState
-import io.github.tophtab.lspstore.domain.usecase.BatchInstallUseCase
 import io.github.tophtab.lspstore.domain.usecase.UpdateChecker
 import io.github.tophtab.lspstore.domain.variant.ModuleVariantState
 import io.github.tophtab.lspstore.domain.variant.ScoredAsset
@@ -51,6 +51,18 @@ private const val COMPLETED_NOTICE_MS = 1_200L
 /** How long a failed row keeps the failure mark before returning to Update. */
 private const val FAILED_NOTICE_MS = 3_000L
 
+/** How often a visible screen re-checks pending installs that never landed. */
+private const val PENDING_RECONCILE_MS = 30_000L
+
+/** Row phases owned by a running chain; a tap on such a row must be ignored. */
+private val ACTIVE_PHASES = setOf(
+    BatchInstallPhase.QUEUED,
+    BatchInstallPhase.PREPARING,
+    BatchInstallPhase.DOWNLOADING,
+    BatchInstallPhase.WAITING_TO_INSTALL,
+    BatchInstallPhase.INSTALLING,
+)
+
 data class InstalledVariantPicker(
     val repoPackageName: String,
     val title: String,
@@ -59,6 +71,8 @@ data class InstalledVariantPicker(
     val needsConfirm: Boolean = false,
     val isLoading: Boolean = true,
     val error: String? = null,
+    /** Set when the picker was opened by an update tap; picking continues that update. */
+    val caller: UpdateInfo? = null,
 )
 
 data class InstalledUiState(
@@ -188,10 +202,37 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
                 _state.update { it.copy(detailRuns = mapped) }
             }
         }
+        viewModelScope.launch {
+            // Single updates started from this screen ride the same coordinator
+            // chain as module pages, so their outcome text lands here too.
+            coordinator.messages.collect { message ->
+                _state.update { it.copy(message = message) }
+            }
+        }
+        viewModelScope.launch {
+            // A delegated install whose installer dialog the user dismissed never
+            // produces a package event. The resume hook only runs on foreground
+            // transitions, so without a periodic re-check the pending entry would
+            // keep the row's Update button hidden until the app is restarted.
+            while (true) {
+                delay(PENDING_RECONCILE_MS)
+                if (pending.isEmpty()) continue
+                val current = _state.value
+                // A batch may still be waiting for its own hand-off; abandoning
+                // the pending entry now would release the install slot too early.
+                if (current.batchRunning || current.detailRuns.isNotEmpty()) continue
+                container.reconcilePendingInstalls()
+            }
+        }
         load(force = false)
     }
 
-    fun refresh() = load(force = true)
+    fun refresh() {
+        load(force = true)
+        // Pull-to-refresh is another chance to settle a hand-off the installer
+        // never completed (same reconciliation the resume hook runs).
+        viewModelScope.launch { container.reconcilePendingInstalls() }
+    }
 
     /**
      * Whether the finished refresh that produced the current
@@ -234,11 +275,15 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
             ?: container.appContext.getString(R.string.error_install_failed)
     }
     fun update(info: UpdateInfo) {
-        if (_state.value.batchRunning) return
+        val packageName = info.module.packageName
         // A module page may already be installing this package; do not start a
         // second chain for it.
-        if (_state.value.detailRuns.containsKey(info.module.packageName)) return
-        startRun(targets = listOf(info), single = true)
+        if (_state.value.detailRuns.containsKey(packageName)) return
+        // A busy row of a running batch keeps its pill; retrying a row that
+        // already reached a terminal phase (failed, skipped, cancelled) is fine.
+        val row = _state.value.rowStates[packageName]
+        if (row != null && row.phase in ACTIVE_PHASES) return
+        startSingleRun(info)
     }
 
     /**
@@ -246,17 +291,98 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
      * failure handling have a single implementation.
      */
     fun updateAll() {
-        val busy = _state.value.detailRuns.keys
-        // A module page install already owns its package; starting a second
-        // chain for it here would download and install it twice.
+        // A module page install or a busy batch row already owns its package;
+        // starting a second chain for it here would download and install it twice.
+        val busy = _state.value.detailRuns.keys +
+            _state.value.rowStates.filterValues { it.phase in ACTIVE_PHASES }.keys
         val targets = _state.value.updates.filterNot {
             it.module.packageName in busy
         }
         if (targets.isEmpty() || _state.value.batchRunning) return
-        startRun(targets = targets, single = false)
+        startRun(targets = targets)
     }
 
-    private fun startRun(targets: List<UpdateInfo>, single: Boolean) {
+    /**
+     * Single updates run through the app-scoped install coordinator (the same
+     * chain a module page uses) instead of the batch: one module downloading no
+     * longer disables the other rows, and a dismissed installer never parks the
+     * screen in a waiting state — the row simply falls back to Update, and the
+     * pending reconciliation restores it once the hand-off is abandoned.
+     */
+    private fun startSingleRun(info: UpdateInfo) {
+        val repoPackage = info.module.packageName
+        viewModelScope.launch {
+            runCatching { moduleRepository.getDetail(repoPackage) }
+                .onSuccess { detail ->
+                    val release = detail.latestReleaseFor(repoPackage in preReleases)
+                    if (release == null) {
+                        _state.update {
+                            it.copy(
+                                message = container.appContext.getString(
+                                    R.string.error_no_apk_asset,
+                                ),
+                            )
+                        }
+                        return@launch
+                    }
+                    val state = variantStates[repoPackage]
+                        ?: variantStates[info.installed.packageName]
+                        ?: ModuleVariantState()
+                    val resolution = container.resolveVariantUseCase.resolve(
+                        release = release,
+                        state = state,
+                        device = container.deviceProfile,
+                        expectedPackage = info.installed.packageName,
+                    )
+                    when (val decision = resolution.decision) {
+                        is VariantDecision.Pick -> {
+                            val version = release.version
+                            coordinator.start(
+                                ModuleInstallRequest(
+                                    repoPackageName = repoPackage,
+                                    title = info.module.title,
+                                    asset = decision.asset,
+                                    installedPackage = info.installed.packageName,
+                                    versionCode = version?.versionCode
+                                        ?: info.latest.versionCode,
+                                    versionName = version?.versionName
+                                        ?: info.latest.versionName,
+                                ),
+                            )
+                        }
+
+                        is VariantDecision.Choose -> openVariantPicker(repoPackage, info)
+
+                        is VariantDecision.NotApplicable -> {
+                            libraryRepository.setVariantState(
+                                repoPackage,
+                                state.onEvaluatedNoCandidate(decision.reason),
+                            )
+                            _state.update {
+                                it.copy(
+                                    message = container.appContext.variantReasonText(
+                                        decision.reason,
+                                    ),
+                                )
+                            }
+                        }
+                    }
+                }
+                .onFailure { error ->
+                    if (error is CancellationException) return@onFailure
+                    _state.update {
+                        it.copy(
+                            message = error.toUserMessage(
+                                container.appContext,
+                                R.string.installed_check_failed,
+                            ),
+                        )
+                    }
+                }
+        }
+    }
+
+    private fun startRun(targets: List<UpdateInfo>) {
         val generation = ++batchGeneration
         val total = targets.size
         val control = batchInstall.newControl()
@@ -307,37 +433,27 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
             val failed = items.count { it.phase == BatchInstallPhase.FAILED }
             val skipped = items.count { it.phase == BatchInstallPhase.SKIPPED }
             val cancelled = items.count { it.phase == BatchInstallPhase.CANCELLED }
-            val message = if (single) {
-                singleRunMessage(targets.first(), result, skipped, control)
-            } else {
-                when {
-                    result.installInterrupted -> container.appContext.getString(
-                        R.string.installed_batch_installer_busy,
-                        skipped,
-                    )
+            val message = when {
+                result.installInterrupted -> container.appContext.getString(
+                    R.string.installed_batch_installer_busy,
+                    skipped,
+                )
 
-                    failed > 0 -> failureMessage(result.failures, failed)
+                failed > 0 -> failureMessage(result.failures, failed)
 
-                    skipped > 0 -> container.appContext.getString(
-                        R.string.installed_finished_skipped,
-                        skipped,
-                    )
+                skipped > 0 -> container.appContext.getString(
+                    R.string.installed_finished_skipped,
+                    skipped,
+                )
 
-                    // Per-row cancels are not failures, but "all modules
-                    // updated" would be a lie when some were stopped.
-                    cancelled > 0 -> container.appContext.getString(
-                        R.string.installed_finished_cancelled,
-                        cancelled,
-                    )
+                // Per-row cancels are not failures, but "all modules
+                // updated" would be a lie when some were stopped.
+                cancelled > 0 -> container.appContext.getString(
+                    R.string.installed_finished_cancelled,
+                    cancelled,
+                )
 
-                    else -> container.appContext.getString(R.string.installed_all_updated)
-                }
-            }
-            if (single && skipped > 0 && !result.installInterrupted &&
-                !control.isCancelled(targets.first().module.packageName)
-            ) {
-                // No remembered choice and the name layer is ambiguous: ask.
-                openVariantPicker(targets.first().module.packageName)
+                else -> container.appContext.getString(R.string.installed_all_updated)
             }
             _state.update {
                 it.copy(
@@ -351,33 +467,6 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
             batchControl = null
             batchJob = null
         }
-    }
-
-    /**
-     * A successful single update keeps its old sentence instead of the batch
-     * "all modules updated"; a delegated hand-off stays silent because the
-     * pending row is the feedback.
-     */
-    private fun singleRunMessage(
-        info: UpdateInfo,
-        result: BatchInstallUseCase.Result,
-        skipped: Int,
-        control: BatchInstallControl,
-    ): String? = when {
-        control.isCancelled(info.module.packageName) -> null
-        result.installInterrupted -> container.appContext.getString(
-            R.string.installed_batch_installer_busy,
-            1,
-        )
-        result.failures.isNotEmpty() -> result.failures.first().detail
-            ?: container.appContext.getString(R.string.error_install_failed)
-        result.delegated > 0 -> null
-        skipped > 0 -> container.appContext.getString(R.string.installed_choose_variant)
-        else -> container.appContext.getString(
-            R.string.installed_updated_one,
-            info.module.title,
-            info.latest.versionName,
-        )
     }
 
     /** Cancels one module of the running update; the row returns to Update. */
@@ -486,7 +575,7 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
     }
 
     /** Loads the latest release's variants so the user can pin the one updates use. */
-    fun openVariantPicker(repoPackageName: String) {
+    fun openVariantPicker(repoPackageName: String, caller: UpdateInfo? = null) {
         if (_state.value.variantPicker != null) return
         val title = index.firstOrNull { it.packageName == repoPackageName }?.title
             ?: installed.firstOrNull { it.packageName == repoPackageName }?.label
@@ -497,6 +586,7 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
                     repoPackageName = repoPackageName,
                     title = title,
                     selectedAssetName = null,
+                    caller = caller,
                 ),
             )
         }
@@ -606,6 +696,21 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
                         } else {
                             R.string.installed_variant_saved
                         },
+                    ),
+                )
+            }
+            // Picking from an update row continues that update with the chosen
+            // APK right away, instead of asking the user to tap Update again.
+            val caller = picker.caller
+            if (asset != null && caller != null) {
+                coordinator.start(
+                    ModuleInstallRequest(
+                        repoPackageName = picker.repoPackageName,
+                        title = caller.module.title,
+                        asset = asset,
+                        installedPackage = caller.installed.packageName,
+                        versionCode = caller.latest.versionCode,
+                        versionName = caller.latest.versionName,
                     ),
                 )
             }

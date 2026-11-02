@@ -1,6 +1,7 @@
 package io.github.tophtab.lspstore.data.install
 
 import android.content.Context
+import android.os.Environment
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -86,10 +87,8 @@ class DownloadManager(
     }
 
     fun cancel(key: String) {
-        val task = _tasks.value[key]
         jobs.remove(key)?.cancel()
         updateTask(key) { it.copy(status = DownloadStatus.CANCELLED) }
-        runCatching { task?.file?.delete() }
     }
 
     fun clearFinished() {
@@ -135,7 +134,7 @@ class DownloadManager(
     }
 
     private fun launchDownload(key: String, asset: ReleaseAsset) {
-        val target = targetFile(key, asset.name)
+        val target = targetFile(key, asset)
         val existingBytes = if (target.exists()) target.length() else 0L
         // A file that already covers the asset is a finished transfer whose
         // completion could not be recorded (process death right after the last
@@ -222,15 +221,57 @@ class DownloadManager(
         }
     }
 
-    private fun targetFile(key: String, assetName: String): File {
-        val dir = File(context.cacheDir, "apk").apply { mkdirs() }
-        val safeName = assetName
+    private fun targetFile(key: String, asset: ReleaseAsset): File {
+        val dir = downloadDir().apply { mkdirs() }
+        val baseName = asset.name
             .substringAfterLast('/')
             .substringAfterLast('\\')
+        // Keep the extension at the very end: Name-<hash>.apk, never Name.apk-<hash>.
+        val display = displayNameFor(baseName, asset)
+        val stem = display.substringBeforeLast('.', display)
+        val ext = display.substringAfterLast('.', "")
+        return File(dir, if (ext.isBlank()) "$stem-$key" else "$stem-$key.$ext")
+    }
+
+    /**
+     * Downloads live under the public Download/LSP_Store folder so they can be
+     * found outside the app; the folder is created on first use.
+     */
+    @Suppress("DEPRECATION")
+    private fun downloadDir(): File =
+        File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "LSP_Store")
+
+    /** Human-readable part of the file name; the identity hash goes after it. */
+    private fun displayNameFor(baseName: String, asset: ReleaseAsset): String {
+        val stem = baseName.substringBeforeLast('.', baseName)
+        val isGeneric = GENERIC_NAMES.any { stem.equals(it, ignoreCase = true) }
+        val candidate = (if (isGeneric) projectNameFrom(asset) else stem).orEmpty()
+        val clean = (candidate.ifBlank { stem })
             .replace(Regex("[^A-Za-z0-9._-]"), "_")
             .take(80)
-            .ifBlank { "module.apk" }
-        return File(dir, "$key-$safeName")
+            .ifBlank { "module" }
+        return if (clean.endsWith(".apk", ignoreCase = true)) clean else "$clean.apk"
+    }
+
+    /**
+     * Extracts the project name from the download URL when the asset file name is
+     * a generic `app-release.apk` style name. GitHub release URLs carry it right
+     * before the `releases/download` segment; assets.lsposed.org places it right
+     * after the `/a/` marker.
+     */
+    private fun projectNameFrom(asset: ReleaseAsset): String? {
+        val url = asset.downloadUrl.ifBlank { asset.fallbackUrl.orEmpty() }
+        val path = runCatching { java.net.URI(url).path }.getOrNull() ?: return null
+        val segments = path.split('/').filter { it.isNotBlank() }
+        if (segments.isEmpty()) return null
+
+        val releaseIdx = segments.indexOfLast { it.equals("releases", ignoreCase = true) }
+        if (releaseIdx >= 1) return segments[releaseIdx - 1]
+
+        val aIdx = segments.indexOfFirst { it.equals("a", ignoreCase = true) }
+        if (aIdx in 0 until segments.lastIndex) return segments[aIdx + 1]
+
+        return segments.dropLast(1).lastOrNull { it.contains('.') }
     }
 
     private fun updateTask(key: String, create: Boolean = false, transform: (DownloadTask) -> DownloadTask) {
@@ -241,7 +282,7 @@ class DownloadManager(
     }
 
     fun downloadedBytes(): Long {
-        val dir = File(context.cacheDir, "apk")
+        val dir = downloadDir()
         if (!dir.exists()) return 0
         return dir.walkBottomUp().filter { it.isFile }.sumOf { it.length() }
     }
@@ -261,9 +302,23 @@ class DownloadManager(
         jobs.values.forEach { it.cancel() }
         jobs.clear()
         _tasks.value = emptyMap()
-        runCatching { File(context.cacheDir, "apk").deleteRecursively() }
+        runCatching { downloadDir().deleteRecursively() }
     }
 }
+
+/** File names treated as generic and rewritten to the URL's project name. */
+private val GENERIC_NAMES = setOf(
+    "app",
+    "app-release",
+    "apprelease",
+    "app-debug",
+    "appdebug",
+    "release",
+    "debug",
+    "module",
+    "app-release-unsigned",
+    "app-release-signed",
+)
 
 /**
  * Cache key for an asset. The file name alone is not unique: many modules ship
