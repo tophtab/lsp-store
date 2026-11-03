@@ -186,7 +186,7 @@
     <string name="settings_translation">Traduzione</string>
     <string name="settings_translation_provider">Fornitore di traduzioni</string>
     <string name="settings_translation_auto">Traduzione automatica</string>
-    <string name="settings_translation_auto_desc">Traduce automaticamente la descrizione del modulo quando apri la sua pagina.</string>
+    <string name="settings_translation_auto_desc">Traduce automaticamente la descrizione, il README e le novità del modulo quando apri la sua pagina.</string>
     <string name="settings_translation_deepl_key">Chiave di autenticazione DeepL</string>
     <string name="settings_translation_libre_url">URL di LibreTranslate</string>
     <string name="settings_translation_https_note">Utilizza un URL HTTPS per l\'endpoint LibreTranslate.</string>
@@ -194,9 +194,8 @@
     <string name="settings_translation_ms_key">Chiave Microsoft</string>
     <string name="settings_translation_ms_region">Regione Microsoft</string>
     <string name="settings_translation_note">Google utilizza il suo endpoint pubblico e non necessita di chiave.</string>
-    <string name="detail_translate">Traduci la descrizione</string>
-    <string name="detail_clear_translation">Cancella traduzione</string>
-    <string name="detail_translated">Tradotto</string>
+    <string name="detail_translate_page">Traduci</string>
+    <string name="detail_show_original">Mostra originale</string>
     <string name="detail_translate_failed">Traduzione fallita</string>
         <string name="download_tap_to_cancel">Tocca per annullare</string>
 <string name="download_progress">%1$s / %2$s</string>

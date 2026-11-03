@@ -186,7 +186,7 @@
     <string name="settings_translation">Çeviri</string>
     <string name="settings_translation_provider">Çeviri sağlayıcı</string>
     <string name="settings_translation_auto">Otomatik çeviri</string>
-    <string name="settings_translation_auto_desc">Bir modül sayfasını açtığınızda açıklamayı otomatik olarak çevirir.</string>
+    <string name="settings_translation_auto_desc">Bir modül sayfasını açtığınızda açıklamayı, README ve sürüm notlarını otomatik olarak çevirir.</string>
     <string name="settings_translation_deepl_key">DeepL kimlik doğrulama anahtarı</string>
     <string name="settings_translation_libre_url">LibreTranslate URL\'si</string>
     <string name="settings_translation_https_note">LibreTranslate uç noktası için bir HTTPS URL\'si kullanın.</string>
@@ -194,9 +194,8 @@
     <string name="settings_translation_ms_key">Microsoft anahtarı</string>
     <string name="settings_translation_ms_region">Microsoft bölgesi</string>
     <string name="settings_translation_note">Google, genel uç noktasını kullanır ve anahtara ihtiyaç duymaz.</string>
-    <string name="detail_translate">Açıklamayı çevir</string>
-    <string name="detail_clear_translation">Çeviriyi temizle</string>
-    <string name="detail_translated">Çevrildi</string>
+    <string name="detail_translate_page">Çevir</string>
+    <string name="detail_show_original">Orijinali göster</string>
     <string name="detail_translate_failed">Çeviri başarısız oldu</string>
         <string name="download_tap_to_cancel">İptal etmek için dokunun</string>
 <string name="download_progress">%1$s / %2$s</string>

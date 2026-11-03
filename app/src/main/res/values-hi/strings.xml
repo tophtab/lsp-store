@@ -186,7 +186,7 @@
     <string name="settings_translation">अनुवाद</string>
     <string name="settings_translation_provider">अनुवाद प्रदाता</string>
     <string name="settings_translation_auto">स्वचालित अनुवाद</string>
-    <string name="settings_translation_auto_desc">मॉड्यूल पेज खोलने पर विवरण अपने आप अनुवादित करें।</string>
+    <string name="settings_translation_auto_desc">मॉड्यूल पेज खोलने पर विवरण, README और अपडेट सामग्री अपने आप अनुवादित करें।</string>
     <string name="settings_translation_deepl_key">डीपएल प्रमाणीकरण कुंजी</string>
     <string name="settings_translation_libre_url">लिबरट्रांसलेट यूआरएल</string>
     <string name="settings_translation_https_note">लिबरट्रांसलेट एंडपॉइंट के लिए HTTPS URL का उपयोग करें।</string>
@@ -194,9 +194,8 @@
     <string name="settings_translation_ms_key">माइक्रोसॉफ्ट कुंजी</string>
     <string name="settings_translation_ms_region">माइक्रोसॉफ्ट क्षेत्र</string>
     <string name="settings_translation_note">Google अपने सार्वजनिक समापन बिंदु का उपयोग करता है और उसे किसी कुंजी की आवश्यकता नहीं है।</string>
-    <string name="detail_translate">विवरण का अनुवाद करें</string>
-    <string name="detail_clear_translation">अनुवाद साफ़ करें</string>
-    <string name="detail_translated">अनुवाद</string>
+    <string name="detail_translate_page">अनुवाद करें</string>
+    <string name="detail_show_original">मूल दिखाएँ</string>
     <string name="detail_translate_failed">अनुवाद विफल</string>
         <string name="download_tap_to_cancel">रद्द करने के लिए टैप करें</string>
 <string name="download_progress">%1$s / %2$s</string>
