@@ -88,10 +88,8 @@ class BatchInstallUseCaseTest {
         targets: List<UpdateInfo>,
         prepared: (UpdateInfo) -> PreparedInstall = { ready(it) },
         installer: (PreparedInstall.Ready) -> InstallOutcome = { InstallOutcome.Completed },
-        settled: Boolean = true,
         isActive: () -> Boolean = { true },
         onInstalled: (String) -> Unit = {},
-        released: MutableList<String> = mutableListOf(),
         downloadLimit: Int = 3,
     ): Pair<BatchInstallUseCase.Result, Recorder> {
         val recorder = Recorder()
@@ -119,8 +117,6 @@ class BatchInstallUseCaseTest {
         val useCase = BatchInstallUseCase(
             prepareInstall = preparer,
             installPrepared = install,
-            awaitInstallSettled = { _, _ -> settled },
-            releaseInstallSlot = { released += it },
             abandonDownload = {},
             downloadSlots = DownloadSlots { downloadLimit },
         )
@@ -148,7 +144,6 @@ class BatchInstallUseCaseTest {
 
         val (result, recorder) = run(targets)
 
-        assertFalse(result.installInterrupted)
         assertEquals(2, recorder.installs)
         assertEquals(BatchInstallPhase.COMPLETED, recorder.phases["com.example.a"])
         assertEquals(BatchInstallPhase.COMPLETED, recorder.phases["com.example.b"])
@@ -169,46 +164,27 @@ class BatchInstallUseCaseTest {
             },
         )
 
-        assertFalse(result.installInterrupted)
         assertEquals(2, recorder.installs)
         assertEquals(BatchInstallPhase.FAILED, recorder.phases["com.example.a"])
         assertEquals(BatchInstallPhase.COMPLETED, recorder.phases["com.example.b"])
     }
 
     @Test
-    fun delegatedInstallThatNeverSettlesSkipsTheRestOfTheQueue() {
+    fun delegatedHandOffDoesNotBlockTheNextTarget() {
         val targets = listOf(updateInfo("com.example.a"), updateInfo("com.example.b"))
-        val released = mutableListOf<String>()
         val installed = mutableListOf<String>()
 
         val (result, recorder) = run(
             targets,
             installer = { InstallOutcome.DelegatedToSystem },
-            settled = false,
             onInstalled = { installed += it },
-            released = released,
         )
 
-        assertTrue(result.installInterrupted)
-        // Only the hand-off that never resolved reached the installer.
-        assertEquals(listOf("com.example.a"), installed)
-        assertEquals(BatchInstallPhase.SKIPPED, recorder.phases["com.example.a"])
-        // The install slot has to be given back, otherwise the queue deadlocks.
-        assertEquals(listOf("com.example.a"), released)
-    }
-
-    @Test
-    fun delegatedInstallThatSettlesContinuesTheQueue() {
-        val targets = listOf(updateInfo("com.example.a"), updateInfo("com.example.b"))
-
-        val (result, recorder) = run(
-            targets,
-            installer = { InstallOutcome.DelegatedToSystem },
-            settled = true,
-        )
-
-        assertFalse(result.installInterrupted)
-        assertEquals(2, recorder.installs)
+        // A cancelled installer dialog must not freeze "update all": both
+        // hand-offs leave this queue, and the next one waits at the install
+        // gate (released by the broadcast or the resume reconcile).
+        assertEquals(2, result.delegated)
+        assertEquals(listOf("com.example.a", "com.example.b"), installed)
         assertEquals(BatchInstallPhase.COMPLETED, recorder.phases["com.example.a"])
         assertEquals(BatchInstallPhase.COMPLETED, recorder.phases["com.example.b"])
     }
@@ -228,7 +204,6 @@ class BatchInstallUseCaseTest {
             },
         )
 
-        assertFalse(result.installInterrupted)
         assertEquals(1, recorder.installs)
         assertEquals(BatchInstallPhase.SKIPPED, recorder.phases["com.example.a"])
         assertEquals(BatchInstallPhase.COMPLETED, recorder.phases["com.example.b"])
@@ -243,7 +218,6 @@ class BatchInstallUseCaseTest {
             prepared = { info -> PreparedInstall.Failed(info, "no asset") },
         )
 
-        assertFalse(result.installInterrupted)
         assertEquals(0, recorder.installs)
         assertEquals(BatchInstallPhase.FAILED, recorder.phases["com.example.a"])
         // The reason has to survive the queue, otherwise the summary can only
@@ -306,8 +280,6 @@ class BatchInstallUseCaseTest {
             val useCase = BatchInstallUseCase(
                 prepareInstall = preparer,
                 installPrepared = installer,
-                awaitInstallSettled = { _, _ -> true },
-                releaseInstallSlot = {},
                 abandonDownload = {},
                 downloadSlots = DownloadSlots { 3 },
             )
@@ -355,8 +327,6 @@ class BatchInstallUseCaseTest {
                 val useCase = BatchInstallUseCase(
                     prepareInstall = preparer,
                     installPrepared = installer,
-                    awaitInstallSettled = { _, _ -> true },
-                    releaseInstallSlot = {},
                     abandonDownload = {},
                     downloadSlots = DownloadSlots { limit },
                 )
@@ -403,8 +373,6 @@ class BatchInstallUseCaseTest {
             val useCase = BatchInstallUseCase(
                 prepareInstall = preparer,
                 installPrepared = installer,
-                awaitInstallSettled = { _, _ -> true },
-                releaseInstallSlot = {},
                 abandonDownload = {},
                 downloadSlots = DownloadSlots { 3 },
             )
@@ -451,7 +419,6 @@ class BatchInstallUseCaseTest {
             },
         )
 
-        assertFalse(result.installInterrupted)
         assertTrue(installs.size < targets.size)
     }
 }

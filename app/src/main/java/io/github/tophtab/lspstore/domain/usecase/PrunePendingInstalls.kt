@@ -18,9 +18,9 @@ data class PendingPruneResult(
 
 /**
  * Pure decision table of [io.github.tophtab.lspstore.data.repository.PendingInstallRepository.prune]:
- * a pending install is done when the device reports its target version (or a
- * newer one), and is abandoned when it is older than [maxAgeMs] without ever
- * landing (cancelled or dismissed installer dialog).
+ * a pending install is done when [settlePendingInstall] says the device runs the
+ * target (including a same-code re-upload), and is abandoned when it is older
+ * than [maxAgeMs] without ever landing (cancelled or dismissed installer dialog).
  */
 fun prunePendingInstalls(
     pending: List<PendingInstall>,
@@ -32,14 +32,17 @@ fun prunePendingInstalls(
     val kept = mutableListOf<PendingInstall>()
     val landed = mutableListOf<PendingInstall>()
     pending.forEach { entry ->
-        val installedModule = installedByPackage[entry.packageName]
-        val targetReached = entry.versionCode > 0L &&
-            installedModule != null &&
-            installedModule.versionCode >= entry.versionCode
-        val stale = entry.createdAt > 0L && now - entry.createdAt > maxAgeMs
-        when {
-            targetReached -> landed += entry
-            !stale -> kept += entry
+        when (
+            settlePendingInstall(
+                pending = entry,
+                installed = installedByPackage[entry.packageName],
+                now = now,
+                abandonAfterMs = maxAgeMs,
+            )
+        ) {
+            PendingSettlement.LANDED -> landed += entry
+            PendingSettlement.PENDING -> kept += entry
+            PendingSettlement.ABANDONED -> Unit
         }
     }
     return PendingPruneResult(kept = kept, landed = landed)

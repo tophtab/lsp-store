@@ -147,7 +147,7 @@ class InstallPreparedApkUseCase(
             systemInstallSerializer.awaitFreeAndMarkPending(packageName)
             // Verify and update the installed package, which may differ from
             // the repository listing for imported/linked modules.
-            installer.install(prepared.file, packageName, useRoot)
+            installer.install(prepared.file, useRoot)
         } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (error: Throwable) {

@@ -24,20 +24,29 @@ class PendingPruneTest {
             createdAt = createdAt,
         )
 
-    private fun installed(packageName: String, versionCode: Long) = InstalledModule(
+    private fun installed(
+        packageName: String,
+        versionCode: Long,
+        lastUpdateTime: Long = 0L,
+    ) = InstalledModule(
         packageName = packageName,
         versionCode = versionCode,
         versionName = "1.0",
         label = packageName,
         isXposedModule = true,
         description = null,
+        lastUpdateTime = lastUpdateTime,
     )
 
     @Test
     fun reachedTargetIsReportedAsLanded() {
+        // Same version code: only the install timestamp proves the new upload
+        // landed instead of the old copy still being on disk.
         val result = prunePendingInstalls(
-            pending = listOf(pending("a.b", versionCode = 11L)),
-            installed = listOf(installed("a.b", versionCode = 11L)),
+            pending = listOf(pending("a.b", versionCode = 11L, createdAt = 900L)),
+            installed = listOf(
+                installed("a.b", versionCode = 11L, lastUpdateTime = 950L),
+            ),
             now = 1_000L,
         )
 
@@ -54,6 +63,22 @@ class PendingPruneTest {
         )
 
         assertEquals(1, result.landed.size)
+    }
+
+    @Test
+    fun sameCodeOldInstallKeepsWaiting() {
+        // The dismissed-installer case: the old build keeps the same code, so
+        // its install timestamp predates the hand-off.
+        val result = prunePendingInstalls(
+            pending = listOf(pending("a.b", versionCode = 11L, createdAt = 1_000L)),
+            installed = listOf(
+                installed("a.b", versionCode = 11L, lastUpdateTime = 900L),
+            ),
+            now = 2_000L,
+        )
+
+        assertEquals(1, result.kept.size)
+        assertTrue(result.landed.isEmpty())
     }
 
     @Test
@@ -108,13 +133,13 @@ class PendingPruneTest {
     fun mixedBatchesKeepOrder() {
         val result = prunePendingInstalls(
             pending = listOf(
-                pending("a.a", versionCode = 5L),
-                pending("b.b", versionCode = 5L),
-                pending("c.c", versionCode = 5L),
+                pending("a.a", versionCode = 5L, createdAt = 900L),
+                pending("b.b", versionCode = 5L, createdAt = 900L),
+                pending("c.c", versionCode = 5L, createdAt = 900L),
             ),
             installed = listOf(
-                installed("a.a", versionCode = 5L),
-                installed("b.b", versionCode = 4L),
+                installed("a.a", versionCode = 5L, lastUpdateTime = 950L),
+                installed("b.b", versionCode = 4L, lastUpdateTime = 950L),
             ),
             now = 1_000L,
         )

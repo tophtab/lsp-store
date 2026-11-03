@@ -124,10 +124,11 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        // Delegated installs never reach PackageEventReceiver while we are
-        // backgrounded, so reconcile pending installs whenever we come back.
+        // A delegated install hands the screen to another app. Returning here
+        // means that installer closed: release its slot (a cancelled dialog
+        // sends no broadcast) and settle what actually landed.
         val container = (application as LspStoreApp).container
-        lifecycleScope.launch { container.reconcilePendingInstalls() }
+        lifecycleScope.launch { container.reconcileAfterInstallerReturn() }
     }
 }
 

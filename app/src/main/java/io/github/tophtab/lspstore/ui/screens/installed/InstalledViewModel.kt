@@ -133,6 +133,12 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
     private var batchJob: Job? = null
     private var batchControl: BatchInstallControl? = null
     private var loadJob: Job? = null
+    /**
+     * Packages whose single update is resolving its detail but has not reached
+     * the coordinator yet. Without this, a rapid second tap (or "update all")
+     * can start a second chain for the same package.
+     */
+    private val startingUpdates = mutableSetOf<String>()
     private val refreshScrollGate = RefreshScrollGate()
 
     /**
@@ -192,6 +198,12 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
                     )
                 }
             }
+        }
+        viewModelScope.launch {
+            // Removals and external installs (another app, system settings) do
+            // not complete a hand-off of ours, but the list should still follow
+            // what is on the device. No snackbar: nothing was installed from here.
+            installer.packageChanges.collect { reloadInstalled() }
         }
         viewModelScope.launch {
             // Installs started from a module page keep running after returning
@@ -276,9 +288,11 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
     }
     fun update(info: UpdateInfo) {
         val packageName = info.module.packageName
-        // A module page may already be installing this package; do not start a
-        // second chain for it.
+        // A module page or an earlier tap may already own this package; the
+        // coordinator check is synchronous, so a double tap cannot slip between
+        // the row check and the chain start.
         if (_state.value.detailRuns.containsKey(packageName)) return
+        if (coordinator.isRunning(packageName) || packageName in startingUpdates) return
         // A busy row of a running batch keeps its pill; retrying a row that
         // already reached a terminal phase (failed, skipped, cancelled) is fine.
         val row = _state.value.rowStates[packageName]
@@ -291,10 +305,13 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
      * failure handling have a single implementation.
      */
     fun updateAll() {
-        // A module page install or a busy batch row already owns its package;
-        // starting a second chain for it here would download and install it twice.
+        // A module page install, an in-flight single update or a busy batch row
+        // already owns its package; starting a second chain for it here would
+        // download and install it twice.
         val busy = _state.value.detailRuns.keys +
-            _state.value.rowStates.filterValues { it.phase in ACTIVE_PHASES }.keys
+            _state.value.rowStates.filterValues { it.phase in ACTIVE_PHASES }.keys +
+            coordinator.runningPackages() +
+            startingUpdates
         val targets = _state.value.updates.filterNot {
             it.module.packageName in busy
         }
@@ -311,74 +328,92 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
      */
     private fun startSingleRun(info: UpdateInfo) {
         val repoPackage = info.module.packageName
+        startingUpdates += repoPackage
         viewModelScope.launch {
-            runCatching { moduleRepository.getDetail(repoPackage) }
-                .onSuccess { detail ->
-                    val release = detail.latestReleaseFor(repoPackage in preReleases)
-                    if (release == null) {
-                        _state.update {
-                            it.copy(
-                                message = container.appContext.getString(
-                                    R.string.error_no_apk_asset,
-                                ),
-                            )
-                        }
-                        return@launch
-                    }
-                    val state = variantStates[repoPackage]
-                        ?: variantStates[info.installed.packageName]
-                        ?: ModuleVariantState()
-                    val resolution = container.resolveVariantUseCase.resolve(
-                        release = release,
-                        state = state,
-                        device = container.deviceProfile,
-                        expectedPackage = info.installed.packageName,
-                    )
-                    when (val decision = resolution.decision) {
-                        is VariantDecision.Pick -> {
-                            val version = release.version
-                            coordinator.start(
-                                ModuleInstallRequest(
-                                    repoPackageName = repoPackage,
-                                    title = info.module.title,
-                                    asset = decision.asset,
-                                    installedPackage = info.installed.packageName,
-                                    versionCode = version?.versionCode
-                                        ?: info.latest.versionCode,
-                                    versionName = version?.versionName
-                                        ?: info.latest.versionName,
-                                ),
-                            )
-                        }
-
-                        is VariantDecision.Choose -> openVariantPicker(repoPackage, info)
-
-                        is VariantDecision.NotApplicable -> {
-                            libraryRepository.setVariantState(
-                                repoPackage,
-                                state.onEvaluatedNoCandidate(decision.reason),
-                            )
+            try {
+                runCatching { moduleRepository.getDetail(repoPackage) }
+                    .onSuccess { detail ->
+                        val release = detail.latestReleaseFor(repoPackage in preReleases)
+                        if (release == null) {
                             _state.update {
                                 it.copy(
-                                    message = container.appContext.variantReasonText(
-                                        decision.reason,
+                                    message = container.appContext.getString(
+                                        R.string.error_no_apk_asset,
                                     ),
                                 )
                             }
+                            return@launch
+                        }
+                        if (!release.matchesVersion(info.latest)) {
+                            // Same guard the batch path has: a stale mirror detail
+                            // would otherwise install an older build and leave the
+                            // update prompt in place.
+                            _state.update {
+                                it.copy(
+                                    message = container.appContext.getString(
+                                        R.string.error_repository_stale,
+                                    ),
+                                )
+                            }
+                            return@launch
+                        }
+                        val state = variantStates[repoPackage]
+                            ?: variantStates[info.installed.packageName]
+                            ?: ModuleVariantState()
+                        val resolution = container.resolveVariantUseCase.resolve(
+                            release = release,
+                            state = state,
+                            device = container.deviceProfile,
+                            expectedPackage = info.installed.packageName,
+                        )
+                        when (val decision = resolution.decision) {
+                            is VariantDecision.Pick -> {
+                                val version = release.version
+                                coordinator.start(
+                                    ModuleInstallRequest(
+                                        repoPackageName = repoPackage,
+                                        title = info.module.title,
+                                        asset = decision.asset,
+                                        installedPackage = info.installed.packageName,
+                                        versionCode = version?.versionCode
+                                            ?: info.latest.versionCode,
+                                        versionName = version?.versionName
+                                            ?: info.latest.versionName,
+                                    ),
+                                )
+                            }
+
+                            is VariantDecision.Choose -> openVariantPicker(repoPackage, info)
+
+                            is VariantDecision.NotApplicable -> {
+                                libraryRepository.setVariantState(
+                                    repoPackage,
+                                    state.onEvaluatedNoCandidate(decision.reason),
+                                )
+                                _state.update {
+                                    it.copy(
+                                        message = container.appContext.variantReasonText(
+                                            decision.reason,
+                                        ),
+                                    )
+                                }
+                            }
                         }
                     }
-                }
-                .onFailure { error ->
-                    if (error is CancellationException) return@onFailure
-                    _state.update {
-                        it.copy(
-                            message = error.toUserMessage(
-                                container.appContext,
-                                R.string.installed_check_failed,
-                            ),
-                        )
+                    .onFailure { error ->
+                        if (error is CancellationException) return@onFailure
+                        _state.update {
+                            it.copy(
+                                message = error.toUserMessage(
+                                    container.appContext,
+                                    R.string.installed_check_failed,
+                                ),
+                            )
+                        }
                     }
-                }
+            } finally {
+                startingUpdates -= repoPackage
+            }
         }
     }
 
@@ -410,23 +445,6 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
                     applyItem(generation, packageName, transform)
                 },
             )
-            if (result.installInterrupted) {
-                // Whatever the worker never dequeued stays installed at its old
-                // version; report it as skipped so the summary is honest.
-                _state.value.rowStates.keys.forEach { packageName ->
-                    applyItem(generation, packageName) { item ->
-                        when (item.phase) {
-                            BatchInstallPhase.QUEUED,
-                            BatchInstallPhase.PREPARING,
-                            BatchInstallPhase.DOWNLOADING,
-                            BatchInstallPhase.WAITING_TO_INSTALL,
-                            -> item.copy(phase = BatchInstallPhase.SKIPPED)
-
-                            else -> item
-                        }
-                    }
-                }
-            }
             reloadInstalled()
             if (!isCurrentBatch(generation)) return@launch
             val items = _state.value.rowStates.values
@@ -434,11 +452,6 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
             val skipped = items.count { it.phase == BatchInstallPhase.SKIPPED }
             val cancelled = items.count { it.phase == BatchInstallPhase.CANCELLED }
             val message = when {
-                result.installInterrupted -> container.appContext.getString(
-                    R.string.installed_batch_installer_busy,
-                    skipped,
-                )
-
                 failed > 0 -> failureMessage(result.failures, failed)
 
                 skipped > 0 -> container.appContext.getString(

@@ -94,6 +94,12 @@ class ModuleInstallCoordinator(
 
     private val jobs = ConcurrentHashMap<String, Job>()
 
+    /** Whether a chain already owns this package, synchronously for callers. */
+    fun isRunning(repoPackageName: String): Boolean = jobs.containsKey(repoPackageName)
+
+    /** Packages currently owned by a chain, for "update all" selection. */
+    fun runningPackages(): Set<String> = jobs.keys.toSet()
+
     /** Starts the chain; a second start for the same module is ignored. */
     fun start(request: ModuleInstallRequest) {
         if (jobs.containsKey(request.repoPackageName)) return
@@ -250,7 +256,7 @@ class ModuleInstallCoordinator(
         val outcome = runCatching {
             // komi's orchestrator order: take the slot right before handing over.
             serializer.awaitFreeAndMarkPending(installTarget)
-            installer.install(file, installTarget, useRoot)
+            installer.install(file, useRoot)
         }.getOrElse { InstallOutcome.Failure(it.message ?: "install failed") }
 
         when (outcome) {

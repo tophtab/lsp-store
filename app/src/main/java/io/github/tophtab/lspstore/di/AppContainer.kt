@@ -38,11 +38,12 @@ import io.github.tophtab.lspstore.data.repository.SettingsRepository
 import io.github.tophtab.lspstore.data.repository.SettingsRepositoryImpl
 import io.github.tophtab.lspstore.data.translation.TranslationRepository
 import io.github.tophtab.lspstore.domain.usecase.BatchInstallUseCase
-import io.github.tophtab.lspstore.domain.usecase.InstallProbe
-import io.github.tophtab.lspstore.domain.usecase.InstallSettlement
 import io.github.tophtab.lspstore.domain.usecase.InstallPreparedApkUseCase
+import io.github.tophtab.lspstore.domain.usecase.PendingSettlement
 import io.github.tophtab.lspstore.domain.usecase.PrepareModuleInstallUseCase
 import io.github.tophtab.lspstore.domain.usecase.ResolveVariantUseCase
+import io.github.tophtab.lspstore.domain.usecase.pendingInstallLanded
+import io.github.tophtab.lspstore.domain.usecase.settlePendingInstall
 import io.github.tophtab.lspstore.domain.model.InstalledModule
 import io.github.tophtab.lspstore.domain.model.PendingInstall
 import io.github.tophtab.lspstore.domain.variant.ApkProbe
@@ -148,14 +149,9 @@ class AppContainer(context: Context) {
     )
 
     /** "Update all": concurrent downloads, serialized installs. */
-    /** Landing detection for delegated installs (polling, no package broadcast). */
-    val installSettlement: InstallSettlement = InstallSettlement()
-
     val batchInstallUseCase: BatchInstallUseCase = BatchInstallUseCase(
         prepareInstall = prepareModuleInstallUseCase,
         installPrepared = installPreparedApkUseCase,
-        awaitInstallSettled = ::awaitPendingInstallSettled,
-        releaseInstallSlot = { packageName -> systemInstallSerializer.markCompleted(packageName) },
         abandonDownload = { asset -> downloadManager.cancel(downloadManager.keyOf(asset)) },
         downloadSlots = downloadSlots,
     )
@@ -171,11 +167,72 @@ class AppContainer(context: Context) {
      */
     suspend fun completePendingInstall(packageName: String) {
         val pending = runCatching { pendingInstallRepository.pending.first()[packageName] }
-            .getOrNull()
-        if (pending != null) recordPendingInstallResult(pending)
+            .getOrNull() ?: return
+        recordPendingInstallResult(pending)
         pendingInstallRepository.clear(packageName)
         systemInstallSerializer.markCompleted(packageName)
         installer.confirmInstalled(packageName)
+    }
+
+    /**
+     * Drops a hand-off that never landed (installer dialog dismissed, package
+     * uninstalled). Nothing is recorded, so the module keeps its update and the
+     * variant memory is not marked as a successful install.
+     */
+    suspend fun cancelPendingInstall(packageName: String) {
+        pendingInstallRepository.clear(packageName)
+        systemInstallSerializer.markCompleted(packageName)
+    }
+
+    /**
+     * Handles one package broadcast. Only a pending package is interesting:
+     * [PACKAGE_ADDED]/[PACKAGE_REPLACED] settle it when the device now runs the
+     * target, [PACKAGE_FULLY_REMOVED] drops it without recording success, and an
+     * unrelated package must not release the install slot.
+     */
+    suspend fun onPackageEvent(packageName: String, removed: Boolean) {
+        val pending = runCatching { pendingInstallRepository.pending.first()[packageName] }
+            .getOrNull()
+        if (removed) {
+            if (pending != null) cancelPendingInstall(packageName)
+            installer.notifyPackageChanged(packageName)
+            return
+        }
+        if (pending == null) {
+            // Some other app installed or replaced: refresh the list, but never
+            // touch the pending hand-off or the install slot.
+            installer.notifyPackageChanged(packageName)
+            return
+        }
+        // A package broadcast is about one package, so a cheap PackageManager
+        // lookup is enough; a full installed scan here would run on every event
+        // of an update-all.
+        val packageInfo = runCatching {
+            @Suppress("DEPRECATION")
+            appContext.packageManager.getPackageInfo(packageName, 0)
+        }.getOrNull()
+        if (
+            pendingInstallLanded(
+                pending = pending,
+                installedVersionCode = packageInfo?.longVersionCode,
+                installedLastUpdateTime = packageInfo?.lastUpdateTime,
+            )
+        ) {
+            completePendingInstall(packageName)
+        } else {
+            if (
+                pending.createdAt > 0L &&
+                System.currentTimeMillis() - pending.createdAt > ABANDONED_PENDING_MS
+            ) {
+                cancelPendingInstall(packageName)
+            }
+            // PackageManager can lag the broadcast, so the installed list is
+            // worth rescanning even while the hand-off stays pending.
+            installer.notifyPackageChanged(packageName)
+        }
+        // The broadcast is the installer's own proof that it closed, so the slot
+        // is free even when PackageManager has not caught up yet.
+        systemInstallSerializer.markCompleted(packageName)
     }
 
     /**
@@ -218,6 +275,7 @@ class AppContainer(context: Context) {
         retries: Int = 3,
         retryDelayMs: Long = 1200L,
         abandonAfterMs: Long = ABANDONED_PENDING_MS,
+        abandonUnresolved: Boolean = false,
     ) {
         var unresolved = emptyList<PendingInstall>()
         repeat(retries) { attempt ->
@@ -229,71 +287,53 @@ class AppContainer(context: Context) {
             val stillOpen = mutableListOf<PendingInstall>()
             pendingInstalls.values.forEach { pending ->
                 val match = installed.firstOrNull { it.packageName == pending.packageName }
-                val landed = match != null &&
-                    (pending.versionCode == 0L || match.versionCode >= pending.versionCode)
-                if (landed) {
-                    completePendingInstall(pending.packageName)
-                } else {
-                    // PackageManager can still report the old version for a moment
-                    // after the installer returns; retry shortly.
-                    stillOpen += pending
+                when (
+                    settlePendingInstall(
+                        pending = pending,
+                        installed = match,
+                        now = System.currentTimeMillis(),
+                        abandonAfterMs = abandonAfterMs,
+                    )
+                ) {
+                    PendingSettlement.LANDED -> completePendingInstall(pending.packageName)
+                    PendingSettlement.ABANDONED -> cancelPendingInstall(pending.packageName)
+                    PendingSettlement.PENDING -> stillOpen += pending
                 }
             }
             unresolved = stillOpen
             if (stillOpen.isEmpty()) return
             if (attempt < retries - 1) kotlinx.coroutines.delay(retryDelayMs)
         }
-        // The installed version never moved, so the hand-off was dismissed or
+        // The device never reported the target, so the hand-off was dismissed or
         // cancelled. Keeping the entry would hide the update prompt (pending
         // packages are filtered out of the update list) until it ages out, so it
         // is dropped here: no result is recorded and the module keeps its state.
+        // `abandonUnresolved` is used after the installer returns to the app,
+        // where "still not installed" can only mean the dialog was cancelled.
         val now = System.currentTimeMillis()
         unresolved.forEach { pending ->
-            if (pending.createdAt > 0L && now - pending.createdAt > abandonAfterMs) {
-                pendingInstallRepository.clear(pending.packageName)
-                systemInstallSerializer.markCompleted(pending.packageName)
-            }
+            val expired = abandonUnresolved ||
+                (pending.createdAt > 0L && now - pending.createdAt > abandonAfterMs)
+            if (expired) cancelPendingInstall(pending.packageName)
         }
     }
 
     /**
-     * Waits for a delegated install to actually land on the device.
-     *
-     * `PACKAGE_ADDED` never reaches the receiver while another app is on screen,
-     * and the system installer keeps its "App installed" screen open until the
-     * user dismisses it, so the batch cannot rely on the resume hook: it polls
-     * PackageManager instead and records the outcome as soon as the target
-     * version shows up. Returns false when the hand-off never produced a package.
+     * Runs when the app comes back to the foreground after an installer round
+     * trip. A cancelled installer screen sends no broadcast but does close, so
+     * this is where its slot and pending entry are released.
      */
-    suspend fun awaitPendingInstallSettled(
-        packageName: String,
-        timeoutMs: Long = InstallSettlement.DEFAULT_TIMEOUT_MS,
-        pollMs: Long = InstallSettlement.DEFAULT_POLL_MS,
-    ): Boolean {
-        val outcome = installSettlement.await(timeoutMs = timeoutMs, pollMs = pollMs) {
-            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                val pending = runCatching {
-                    pendingInstallRepository.pending.first()[packageName]
-                }.getOrNull()
-                InstallProbe(
-                    pending = pending,
-                    installedVersionCode = runCatching { installedVersionCode(packageName) }
-                        .getOrNull(),
-                )
-            }
-        }
-        if (outcome == InstallSettlement.Outcome.SETTLED) {
-            completePendingInstall(packageName)
-            return true
-        }
-        return false
-    }
-
-    /** The cheap PackageManager lookup the settlement poll uses. */
-    @Suppress("DEPRECATION")
-    private fun installedVersionCode(packageName: String): Long {
-        val info = appContext.packageManager.getPackageInfo(packageName, 0)
-        return info.longVersionCode
+    suspend fun reconcileAfterInstallerReturn() {
+        val pendingKeys = runCatching { pendingInstallRepository.pending.first().keys }
+            .getOrDefault(emptySet())
+        // Release the gate before reconciling: a cancelled dialog would otherwise
+        // make the next install wait for its full timeout.
+        pendingKeys.forEach { systemInstallSerializer.markCompleted(it) }
+        reconcilePendingInstalls(
+            retries = 4,
+            retryDelayMs = 800L,
+            abandonUnresolved = true,
+        )
     }
 
     private companion object {

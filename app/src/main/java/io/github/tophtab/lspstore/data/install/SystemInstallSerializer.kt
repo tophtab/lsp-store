@@ -33,8 +33,12 @@ class SystemInstallSerializer {
     }
 
     fun markCompleted(packageName: String) {
-        pending.value = null
+        // Only the hand-off that owns the slot may release it: a late broadcast
+        // for the previous install must not open the gate for the next one.
+        pending.compareAndSet(packageName, null)
     }
+
+    fun isHeldBy(packageName: String): Boolean = pending.value == packageName
 
     companion object {
         /**

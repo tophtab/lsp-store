@@ -148,15 +148,11 @@ class BatchInstallControl(
 class BatchInstallUseCase(
     private val prepareInstall: ModuleInstallPreparer,
     private val installPrepared: ModuleInstaller,
-    private val awaitInstallSettled: suspend (packageName: String, timeoutMs: Long) -> Boolean,
-    private val releaseInstallSlot: (packageName: String) -> Unit,
     private val abandonDownload: (asset: ReleaseAsset) -> Unit,
     private val downloadSlots: DownloadSlots,
 ) {
 
     data class Result(
-        /** The external installer never returned; the rest of the queue was dropped. */
-        val installInterrupted: Boolean,
         /** Every module that did not install, in the order the failures surfaced. */
         val failures: List<BatchFailure> = emptyList(),
         /** Installs handed to an external installer; completion arrives later. */
@@ -174,7 +170,6 @@ class BatchInstallUseCase(
         isActive: () -> Boolean,
         onItem: (packageName: String, transform: (BatchInstallState) -> BatchInstallState) -> Unit,
     ): Result {
-        var installInterrupted = false
         // Downloads and installs run in different coroutines, so the collector
         // is shared: the caller gets the list only after supervisorScope joins.
         val failures = java.util.Collections.synchronizedList(mutableListOf<BatchFailure>())
@@ -227,29 +222,13 @@ class BatchInstallUseCase(
                         }
                         onItem(packageName) { it.copy(phase = phase) }
                         // A delegated install keeps the global slot until the
-                        // package actually lands. Firing the next installer
-                        // intent now would cancel the dialog that is still on
-                        // screen (and silently drop that update), so wait for
-                        // the hand-off to resolve before dequeuing.
+                        // package lands. The next install waits at that slot
+                        // (released by the package broadcast or by the resume
+                        // reconcile), so this queue can move on immediately:
+                        // waiting here used to freeze "update all" for 180 s
+                        // after one cancelled installer.
                         if (outcome is InstallOutcome.DelegatedToSystem) {
                             delegated.incrementAndGet()
-                            val settled = awaitInstallSettled(packageName, INSTALL_SETTLE_TIMEOUT_MS)
-                            if (!settled) {
-                                // Give the slot back even though the hand-off
-                                // never resolved: the pending entry stays and
-                                // the resume reconcile will finish it later.
-                                releaseInstallSlot(packageName)
-                                if (isActive()) {
-                                    // Nothing failed inside the app: the dialog
-                                    // is simply still waiting for the user, so
-                                    // the item counts as skipped, not failed.
-                                    onItem(packageName) {
-                                        it.copy(phase = BatchInstallPhase.SKIPPED)
-                                    }
-                                    installInterrupted = true
-                                    break
-                                }
-                            }
                         }
                     }
                 }
@@ -379,17 +358,8 @@ class BatchInstallUseCase(
             installQueue.cancel()
         }
         return Result(
-            installInterrupted = installInterrupted,
             failures = synchronized(failures) { failures.toList() },
             delegated = delegated.get(),
         )
-    }
-
-    companion object {
-        /**
-         * How long a batch waits for the external installer to finish one hand-off
-         * before giving up on the rest of the queue.
-         */
-        const val INSTALL_SETTLE_TIMEOUT_MS: Long = 180_000L
     }
 }
