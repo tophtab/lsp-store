@@ -72,6 +72,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -489,10 +490,24 @@ private fun DetailContent(
             ?.takeIf { it.isNotEmpty() }
     }
     // The page knows which release is selected, so it asks for that release's
-    // notes translation; the view model only translates the summary and README.
-    LaunchedEffect(state.showTranslation, currentRelease?.tagName, notesText) {
+    // notes translation. A manual translate request is handled once for the
+    // release on screen; only the auto-translate setting keeps translating new
+    // releases as the user switches between them.
+    var handledTranslateRequest by rememberSaveable { mutableIntStateOf(0) }
+    LaunchedEffect(
+        state.showTranslation,
+        state.autoTranslate,
+        state.translateRequest,
+        currentRelease?.tagName,
+        notesText,
+    ) {
         val tag = currentRelease?.tagName
-        if (state.showTranslation && tag != null && !notesText.isNullOrBlank()) {
+        if (!state.showTranslation || tag == null || notesText.isNullOrBlank()) {
+            return@LaunchedEffect
+        }
+        val manualRequest = state.translateRequest != handledTranslateRequest
+        if (manualRequest) handledTranslateRequest = state.translateRequest
+        if (manualRequest || state.autoTranslate) {
             onTranslateNotes(tag, notesText)
         }
     }
