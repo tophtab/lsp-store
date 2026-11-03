@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import io.github.tophtab.lspstore.domain.model.ReleaseAsset
 import java.io.File
@@ -45,6 +46,7 @@ data class DownloadTask(
  */
 class DownloadManager(
     private val context: Context,
+    private val exporter: ApkExportStore,
 ) {
     private val client = OkHttpClient.Builder()
         .connectTimeout(20, java.util.concurrent.TimeUnit.SECONDS)
@@ -55,6 +57,9 @@ class DownloadManager(
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val jobs = ConcurrentHashMap<String, Job>()
+
+    /** Copies into Download/LSP_Store, tracked so [clearAll] can wait for them. */
+    private val exports = ConcurrentHashMap<String, Job>()
     private val _tasks = MutableStateFlow<Map<String, DownloadTask>>(emptyMap())
     val tasks = _tasks.asStateFlow()
 
@@ -66,7 +71,12 @@ class DownloadManager(
         val key = keyOf(asset)
         val existing = _tasks.value[key]
         if (existing?.status == DownloadStatus.RUNNING) return key
-        if (existing?.status == DownloadStatus.COMPLETED && existing.file?.exists() == true) return key
+        if (existing?.status == DownloadStatus.COMPLETED && existing.file?.exists() == true) {
+            // The export may not have run yet (process death right after the
+            // transfer finished); it is idempotent, so retry it here.
+            exportCompleted(key, asset, existing.file)
+            return key
+        }
         // A previously failed or interrupted transfer keeps its partial file;
         // launchDownload resumes from whatever is on disk.
         launchDownload(key, asset)
@@ -89,6 +99,8 @@ class DownloadManager(
         val task = _tasks.value[key]
         jobs.remove(key)?.cancel()
         updateTask(key) { it.copy(status = DownloadStatus.CANCELLED) }
+        // The working copy is ours; a cancelled transfer should not leave it
+        // behind. A later attempt simply starts from zero.
         runCatching { task?.file?.delete() }
     }
 
@@ -135,7 +147,7 @@ class DownloadManager(
     }
 
     private fun launchDownload(key: String, asset: ReleaseAsset) {
-        val target = targetFile(key, asset.name)
+        val target = targetFile(key, asset)
         val existingBytes = if (target.exists()) target.length() else 0L
         // A file that already covers the asset is a finished transfer whose
         // completion could not be recorded (process death right after the last
@@ -153,7 +165,10 @@ class DownloadManager(
                 error = null,
             )
         }
-        if (complete) return
+        if (complete) {
+            exportCompleted(key, asset, target)
+            return
+        }
 
         DownloadService.start(context)
 
@@ -200,6 +215,9 @@ class DownloadManager(
                                 total = target.length(),
                             )
                         }
+                        // Best effort and off the critical path: the install uses
+                        // the private file, so a failed export never blocks it.
+                        exportCompleted(key, asset, target)
                         return@launch
                     } catch (t: Throwable) {
                         lastError = t
@@ -222,15 +240,34 @@ class DownloadManager(
         }
     }
 
-    private fun targetFile(key: String, assetName: String): File {
+    private fun targetFile(key: String, asset: ReleaseAsset): File {
         val dir = File(context.cacheDir, "apk").apply { mkdirs() }
-        val safeName = assetName
+        val safeName = asset.name
             .substringAfterLast('/')
             .substringAfterLast('\\')
             .replace(Regex("[^A-Za-z0-9._-]"), "_")
             .take(80)
             .ifBlank { "module.apk" }
         return File(dir, "$key-$safeName")
+    }
+
+    /**
+     * Publishes a finished transfer in Download/LSP_Store. Runs on the download
+     * scope so the caller (install chain) never waits for the copy, and is
+     * idempotent for the same asset identity.
+     */
+    private fun exportCompleted(key: String, asset: ReleaseAsset, file: File?) {
+        if (file == null || !file.exists()) return
+        exports.computeIfAbsent(key) {
+            scope.launch {
+                val self = coroutineContext[Job]
+                try {
+                    exporter.export(file, exportedApkName(key, asset))
+                } finally {
+                    if (self != null) exports.remove(key, self) else exports.remove(key)
+                }
+            }
+        }
     }
 
     private fun updateTask(key: String, create: Boolean = false, transform: (DownloadTask) -> DownloadTask) {
@@ -240,10 +277,18 @@ class DownloadManager(
         }
     }
 
-    fun downloadedBytes(): Long {
+    /**
+     * Space used by both copies: the private working files and the exported
+     * APKs in Download/LSP_Store. The Settings entry clears both.
+     */
+    suspend fun downloadedBytes(): Long = withContext(Dispatchers.IO) {
         val dir = File(context.cacheDir, "apk")
-        if (!dir.exists()) return 0
-        return dir.walkBottomUp().filter { it.isFile }.sumOf { it.length() }
+        val working = if (dir.exists()) {
+            dir.walkBottomUp().filter { it.isFile }.sumOf { it.length() }
+        } else {
+            0L
+        }
+        working + exporter.exportedBytes()
     }
 
     /** Cancels every running/paused download, keeping the tasks list for history. */
@@ -257,11 +302,21 @@ class DownloadManager(
         }
     }
 
-    fun clearAll() {
+    /**
+     * Cancels transfers, removes the private working files and deletes the
+     * APKs this app exported to Download/LSP_Store. Waits for in-flight exports
+     * so none of them can publish a file after the cleanup query ran.
+     */
+    suspend fun clearAll() = withContext(Dispatchers.IO) {
         jobs.values.forEach { it.cancel() }
         jobs.clear()
+        val runningExports = exports.values.toList()
+        runningExports.forEach { it.cancel() }
+        runningExports.forEach { it.join() }
+        exports.clear()
         _tasks.value = emptyMap()
         runCatching { File(context.cacheDir, "apk").deleteRecursively() }
+        exporter.deleteAll()
     }
 }
 

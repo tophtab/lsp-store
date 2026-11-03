@@ -168,9 +168,9 @@ class ApkInstaller(
 
     private fun shellQuote(value: String): String = "'" + value.replace("'", "'\\''") + "'"
 
-    fun clearDownloads() {
+    suspend fun clearDownloads() {
         downloadManager.clearAll()
     }
 
-    fun downloadsSizeBytes(): Long = downloadManager.downloadedBytes()
+    suspend fun downloadsSizeBytes(): Long = downloadManager.downloadedBytes()
 }

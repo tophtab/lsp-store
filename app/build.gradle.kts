@@ -28,8 +28,10 @@ android {
 
     defaultConfig {
         applicationId = "io.github.tophtab.lspstore"
-        // LSPosed itself supports Android 8.1 (API 27) and up.
-        minSdk = 27
+        // Android 10 (API 29) is the floor: downloads are exported to the
+        // public Downloads collection through MediaStore, which needs API 29
+        // and needs no storage permission from there on.
+        minSdk = 29
         targetSdk = 36
         // versionCode = major * 10000 + minor * 100 + patch, so 1.0.0 is 10000,
         // 1.1.0 is 10100 and 12.0.0 is 120000. Android compares the integer, so a

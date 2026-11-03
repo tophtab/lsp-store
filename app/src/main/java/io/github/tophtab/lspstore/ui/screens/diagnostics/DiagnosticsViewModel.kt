@@ -97,6 +97,9 @@ class DiagnosticsViewModel(private val container: AppContainer) : ViewModel() {
             val repo = runCatching { container.moduleRepository.getIndex(force = false).size }
                 .getOrDefault(0)
 
+            val downloadsSize = runCatching {
+                container.installer.downloadsSizeBytes()
+            }.getOrDefault(0L)
             _state.update {
                 it.copy(
                     appVersion = "$versionLabel (${BuildConfig.VERSION_CODE})",
@@ -105,7 +108,7 @@ class DiagnosticsViewModel(private val container: AppContainer) : ViewModel() {
                     installedModules = installed,
                     repoModules = repo,
                     indexCacheSize = container.moduleRepository.cacheSizeBytes(),
-                    downloadsSize = container.installer.downloadsSizeBytes(),
+                    downloadsSize = downloadsSize,
                     theme = theme.name,
                     rootInstall = root,
                     translationProvider = translation.provider.name,
