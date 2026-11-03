@@ -193,14 +193,6 @@ fun ModuleDetailScreen(packageName: String, onBack: () -> Unit, onOpenAuthor: (S
                 onBack = onBack,
                 backContentDescription = stringResource(R.string.action_back),
                 actions = {
-                    if (sourceUrl != null) {
-                        IconButton(onClick = { uriHandler.openUri(sourceUrl) }) {
-                            Icon(
-                                Icons.Filled.OpenInBrowser,
-                                contentDescription = stringResource(R.string.detail_open_source),
-                            )
-                        }
-                    }
                     if (canTranslate) {
                         val translateDescription = stringResource(
                             if (state.showTranslation) {
@@ -229,6 +221,14 @@ fun ModuleDetailScreen(packageName: String, onBack: () -> Unit, onOpenAuthor: (S
                                     },
                                 )
                             }
+                        }
+                    }
+                    if (sourceUrl != null) {
+                        IconButton(onClick = { uriHandler.openUri(sourceUrl) }) {
+                            Icon(
+                                Icons.Filled.OpenInBrowser,
+                                contentDescription = stringResource(R.string.detail_open_source),
+                            )
                         }
                     }
                     IconButton(onClick = { menuOpen = true }) {
