@@ -186,7 +186,7 @@
     <string name="settings_translation">অনুবাদ</string>
     <string name="settings_translation_provider">অনুবাদ প্রদানকারী</string>
     <string name="settings_translation_auto">স্বয়ংক্রিয় অনুবাদ</string>
-    <string name="settings_translation_auto_desc">মডিউলের পৃষ্ঠা খুললে বিবরণ স্বয়ংক্রিয়ভাবে অনুবাদ করুন।</string>
+    <string name="settings_translation_auto_desc">মডিউলের পৃষ্ঠা খুললে বিবরণ, README এবং আপডেটের বিষয়বস্তু স্বয়ংক্রিয়ভাবে অনুবাদ করুন।</string>
     <string name="settings_translation_deepl_key">DeepL auth key</string>
     <string name="settings_translation_libre_url">LibreTranslate URL</string>
     <string name="settings_translation_https_note">LibreTranslate এন্ডপয়েন্টের জন্য একটি HTTPS URL ব্যবহার করুন।</string>
@@ -194,9 +194,8 @@
     <string name="settings_translation_ms_key">মাইক্রোসফট কী</string>
     <string name="settings_translation_ms_region">মাইক্রোসফ্ট অঞ্চল</string>
     <string name="settings_translation_note">Google তার সর্বজনীন এন্ডপয়েন্ট ব্যবহার করে এবং কোন চাবির প্রয়োজন নেই।</string>
-    <string name="detail_translate">বর্ণনা অনুবাদ করুন</string>
-    <string name="detail_clear_translation">অনুবাদ সাফ করুন</string>
-    <string name="detail_translated">অনূদিত</string>
+    <string name="detail_translate_page">অনুবাদ করুন</string>
+    <string name="detail_show_original">মূল দেখান</string>
     <string name="detail_translate_failed">অনুবাদ ব্যর্থ হয়েছে</string>
         <string name="download_tap_to_cancel">বাতিল করতে ট্যাপ করুন</string>
 <string name="download_progress">%1$s / %2$s</string>

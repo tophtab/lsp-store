@@ -56,6 +56,7 @@ import androidx.compose.material.icons.filled.UnfoldMore
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Translate
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -90,6 +91,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.LinkInteractionListener
@@ -162,6 +165,12 @@ fun ModuleDetailScreen(packageName: String, onBack: () -> Unit, onOpenAuthor: (S
     val shareTitle = stringResource(R.string.detail_share_module)
     val installedPackage = state.installed?.packageName ?: packageName
     val sourceUrl = state.detail?.sourceUrl ?: state.detail?.module?.url
+    val canTranslate = state.detail?.let { detail ->
+        !detail.module.summary.isNullOrBlank() ||
+            !detail.readmeHtml.isNullOrBlank() ||
+            listOf(detail.releases, detail.betaReleases, detail.snapshotReleases)
+                .any { releases -> releases.any { !it.descriptionHtml.isNullOrBlank() } }
+    } == true
     LaunchedEffect(state.message) {
         state.message?.let {
             snackbarHostState.showSnackbar(it)
@@ -192,6 +201,36 @@ fun ModuleDetailScreen(packageName: String, onBack: () -> Unit, onOpenAuthor: (S
                             )
                         }
                     }
+                    if (canTranslate) {
+                        val translateDescription = stringResource(
+                            if (state.showTranslation) {
+                                R.string.detail_show_original
+                            } else {
+                                R.string.detail_translate_page
+                            },
+                        )
+                        IconButton(onClick = viewModel::toggleTranslation) {
+                            if (state.isTranslating) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier
+                                        .size(20.dp)
+                                        .semantics { contentDescription = translateDescription },
+                                    strokeWidth = 2.dp,
+                                    color = MaterialTheme.colorScheme.primary,
+                                )
+                            } else {
+                                Icon(
+                                    Icons.Outlined.Translate,
+                                    contentDescription = translateDescription,
+                                    tint = if (state.showTranslation) {
+                                        MaterialTheme.colorScheme.primary
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurface
+                                    },
+                                )
+                            }
+                        }
+                    }
                     IconButton(onClick = { menuOpen = true }) {
                         Icon(
                             Icons.Filled.MoreVert,
@@ -219,8 +258,7 @@ fun ModuleDetailScreen(packageName: String, onBack: () -> Unit, onOpenAuthor: (S
                     onInstallLatest = viewModel::installLatest,
                     onInstallAsset = viewModel::installAsset,
                     onProbeAssets = viewModel::probeRelease,
-                    onTranslate = viewModel::translateSummary,
-                    onClearTranslation = viewModel::clearTranslation,
+                    onTranslateNotes = viewModel::translateNotes,
                     onOpenAuthor = onOpenAuthor,
                     onCancel = viewModel::cancelInstall,
                     onSelectChannel = viewModel::selectChannel,
@@ -383,8 +421,7 @@ private fun DetailContent(
     onInstallLatest: () -> Unit,
     onInstallAsset: (ReleaseAsset) -> Unit,
     onProbeAssets: (Release) -> Unit,
-    onTranslate: () -> Unit,
-    onClearTranslation: () -> Unit,
+    onTranslateNotes: (String, String) -> Unit,
     onOpenAuthor: (String) -> Unit,
     onCancel: () -> Unit,
     onSelectChannel: (ReleaseChannel) -> Unit,
@@ -445,7 +482,20 @@ private fun DetailContent(
     var assetSheetVisible by rememberSaveable { mutableStateOf(false) }
     val currentRelease = selectedRelease
     var whatsNewExpanded by rememberSaveable(currentRelease?.tagName) { mutableStateOf(false) }
-    val notes = currentRelease?.descriptionHtml?.takeIf { it.isNotBlank() }
+    val notesHtml = currentRelease?.descriptionHtml?.takeIf { it.isNotBlank() }
+    val notesText = remember(notesHtml) {
+        notesHtml
+            ?.let { Html.fromHtml(it, Html.FROM_HTML_MODE_LEGACY).toString().trim() }
+            ?.takeIf { it.isNotEmpty() }
+    }
+    // The page knows which release is selected, so it asks for that release's
+    // notes translation; the view model only translates the summary and README.
+    LaunchedEffect(state.showTranslation, currentRelease?.tagName, notesText) {
+        val tag = currentRelease?.tagName
+        if (state.showTranslation && tag != null && !notesText.isNullOrBlank()) {
+            onTranslateNotes(tag, notesText)
+        }
+    }
 
     LazyColumn(
         state = listState,
@@ -457,8 +507,6 @@ private fun DetailContent(
             DetailHero(
                 state = state,
                 detail = detail,
-                onTranslate = onTranslate,
-                onClearTranslation = onClearTranslation,
                 onOpenAuthor = onOpenAuthor,
             )
         }
@@ -513,14 +561,19 @@ private fun DetailContent(
             StatsSection(detail = detail)
         }
 
-        if (notes != null && currentRelease != null) {
+        if (notesText != null && currentRelease != null) {
             item(key = "whats_new_header") {
                 SectionHeading(stringResource(R.string.detail_whats_new))
             }
             item(key = "whats_new") {
+                val displayedNotes = if (state.showTranslation) {
+                    state.translatedNotes[currentRelease.tagName] ?: notesText
+                } else {
+                    notesText
+                }
                 WhatsNewCard(
                     release = currentRelease,
-                    notesHtml = notes,
+                    notes = displayedNotes,
                     expanded = whatsNewExpanded,
                     onToggleExpanded = { whatsNewExpanded = !whatsNewExpanded },
                 )
@@ -531,7 +584,11 @@ private fun DetailContent(
             SectionHeading(stringResource(R.string.detail_about))
         }
         item(key = "about") {
-            val readme = detail.readmeHtml
+            val readme = if (state.showTranslation) {
+                state.translatedReadmeHtml ?: detail.readmeHtml
+            } else {
+                detail.readmeHtml
+            }
             if (readme.isNullOrBlank()) {
                 KomiText(
                     text = stringResource(R.string.detail_no_readme),

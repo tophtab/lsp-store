@@ -1,7 +1,6 @@
 @file:OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 package io.github.tophtab.lspstore.ui.screens.detail
 
-import android.text.Html
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -32,10 +31,8 @@ import androidx.compose.material.icons.outlined.History
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -48,7 +45,6 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -168,8 +164,6 @@ internal fun StatItem(label: String, stat: Long, modifier: Modifier = Modifier) 
 internal fun DetailHero(
     state: ModuleDetailUiState,
     detail: ModuleDetail,
-    onTranslate: () -> Unit,
-    onClearTranslation: () -> Unit,
     onOpenAuthor: (String) -> Unit,
 ) {
     val module = detail.module
@@ -267,35 +261,18 @@ internal fun DetailHero(
             }
 
             Spacer(Modifier.height(12.dp))
+            val summary = if (state.showTranslation) {
+                state.translatedSummary ?: module.summary.orEmpty()
+            } else {
+                module.summary.orEmpty()
+            }
             KomiText(
-                text = state.translatedSummary ?: module.summary.orEmpty(),
+                text = summary,
                 role = KomiTextRole.Body,
                 fontSize = 14.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 20.dp),
             )
-            if (state.translatedSummary != null) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    TextButton(onClick = onClearTranslation) {
-                        KomiText(
-                            text = stringResource(R.string.detail_clear_translation),
-                            role = KomiTextRole.Label,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        )
-                    }
-                }
-            } else if (!module.summary.isNullOrBlank()) {
-                TextButton(
-                    onClick = onTranslate,
-                    enabled = !state.isTranslating,
-                ) {
-                    KomiText(
-                        text = stringResource(R.string.detail_translate),
-                        role = KomiTextRole.Label,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    )
-                }
-            }
 
             // Plain "installed" is redundant here (the install button says
             // Reinstall); only the states that need attention keep a pill.
@@ -577,13 +554,10 @@ private fun InstallActionButton(
 @Composable
 internal fun WhatsNewCard(
     release: Release,
-    notesHtml: String,
+    notes: String,
     expanded: Boolean,
     onToggleExpanded: () -> Unit,
 ) {
-    val notes = remember(notesHtml) {
-        Html.fromHtml(notesHtml, Html.FROM_HTML_MODE_LEGACY).toString().trim()
-    }
     val needsExpansion = notes.length > 320
     val collapsedHeight = 220.dp
     Column {

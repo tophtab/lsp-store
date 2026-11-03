@@ -186,7 +186,7 @@
     <string name="settings_translation">ترجمة</string>
     <string name="settings_translation_provider">مزود الترجمة</string>
     <string name="settings_translation_auto">ترجمة تلقائية</string>
-    <string name="settings_translation_auto_desc">ترجمة وصف الوحدة تلقائيًا عند فتح صفحتها.</string>
+    <string name="settings_translation_auto_desc">ترجمة وصف الوحدة وREADME ومحتوى التحديث تلقائيًا عند فتح صفحتها.</string>
     <string name="settings_translation_deepl_key">مفتاح مصادقة DeepL</string>
     <string name="settings_translation_libre_url">عنوان URL الخاص بـ LibreTranslate</string>
     <string name="settings_translation_https_note">استخدم عنوان URL HTTPS لنقطة نهاية LibreTranslate.</string>
@@ -194,9 +194,8 @@
     <string name="settings_translation_ms_key">مفتاح مايكروسوفت</string>
     <string name="settings_translation_ms_region">منطقة مايكروسوفت</string>
     <string name="settings_translation_note">تستخدم Google نقطة النهاية العامة الخاصة بها ولا تحتاج إلى مفتاح.</string>
-    <string name="detail_translate">ترجمة الوصف</string>
-    <string name="detail_clear_translation">مسح الترجمة</string>
-    <string name="detail_translated">مترجم</string>
+    <string name="detail_translate_page">ترجمة</string>
+    <string name="detail_show_original">عرض الأصل</string>
     <string name="detail_translate_failed">فشلت الترجمة</string>
         <string name="download_tap_to_cancel">اضغط للإلغاء</string>
 <string name="download_progress">%1$s / %2$s</string>

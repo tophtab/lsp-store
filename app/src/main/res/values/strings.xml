@@ -216,7 +216,7 @@
     <string name="settings_translation">Translation</string>
     <string name="settings_translation_provider">Translation provider</string>
     <string name="settings_translation_auto">Auto-translate</string>
-    <string name="settings_translation_auto_desc">Translate a module\'s description automatically when you open its page.</string>
+    <string name="settings_translation_auto_desc">Translate a module page automatically when you open it.</string>
     <string name="translation_google" translatable="false">Google</string>
     <string name="translation_libre" translatable="false">LibreTranslate</string>
     <string name="translation_deepl" translatable="false">DeepL</string>
@@ -228,9 +228,8 @@
     <string name="settings_translation_ms_key">Microsoft key</string>
     <string name="settings_translation_ms_region">Microsoft region</string>
     <string name="settings_translation_note">Google uses its public endpoint and needs no key.</string>
-    <string name="detail_translate">Translate description</string>
-    <string name="detail_clear_translation">Clear translation</string>
-    <string name="detail_translated">Translated</string>
+    <string name="detail_translate_page">Translate</string>
+    <string name="detail_show_original">Show original</string>
     <string name="detail_translate_failed">Translation failed</string>
         <string name="download_tap_to_cancel">Tap to cancel</string>
 <string name="download_progress">%1$s / %2$s</string>

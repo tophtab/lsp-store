@@ -51,6 +51,36 @@ class TranslationRepository(
             .onSuccess { result -> synchronized(cache) { cache[cacheKey] = result } }
     }
 
+    /**
+     * Translates rendered README HTML. Markup is replaced by tokens before the
+     * request and put back afterwards, so headings, links, images and code
+     * blocks survive the trip through a provider that only understands text.
+     */
+    suspend fun translateHtml(html: String): Result<String> {
+        if (html.isBlank()) return Result.success(html)
+        val settings = settingsRepository.translationSettings.first()
+        if (!settings.isConfigured) {
+            return Result.failure(IllegalStateException("Translation provider is not configured"))
+        }
+
+        val target = translationTarget(settings.provider)
+        val cacheKey = "html|${settings.provider.name}|$target|$html"
+        synchronized(cache) { cache[cacheKey] }?.let { return Result.success(it) }
+
+        return runCatching {
+            val protected = HtmlTranslation.protect(html)
+            val translated = buildString {
+                HtmlTranslation.chunks(protected.text, HTML_CHUNK_CHARS)
+                    .forEachIndexed { index, chunk ->
+                        if (index > 0) append(' ')
+                        append(translateWith(settings, chunk, target))
+                    }
+            }
+            HtmlTranslation.restore(translated, protected.tokens)
+                ?: error("Translation lost markup")
+        }.onSuccess { result -> synchronized(cache) { cache[cacheKey] = result } }
+    }
+
     private suspend fun translateWith(
         settings: TranslationSettings,
         text: String,
@@ -181,6 +211,14 @@ class TranslationRepository(
     private companion object {
         const val MAX_CACHE_ENTRIES = 256
         const val DEFAULT_LIBRE_URL = "https://translate.disroot.org"
+
+        /**
+         * A README loses most of its bytes to markup once the tags are
+         * tokenised, so this is generous. Chunking mostly protects the public
+         * Google form endpoint and the per-request limits of the other
+         * providers.
+         */
+        const val HTML_CHUNK_CHARS = 3_500
     }
 }
 

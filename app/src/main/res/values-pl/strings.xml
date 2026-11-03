@@ -186,7 +186,7 @@
     <string name="settings_translation">Tłumaczenie</string>
     <string name="settings_translation_provider">Dostawca tłumaczeń</string>
     <string name="settings_translation_auto">Automatyczne tłumaczenie</string>
-    <string name="settings_translation_auto_desc">Automatycznie tłumacz opis modułu po otwarciu jego strony.</string>
+    <string name="settings_translation_auto_desc">Automatycznie tłumacz opis, README i zmiany modułu po otwarciu jego strony.</string>
     <string name="settings_translation_deepl_key">Klucz autoryzacyjny DeepL</string>
     <string name="settings_translation_libre_url">LibreTranslate URL</string>
     <string name="settings_translation_https_note">Użyj adresu URL HTTPS dla punktu końcowego LibreTranslate.</string>
@@ -194,9 +194,8 @@
     <string name="settings_translation_ms_key">Klucz Microsoftu</string>
     <string name="settings_translation_ms_region">Region Microsoftu</string>
     <string name="settings_translation_note">Google korzysta ze swojego publicznego punktu końcowego i nie potrzebuje klucza.</string>
-    <string name="detail_translate">Przetłumacz opis</string>
-    <string name="detail_clear_translation">Wyczyść tłumaczenie</string>
-    <string name="detail_translated">Przetłumaczony</string>
+    <string name="detail_translate_page">Przetłumacz</string>
+    <string name="detail_show_original">Pokaż oryginał</string>
     <string name="detail_translate_failed">Tłumaczenie nie powiodło się</string>
         <string name="download_tap_to_cancel">Dotknij, aby anulować</string>
 <string name="download_progress">%1$s / %2$s</string>

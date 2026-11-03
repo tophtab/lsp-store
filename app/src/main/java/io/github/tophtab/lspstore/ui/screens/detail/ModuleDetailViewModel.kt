@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
@@ -63,7 +64,14 @@ data class ModuleDetailUiState(
     val activeInstall: ModuleInstallRun? = null,
     val message: String? = null,
     val translatedSummary: String? = null,
-    val isTranslating: Boolean = false,
+    /** README translated as HTML, with its markup preserved. */
+    val translatedReadmeHtml: String? = null,
+    /** Release notes translated as plain text, keyed by release tag. */
+    val translatedNotes: Map<String, String> = emptyMap(),
+    /** Whether the page currently shows translations instead of the originals. */
+    val showTranslation: Boolean = false,
+    /** Number of translation requests currently in flight. */
+    val translationsInFlight: Int = 0,
     val variantPicker: VariantPicker? = null,
     val variantState: ModuleVariantState? = null,
     /** P2 probe results for [probedTag], shown in the picker/sheet. */
@@ -73,6 +81,9 @@ data class ModuleDetailUiState(
     val pendingInstall: PendingInstall? = null,
     val installLogs: List<String> = emptyList(),
 ) {
+    val isTranslating: Boolean
+        get() = translationsInFlight > 0
+
     val latestVersion: ModuleVersion?
         get() = detail?.module?.latestFor(channel)
 
@@ -117,6 +128,21 @@ class ModuleDetailViewModel(
     private var links: Map<String, String> = emptyMap()
     private var variantStates: Map<String, ModuleVariantState> = emptyMap()
     private var pendingInstalls: Map<String, PendingInstall> = emptyMap()
+
+    private var summaryTranslationJob: Job? = null
+    private var readmeTranslationJob: Job? = null
+    private val notesTranslationJobs = mutableMapOf<String, Job>()
+
+    /**
+     * Translations identified individually rather than counted: a cancelled job
+     * may finish after a replacement has already started, and a plain counter
+     * would then hide the replacement's spinner.
+     */
+    private val activeTranslations = mutableSetOf<Long>()
+    private var translationSequence = 0L
+
+    /** The user chose the original; auto-translate must not undo that choice. */
+    private var autoTranslateSuppressed = false
 
     init {
         viewModelScope.launch {
@@ -206,6 +232,7 @@ class ModuleDetailViewModel(
     }
 
     fun load() {
+        cancelTranslations()
         viewModelScope.launch {
             _state.update {
                 it.copy(
@@ -213,6 +240,8 @@ class ModuleDetailViewModel(
                     isRefreshing = it.detail != null,
                     error = null,
                     translatedSummary = null,
+                    translatedReadmeHtml = null,
+                    translatedNotes = emptyMap(),
                 )
             }
             runCatching {
@@ -234,7 +263,7 @@ class ModuleDetailViewModel(
                 }
                 updatePendingState()
                 libraryRepository.addRecentlyViewed(packageName)
-                maybeAutoTranslate()
+                if (_state.value.showTranslation) translatePage() else maybeAutoTranslate()
             }.onFailure { error ->
                 _state.update {
                     it.copy(
@@ -396,44 +425,139 @@ class ModuleDetailViewModel(
         _state.update { it.copy(message = null) }
     }
 
-    fun translateSummary() {
-        val summary = _state.value.detail?.module?.summary ?: return
-        if (summary.isBlank() || _state.value.isTranslating) return
-        viewModelScope.launch {
-            _state.update { it.copy(isTranslating = true, message = null) }
-            translationRepository.translate(summary)
-                .onSuccess { translated ->
-                    _state.update { it.copy(isTranslating = false, translatedSummary = translated) }
-                }
-                .onFailure {
-                    _state.update {
-                        it.copy(
-                            isTranslating = false,
-                            message = container.appContext.getString(R.string.detail_translate_failed),
-                        )
-                    }
-                }
+    /**
+     * Shows or hides translated content. The first tap translates the module
+     * summary and README; the release notes are translated by the page for the
+     * version it is showing, since only the page knows which release is
+     * selected. A second tap returns to the originals without dropping the
+     * translations.
+     */
+    fun toggleTranslation() {
+        if (_state.value.showTranslation) {
+            autoTranslateSuppressed = true
+            _state.update { it.copy(showTranslation = false) }
+            return
+        }
+        autoTranslateSuppressed = false
+        _state.update { it.copy(showTranslation = true) }
+        translatePage()
+    }
+
+    /** Translates the page-level content (summary and README) when needed. */
+    private fun translatePage() {
+        val detail = _state.value.detail ?: return
+        if (!_state.value.showTranslation) return
+        translateSummary(detail)
+        translateReadme(detail)
+    }
+
+    private fun translateSummary(detail: ModuleDetail) {
+        val summary = detail.module.summary
+        if (summary.isNullOrBlank() || _state.value.translatedSummary != null) return
+        if (summaryTranslationJob?.isActive == true) return
+        summaryTranslationJob = viewModelScope.launch {
+            translateText(summary) { translated ->
+                _state.update { it.copy(translatedSummary = translated) }
+            }
+        }
+    }
+
+    private fun translateReadme(detail: ModuleDetail) {
+        val html = detail.readmeHtml
+        if (html.isNullOrBlank() || _state.value.translatedReadmeHtml != null) return
+        if (readmeTranslationJob?.isActive == true) return
+        readmeTranslationJob = viewModelScope.launch {
+            translateText(html, translationRepository::translateHtml) { translated ->
+                _state.update { it.copy(translatedReadmeHtml = translated) }
+            }
         }
     }
 
     /**
-     * Opt-in auto translation of the description, Komi-style. The target is the
-     * app language, so there is nothing else to read from settings. A provider
-     * that is not configured is skipped silently instead of showing a failure
-     * every time a module page opens.
+     * Translates one release's notes. The page calls this for the release it is
+     * showing, so switching versions while translation is on translates the new
+     * notes on demand.
      */
-    private fun maybeAutoTranslate() {
-        val summary = _state.value.detail?.module?.summary
-        if (summary.isNullOrBlank() || _state.value.translatedSummary != null) return
-        viewModelScope.launch {
-            val settings = settingsRepository.translationSettings.first()
-            if (!settings.autoTranslate || !settings.isConfigured) return@launch
-            translateSummary()
+    fun translateNotes(tagName: String, text: String) {
+        if (!_state.value.showTranslation) return
+        if (text.isBlank() || _state.value.translatedNotes.containsKey(tagName)) return
+        if (notesTranslationJobs[tagName]?.isActive == true) return
+        notesTranslationJobs[tagName] = viewModelScope.launch {
+            translateText(text) { translated ->
+                _state.update {
+                    it.copy(translatedNotes = it.translatedNotes + (tagName to translated))
+                }
+            }
         }
     }
 
-    fun clearTranslation() {
-        _state.update { it.copy(translatedSummary = null) }
+    private suspend fun translateText(
+        text: String,
+        translate: suspend (String) -> Result<String> = translationRepository::translate,
+        onSuccess: (String) -> Unit,
+    ) {
+        val id = beginTranslation()
+        try {
+            translate(text)
+                .onSuccess(onSuccess)
+                .onFailure { showTranslationFailure() }
+        } finally {
+            endTranslation(id)
+        }
+    }
+
+    private fun beginTranslation(): Long {
+        val id = ++translationSequence
+        activeTranslations += id
+        _state.update { it.copy(translationsInFlight = activeTranslations.size) }
+        return id
+    }
+
+    private fun endTranslation(id: Long) {
+        activeTranslations -= id
+        _state.update { it.copy(translationsInFlight = activeTranslations.size) }
+    }
+
+    private fun showTranslationFailure() {
+        _state.update {
+            // One message is enough even when several parts fail together.
+            if (it.message != null) {
+                it
+            } else {
+                it.copy(message = container.appContext.getString(R.string.detail_translate_failed))
+            }
+        }
+    }
+
+    private fun cancelTranslations() {
+        summaryTranslationJob?.cancel()
+        readmeTranslationJob?.cancel()
+        notesTranslationJobs.values.forEach { it.cancel() }
+        notesTranslationJobs.clear()
+        // The cancelled jobs decrement the counter in their own `finally`, so it
+        // must not be reset here: a fresh job may already have incremented it.
+    }
+
+    /**
+     * Opt-in auto translation, Komi-style. The target is the app language, so
+     * there is nothing else to read from settings. A provider that is not
+     * configured is skipped silently instead of showing a failure every time a
+     * module page opens.
+     */
+    private fun maybeAutoTranslate() {
+        if (autoTranslateSuppressed || _state.value.showTranslation) return
+        val detail = _state.value.detail ?: return
+        val hasContent = !detail.module.summary.isNullOrBlank() ||
+            !detail.readmeHtml.isNullOrBlank() ||
+            listOf(detail.releases, detail.betaReleases, detail.snapshotReleases)
+                .any { releases -> releases.any { !it.descriptionHtml.isNullOrBlank() } }
+        if (!hasContent) return
+        viewModelScope.launch {
+            val settings = settingsRepository.translationSettings.first()
+            if (!settings.autoTranslate || !settings.isConfigured) return@launch
+            _state.update { it.copy(showTranslation = true) }
+            translatePage()
+        }
     }
 
     /**
