@@ -70,6 +70,10 @@ data class ModuleDetailUiState(
     val translatedNotes: Map<String, String> = emptyMap(),
     /** Whether the page currently shows translations instead of the originals. */
     val showTranslation: Boolean = false,
+    /** The persisted auto-translate setting: the only source of automatic translation. */
+    val autoTranslate: Boolean = false,
+    /** Increments on every manual tap that starts translating the page. */
+    val translateRequest: Int = 0,
     /** Number of translation requests currently in flight. */
     val translationsInFlight: Int = 0,
     val variantPicker: VariantPicker? = null,
@@ -148,6 +152,13 @@ class ModuleDetailViewModel(
         viewModelScope.launch {
             libraryRepository.favourites.collect { favourites ->
                 _state.update { it.copy(isFavourite = packageName in favourites) }
+            }
+        }
+        viewModelScope.launch {
+            // Only the setting may translate content the user did not ask for;
+            // the manual top-bar action stays a one-shot request.
+            settingsRepository.translationSettings.collect { settings ->
+                _state.update { it.copy(autoTranslate = settings.autoTranslate) }
             }
         }
         viewModelScope.launch {
@@ -427,9 +438,10 @@ class ModuleDetailViewModel(
 
     /**
      * Shows or hides translated content. The first tap translates the module
-     * summary and README; the release notes are translated by the page for the
-     * version it is showing, since only the page knows which release is
-     * selected. A second tap returns to the originals without dropping the
+     * summary and README; the page translates the release notes for the version
+     * it is showing. This is a one-shot request for the current page: switching
+     * to another version does not translate its notes unless the auto-translate
+     * setting is on. A second tap returns to the originals without dropping the
      * translations.
      */
     fun toggleTranslation() {
@@ -439,7 +451,9 @@ class ModuleDetailViewModel(
             return
         }
         autoTranslateSuppressed = false
-        _state.update { it.copy(showTranslation = true) }
+        _state.update {
+            it.copy(showTranslation = true, translateRequest = it.translateRequest + 1)
+        }
         translatePage()
     }
 
