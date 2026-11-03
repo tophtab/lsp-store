@@ -28,8 +28,10 @@ android {
 
     defaultConfig {
         applicationId = "io.github.tophtab.lspstore"
-        // LSPosed itself supports Android 8.1 (API 27) and up.
-        minSdk = 27
+        // Android 10 (API 29) is the floor: downloads are exported to the
+        // public Downloads collection through MediaStore, which needs API 29
+        // and needs no storage permission from there on.
+        minSdk = 29
         targetSdk = 36
         // versionCode = major * 10000 + minor * 100 + patch, so 1.0.0 is 10000,
         // 1.1.0 is 10100 and 12.0.0 is 120000. Android compares the integer, so a
@@ -58,10 +60,14 @@ android {
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName("debug")
             // Without KEYSTORE_FILE the APK stays unsigned, so a local
             // `assembleRelease` works without the release key; publishing jobs
             // verify the signature separately.
+            signingConfig = if (System.getenv("KEYSTORE_FILE").isNullOrEmpty()) {
+                null
+            } else {
+                signingConfigs.getByName("release")
+            }
             isMinifyEnabled = true
             // Off by measurement (CI A/B on 1.1.0): resource shrinking saved 361 KB
             // (10.3%) of the APK but cost ~50s of every release build - it is an R8

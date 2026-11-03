@@ -192,7 +192,9 @@ asset 字节数，发布后等 30 秒再查一次 `draft`——被 bot 退回就
   `LSP Store`，不能改成介绍文字；它也改不了（需要组织管理员）。release 本身可以
   通过 API 建，这就是 CI 能自动发的原因。
 - 组织仓库里不要提交源码（官方 README 明确要求），源码只在 `tophtab/lsp-store`。
-- `minSdk` 27 是 LSPosed 的下限，别为了兼容 8.0 降下去。
+- `minSdk` 29 是当前的应用下限：下载完成后的 APK 通过 MediaStore 导出到公共
+  `Download/LSP_Store`，这条路径从 Android 10 起不需要存储权限。别为了兼容
+  Android 8.1 / 9 再降下去。
 - 构建需要 `compileSdk 37`（AGP 9.4.1 / Gradle 9.8.2），本机或 CI 都要装
   `platforms;android-37.1`；`targetSdk` 仍是 36。
 - libxposed 的 api / service 版本要和 `module.prop` 里的 min/target 保持一致

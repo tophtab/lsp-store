@@ -39,14 +39,16 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
     private var translationEdited = false
 
     private val _state = MutableStateFlow(
-        SettingsUiState(
-            downloadsSize = installer.downloadsSizeBytes(),
-            indexCacheSize = moduleRepository.cacheSizeBytes(),
-        ),
+        SettingsUiState(indexCacheSize = moduleRepository.cacheSizeBytes()),
     )
     val state = _state.asStateFlow()
 
     init {
+        viewModelScope.launch {
+            // The export query touches MediaStore, so it stays off the main thread.
+            val size = installer.downloadsSizeBytes()
+            _state.update { it.copy(downloadsSize = size) }
+        }
         viewModelScope.launch {
             settingsRepository.rootInstall.collect { enabled -> _state.update { it.copy(rootInstall = enabled) } }
         }
@@ -128,9 +130,10 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
     fun clearDownloadedApks() {
         viewModelScope.launch {
             installer.clearDownloads()
+            val size = installer.downloadsSizeBytes()
             _state.update {
                 it.copy(
-                    downloadsSize = installer.downloadsSizeBytes(),
+                    downloadsSize = size,
                     message = appContext.getString(R.string.settings_apks_cleared),
                 )
             }

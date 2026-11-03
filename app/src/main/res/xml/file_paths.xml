@@ -2,6 +2,4 @@
 <paths>
     <cache-path name="apk_cache" path="apk/" />
     <files-path name="apk_files" path="apk/" />
-    <!-- Download/LSP_Store lives under the public external storage root. -->
-    <external-path name="lsp_store_downloads" path="Download/LSP_Store/" />
 </paths>

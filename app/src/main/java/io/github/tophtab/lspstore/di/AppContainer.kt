@@ -12,6 +12,7 @@ import kotlinx.coroutines.launch
 import io.ktor.client.HttpClient
 import kotlinx.serialization.json.Json
 import io.github.tophtab.lspstore.data.device.DeviceProfileProvider
+import io.github.tophtab.lspstore.data.install.ApkExportStore
 import io.github.tophtab.lspstore.data.install.ApkInstaller
 import io.github.tophtab.lspstore.data.install.DownloadManager
 import io.github.tophtab.lspstore.data.install.DownloadSlots
@@ -84,7 +85,8 @@ class AppContainer(context: Context) {
     val libraryRepository: LibraryRepository = LibraryRepositoryImpl(context)
     val pendingInstallRepository: PendingInstallRepository =
         PendingInstallRepositoryImpl(context)
-    val downloadManager: DownloadManager = DownloadManager(context)
+    val apkExportStore: ApkExportStore = ApkExportStore(appContext)
+    val downloadManager: DownloadManager = DownloadManager(context, apkExportStore)
     val installer: ApkInstaller = ApkInstaller(context, downloadManager)
     val systemInstallSerializer: SystemInstallSerializer = SystemInstallSerializer()
 
@@ -291,11 +293,7 @@ class AppContainer(context: Context) {
     @Suppress("DEPRECATION")
     private fun installedVersionCode(packageName: String): Long {
         val info = appContext.packageManager.getPackageInfo(packageName, 0)
-        return if (android.os.Build.VERSION.SDK_INT >= 28) {
-            info.longVersionCode
-        } else {
-            info.versionCode.toLong()
-        }
+        return info.longVersionCode
     }
 
     private companion object {

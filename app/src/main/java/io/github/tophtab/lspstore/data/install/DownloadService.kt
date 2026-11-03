@@ -8,7 +8,6 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
-import android.os.Build
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
@@ -93,13 +92,13 @@ class DownloadService : Service() {
         }
 
     private fun startForegroundCompat(notification: Notification) {
-        val type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
-        } else {
-            0
-        }
         runCatching {
-            ServiceCompat.startForeground(this, NOTIFICATION_ID, notification, type)
+            ServiceCompat.startForeground(
+                this,
+                NOTIFICATION_ID,
+                notification,
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC,
+            )
         }
     }
 
@@ -166,7 +165,7 @@ class DownloadService : Service() {
 
         fun start(context: Context) {
             val intent = Intent(context, DownloadService::class.java)
-            // minSdk is 26, so startForegroundService is always available.
+            // minSdk is 29, so startForegroundService is always available.
             runCatching { context.startForegroundService(intent) }
         }
     }

@@ -69,9 +69,6 @@ class InstalledModulesRepositoryImpl(
         val modules = withContext(Dispatchers.IO) {
             val pm = context.packageManager
             val apiLevel = Build.VERSION.SDK_INT
-            // Lint only understands the SDK_INT check written inline.
-            @Suppress("DEPRECATION")
-            val supportsLongVersionCode = Build.VERSION.SDK_INT >= Build.VERSION_CODES.P
             val packages = pm.getInstalledPackages(
                 PackageManager.GET_META_DATA or PackageManager.GET_PROVIDERS,
             )
@@ -90,7 +87,7 @@ class InstalledModulesRepositoryImpl(
                     label = runCatching { pm.getApplicationLabel(app).toString() }
                         .getOrDefault(pkg.packageName),
                     apiLevel = apiLevel,
-                    longVersionCode = if (supportsLongVersionCode) pkg.longVersionCode else null,
+                    longVersionCode = pkg.longVersionCode,
                     legacyVersionCode = pkg.versionCode,
                     versionName = pkg.versionName,
                     hasLegacyXposedMeta = hasLegacyXposedMeta,

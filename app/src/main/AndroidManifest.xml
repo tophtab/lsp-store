@@ -7,15 +7,8 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
-    <!-- Writing the downloaded APKs into the public Download/LSP_Store folder:
-         WRITE_EXTERNAL_STORAGE covers API 27/28, MANAGE_EXTERNAL_STORAGE covers
-         Android 11+ (which no longer grants the former via scoped storage). -->
-    <uses-permission
-        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
-        android:maxSdkVersion="29" />
-    <uses-permission
-        android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
-        tools:ignore="ScopedStorage" />
+    <!-- No storage permission: finished APKs are exported through MediaStore,
+         which lets the app write and delete its own Downloads entries. -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
     <uses-permission
@@ -30,7 +23,6 @@
         android:name=".LspStoreApp"
         tools:targetApi="33"
         android:allowBackup="true"
-        android:requestLegacyExternalStorage="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:description="@string/module_description"
         android:fullBackupContent="@xml/backup_rules"

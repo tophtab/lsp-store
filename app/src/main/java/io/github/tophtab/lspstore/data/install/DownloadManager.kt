@@ -1,7 +1,6 @@
 package io.github.tophtab.lspstore.data.install
 
 import android.content.Context
-import android.os.Environment
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -12,6 +11,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import io.github.tophtab.lspstore.domain.model.ReleaseAsset
 import java.io.File
@@ -46,6 +46,7 @@ data class DownloadTask(
  */
 class DownloadManager(
     private val context: Context,
+    private val exporter: ApkExportStore,
 ) {
     private val client = OkHttpClient.Builder()
         .connectTimeout(20, java.util.concurrent.TimeUnit.SECONDS)
@@ -56,6 +57,9 @@ class DownloadManager(
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val jobs = ConcurrentHashMap<String, Job>()
+
+    /** Copies into Download/LSP_Store, tracked so [clearAll] can wait for them. */
+    private val exports = ConcurrentHashMap<String, Job>()
     private val _tasks = MutableStateFlow<Map<String, DownloadTask>>(emptyMap())
     val tasks = _tasks.asStateFlow()
 
@@ -67,7 +71,12 @@ class DownloadManager(
         val key = keyOf(asset)
         val existing = _tasks.value[key]
         if (existing?.status == DownloadStatus.RUNNING) return key
-        if (existing?.status == DownloadStatus.COMPLETED && existing.file?.exists() == true) return key
+        if (existing?.status == DownloadStatus.COMPLETED && existing.file?.exists() == true) {
+            // The export may not have run yet (process death right after the
+            // transfer finished); it is idempotent, so retry it here.
+            exportCompleted(key, asset, existing.file)
+            return key
+        }
         // A previously failed or interrupted transfer keeps its partial file;
         // launchDownload resumes from whatever is on disk.
         launchDownload(key, asset)
@@ -87,8 +96,12 @@ class DownloadManager(
     }
 
     fun cancel(key: String) {
+        val task = _tasks.value[key]
         jobs.remove(key)?.cancel()
         updateTask(key) { it.copy(status = DownloadStatus.CANCELLED) }
+        // The working copy is ours; a cancelled transfer should not leave it
+        // behind. A later attempt simply starts from zero.
+        runCatching { task?.file?.delete() }
     }
 
     fun clearFinished() {
@@ -152,7 +165,10 @@ class DownloadManager(
                 error = null,
             )
         }
-        if (complete) return
+        if (complete) {
+            exportCompleted(key, asset, target)
+            return
+        }
 
         DownloadService.start(context)
 
@@ -199,6 +215,9 @@ class DownloadManager(
                                 total = target.length(),
                             )
                         }
+                        // Best effort and off the critical path: the install uses
+                        // the private file, so a failed export never blocks it.
+                        exportCompleted(key, asset, target)
                         return@launch
                     } catch (t: Throwable) {
                         lastError = t
@@ -222,56 +241,33 @@ class DownloadManager(
     }
 
     private fun targetFile(key: String, asset: ReleaseAsset): File {
-        val dir = downloadDir().apply { mkdirs() }
-        val baseName = asset.name
+        val dir = File(context.cacheDir, "apk").apply { mkdirs() }
+        val safeName = asset.name
             .substringAfterLast('/')
             .substringAfterLast('\\')
-        // Keep the extension at the very end: Name-<hash>.apk, never Name.apk-<hash>.
-        val display = displayNameFor(baseName, asset)
-        val stem = display.substringBeforeLast('.', display)
-        val ext = display.substringAfterLast('.', "")
-        return File(dir, if (ext.isBlank()) "$stem-$key" else "$stem-$key.$ext")
-    }
-
-    /**
-     * Downloads live under the public Download/LSP_Store folder so they can be
-     * found outside the app; the folder is created on first use.
-     */
-    @Suppress("DEPRECATION")
-    private fun downloadDir(): File =
-        File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "LSP_Store")
-
-    /** Human-readable part of the file name; the identity hash goes after it. */
-    private fun displayNameFor(baseName: String, asset: ReleaseAsset): String {
-        val stem = baseName.substringBeforeLast('.', baseName)
-        val isGeneric = GENERIC_NAMES.any { stem.equals(it, ignoreCase = true) }
-        val candidate = (if (isGeneric) projectNameFrom(asset) else stem).orEmpty()
-        val clean = (candidate.ifBlank { stem })
             .replace(Regex("[^A-Za-z0-9._-]"), "_")
             .take(80)
-            .ifBlank { "module" }
-        return if (clean.endsWith(".apk", ignoreCase = true)) clean else "$clean.apk"
+            .ifBlank { "module.apk" }
+        return File(dir, "$key-$safeName")
     }
 
     /**
-     * Extracts the project name from the download URL when the asset file name is
-     * a generic `app-release.apk` style name. GitHub release URLs carry it right
-     * before the `releases/download` segment; assets.lsposed.org places it right
-     * after the `/a/` marker.
+     * Publishes a finished transfer in Download/LSP_Store. Runs on the download
+     * scope so the caller (install chain) never waits for the copy, and is
+     * idempotent for the same asset identity.
      */
-    private fun projectNameFrom(asset: ReleaseAsset): String? {
-        val url = asset.downloadUrl.ifBlank { asset.fallbackUrl.orEmpty() }
-        val path = runCatching { java.net.URI(url).path }.getOrNull() ?: return null
-        val segments = path.split('/').filter { it.isNotBlank() }
-        if (segments.isEmpty()) return null
-
-        val releaseIdx = segments.indexOfLast { it.equals("releases", ignoreCase = true) }
-        if (releaseIdx >= 1) return segments[releaseIdx - 1]
-
-        val aIdx = segments.indexOfFirst { it.equals("a", ignoreCase = true) }
-        if (aIdx in 0 until segments.lastIndex) return segments[aIdx + 1]
-
-        return segments.dropLast(1).lastOrNull { it.contains('.') }
+    private fun exportCompleted(key: String, asset: ReleaseAsset, file: File?) {
+        if (file == null || !file.exists()) return
+        exports.computeIfAbsent(key) {
+            scope.launch {
+                val self = coroutineContext[Job]
+                try {
+                    exporter.export(file, exportedApkName(key, asset))
+                } finally {
+                    if (self != null) exports.remove(key, self) else exports.remove(key)
+                }
+            }
+        }
     }
 
     private fun updateTask(key: String, create: Boolean = false, transform: (DownloadTask) -> DownloadTask) {
@@ -281,10 +277,18 @@ class DownloadManager(
         }
     }
 
-    fun downloadedBytes(): Long {
-        val dir = downloadDir()
-        if (!dir.exists()) return 0
-        return dir.walkBottomUp().filter { it.isFile }.sumOf { it.length() }
+    /**
+     * Space used by both copies: the private working files and the exported
+     * APKs in Download/LSP_Store. The Settings entry clears both.
+     */
+    suspend fun downloadedBytes(): Long = withContext(Dispatchers.IO) {
+        val dir = File(context.cacheDir, "apk")
+        val working = if (dir.exists()) {
+            dir.walkBottomUp().filter { it.isFile }.sumOf { it.length() }
+        } else {
+            0L
+        }
+        working + exporter.exportedBytes()
     }
 
     /** Cancels every running/paused download, keeping the tasks list for history. */
@@ -298,27 +302,23 @@ class DownloadManager(
         }
     }
 
-    fun clearAll() {
+    /**
+     * Cancels transfers, removes the private working files and deletes the
+     * APKs this app exported to Download/LSP_Store. Waits for in-flight exports
+     * so none of them can publish a file after the cleanup query ran.
+     */
+    suspend fun clearAll() = withContext(Dispatchers.IO) {
         jobs.values.forEach { it.cancel() }
         jobs.clear()
+        val runningExports = exports.values.toList()
+        runningExports.forEach { it.cancel() }
+        runningExports.forEach { it.join() }
+        exports.clear()
         _tasks.value = emptyMap()
-        runCatching { downloadDir().deleteRecursively() }
+        runCatching { File(context.cacheDir, "apk").deleteRecursively() }
+        exporter.deleteAll()
     }
 }
-
-/** File names treated as generic and rewritten to the URL's project name. */
-private val GENERIC_NAMES = setOf(
-    "app",
-    "app-release",
-    "apprelease",
-    "app-debug",
-    "appdebug",
-    "release",
-    "debug",
-    "module",
-    "app-release-unsigned",
-    "app-release-signed",
-)
 
 /**
  * Cache key for an asset. The file name alone is not unique: many modules ship
