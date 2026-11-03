@@ -67,6 +67,12 @@ class DownloadManager(
 
     fun taskFor(asset: ReleaseAsset): DownloadTask? = _tasks.value[keyOf(asset)]
 
+    /**
+     * Atomic with respect to other callers: the RUNNING check and the job
+     * creation are one step, so two install chains cannot both open a writer for
+     * the same target file.
+     */
+    @Synchronized
     fun start(asset: ReleaseAsset): String {
         val key = keyOf(asset)
         val existing = _tasks.value[key]
@@ -96,12 +102,15 @@ class DownloadManager(
     }
 
     fun cancel(key: String) {
-        val task = _tasks.value[key]
+        val task = _tasks.value[key] ?: return
+        // A finished transfer is shared by whoever asked for it; cancelling one
+        // consumer must not delete an APK another install chain is about to use.
+        if (task.status == DownloadStatus.COMPLETED) return
         jobs.remove(key)?.cancel()
         updateTask(key) { it.copy(status = DownloadStatus.CANCELLED) }
         // The working copy is ours; a cancelled transfer should not leave it
         // behind. A later attempt simply starts from zero.
-        runCatching { task?.file?.delete() }
+        runCatching { task.file?.delete() }
     }
 
     fun clearFinished() {

@@ -46,8 +46,12 @@ class ApkInstaller(
      */
     val installedPackages = MutableSharedFlow<String>(extraBufferCapacity = 8)
 
-    /** Packages handed to an external installer and not yet reported back. */
-    private val delegatedPackages = java.util.Collections.synchronizedSet(mutableSetOf<String>())
+    /**
+     * Any add/replace/remove the system reported, including packages this store
+     * did not install. The list rescans on it without claiming an install
+     * finished.
+     */
+    val packageChanges = MutableSharedFlow<String>(extraBufferCapacity = 8)
 
     suspend fun download(
         asset: ReleaseAsset,
@@ -66,17 +70,20 @@ class ApkInstaller(
     }
 
     /**
-     * @param packageName the package that the APK is expected to bring. Only used
-     *   to remember the hand-off; the APK itself is not inspected here. Whether
-     *   the APK may replace what is installed (signature, downgrade, ABI, ...) is
-     *   the installer's and PackageManager's call, not ours: rooted users may run
-     *   a patched installer that accepts a different signing key, and blocking it
-     *   here would take that choice away. See [io.github.tophtab.lspstore.data.install.ApkGate]
-     *   for the checks that stay (an APK that cannot run on this device at all).
+     * Hands [file] to the privileged path or the device's installer app.
+     *
+     * Whether the APK may replace what is installed (signature, downgrade, ABI,
+     * ...) is the installer's and PackageManager's call, not ours: rooted users
+     * may run a patched installer that accepts a different signing key, and
+     * blocking it here would take that choice away. See
+     * [io.github.tophtab.lspstore.data.install.ApkGate] for the checks that stay
+     * (an APK that cannot run on this device at all).
+     *
+     * The caller records the hand-off itself (bounding package and version in a
+     * `PendingInstall`), because a delegated install returns no result here.
      */
     suspend fun install(
         file: File,
-        packageName: String,
         useRoot: Boolean,
         allowUi: Boolean = true,
     ): InstallOutcome {
@@ -100,7 +107,7 @@ class ApkInstaller(
         // so no PackageInstaller session is created from this process.
         return runCatching {
             ensurePermissionsOrThrow()
-            delegateToInstaller(file, packageName)
+            delegateToInstaller(file)
         }.getOrElse {
             InstallOutcome.Failure(it.message ?: context.getString(R.string.installer_launch_failed))
         }
@@ -121,27 +128,22 @@ class ApkInstaller(
         throw IllegalStateException(context.getString(R.string.installer_unknown_sources))
     }
 
-    /** Called by [PackageEventReceiver] once the system reports the install landed. */
-    fun onPackageInstalled(packageName: String) {
-        // Only report packages we delegated ourselves; the receiver also sees
-        // installs made outside the store.
-        if (delegatedPackages.remove(packageName)) {
-            installedPackages.tryEmit(packageName)
-        }
-    }
-
     /**
-     * Reports a delegated install that we discovered by rescanning PackageManager
-     * on resume. The PACKAGE_ADDED broadcast is not delivered to manifest
-     * receivers while the app is in the background (Android 8+), so this is the
-     * reliable completion signal for the system-installer path.
+     * Reports a delegated install that the store confirmed landed (package
+     * broadcast or a resume-time rescan). The PACKAGE_ADDED broadcast is not
+     * delivered to manifest receivers while the app is in the background
+     * (Android 8+), so this is the one completion signal every path shares.
      */
     fun confirmInstalled(packageName: String) {
-        delegatedPackages.remove(packageName)
         installedPackages.tryEmit(packageName)
     }
 
-    private fun delegateToInstaller(file: File, packageName: String): InstallOutcome {
+    /** A package change that is not an install completion of ours. */
+    fun notifyPackageChanged(packageName: String) {
+        packageChanges.tryEmit(packageName)
+    }
+
+    private fun delegateToInstaller(file: File): InstallOutcome {
         val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
         val intent = Intent(Intent.ACTION_VIEW)
             .setDataAndType(uri, APK_MIME_TYPE)
@@ -150,7 +152,6 @@ class ApkInstaller(
             return InstallOutcome.Failure(context.getString(R.string.installer_no_handler))
         }
         context.startActivity(intent)
-        delegatedPackages.add(packageName)
         return InstallOutcome.DelegatedToSystem
     }
 
