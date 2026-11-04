@@ -17,6 +17,8 @@ import io.github.tophtab.lspstore.data.repository.InstalledModulesRepository
 import io.github.tophtab.lspstore.data.repository.LibraryRepository
 import io.github.tophtab.lspstore.data.repository.ModuleRepository
 import io.github.tophtab.lspstore.data.repository.PendingInstallRepository
+import io.github.tophtab.lspstore.data.translation.ContentLanguage
+import io.github.tophtab.lspstore.data.translation.translationLanguage
 import io.github.tophtab.lspstore.di.AppContainer
 import io.github.tophtab.lspstore.ui.toUserMessage
 import io.github.tophtab.lspstore.ui.variant.variantReasonText
@@ -148,6 +150,13 @@ class ModuleDetailViewModel(
     /** The user chose the original; auto-translate must not undo that choice. */
     private var autoTranslateSuppressed = false
 
+    /**
+     * The user turned translation on with the top-bar action. A reload keeps
+     * translating content even when its language matches the target, because
+     * this was an explicit request rather than the auto-translate setting.
+     */
+    private var manualTranslationActive = false
+
     init {
         viewModelScope.launch {
             libraryRepository.favourites.collect { favourites ->
@@ -274,7 +283,11 @@ class ModuleDetailViewModel(
                 }
                 updatePendingState()
                 libraryRepository.addRecentlyViewed(packageName)
-                if (_state.value.showTranslation) translatePage() else maybeAutoTranslate()
+                if (_state.value.showTranslation) {
+                    translatePage(force = manualTranslationActive)
+                } else {
+                    maybeAutoTranslate()
+                }
             }.onFailure { error ->
                 _state.update {
                     it.copy(
@@ -451,23 +464,29 @@ class ModuleDetailViewModel(
             return
         }
         autoTranslateSuppressed = false
+        manualTranslationActive = true
         _state.update {
             it.copy(showTranslation = true, translateRequest = it.translateRequest + 1)
         }
-        translatePage()
+        translatePage(force = true)
     }
 
-    /** Translates the page-level content (summary and README) when needed. */
-    private fun translatePage() {
+    /**
+     * Translates the page-level content (summary and README) when needed. A
+     * forced page skips the language check: the user asked for a translation
+     * even when the content already looks like the target language.
+     */
+    private fun translatePage(force: Boolean) {
         val detail = _state.value.detail ?: return
         if (!_state.value.showTranslation) return
-        translateSummary(detail)
-        translateReadme(detail)
+        translateSummary(detail, force)
+        translateReadme(detail, force)
     }
 
-    private fun translateSummary(detail: ModuleDetail) {
+    private fun translateSummary(detail: ModuleDetail, force: Boolean) {
         val summary = detail.module.summary
         if (summary.isNullOrBlank() || _state.value.translatedSummary != null) return
+        if (!force && ContentLanguage.isLanguage(summary, translationLanguage())) return
         if (summaryTranslationJob?.isActive == true) return
         summaryTranslationJob = viewModelScope.launch {
             translateText(summary) { translated ->
@@ -476,9 +495,12 @@ class ModuleDetailViewModel(
         }
     }
 
-    private fun translateReadme(detail: ModuleDetail) {
+    private fun translateReadme(detail: ModuleDetail, force: Boolean) {
         val html = detail.readmeHtml
         if (html.isNullOrBlank() || _state.value.translatedReadmeHtml != null) return
+        if (!force && ContentLanguage.isLanguage(ContentLanguage.fromHtml(html), translationLanguage())) {
+            return
+        }
         if (readmeTranslationJob?.isActive == true) return
         readmeTranslationJob = viewModelScope.launch {
             translateText(html, translationRepository::translateHtml) { translated ->
@@ -490,11 +512,13 @@ class ModuleDetailViewModel(
     /**
      * Translates one release's notes. The page calls this for the release it is
      * showing, so switching versions while translation is on translates the new
-     * notes on demand.
+     * notes on demand. Only the auto-translate setting skips notes that already
+     * look like the target language; a manual request translates regardless.
      */
-    fun translateNotes(tagName: String, text: String) {
+    fun translateNotes(tagName: String, text: String, manual: Boolean = false) {
         if (!_state.value.showTranslation) return
         if (text.isBlank() || _state.value.translatedNotes.containsKey(tagName)) return
+        if (!manual && ContentLanguage.isLanguage(text, translationLanguage())) return
         if (notesTranslationJobs[tagName]?.isActive == true) return
         notesTranslationJobs[tagName] = viewModelScope.launch {
             translateText(text) { translated ->
@@ -533,13 +557,20 @@ class ModuleDetailViewModel(
     }
 
     private fun showTranslationFailure() {
-        _state.update {
-            // One message is enough even when several parts fail together.
-            if (it.message != null) {
-                it
-            } else {
-                it.copy(message = container.appContext.getString(R.string.detail_translate_failed))
-            }
+        _state.update { current ->
+            // Only the last in-flight request can decide this, and only when no
+            // translation arrived: otherwise the button would claim a translated
+            // page while it still shows the originals.
+            val nothingTranslated = activeTranslations.size == 1 &&
+                current.translatedSummary == null &&
+                current.translatedReadmeHtml == null &&
+                current.translatedNotes.isEmpty()
+            current.copy(
+                // One message is enough even when several parts fail together.
+                message = current.message
+                    ?: container.appContext.getString(R.string.detail_translate_failed),
+                showTranslation = if (nothingTranslated) false else current.showTranslation,
+            )
         }
     }
 
@@ -554,23 +585,29 @@ class ModuleDetailViewModel(
 
     /**
      * Opt-in auto translation, Komi-style. The target is the app language, so
-     * there is nothing else to read from settings. A provider that is not
-     * configured is skipped silently instead of showing a failure every time a
-     * module page opens.
+     * there is nothing else to read from settings. Content that already looks
+     * like the target language is left alone: the page only switches to the
+     * translated view when at least one block needs translating. A provider that
+     * is not configured is skipped silently instead of showing a failure every
+     * time a module page opens.
      */
     private fun maybeAutoTranslate() {
         if (autoTranslateSuppressed || _state.value.showTranslation) return
         val detail = _state.value.detail ?: return
-        val hasContent = !detail.module.summary.isNullOrBlank() ||
-            !detail.readmeHtml.isNullOrBlank() ||
-            listOf(detail.releases, detail.betaReleases, detail.snapshotReleases)
-                .any { releases -> releases.any { !it.descriptionHtml.isNullOrBlank() } }
-        if (!hasContent) return
+        val target = translationLanguage()
+        val notesHtml = detail.latestReleaseFor(_state.value.channel)?.descriptionHtml
+        val needsTranslation = ContentLanguage.needsTranslation(
+            target,
+            detail.module.summary,
+            detail.readmeHtml?.let(ContentLanguage::fromHtml),
+            notesHtml?.let(ContentLanguage::fromHtml),
+        )
+        if (!needsTranslation) return
         viewModelScope.launch {
             val settings = settingsRepository.translationSettings.first()
             if (!settings.autoTranslate || !settings.isConfigured) return@launch
             _state.update { it.copy(showTranslation = true) }
-            translatePage()
+            translatePage(force = false)
         }
     }
 
