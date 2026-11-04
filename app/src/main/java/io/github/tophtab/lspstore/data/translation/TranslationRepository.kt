@@ -223,6 +223,15 @@ class TranslationRepository(
 }
 
 /**
+ * Base language code the page translates into, following the app language the
+ * way Komi does. This is the value [ContentLanguage.detect] results are compared
+ * with, so it deliberately drops the region and script spelling that only the
+ * providers care about.
+ */
+internal fun translationLanguage(locale: Locale = Locale.getDefault()): String =
+    locale.language.takeIf { it.isNotBlank() && it != "und" } ?: "en"
+
+/**
  * Target language for [provider], following the app language the way Komi does.
  * LSP Store has no in-app language picker, so the app language is the system
  * language.
@@ -236,7 +245,7 @@ internal fun translationTarget(
     provider: TranslationProvider,
     locale: Locale = Locale.getDefault(),
 ): String {
-    val language = locale.language.takeIf { it.isNotBlank() && it != "und" } ?: "en"
+    val language = translationLanguage(locale)
     val traditionalChinese = locale.country in setOf("TW", "HK", "MO")
     return when (provider) {
         TranslationProvider.DEEPL -> when (language) {

@@ -61,6 +61,8 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
@@ -202,24 +204,42 @@ fun ModuleDetailScreen(packageName: String, onBack: () -> Unit, onOpenAuthor: (S
                                 R.string.detail_translate_page
                             },
                         )
-                        IconButton(onClick = viewModel::toggleTranslation) {
-                            if (state.isTranslating) {
+                        // A toggle button, not a plain action: the checked state
+                        // is what says "the page is translated", and TalkBack
+                        // announces it. The checked colours are the cyan
+                        // fill + onPrimary pair, the only role pairing in this
+                        // palette that keeps the icon at full contrast (11:1);
+                        // tinting the bare icon with `primary` measured 1.13:1
+                        // on the light surface and read as disabled.
+                        // The checked fill is a rounded square, not the default
+                        // circle: it mirrors the bottom bar's selected-item
+                        // indicator, whose 16dp pill corners become a square
+                        // silhouette around this square icon. `shapes.medium`
+                        // is that same 16dp radius, and it is also the corner
+                        // Material 3 gives a selected icon-only button.
+                        IconToggleButton(
+                            checked = state.showTranslation,
+                            onCheckedChange = { viewModel.toggleTranslation() },
+                            colors = IconButtonDefaults.iconToggleButtonColors(
+                                containerColor = Color.Transparent,
+                                contentColor = MaterialTheme.colorScheme.onSurface,
+                                checkedContainerColor = MaterialTheme.colorScheme.primary,
+                                checkedContentColor = MaterialTheme.colorScheme.onPrimary,
+                            ),
+                            shape = MaterialTheme.shapes.medium,
+                        ) {
+                            if (state.showTranslation && state.isTranslating) {
                                 CircularProgressIndicator(
                                     modifier = Modifier
                                         .size(20.dp)
                                         .semantics { contentDescription = translateDescription },
                                     strokeWidth = 2.dp,
-                                    color = MaterialTheme.colorScheme.primary,
+                                    color = MaterialTheme.colorScheme.onPrimary,
                                 )
                             } else {
                                 Icon(
                                     Icons.Outlined.Translate,
                                     contentDescription = translateDescription,
-                                    tint = if (state.showTranslation) {
-                                        MaterialTheme.colorScheme.primary
-                                    } else {
-                                        MaterialTheme.colorScheme.onSurface
-                                    },
                                 )
                             }
                         }
@@ -422,7 +442,7 @@ private fun DetailContent(
     onInstallLatest: () -> Unit,
     onInstallAsset: (ReleaseAsset) -> Unit,
     onProbeAssets: (Release) -> Unit,
-    onTranslateNotes: (String, String) -> Unit,
+    onTranslateNotes: (String, String, Boolean) -> Unit,
     onOpenAuthor: (String) -> Unit,
     onCancel: () -> Unit,
     onSelectChannel: (ReleaseChannel) -> Unit,
@@ -508,7 +528,7 @@ private fun DetailContent(
         val manualRequest = state.translateRequest != handledTranslateRequest
         if (manualRequest) handledTranslateRequest = state.translateRequest
         if (manualRequest || state.autoTranslate) {
-            onTranslateNotes(tag, notesText)
+            onTranslateNotes(tag, notesText, manualRequest)
         }
     }
 
