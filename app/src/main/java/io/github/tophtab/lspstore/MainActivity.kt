@@ -78,6 +78,7 @@ import io.github.tophtab.lspstore.ui.navigation.NavPlacement
 import io.github.tophtab.lspstore.ui.navigation.Routes
 import io.github.tophtab.lspstore.ui.navigation.navPlacement
 import io.github.tophtab.lspstore.ui.navigation.selectedTopLevelRoute
+import io.github.tophtab.lspstore.ui.navigation.tabSwitchPopTarget
 import io.github.tophtab.lspstore.ui.screens.about.AboutScreen
 import io.github.tophtab.lspstore.ui.screens.author.AuthorScreen
 import io.github.tophtab.lspstore.ui.screens.detail.ModuleDetailScreen
@@ -222,6 +223,14 @@ private fun MainContent() {
             reselectTick++
         } else {
             reselectRoute = null
+            // A tab switch saves the whole stack above the start destination
+            // (`saveState`) and restores all of it (`restoreState`), so a
+            // detail/author/library page that is open right now would come
+            // back with its section. Drop those pages first, unsaved, so the
+            // tab lands on its root list.
+            tabSwitchPopTarget(currentRoute, lastRootRoute, rootRoutes)?.let { root ->
+                navController.popBackStack(root, inclusive = false)
+            }
             navController.navigate(route) {
                 popUpTo(navController.graph.findStartDestination().id) {
                     saveState = true

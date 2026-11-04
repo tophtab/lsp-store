@@ -38,3 +38,23 @@ fun selectedTopLevelRoute(
     lastRootRoute: String?,
     roots: Set<String>,
 ): String? = currentRoute?.takeIf { it in roots } ?: lastRootRoute
+
+/**
+ * The root route a tab switch has to return to first, or null when the current
+ * destination is already a root.
+ *
+ * Tab navigation saves the back stack with `popUpTo(saveState = true)`, which
+ * snapshots every page above the graph's start destination, and
+ * `restoreState = true` replays that whole snapshot. Left alone, a detail,
+ * author or library page open at switch time is saved with its section and
+ * re-opens the next time that tab is selected. Popping to the section root
+ * without saving first keeps the saved state to the tab's list.
+ */
+fun tabSwitchPopTarget(
+    currentRoute: String?,
+    lastRootRoute: String?,
+    roots: Set<String>,
+): String? {
+    if (currentRoute == null || currentRoute in roots) return null
+    return lastRootRoute
+}
