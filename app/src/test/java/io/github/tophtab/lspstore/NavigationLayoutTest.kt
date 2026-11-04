@@ -3,6 +3,7 @@ package io.github.tophtab.lspstore
 import io.github.tophtab.lspstore.ui.navigation.NavPlacement
 import io.github.tophtab.lspstore.ui.navigation.navPlacement
 import io.github.tophtab.lspstore.ui.navigation.selectedTopLevelRoute
+import io.github.tophtab.lspstore.ui.navigation.tabSwitchPopTarget
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -60,5 +61,22 @@ class NavigationLayoutTest {
     @Test
     fun noRootHistorySelectsNothing() {
         assertNull(selectedTopLevelRoute("module/app.lsposed.demo", null, roots))
+    }
+
+    @Test
+    fun nonRootPageIsPoppedBackToItsSectionBeforeSwitchingTabs() {
+        // A detail/author/library page on top: return to the section root so
+        // the tab's saved state (restored on the next visit) contains only the
+        // list, not the page that was open.
+        assertEquals("home", tabSwitchPopTarget("module/app.lsposed.demo", "home", roots))
+        assertEquals("installed", tabSwitchPopTarget("author/someone", "installed", roots))
+        assertEquals("settings", tabSwitchPopTarget("library/favourites", "settings", roots))
+    }
+
+    @Test
+    fun rootPageNeedsNoPopBeforeSwitchingTabs() {
+        assertNull(tabSwitchPopTarget("home", "home", roots))
+        assertNull(tabSwitchPopTarget("installed", "home", roots))
+        assertNull(tabSwitchPopTarget(null, "home", roots))
     }
 }
