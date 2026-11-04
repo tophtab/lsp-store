@@ -59,6 +59,17 @@ android {
     }
 
     buildTypes {
+        debug {
+            // A locally built debug APK is sideloaded over the released app, so
+            // it has to carry the release signature or the install is rejected
+            // as incompatible. Without the keystore in the environment it stays
+            // on the default debug key, which is enough for CI pull requests.
+            signingConfig = if (System.getenv("KEYSTORE_FILE").isNullOrEmpty()) {
+                signingConfigs.getByName("debug")
+            } else {
+                signingConfigs.getByName("release")
+            }
+        }
         release {
             // Without KEYSTORE_FILE the APK stays unsigned, so a local
             // `assembleRelease` works without the release key; publishing jobs
