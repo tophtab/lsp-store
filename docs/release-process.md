@@ -101,6 +101,17 @@ master push 产出的包**就是**该提交将来发版用的那个 APK（打 ta
 编译）：versionName 不做任何后缀，提交号由 CI 写进 `BuildConfig.BUILD_SHA`，在关于页
 /诊断页显示为 `1.0.2 · 3f2a91c`。
 
+本地装到自己的设备上时，`debug` 包会沿用 release 的签名：只要环境里有
+`KEYSTORE_FILE`，`assembleDebug` 就用 release keystore 签（见 `app/build.gradle.kts`），
+可以直接覆盖设备上已装的正式版；没有这个变量时回落到默认 debug key，签名不同，
+只能先卸载正式版才能装。例如：
+
+```bash
+export KEYSTORE_FILE=~/lsp-store-signing/release.keystore.jks \
+       KEYSTORE_PASSWORD=… KEY_ALIAS=lspstore KEY_PASSWORD=…
+./gradlew assembleDebug
+```
+
 ## 每次发版
 
 1. 改 `app/build.gradle.kts` 的 `versionName` / `versionCode`
