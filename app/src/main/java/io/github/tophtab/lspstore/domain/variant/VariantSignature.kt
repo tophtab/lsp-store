@@ -94,6 +94,10 @@ data class ApkMeta(
     val universal: Boolean = false,
     val hasXposedDeclaration: Boolean = false,
     val minApiVersion: Int? = null,
+    /** `module.prop targetApiVersion`: what the loaders actually select on. */
+    val targetApiVersion: Int? = null,
+    /** `assets/xposed_init` present: the framework can load this as a legacy module. */
+    val hasLegacyInit: Boolean = false,
     /** libxposed scope packages, recorded for future target-app matching (P3). */
     val scope: List<String> = emptyList(),
 )

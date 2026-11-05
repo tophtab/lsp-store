@@ -6,6 +6,7 @@ import org.junit.Test
 import io.github.tophtab.lspstore.data.device.lsposedApiFor
 import io.github.tophtab.lspstore.data.device.parseGetprop
 import io.github.tophtab.lspstore.data.device.parseVendorOs
+import io.github.tophtab.lspstore.data.device.vectorApiFor
 import io.github.tophtab.lspstore.domain.variant.VendorOs
 
 class DeviceProfileParserTest {
@@ -81,7 +82,20 @@ class DeviceProfileParserTest {
         assertEquals(93, lsposedApiFor("1.8.6"))
         assertEquals(93, lsposedApiFor("0.9.0"))
         assertEquals(100, lsposedApiFor("1.9.2"))
-        assertEquals(102, lsposedApiFor("1.10.0"))
+        // 1.10 and 1.11 still build against libxposed API 100.
+        assertEquals(100, lsposedApiFor("1.10.2"))
+        assertEquals(100, lsposedApiFor("1.11.0"))
         assertEquals(102, lsposedApiFor("2.0.1-beta"))
+    }
+
+    @Test
+    fun vectorApiMapping() {
+        assertNull(vectorApiFor(null))
+        assertNull(vectorApiFor("manager"))
+        assertEquals(100, vectorApiFor("1.11.0"))
+        assertEquals(100, vectorApiFor("2.0"))
+        assertEquals(101, vectorApiFor("2.1"))
+        assertEquals(102, vectorApiFor("2.2"))
+        assertEquals(102, vectorApiFor("2.10"))
     }
 }

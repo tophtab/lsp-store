@@ -8,6 +8,7 @@ import io.github.tophtab.lspstore.domain.variant.Reason
 import io.github.tophtab.lspstore.domain.variant.VariantTraits
 import io.github.tophtab.lspstore.domain.variant.VendorOs
 import io.github.tophtab.lspstore.domain.variant.androidVersionFromSdk
+import io.github.tophtab.lspstore.domain.variant.libXposedApiRequirement
 
 /** Turns a resolver [Reason] back into a localized, one-line explanation. */
 fun Context.variantReasonText(reason: Reason): String = when (reason.kind) {
@@ -64,7 +65,11 @@ fun variantTags(traits: VariantTraits, meta: ApkMeta? = null): List<String> {
         meta?.universal == true || traits.universal -> tags += "universal"
     }
     (meta?.minSdk ?: traits.minSdkToken)?.let { tags += "minSdk $it" }
-    val api = meta?.minApiVersion ?: traits.libxposedApi
+    val api = if (meta != null) {
+        libXposedApiRequirement(meta.targetApiVersion, meta.hasLegacyInit, meta.minApiVersion)
+    } else {
+        traits.libxposedApi
+    }
     when {
         api != null -> tags += "API $api"
         traits.modernWord -> tags += "modern"

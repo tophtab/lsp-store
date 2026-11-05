@@ -25,6 +25,8 @@ class ApkGateTest {
         hasProvider: Boolean = false,
         hasModuleProp: Boolean = false,
         minApiVersion: Int? = null,
+        targetApiVersion: Int? = null,
+        hasLegacyInit: Boolean = false,
         debuggable: Boolean = false,
     ) = ArchiveInfo(
         packageName = packageName,
@@ -35,6 +37,8 @@ class ApkGateTest {
         hasLibXposedProvider = hasProvider,
         hasModuleProp = hasModuleProp,
         minApiVersion = minApiVersion,
+        targetApiVersion = targetApiVersion,
+        hasLegacyInit = hasLegacyInit,
     )
 
     @Test
@@ -92,19 +96,52 @@ class ApkGateTest {
     }
 
     @Test
-    fun newerLibXposedApiIsRejected() {
+    fun newerLibXposedApiOnlyWarns() {
         val result = ApkGate.evaluate(
             info(minApiVersion = 103),
             "com.example.module",
             device,
         )
-        assertTrue(result is GateResult.Reject)
-        result as GateResult.Reject
+        assertTrue(result is GateResult.Warn)
+        result as GateResult.Warn
         assertEquals(Reason.Kind.API_TOO_NEW, result.reason.kind)
 
         assertEquals(
             GateResult.Ok,
             ApkGate.evaluate(info(minApiVersion = 102), "com.example.module", device),
+        )
+    }
+
+    @Test
+    fun legacyEntryAndTargetMakeTheDeclaredFloorAdvisory() {
+        // A legacy module can carry module.prop for the repository listing; the
+        // framework loads it through assets/xposed_init, so the floor is moot.
+        assertEquals(
+            GateResult.Ok,
+            ApkGate.evaluate(
+                info(minApiVersion = 103, hasLegacyInit = true),
+                "com.example.module",
+                device,
+            ),
+        )
+        // The loaders select on targetApiVersion first, not on minApiVersion.
+        assertEquals(
+            GateResult.Ok,
+            ApkGate.evaluate(
+                info(minApiVersion = 103, targetApiVersion = 101),
+                "com.example.module",
+                device,
+            ),
+        )
+        val newerTarget = ApkGate.evaluate(
+            info(minApiVersion = 100, targetApiVersion = 103),
+            "com.example.module",
+            device,
+        )
+        assertTrue(newerTarget is GateResult.Warn)
+        assertEquals(
+            listOf("103"),
+            (newerTarget as GateResult.Warn).reason.args,
         )
     }
 

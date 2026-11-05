@@ -989,6 +989,7 @@ private fun VariantPickerDialog(
                                 Formatter.formatShortFileSize(context, candidate.asset.size),
                                 tags.takeIf { it.isNotEmpty() }?.joinToString(" · "),
                                 reason,
+                                candidate.warning?.let { context.variantReasonText(it) },
                             ).joinToString(" - ")
                             VariantChoiceRow(
                                 label = candidate.asset.name,

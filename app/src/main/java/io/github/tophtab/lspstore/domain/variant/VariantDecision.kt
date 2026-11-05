@@ -46,6 +46,12 @@ data class ScoredAsset(
     val recommended: Boolean,
     /** Non-null when the candidate must not be installed directly (folded in the UI). */
     val blocked: Reason?,
+    /**
+     * Non-null when the APK asks for a newer libxposed API than the detected
+     * framework. Advisory only: the loaders do not refuse on it, so the
+     * candidate stays installable.
+     */
+    val warning: Reason? = null,
     /** Probe-confirmed debug flag, falling back to the file name. */
     val debug: Boolean = traits.debugName,
     /** P2 probe result, null while only the name layer is known. */

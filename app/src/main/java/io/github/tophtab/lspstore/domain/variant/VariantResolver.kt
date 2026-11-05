@@ -47,6 +47,7 @@ class VariantResolver(private val device: DeviceProfile) {
                 score = if (blocked != null) 0 else score(asset, traits, meta, maxDownloads),
                 recommended = false,
                 blocked = blocked,
+                warning = apiWarning(meta, traits),
                 debug = debug,
                 meta = meta,
             )
@@ -153,7 +154,7 @@ class VariantResolver(private val device: DeviceProfile) {
         if (traits.android != null && traits.android == deviceAndroid) {
             labels += "Android ${traits.android}"
         }
-        val api = meta?.minApiVersion ?: traits.libxposedApi
+        val api = apiRequirement(meta, traits)
         when {
             api != null && apiSupported(api) -> labels += "libxposed API $api"
             api == null && traits.modernWord -> labels += "libxposed"
@@ -227,10 +228,6 @@ class VariantResolver(private val device: DeviceProfile) {
                 listOf(meta.packageName, expectedPackage),
             )
         }
-        val requiredApi = meta?.minApiVersion ?: traits.libxposedApi
-        if (requiredApi != null && device.lsposedApi != null && requiredApi > device.lsposedApi) {
-            return Reason(Reason.Kind.API_TOO_NEW, listOf(requiredApi.toString()))
-        }
         // Bundled apps only exist inside multi-APK releases; a single APK named
         // "Pro" is still the module itself.
         if (multiVariant && isBundledName(assetName)) {
@@ -263,7 +260,7 @@ class VariantResolver(private val device: DeviceProfile) {
                 score += if (candidate.second != null && candidate.second == vendor.major) 40 else 20
             }
         }
-        val requiredApi = meta?.minApiVersion ?: traits.libxposedApi
+        val requiredApi = apiRequirement(meta, traits)
         if ((requiredApi != null && apiSupported(requiredApi)) ||
             (requiredApi == null && traits.modernWord)
         ) {
@@ -309,7 +306,7 @@ class VariantResolver(private val device: DeviceProfile) {
             }
         }
         if (device.lsposedApi != null) {
-            val requiredApi = meta?.minApiVersion ?: traits.libxposedApi
+            val requiredApi = apiRequirement(meta, traits)
             when {
                 requiredApi != null && requiredApi <= device.lsposedApi ->
                     signals += "api:libxposed"
@@ -360,6 +357,33 @@ class VariantResolver(private val device: DeviceProfile) {
 
     private fun minSdkTier(candidate: ScoredAsset): Int =
         candidate.meta?.minSdk ?: candidate.traits.minSdkToken ?: -1
+
+    /**
+     * The libxposed API this candidate is expected to be loaded with. The
+     * loaders pick their strategy from `targetApiVersion` plus the legacy
+     * entry; `minApiVersion` is only the author's floor (see
+     * [libXposedApiRequirement]).
+     */
+    private fun apiRequirement(meta: ApkMeta?, traits: VariantTraits): Int? =
+        libXposedApiRequirement(
+            targetApiVersion = meta?.targetApiVersion,
+            hasLegacyInit = meta?.hasLegacyInit == true,
+            minApiVersion = meta?.minApiVersion ?: traits.libxposedApi,
+        )
+
+    /**
+     * A newer API than the framework reports is advisory: LSPosed/Vector load
+     * the module anyway, so it only ranks lower and warns (#47).
+     */
+    private fun apiWarning(meta: ApkMeta?, traits: VariantTraits): Reason? {
+        val supported = device.lsposedApi ?: return null
+        val required = apiRequirement(meta, traits) ?: return null
+        return if (required > supported) {
+            Reason(Reason.Kind.API_TOO_NEW, listOf(required.toString()))
+        } else {
+            null
+        }
+    }
 
     private fun apiSupported(required: Int?): Boolean {
         if (required == null) return true

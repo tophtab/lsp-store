@@ -2,6 +2,23 @@
 
 从 1.0.5 起使用「增加 / 减少 / 修复」三个分类。
 
+## 未发布
+
+增加：
+
+- 无。
+
+减少：
+
+- 无。
+
+修复：
+
+- 更新模块时不再因为 `module.prop` 里声明了更高的 libxposed API 而拒绝安装：按加载器的实际策略
+  （`targetApiVersion` + `assets/xposed_init`）判断，声明值只参与排序并显示为警告（#47）。
+- 识别 Vector 的 manager 包名（`org.matrix.vector.manager`），并修正版本号到 libxposed API 的映射：
+  1.10/1.11 是 API 100，Vector 2.0 / 2.1 / 2.2 分别是 100 / 101 / 102。
+
 ## 1.1.9
 
 增加：

@@ -7,6 +7,7 @@ import java.util.zip.ZipOutputStream
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -48,6 +49,8 @@ class RangeProbeTest {
         assertEquals(setOf("arm64-v8a"), meta.abis)
         assertTrue(meta.hasXposedDeclaration)
         assertEquals(102, meta.minApiVersion)
+        assertEquals(102, meta.targetApiVersion)
+        assertFalse(meta.hasLegacyInit)
         assertEquals(listOf("com.android.systemui"), meta.scope)
 
         // Cache key ignores the query string and the second lookup is free.
@@ -67,6 +70,14 @@ class RangeProbeTest {
         )
         val meta = probe(FakeRangeSource(apk)).fetch(asset(apk))!!
         assertTrue(meta.hasXposedDeclaration)
+    }
+
+    @Test
+    fun legacyInitEntryIsDetected() = runBlocking {
+        val apk = apkBytes(ManifestFixture().bytes(), legacyInit = true)
+        val meta = probe(FakeRangeSource(apk)).fetch(asset(apk))!!
+        assertTrue(meta.hasLegacyInit)
+        assertEquals(102, meta.targetApiVersion)
     }
 
     @Test
@@ -117,7 +128,7 @@ class RangeProbeTest {
         }
     }
 
-    private fun apkBytes(manifest: ByteArray, padding: Int = 0): ByteArray {
+    private fun apkBytes(manifest: ByteArray, padding: Int = 0, legacyInit: Boolean = false): ByteArray {
         val out = ByteArrayOutputStream()
         ZipOutputStream(out).use { zip ->
             fun put(name: String, data: ByteArray) {
@@ -132,6 +143,7 @@ class RangeProbeTest {
             )
             put("META-INF/xposed/scope.list", "com.android.systemui\n".toByteArray())
             put("lib/arm64-v8a/libhook.so", ByteArray(32))
+            if (legacyInit) put("assets/xposed_init", "com.example.Hook\n".toByteArray())
             if (padding > 0) put("assets/padding.bin", ByteArray(padding) { 0x5A })
         }
         return out.toByteArray()

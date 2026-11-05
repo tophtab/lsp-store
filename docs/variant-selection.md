@@ -167,7 +167,8 @@ META-INF/xposed/scope.list     作用域包名（30 个里有 13 个是 system�
 
 所以“这个 APK 是模块吗”要三选一：manifest `xposedmodule`/`xposedminversion`、
 `io.github.libxposed.service.XposedProvider`、`META-INF/xposed/module.prop`。
-`module.prop` 里的 `minApiVersion` 是**判断 API 轴的权威依据**（比文件名可靠），只有几百字节，
+`module.prop` 里的 `targetApiVersion` 才是加载器选策略的依据（`minApiVersion` 只是作者声明的下限，
+框架并不强制，见 #47），加上 `assets/xposed_init` 一起读只要几百字节，
 和 manifest 一起读成本几乎为零。`scope.list` 还能支撑“目标 App 版本”那条轴。
 
 这条同时修正上一版的一个错误：原本建议“包名 ≠ 仓库包名 → 硬剔除”，实测 2.5% 的合法模块包名
@@ -228,7 +229,8 @@ META-INF/xposed/scope.list     作用域包名（30 个里有 13 个是 system�
    （这是解决第 8 类的唯一手段；只包名不符时不要拦，见 3.3）。
 4. APK `minSdk > Build.VERSION.SDK_INT` → 剔除；`maxSdk < SDK_INT` → 剔除。
 5. 有 ABI 限定且设备 ABI 无一兼容、也无 universal → 剔除（读 `lib/` 精确，不用猜）。
-6. APK 的 `module.prop minApiVersion` > 已装 LSPosed 支持的 API → 剔除。
+6. APK 的 `module.prop` API 号（`targetApiVersion` 优先，legacy 入口则无要求）> 已装 LSPosed 支持的 API
+   → 降权 + 警告，**不剔除**（加载器不会拒绝，#47）。
 
 候选空间是 **(release, asset) 对**，但**只在当前 release 内选择**：当前 release 全被过滤时，
 不往旧 release 回退（见 3.2 的数据），而是给该模块一个 `NOT_APPLICABLE` 结果：
@@ -332,7 +334,7 @@ OS3_HyperCeiler-2.10.166-20260331-release.apk     [推荐]
 ### 验证兜底（很便宜，建议和 P0 一起做）
 
 见 7.2：下载完成后、交给安装器之前，用 `PackageManager.getPackageArchiveInfo(path, GET_META_DATA)` 校验
-`minSdk`、Xposed 声明、内部 ABI、`minApiVersion`。不通过则拒绝安装 + 置 `SUSPECT`，**不是**提示一下就放行。
+`minSdk`、Xposed 声明、内部 ABI（API 号只警告，不拦）。不通过则拒绝安装 + 置 `SUSPECT`，**不是**提示一下就放行。
 包名不一致只**提示**不拦（实测 2.5% 的合法模块包名与仓库名不同）；只有“包名不一致 + 无声明”才当配套 App 拦下。
 
 ---
@@ -411,7 +413,7 @@ CD 本身就能给出精确 ABI（`lib/arm64-v8a/…`）；manifest 给出版本
 | 包名 / Xposed 声明（三者任一） | 0 | 拒绝安装，置 `SUSPECT`，当场探测重排一次 |
 | `minSdkVersion ≤ SDK_INT` | 0 | 同上 → 重排后通常直接得到 `NOT_APPLICABLE` |
 | `lib/` 里有无兼容 ABI | 0 | 同上 |
-| `module.prop minApiVersion ≤ 设备 LSPosed API` | 0 | 同上 |
+| `module.prop` API 号（`targetApiVersion` 优先）≤ 设备 LSPosed API | 0 | 只警告，不拦（#47） |
 | `applicationInfo.flags` 的 DEBUGGABLE | 0 | 只记展示徽章，不拦 |
 
 这层不是“验证”（不联网、不看新版本），而是“文件级门禁”，所以不会破坏懒验证的成本模型；
@@ -472,7 +474,7 @@ CD 本身就能给出精确 ABI（`lib/arm64-v8a/…`）；manifest 给出版本
 - **单 APK 也走同一个 resolver 的判定分支**：debug 命名 / `versionName` ≠ tag → 徽章（**不弹窗**）；
   `minSdk` 不兼容 / 真实 ABI 不兼容 → 标记 `NOT_APPLICABLE`，禁用安装、不进更新。
 - 多 APK 且出现 debug 包时：降权非 debug，不额外提问。
-- **下载后本地门禁**（见 7.2）：校验 minSdk / Xposed 声明 / ABI / minApiVersion，不通过则拒绝安装 + 置 `SUSPECT`。
+- **下载后本地门禁**（见 7.2）：校验 minSdk / Xposed 声明 / ABI（API 号只警告），不通过则拒绝安装 + 置 `SUSPECT`。
 
 **P1（设备画像，2–3 天）**
 - `DeviceProfile`（vendor OS / LSPosed API），名字层新增 OS / API 轴匹配。
@@ -483,7 +485,7 @@ CD 本身就能给出精确 ABI（`lib/arm64-v8a/…`）；manifest 给出版本
 - Range 探测（CD + manifest + `module.prop` + `scope.list`）+ AXML 解析 + 缓存 + 整包 fallback。
 - **只用于 7.1 规定的四个时机**（`UNKNOWN` 首次安装 / 名字层歧义 / `SUSPECT` 失败恢复 / 用户主动打开选择器），
   `TRUSTED` 模块的常规更新永不探测。
-- 用真实包名 + Xposed 声明识别第 8 类；`minSdk` 硬过滤；`lib/` 做精确 ABI；`minApiVersion` 做 API 轴。
+- 用真实包名 + Xposed 声明识别第 8 类；`minSdk` 硬过滤；`lib/` 做精确 ABI；`targetApiVersion`/`minApiVersion` 只做 API 轴排序与警告。
 - 选择器展示精确元数据；用 `debuggable` 做 debug 降权；无可用时标 `NOT_APPLICABLE`（不回退旧版）。
 
 **P3（语义记忆与先验）**

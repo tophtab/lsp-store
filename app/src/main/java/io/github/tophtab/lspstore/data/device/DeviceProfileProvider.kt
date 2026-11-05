@@ -61,14 +61,27 @@ class DeviceProfileProvider(private val context: Context) {
         }
     } ?: emptyMap()
 
-    private fun readLsposedApi(context: Context): Int? = runCatching {
-        @Suppress("DEPRECATION")
-        val info = context.packageManager.getPackageInfo(LSPOSED_PACKAGE, 0)
-        lsposedApiFor(info.versionName)
+    private fun readLsposedApi(context: Context): Int? = MANAGER_PACKAGES
+        .mapNotNull { (packageName, toApi) -> managerVersionName(context, packageName)?.let(toApi) }
+        // Two managers can coexist after a fork migration; the framework that
+        // can load the most modules is the one to compare against.
+        .maxOrNull()
+
+    @Suppress("DEPRECATION")
+    private fun managerVersionName(context: Context, packageName: String): String? = runCatching {
+        context.packageManager.getPackageInfo(packageName, 0).versionName
     }.getOrNull()
 
     private companion object {
-        const val LSPOSED_PACKAGE = "org.lsposed.manager"
+        /**
+         * Vector, the maintained LSPosed fork, ships its manager as
+         * `org.matrix.vector.manager` from 2.0 on; older releases and LSPosed
+         * itself use `org.lsposed.manager`.
+         */
+        val MANAGER_PACKAGES: List<Pair<String, (String?) -> Int?>> = listOf(
+            "org.matrix.vector.manager" to ::vectorApiFor,
+            "org.lsposed.manager" to ::lsposedApiFor,
+        )
     }
 }
 
@@ -103,18 +116,39 @@ fun parseVendorOs(props: Map<String, String>, incremental: String?): VendorOs? {
     return null
 }
 
-/** LSPosed's versionName → highest libxposed API we assume it supports. */
+/** Classic LSPosed's versionName → the highest libxposed API it supports. */
 fun lsposedApiFor(versionName: String?): Int? {
+    val (major, minor) = parseMajorMinor(versionName) ?: return null
+    return when {
+        major < 1 -> 93
+        major == 1 && minor < 9 -> 93
+        // 1.9.x and the 1.10/1.11 releases all build against libxposed API 100.
+        major == 1 -> 100
+        else -> 102
+    }
+}
+
+/**
+ * Vector renumbered its releases at the rename: 2.0 closed the API-100 era,
+ * 2.1 moved to libxposed API 101, 2.2 brought 102. The 1.x versions keep the
+ * LSPosed numbering.
+ */
+fun vectorApiFor(versionName: String?): Int? {
+    val (major, minor) = parseMajorMinor(versionName) ?: return null
+    if (major < 2) return lsposedApiFor(versionName)
+    return when {
+        minor <= 0 -> 100
+        minor == 1 -> 101
+        else -> 102
+    }
+}
+
+private fun parseMajorMinor(versionName: String?): Pair<Int, Int>? {
     if (versionName.isNullOrBlank()) return null
     val match = Regex("(\\d+)\\.(\\d+)").find(versionName) ?: return null
     val major = match.groupValues[1].toIntOrNull() ?: return null
     val minor = match.groupValues[2].toIntOrNull() ?: return null
-    return when {
-        major < 1 -> 93
-        major == 1 && minor < 9 -> 93
-        major == 1 && minor == 9 -> 100
-        else -> 102
-    }
+    return major to minor
 }
 
 private fun firstInt(value: String): Int? =
