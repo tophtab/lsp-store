@@ -3,6 +3,7 @@ package io.github.tophtab.lspstore.domain.usecase
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.cancellation.CancellationException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.joinAll
@@ -144,6 +145,9 @@ class BatchInstallControl(
  * installs use for their transfer too, so the maximum concurrent download
  * setting applies app-wide. The caller owns the UI: it receives item transitions
  * through [onItem].
+ *
+ * Targets matched by [run]'s `installLast` predicate start their download only
+ * after every other target finished, so they are installed last.
  */
 class BatchInstallUseCase(
     private val prepareInstall: ModuleInstallPreparer,
@@ -168,6 +172,14 @@ class BatchInstallUseCase(
         includePreReleases: (packageName: String) -> Boolean,
         variantStates: Map<String, ModuleVariantState>,
         isActive: () -> Boolean,
+        /**
+         * Targets this predicate accepts are downloaded after every other target
+         * finished its download. Their APKs therefore enter the FIFO install
+         * queue last, so they are installed last too. The store uses this for its
+         * own update: replacing the running APK commonly kills this process, and
+         * that must not abort the rest of the batch.
+         */
+        installLast: (UpdateInfo) -> Boolean = { false },
         onItem: (packageName: String, transform: (BatchInstallState) -> BatchInstallState) -> Unit,
     ): Result {
         // Downloads and installs run in different coroutines, so the collector
@@ -233,9 +245,14 @@ class BatchInstallUseCase(
                     }
                 }
 
-                val downloads = targets.map { info ->
+                /**
+                 * Starts one target's download and returns its job. Extracted so
+                 * the deferred targets can be started after the regular ones
+                 * without duplicating the download/queue body.
+                 */
+                fun startDownload(scope: CoroutineScope, info: UpdateInfo): Job {
                     val packageName = info.module.packageName
-                    launch {
+                    return scope.launch {
                         val self = coroutineContext[Job]
                         if (self != null) control.attach(packageName, self)
                         var asset: ReleaseAsset? = null
@@ -350,7 +367,12 @@ class BatchInstallUseCase(
                     }
                 }
 
-                downloads.joinAll()
+                val (lastTargets, regularTargets) = targets.partition(installLast)
+                regularTargets.map { info -> startDownload(this, info) }.joinAll()
+                // Only now start the deferred downloads: their APKs enter the
+                // FIFO install queue behind every regular one, so the store's own
+                // update is installed last even if it downloads instantly.
+                lastTargets.map { info -> startDownload(this, info) }.joinAll()
                 installQueue.close()
                 installWorker.join()
             }
