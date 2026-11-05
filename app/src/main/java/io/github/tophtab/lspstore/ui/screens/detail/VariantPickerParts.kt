@@ -20,6 +20,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -36,6 +37,7 @@ import io.github.tophtab.lspstore.ui.design.KomiDialog
 import io.github.tophtab.lspstore.ui.design.KomiDivider
 import io.github.tophtab.lspstore.ui.design.KomiText
 import io.github.tophtab.lspstore.ui.theme.KomiTextRole
+import io.github.tophtab.lspstore.ui.variant.variantReasonText
 import io.github.tophtab.lspstore.ui.variant.variantTags
 
 @Composable
@@ -111,6 +113,7 @@ internal fun VariantCandidateRow(
         emptyList()
     }
     val tags = variantTags(candidate.traits, candidate.meta)
+    val context = LocalContext.current
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -169,6 +172,16 @@ internal fun VariantCandidateRow(
                     role = KomiTextRole.Label,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 11.sp,
+                )
+            }
+            candidate.warning?.let { warning ->
+                KomiText(
+                    text = context.variantReasonText(warning),
+                    role = KomiTextRole.Label,
+                    color = MaterialTheme.colorScheme.error,
+                    fontSize = 11.sp,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
         }

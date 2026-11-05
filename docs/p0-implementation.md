@@ -204,7 +204,9 @@ fun check(file: File, expectedPackage: String, device: DeviceProfile): GateResul
   `ZipFile(file).getEntry("META-INF/xposed/module.prop") != null`。
   `getPackageArchiveInfo(..., GET_PROVIDERS)` 拿 provider 不可靠（部分 API 级别不填），只当附加信号：
   **取不到 provider 不算“无声明”**，探到才加分。
-- `module.prop` 解析 `minApiVersion=`（几行文本），与 `device.lsposedApi` 比较（P0 若 `lsposedApi == null` 跳过此检查）。
+- `module.prop` 解析 `minApiVersion=`/`targetApiVersion=`（几行文本），与 `device.lsposedApi` 比较；
+  **只用于警告与降权，不拒绝**（加载器按 `targetApiVersion` + `assets/xposed_init` 选策略，从不因
+  `minApiVersion` 拒绝模块，见 #47）。
 - 包名不一致：**有声明 → 放行 + 警告**；**无声明 → 拒绝**（实测 2.5% 合法模块包名不同，别一刀切）。
   包名一致时不需要声明也能放行。
 - `minSdk > device.sdkInt` → 拒绝且 `fatal = true`（→ `NOT_APPLICABLE`）。

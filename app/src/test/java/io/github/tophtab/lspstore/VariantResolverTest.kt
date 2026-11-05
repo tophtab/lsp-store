@@ -6,6 +6,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import io.github.tophtab.lspstore.domain.model.ModuleVersion
@@ -380,6 +381,60 @@ class VariantResolverTest {
         )
         val decision = resolver.resolve(release)
         assertEquals(Reason.Kind.NO_APK, (decision as VariantDecision.NotApplicable).reason.kind)
+    }
+
+    @Test
+    fun newerDeclaredApiStillInstallsAndOnlyWarns() {
+        val older = VariantResolver(
+            DeviceProfile(sdkInt = 36, abis = listOf("arm64-v8a"), lsposedApi = 100),
+        )
+        val release = releaseOf("Hook_app-api-102.apk")
+        val decision = older.resolve(release)
+        assertTrue(decision is VariantDecision.Pick)
+        assertEquals("Hook_app-api-102.apk", (decision as VariantDecision.Pick).asset.name)
+
+        val candidate = older.candidates(release).single()
+        assertEquals(Reason.Kind.API_TOO_NEW, candidate.warning?.kind)
+        assertEquals(listOf("102"), candidate.warning?.args)
+    }
+
+    @Test
+    fun aLegacyEntryMakesTheDeclaredApiAdvisory() {
+        val older = VariantResolver(
+            DeviceProfile(sdkInt = 36, abis = listOf("arm64-v8a"), lsposedApi = 100),
+        )
+        val release = releaseOf("module.apk")
+        val probes = mapOf(
+            "module.apk" to ApkMeta(
+                packageName = "com.example.module",
+                hasXposedDeclaration = true,
+                minApiVersion = 102,
+                targetApiVersion = 100,
+                hasLegacyInit = true,
+            ),
+        )
+        assertNull(older.candidates(release, probes = probes).single().warning)
+        assertTrue(older.resolve(release, probes = probes) is VariantDecision.Pick)
+    }
+
+    @Test
+    fun targetApiVersionDecidesTheWarningInsteadOfTheAuthorsFloor() {
+        val older = VariantResolver(
+            DeviceProfile(sdkInt = 36, abis = listOf("arm64-v8a"), lsposedApi = 100),
+        )
+        val release = releaseOf("module.apk")
+        val probes = mapOf(
+            "module.apk" to ApkMeta(
+                packageName = "com.example.module",
+                hasXposedDeclaration = true,
+                minApiVersion = 102,
+                targetApiVersion = 101,
+            ),
+        )
+        assertEquals(
+            listOf("101"),
+            older.candidates(release, probes = probes).single().warning?.args,
+        )
     }
 
     private fun releaseOf(vararg names: String): Release = Release(

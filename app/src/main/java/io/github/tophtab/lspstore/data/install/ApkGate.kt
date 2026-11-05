@@ -7,6 +7,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import io.github.tophtab.lspstore.domain.variant.DeviceProfile
 import io.github.tophtab.lspstore.domain.variant.Reason
+import io.github.tophtab.lspstore.domain.variant.libXposedApiRequirement
 import java.io.File
 import java.util.zip.ZipFile
 
@@ -25,6 +26,9 @@ data class ArchiveInfo(
     val hasLibXposedProvider: Boolean = false,
     val hasModuleProp: Boolean = false,
     val minApiVersion: Int? = null,
+    val targetApiVersion: Int? = null,
+    /** `assets/xposed_init` present: the framework loads this as a legacy module. */
+    val hasLegacyInit: Boolean = false,
 ) {
     val hasXposedDeclaration: Boolean
         get() = hasLegacyXposedMeta || hasLibXposedProvider || hasModuleProp
@@ -66,11 +70,16 @@ object ApkGate {
             )
         }
         val supportedApi = device.lsposedApi
-        if (info.minApiVersion != null && supportedApi != null && info.minApiVersion > supportedApi) {
-            // Another variant (legacy API) may still work, so this is retryable.
-            return GateResult.Reject(
-                Reason(Reason.Kind.API_TOO_NEW, listOf(info.minApiVersion.toString())),
-            )
+        val requiredApi = libXposedApiRequirement(
+            targetApiVersion = info.targetApiVersion,
+            hasLegacyInit = info.hasLegacyInit,
+            minApiVersion = info.minApiVersion,
+        )
+        if (requiredApi != null && supportedApi != null && requiredApi > supportedApi) {
+            // The framework selects a loading strategy and loads the module
+            // anyway, so this is a warning, never a refusal (#47). Another
+            // variant may still fit better, but the user decides.
+            return GateResult.Warn(Reason(Reason.Kind.API_TOO_NEW, listOf(requiredApi.toString())))
         }
         val packageMismatch = info.packageName != null && info.packageName != expectedPackage
         if (packageMismatch) {
@@ -113,12 +122,13 @@ object ApkGate {
         val app = pkg.applicationInfo ?: return null
         val meta = app.metaData
         val moduleProp = readModuleProp(file)
+        val zipFacts = readZipFacts(file)
         return ArchiveInfo(
             packageName = pkg.packageName,
             minSdk = app.minSdkVersion.takeIf { it > 0 },
             targetSdk = app.targetSdkVersion.takeIf { it > 0 },
             debuggable = app.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0,
-            libAbis = readLibAbis(file),
+            libAbis = zipFacts.abis,
             hasLegacyXposedMeta = meta != null &&
                 (meta.containsKey("xposedmodule") || meta.containsKey("xposedminversion")),
             hasLibXposedProvider = pkg.providers?.any {
@@ -126,20 +136,28 @@ object ApkGate {
             } == true,
             hasModuleProp = moduleProp != null,
             minApiVersion = moduleProp?.get("minApiVersion")?.toIntOrNull(),
+            targetApiVersion = moduleProp?.get("targetApiVersion")?.toIntOrNull(),
+            hasLegacyInit = zipFacts.hasLegacyInit,
         )
     }
 
-    private fun readLibAbis(file: File): Set<String> = runCatching {
+    private class ZipFacts(val abis: Set<String>, val hasLegacyInit: Boolean)
+
+    private fun readZipFacts(file: File): ZipFacts = runCatching {
         ZipFile(file).use { zip ->
-            zip.entries().asSequence()
-                .filterNot { it.isDirectory }
-                .mapNotNull { entry ->
-                    val parts = entry.name.split('/')
-                    if (parts.size >= 3 && parts[0] == "lib") parts[1].takeIf { it.isNotBlank() } else null
+            val abis = mutableSetOf<String>()
+            var hasLegacyInit = false
+            zip.entries().asSequence().forEach { entry ->
+                if (entry.isDirectory) return@forEach
+                if (entry.name == LEGACY_INIT) hasLegacyInit = true
+                val parts = entry.name.split('/')
+                if (parts.size >= 3 && parts[0] == "lib") {
+                    parts[1].takeIf { it.isNotBlank() }?.let(abis::add)
                 }
-                .toSet()
+            }
+            ZipFacts(abis, hasLegacyInit)
         }
-    }.getOrDefault(emptySet())
+    }.getOrDefault(ZipFacts(emptySet(), false))
 
     private fun readModuleProp(file: File): Map<String, String>? = runCatching {
         ZipFile(file).use { zip ->
@@ -155,5 +173,6 @@ object ApkGate {
     }.getOrNull()
 
     private const val MODULE_PROP = "META-INF/xposed/module.prop"
+    private const val LEGACY_INIT = "assets/xposed_init"
     private const val XPOSED_PROVIDER = "io.github.libxposed.service.XposedProvider"
 }

@@ -197,6 +197,8 @@ class RangeProbe(
             hasXposedDeclaration = legacyDeclaration || facts.hasLibXposedProvider ||
                 moduleProp.isNotEmpty(),
             minApiVersion = moduleProp["minApiVersion"]?.toIntOrNull(),
+            targetApiVersion = moduleProp["targetApiVersion"]?.toIntOrNull(),
+            hasLegacyInit = entries.any { it.name == LEGACY_INIT },
             scope = scope,
         )
     }
@@ -308,6 +310,7 @@ class RangeProbe(
         const val ANDROID_MANIFEST = "AndroidManifest.xml"
         const val MODULE_PROP = "META-INF/xposed/module.prop"
         const val SCOPE_LIST = "META-INF/xposed/scope.list"
+        const val LEGACY_INIT = "assets/xposed_init"
         const val TAIL_BYTES = 70_000L
         const val MAX_TRAFFIC = 1_500_000L
         const val MAX_FULL_BYTES = 8L * 1024 * 1024

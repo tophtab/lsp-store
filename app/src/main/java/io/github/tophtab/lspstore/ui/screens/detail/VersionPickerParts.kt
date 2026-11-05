@@ -547,6 +547,7 @@ internal fun AssetRow(
     }
     val caption = when {
         candidate.blocked != null -> context.variantReasonText(candidate.blocked)
+        candidate.warning != null -> context.variantReasonText(candidate.warning)
         else -> matchCaption
     }
     Row(

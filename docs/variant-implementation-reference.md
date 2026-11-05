@@ -15,7 +15,7 @@
 | 1 | `domain/variant/*` | traits 解析、签名、打分、决策、状态机（纯 Kotlin） |
 | 2 | `DeviceProfile` | SDK、ABI、厂商 OS（HyperOS/MIUI/OneUI/ColorOS）、LSPosed API |
 | 3 | `RangeProbe` | CD + manifest + `module.prop` + `scope.list`，带缓存与降级 |
-| 4 | `ApkGate` | 下载后本地门禁：包名/声明/minSdk/ABI/minApiVersion |
+| 4 | `ApkGate` | 下载后本地门禁：包名/声明/minSdk/ABI/API（API 只警告） |
 | 5 | 状态与存储 | `UNKNOWN/TRUSTED/SUSPECT/NOT_APPLICABLE` + 冷启动种子 + DataStore 持久化 |
 | 6 | 集成 | 详情页、Installed、批量更新、后台检查、通知 |
 | 7 | UI 与文案 | 推荐徽章/理由、配套包折叠、不可用说明、debug 徽章；8 个新字符串 ×13 语言 |
@@ -150,14 +150,15 @@ sealed interface VariantDecision {
 2. ABI：有具体 ABI token 且与 `device.abis` 无交集且非 universal → 剔除；`probes` 里有 `libs` 时以 `libs` 为准。
 3. `minSdk`：`probes` 里的 `minSdk > device.sdkInt` → 剔除。
 4. `package`：`probes` 里包名不符 **且** 无 Xposed 声明 → 剔除。
-5. API：`probes` 里 `module.prop minApiVersion > device.lsposedApi`（两者非空时）→ 剔除。
+5. API **不剔除**：`module.prop` 的 API 号只做降权 + 行内警告（见 5 与 `libXposedApiRequirement`；
+   LSPosed/Vector 的加载器根本不会因为 `minApiVersion` 拒绝模块，`#47`）。
 6. debug **不剔除**，只降权（`-50`）。
 
 全部被剔除 → `NotApplicable`；剩 1 个 → `Pick(HIGH)`。否则打分：
 
 ```
 OS 匹配 +40 / Android 版本 +30 / minSdk 取≤设备的最大值 +20 / ABI 精确 +25 / universal +10
-/ libxposed 匹配 +20（device.lsposedApi>=minApi 时）/ 签名匹配 +60 / debugName -50
+/ libxposed 匹配 +20（设备 API 覆盖 APK 的 `targetApiVersion`，未探测时用文件名/`minApiVersion`）/ 签名匹配 +60 / debugName -50
 / 下载量 log 归一 +0..5 / 名字里 versionCode==tag -0（不做正向，避免 oshin 陷阱）
 ```
 
@@ -181,9 +182,11 @@ interface DeviceProfileProvider { suspend fun get(): DeviceProfile }
   回退 `ro.miui.ui.version.name`（`V14`）、`ro.build.version.oneui`（`80000` → 8）、`ro.build.version.oplusrom`；
   再回退解析 `Build.VERSION.INCREMENTAL`（`OS3.0.2.0.WOCCNXM`）。
   全部 IO 线程、单次、超时 1s、结果缓存到进程内（`SettingsRepository` 落盘可选）。
-- `lsposedApi`：读 `org.lsposed.manager` 的 `versionName/versionCode`；
-  映射表保守：`<1.9.0 → 93(legacy only)`、`1.9.x → 100`、`1.10.x → 102`。
-  取不到就 `null`（跳过 API 硬过滤，只做降权）。
+- `lsposedApi`：按包名分别读 `org.lsposed.manager`（原版 LSPosed）与
+  `org.matrix.vector.manager`（Vector 2.x 起的 manager 包名）的 `versionName`，取两者中较高的值；
+  映射表：`<1.9.0 → 93(legacy only)`、`1.9.x / 1.10.x / 1.11.x → 100`（这几个版本都编译在
+  libxposed API 100 上）；Vector `2.0 → 100`、`2.1 → 101`、`2.2+ → 102`。
+  取不到就 `null`（跳过 API 轴：不拦、不降权）——注意 API 轴本身只影响排序和警告，从不拒绝安装。
 - `AppContainer` 增加 `val deviceProfile: DeviceProfile`（启动时异步加载，带默认值 `sdkInt/abis`）。
 
 ## 5. RangeProbe
@@ -231,13 +234,15 @@ class ApkGate(private val context: Context, private val device: DeviceProfile) {
 
 - `getPackageArchiveInfo(file.path, GET_META_DATA or GET_ACTIVITIES)`：
   包名、versionCode、`applicationInfo.minSdkVersion`、`debuggable`、`metaData`。
-- Zip 侧（`ZipFile`）：`lib/` 下的 ABI 集合；`META-INF/xposed/module.prop` 是否存在 + `minApiVersion`。
+- Zip 侧（`ZipFile`）：`lib/` 下的 ABI 集合；`META-INF/xposed/module.prop` 是否存在 + `minApiVersion`/`targetApiVersion`；
+  `assets/xposed_init` 是否存在（legacy 加载入口）。
 - 规则（严格执行，见 `docs/variant-selection.md` 3.4 / 7.2）：
   - `minSdk > sdkInt` → `Reject(fatal=true)`。
   - `libs` 非空且与设备无交集且无 universal → `Reject(fatal=true)`。
   - 包名一致 → 其余检查通过即 `Ok`（`debuggable` → `Warn`）。
   - 包名不一致 + 有声明 → `Warn`；包名不一致 + 无声明 → `Reject(fatal=true)`。
-  - `minApiVersion > device.lsposedApi`（非空）→ `Reject(fatal=false)`（可换变体再试）。
+  - API 号（按加载器策略取 `targetApiVersion`，legacy 入口则无要求）高于设备 API → `Warn`，
+    不拒绝（`#47`）。
 
 ## 7. 状态机、存储、冷启动
 
@@ -304,7 +309,7 @@ variant_remembered / variant_debug_badge
 - `VariantStateMachineTest`：成功→TRUSTED；失败→SUSPECT；3 次→NOT_APPLICABLE；`TRUSTED` 更新路径
   探测调用计数 = 0；`SUSPECT` 后恢复成功 → TRUSTED 且计数归零。
 - `ApkGateTest`：把规则抽成 `GatePolicy.evaluate(facts: ApkFacts, device)` 纯函数，覆盖
-  minSdk/ABI/包名+声明/`minApiVersion` 四组用例；Android 侧只做薄封装。
+  minSdk/ABI/包名+声明/API（只 `Warn`，legacy 入口与 `targetApiVersion` 优先）四组用例；Android 侧只做薄封装。
 
 ## 11. 执行顺序（一次会话，保持可编译）
 
