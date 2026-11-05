@@ -91,6 +91,8 @@ class BatchInstallUseCaseTest {
         isActive: () -> Boolean = { true },
         onInstalled: (String) -> Unit = {},
         downloadLimit: Int = 3,
+        downloadDelay: (UpdateInfo) -> Long = { 0L },
+        installLast: (UpdateInfo) -> Boolean = { false },
     ): Pair<BatchInstallUseCase.Result, Recorder> {
         val recorder = Recorder()
         val preparer = object : ModuleInstallPreparer {
@@ -101,6 +103,7 @@ class BatchInstallUseCaseTest {
                 onAssetResolved: (ReleaseAsset) -> Unit,
                 onProgress: (downloaded: Long, total: Long) -> Unit,
             ): PreparedInstall {
+                delay(downloadDelay(info))
                 onAssetResolved(asset)
                 onProgress(500L, 1_000L)
                 return prepared(info)
@@ -127,6 +130,7 @@ class BatchInstallUseCaseTest {
                 includePreReleases = { false },
                 variantStates = emptyMap(),
                 isActive = isActive,
+                installLast = installLast,
                 onItem = { packageName, transform ->
                     val current = BatchInstallState(
                         phase = recorder.phases[packageName] ?: BatchInstallPhase.QUEUED,
@@ -147,6 +151,37 @@ class BatchInstallUseCaseTest {
         assertEquals(2, recorder.installs)
         assertEquals(BatchInstallPhase.COMPLETED, recorder.phases["com.example.a"])
         assertEquals(BatchInstallPhase.COMPLETED, recorder.phases["com.example.b"])
+    }
+
+    @Test
+    fun installLastTargetRunsAfterEveryOtherTarget() {
+        val selfPackage = "io.github.tophtab.lspstore"
+        val targets = listOf(
+            updateInfo(selfPackage),
+            updateInfo("com.example.a"),
+            updateInfo("com.example.b"),
+        )
+        val installed = mutableListOf<String>()
+
+        val (result, recorder) = run(
+            targets,
+            // The deferred target downloads instantly; without the deferral it
+            // would win the install queue while the other two are still
+            // transferring and would kill the process before they land.
+            downloadDelay = { info ->
+                if (info.module.packageName == selfPackage) 0L else 20L
+            },
+            installLast = { info ->
+                info.module.packageName == selfPackage ||
+                    info.installed.packageName == selfPackage
+            },
+            onInstalled = { installed += it },
+        )
+
+        assertEquals(3, recorder.installs)
+        assertEquals(selfPackage, installed.last())
+        assertTrue(result.failures.isEmpty())
+        assertEquals(BatchInstallPhase.COMPLETED, recorder.phases[selfPackage])
     }
 
     @Test

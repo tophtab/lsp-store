@@ -119,6 +119,13 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
     private val batchInstall = container.batchInstallUseCase
     private val coordinator = container.moduleInstallCoordinator
 
+    /**
+     * The store's own package. Its update runs last in "update all": the
+     * installer replaces the APK this process is running from, so every other
+     * module must have reached the installer before that hand-off.
+     */
+    private val selfPackage = container.appContext.packageName
+
     private val _state = MutableStateFlow(InstalledUiState())
     val state = _state.asStateFlow()
 
@@ -441,6 +448,10 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
                 includePreReleases = { packageName -> preReleases.contains(packageName) },
                 variantStates = variantStates,
                 isActive = { isCurrentBatch(generation) },
+                installLast = { info ->
+                    info.module.packageName == selfPackage ||
+                        info.installed.packageName == selfPackage
+                },
                 onItem = { packageName, transform ->
                     applyItem(generation, packageName, transform)
                 },
