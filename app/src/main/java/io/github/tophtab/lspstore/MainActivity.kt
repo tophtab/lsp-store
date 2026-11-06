@@ -2,6 +2,7 @@ package io.github.tophtab.lspstore
 
 import android.Manifest
 import android.app.Activity
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
@@ -65,10 +66,13 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import io.github.tophtab.lspstore.R
 import io.github.tophtab.lspstore.data.install.DownloadStatus
+import io.github.tophtab.lspstore.data.update.UpdateNotifier
 import io.github.tophtab.lspstore.di.AppContainer
 import io.github.tophtab.lspstore.domain.model.ThemeMode
 import io.github.tophtab.lspstore.ui.LocalAppContainer
@@ -97,6 +101,14 @@ import io.github.tophtab.lspstore.ui.theme.LspStoreTheme
 
 class MainActivity : ComponentActivity() {
 
+    /**
+     * Bumped whenever an update notification is tapped. The activity is
+     * `singleTop`, so a tap on a running app arrives through [onNewIntent]; a
+     * cold start arrives through [onCreate]. Both paths only need a signal, and
+     * the navigation host owns the route.
+     */
+    private val openInstalledRequests = MutableStateFlow(0)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
@@ -114,12 +126,23 @@ class MainActivity : ComponentActivity() {
             runCatching { container.settingsRepository.onboardingComplete.first() }
             themeReady = true
         }
+        if (intent?.getBooleanExtra(UpdateNotifier.EXTRA_OPEN_INSTALLED, false) == true) {
+            openInstalledRequests.value++
+        }
         setContent {
             AppTheme(container) {
                 CompositionLocalProvider(LocalAppContainer provides container) {
-                    AppRoot()
+                    AppRoot(openInstalled = openInstalledRequests)
                 }
             }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        if (intent.getBooleanExtra(UpdateNotifier.EXTRA_OPEN_INSTALLED, false)) {
+            openInstalledRequests.value++
         }
     }
 
@@ -171,19 +194,19 @@ private val navItems = listOf(
 private val rootRoutes = navItems.map { it.route }.toSet()
 
 @Composable
-private fun AppRoot() {
+private fun AppRoot(openInstalled: StateFlow<Int>) {
     val container = LocalAppContainer.current
     val onboardingComplete by container.settingsRepository.onboardingComplete
         .collectAsStateWithLifecycle<Boolean?>(initialValue = null)
     when (onboardingComplete) {
         null -> Box(Modifier.fillMaxSize())
         false -> OnboardingScreen()
-        true -> MainContent()
+        true -> MainContent(openInstalled = openInstalled)
     }
 }
 
 @Composable
-private fun MainContent() {
+private fun MainContent(openInstalled: StateFlow<Int>) {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
@@ -239,6 +262,14 @@ private fun MainContent() {
                 restoreState = true
             }
         }
+    }
+
+    // An update notification opens the Installed tab. The signal is consumed
+    // once per tap, and `onNavigate` already pops detail pages and handles a
+    // tab that is already selected.
+    val installedRequests by openInstalled.collectAsStateWithLifecycle()
+    LaunchedEffect(installedRequests) {
+        if (installedRequests > 0) onNavigate(Routes.INSTALLED)
     }
 
     // Keep the palette the hand-rolled bar used. In dark mode primary differs

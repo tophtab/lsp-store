@@ -271,4 +271,24 @@
     <string name="variant_incompatible_group">Non compatibile con questo dispositivo (%1$d)</string>
     <string name="installed_update_skipped">Questa versione di %1$s è stata ignorata</string>
     <string name="error_repository_stale">Il repository sta ancora servendo una versione precedente. Riprova.</string>
+
+    <!-- Background update check -->
+    <string name="updates_channel_name">Aggiornamenti dei moduli</string>
+    <string name="updates_channel_desc">Avvisi di aggiornamento dal controllo in background</string>
+    <string name="updates_notification_title_one">Aggiornamento disponibile per %1$s</string>
+    <string name="updates_notification_title_many">%1$d aggiornamenti dei moduli disponibili</string>
+    <string name="updates_auto_title">Aggiornamento automatico completato</string>
+    <string name="updates_auto_text">%1$d aggiornati, %2$d non riusciti</string>
+    <string name="updates_auto_text_ok">%1$d moduli aggiornati</string>
+    <string name="settings_updates_section">Aggiornamenti</string>
+    <string name="settings_background_check">Controlla in background</string>
+    <string name="settings_background_check_desc">Scarica il repository dei moduli e segnala le nuove versioni a intervalli regolari.</string>
+    <string name="settings_check_interval">Intervallo di controllo</string>
+    <string name="settings_interval_days">%1$d g</string>
+    <string name="settings_wifi_only">Solo Wi-Fi</string>
+    <string name="settings_wifi_only_desc">Esegui il controllo in background solo su reti non a consumo.</string>
+    <string name="settings_auto_update">Installa gli aggiornamenti automaticamente</string>
+    <string name="settings_auto_update_desc">Installa gli aggiornamenti in silenzio tramite root dopo un controllo in background.</string>
+    <string name="settings_auto_update_needs_root">Attiva prima "Installazione silenziosa root".</string>
+    <string name="settings_notifications_needed">Le notifiche sono disattivate: il controllo in background non può segnalare aggiornamenti.</string>
 </resources>

@@ -271,4 +271,24 @@
     <string name="variant_incompatible_group">이 장치와 호환되지 않습니다(%1$d)</string>
     <string name="installed_update_skipped">%1$s의 이 버전을 무시했습니다</string>
     <string name="error_repository_stale">저장소가 아직 이전 릴리스를 제공하고 있습니다. 다시 시도하세요.</string>
+
+    <!-- Background update check -->
+    <string name="updates_channel_name">모듈 업데이트</string>
+    <string name="updates_channel_desc">백그라운드 확인의 업데이트 알림</string>
+    <string name="updates_notification_title_one">%1$s 업데이트가 있습니다</string>
+    <string name="updates_notification_title_many">모듈 업데이트 %1$d개가 있습니다</string>
+    <string name="updates_auto_title">자동 업데이트 완료</string>
+    <string name="updates_auto_text">%1$d개 업데이트됨, %2$d개 실패</string>
+    <string name="updates_auto_text_ok">모듈 %1$d개 업데이트됨</string>
+    <string name="settings_updates_section">업데이트</string>
+    <string name="settings_background_check">백그라운드에서 확인</string>
+    <string name="settings_background_check_desc">일정에 따라 모듈 저장소를 가져와 새 버전을 알립니다.</string>
+    <string name="settings_check_interval">확인 간격</string>
+    <string name="settings_interval_days">%1$d 일</string>
+    <string name="settings_wifi_only">Wi-Fi 전용</string>
+    <string name="settings_wifi_only_desc">종량제가 아닌 네트워크에서만 백그라운드 확인을 실행합니다.</string>
+    <string name="settings_auto_update">업데이트 자동 설치</string>
+    <string name="settings_auto_update_desc">백그라운드 확인 후 루트를 통해 업데이트를 자동으로 설치합니다.</string>
+    <string name="settings_auto_update_needs_root">먼저 "루트 자동 설치"를 켜세요.</string>
+    <string name="settings_notifications_needed">알림이 꺼져 있습니다: 백그라운드 확인이 업데이트를 알릴 수 없습니다.</string>
 </resources>

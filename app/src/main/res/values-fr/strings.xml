@@ -271,4 +271,24 @@
     <string name="variant_incompatible_group">Non compatible avec cet appareil (%1$d)</string>
     <string name="installed_update_skipped">Cette version de %1$s a été ignorée</string>
     <string name="error_repository_stale">Le dépôt renvoie encore une version plus ancienne. Réessayez.</string>
+
+    <!-- Background update check -->
+    <string name="updates_channel_name">Mises à jour des modules</string>
+    <string name="updates_channel_desc">Alertes de mise à jour de la vérification en arrière-plan</string>
+    <string name="updates_notification_title_one">Mise à jour disponible pour %1$s</string>
+    <string name="updates_notification_title_many">%1$d mises à jour de modules disponibles</string>
+    <string name="updates_auto_title">Mise à jour automatique terminée</string>
+    <string name="updates_auto_text">%1$d mis à jour, %2$d échoués</string>
+    <string name="updates_auto_text_ok">%1$d modules mis à jour</string>
+    <string name="settings_updates_section">Mises à jour</string>
+    <string name="settings_background_check">Vérifier en arrière-plan</string>
+    <string name="settings_background_check_desc">Récupère le dépôt de modules et signale les nouvelles versions selon un calendrier.</string>
+    <string name="settings_check_interval">Intervalle de vérification</string>
+    <string name="settings_interval_days">%1$d j</string>
+    <string name="settings_wifi_only">Wi-Fi uniquement</string>
+    <string name="settings_wifi_only_desc">Lance la vérification en arrière-plan uniquement sur les réseaux non limités.</string>
+    <string name="settings_auto_update">Installer les mises à jour automatiquement</string>
+    <string name="settings_auto_update_desc">Installe les mises à jour en silence via root après une vérification en arrière-plan.</string>
+    <string name="settings_auto_update_needs_root">Activez d\'abord « Installation silencieuse root ».</string>
+    <string name="settings_notifications_needed">Les notifications sont désactivées : la vérification en arrière-plan ne peut pas signaler les mises à jour.</string>
 </resources>

@@ -314,4 +314,24 @@
     <string name="detail_logs">Install log</string>
     <string name="variant_field_choose">Choose an APK (%1$d)</string>
     <string name="variant_incompatible_group">Not compatible with this device (%1$d)</string>
+
+    <!-- Background update check -->
+    <string name="updates_channel_name">Module updates</string>
+    <string name="updates_channel_desc">Update alerts from the background check</string>
+    <string name="updates_notification_title_one">%1$s update available</string>
+    <string name="updates_notification_title_many">%1$d module updates available</string>
+    <string name="updates_auto_title">Auto-update finished</string>
+    <string name="updates_auto_text">%1$d updated, %2$d failed</string>
+    <string name="updates_auto_text_ok">%1$d modules updated</string>
+    <string name="settings_updates_section">Updates</string>
+    <string name="settings_background_check">Check in the background</string>
+    <string name="settings_background_check_desc">Fetch the module repository and report new versions on a schedule.</string>
+    <string name="settings_check_interval">Check interval</string>
+    <string name="settings_interval_days">%1$d d</string>
+    <string name="settings_wifi_only">Wi-Fi only</string>
+    <string name="settings_wifi_only_desc">Run the background check on unmetered networks only.</string>
+    <string name="settings_auto_update">Install updates automatically</string>
+    <string name="settings_auto_update_desc">Installs updates silently through root after a background check.</string>
+    <string name="settings_auto_update_needs_root">Turn on Root silent install first.</string>
+    <string name="settings_notifications_needed">Notifications are off: background checks cannot report updates.</string>
 </resources>

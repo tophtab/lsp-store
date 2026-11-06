@@ -271,4 +271,24 @@
     <string name="variant_incompatible_group">এই ডিভাইসের সাথে সামঞ্জস্যপূর্ণ নয় (%1$d)</string>
     <string name="installed_update_skipped">%1$s-এর এই সংস্করণটি উপেক্ষা করা হয়েছে</string>
     <string name="error_repository_stale">রিপোজিটরি এখনও একটি পুরোনো রিলিজ দিচ্ছে। আবার চেষ্টা করুন।</string>
+
+    <!-- Background update check -->
+    <string name="updates_channel_name">মডিউল আপডেট</string>
+    <string name="updates_channel_desc">ব্যাকগ্রাউন্ড চেক থেকে আপডেট সতর্কতা</string>
+    <string name="updates_notification_title_one">%1$s এর জন্য আপডেট পাওয়া গেছে</string>
+    <string name="updates_notification_title_many">%1$d টি মডিউল আপডেট পাওয়া গেছে</string>
+    <string name="updates_auto_title">স্বয়ংক্রিয় আপডেট সম্পন্ন</string>
+    <string name="updates_auto_text">%1$d আপডেট হয়েছে, %2$d ব্যর্থ</string>
+    <string name="updates_auto_text_ok">%1$d টি মডিউল আপডেট হয়েছে</string>
+    <string name="settings_updates_section">আপডেট</string>
+    <string name="settings_background_check">ব্যাকগ্রাউন্ডে চেক করুন</string>
+    <string name="settings_background_check_desc">নির্দিষ্ট সময়সূচিতে মডিউল রিপোজিটরি আনুন এবং নতুন সংস্করণ জানান।</string>
+    <string name="settings_check_interval">চেকের বিরতি</string>
+    <string name="settings_interval_days">%1$d দিন</string>
+    <string name="settings_wifi_only">শুধু Wi-Fi</string>
+    <string name="settings_wifi_only_desc">শুধুমাত্র আনমিটারড নেটওয়ার্কে ব্যাকগ্রাউন্ড চেক চালান।</string>
+    <string name="settings_auto_update">আপডেট স্বয়ংক্রিয়ভাবে ইনস্টল করুন</string>
+    <string name="settings_auto_update_desc">ব্যাকগ্রাউন্ড চেকের পরে রুটের মাধ্যমে নীরবে আপডেট ইনস্টল করে।</string>
+    <string name="settings_auto_update_needs_root">প্রথমে "রুট নীরব ইনস্টল" চালু করুন।</string>
+    <string name="settings_notifications_needed">বিজ্ঞপ্তি বন্ধ আছে: ব্যাকগ্রাউন্ড চেক আপডেট জানাতে পারবে না।</string>
 </resources>

@@ -123,6 +123,7 @@ class InstallPreparedApkUseCase(
     private val systemInstallSerializer: SystemInstallSerializer,
     private val deviceProfile: () -> DeviceProfile,
     private val context: Context,
+    private val allowUi: Boolean = true,
 ) : ModuleInstaller {
 
     override suspend fun install(prepared: PreparedInstall.Ready): InstallOutcome {
@@ -147,7 +148,7 @@ class InstallPreparedApkUseCase(
             systemInstallSerializer.awaitFreeAndMarkPending(packageName)
             // Verify and update the installed package, which may differ from
             // the repository listing for imported/linked modules.
-            installer.install(prepared.file, useRoot)
+            installer.install(prepared.file, useRoot, allowUi)
         } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (error: Throwable) {

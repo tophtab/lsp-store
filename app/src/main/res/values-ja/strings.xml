@@ -271,4 +271,24 @@
     <string name="variant_incompatible_group">このデバイスと互換性がありません (%1$d)</string>
     <string name="installed_update_skipped">%1$s のこのバージョンを無視しました</string>
     <string name="error_repository_stale">リポジトリがまだ古いリリースを返しています。もう一度お試しください。</string>
+
+    <!-- Background update check -->
+    <string name="updates_channel_name">モジュールの更新</string>
+    <string name="updates_channel_desc">バックグラウンド確認からの更新通知</string>
+    <string name="updates_notification_title_one">%1$s の更新があります</string>
+    <string name="updates_notification_title_many">%1$d 件のモジュール更新があります</string>
+    <string name="updates_auto_title">自動更新が完了しました</string>
+    <string name="updates_auto_text">%1$d 件更新、%2$d 件失敗</string>
+    <string name="updates_auto_text_ok">%1$d 件のモジュールを更新しました</string>
+    <string name="settings_updates_section">更新</string>
+    <string name="settings_background_check">バックグラウンドで確認</string>
+    <string name="settings_background_check_desc">定期的にモジュールリポジトリを取得し、新しいバージョンを通知します。</string>
+    <string name="settings_check_interval">確認間隔</string>
+    <string name="settings_interval_days">%1$d 日</string>
+    <string name="settings_wifi_only">Wi-Fi のみ</string>
+    <string name="settings_wifi_only_desc">バックグラウンド確認を従量制でないネットワークでのみ実行します。</string>
+    <string name="settings_auto_update">更新を自動でインストール</string>
+    <string name="settings_auto_update_desc">バックグラウンド確認後、root 経由で更新をサイレントにインストールします。</string>
+    <string name="settings_auto_update_needs_root">先に「ルートサイレントインストール」をオンにしてください。</string>
+    <string name="settings_notifications_needed">通知がオフです: バックグラウンド確認は更新を通知できません。</string>
 </resources>
