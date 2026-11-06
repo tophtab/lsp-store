@@ -271,4 +271,24 @@
     <string name="variant_incompatible_group">Несовместимо с этим устройством (%1$d)</string>
     <string name="installed_update_skipped">Эта версия %1$s игнорируется</string>
     <string name="error_repository_stale">Репозиторий всё ещё отдаёт более старый выпуск. Повторите попытку.</string>
+
+    <!-- Background update check -->
+    <string name="updates_channel_name">Обновления модулей</string>
+    <string name="updates_channel_desc">Уведомления об обновлениях из фоновой проверки</string>
+    <string name="updates_notification_title_one">Доступно обновление %1$s</string>
+    <string name="updates_notification_title_many">Доступно обновлений модулей: %1$d</string>
+    <string name="updates_auto_title">Автообновление завершено</string>
+    <string name="updates_auto_text">Обновлено: %1$d, с ошибкой: %2$d</string>
+    <string name="updates_auto_text_ok">Обновлено модулей: %1$d</string>
+    <string name="settings_updates_section">Обновления</string>
+    <string name="settings_background_check">Проверять в фоне</string>
+    <string name="settings_background_check_desc">Загружает репозиторий модулей и сообщает о новых версиях по расписанию.</string>
+    <string name="settings_check_interval">Интервал проверки</string>
+    <string name="settings_interval_days">%1$d д</string>
+    <string name="settings_wifi_only">Только Wi-Fi</string>
+    <string name="settings_wifi_only_desc">Запускать фоновую проверку только в сетях без лимита трафика.</string>
+    <string name="settings_auto_update">Устанавливать обновления автоматически</string>
+    <string name="settings_auto_update_desc">Тихо устанавливает обновления через root после фоновой проверки.</string>
+    <string name="settings_auto_update_needs_root">Сначала включите «Тихая установка root».</string>
+    <string name="settings_notifications_needed">Уведомления отключены: фоновая проверка не сможет сообщать об обновлениях.</string>
 </resources>

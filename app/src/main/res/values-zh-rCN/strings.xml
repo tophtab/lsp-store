@@ -308,4 +308,24 @@
     <string name="detail_logs">安装日志</string>
     <string name="variant_field_choose">选择 APK（%1$d 个）</string>
     <string name="variant_incompatible_group">与此设备不兼容（%1$d 个）</string>
+
+    <!-- Background update check -->
+    <string name="updates_channel_name">模块更新</string>
+    <string name="updates_channel_desc">后台检查的更新提醒</string>
+    <string name="updates_notification_title_one">%1$s 有可用更新</string>
+    <string name="updates_notification_title_many">有 %1$d 个模块更新可用</string>
+    <string name="updates_auto_title">自动更新完成</string>
+    <string name="updates_auto_text">已更新 %1$d 个，失败 %2$d 个</string>
+    <string name="updates_auto_text_ok">已更新 %1$d 个模块</string>
+    <string name="settings_updates_section">更新</string>
+    <string name="settings_background_check">后台检查</string>
+    <string name="settings_background_check_desc">按计划获取模块仓库并提示新版本。</string>
+    <string name="settings_check_interval">检查间隔</string>
+    <string name="settings_interval_days">%1$d 天</string>
+    <string name="settings_wifi_only">仅 Wi-Fi</string>
+    <string name="settings_wifi_only_desc">仅在非计费网络上运行后台检查。</string>
+    <string name="settings_auto_update">自动安装更新</string>
+    <string name="settings_auto_update_desc">后台检查后通过 Root 静默安装更新。</string>
+    <string name="settings_auto_update_needs_root">请先开启“Root 静默安装”。</string>
+    <string name="settings_notifications_needed">通知已关闭：后台检查无法提示更新。</string>
 </resources>

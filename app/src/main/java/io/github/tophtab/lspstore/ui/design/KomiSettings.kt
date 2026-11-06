@@ -148,16 +148,19 @@ fun KomiSettingsSwitchRow(
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
     last: Boolean = false,
+    enabled: Boolean = true,
 ) {
     KomiSettingsRow(
         title = title,
         subtitle = subtitle,
         modifier = modifier,
         last = last,
+        enabled = enabled,
         trailing = {
             Switch(
                 checked = checked,
                 onCheckedChange = onCheckedChange,
+                enabled = enabled,
                 colors = androidx.compose.material3.SwitchDefaults.colors(
                     checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
                     checkedTrackColor = MaterialTheme.colorScheme.primary,

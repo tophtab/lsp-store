@@ -271,4 +271,24 @@
     <string name="variant_incompatible_group">Bu cihazla uyumlu değil (%1$d)</string>
     <string name="installed_update_skipped">%1$s uygulamasının bu sürümü yoksayıldı</string>
     <string name="error_repository_stale">Depo hâlâ daha eski bir sürüm sunuyor. Tekrar deneyin.</string>
+
+    <!-- Background update check -->
+    <string name="updates_channel_name">Modül güncellemeleri</string>
+    <string name="updates_channel_desc">Arka plan denetiminden güncelleme uyarıları</string>
+    <string name="updates_notification_title_one">%1$s için güncelleme var</string>
+    <string name="updates_notification_title_many">%1$d modül güncellemesi mevcut</string>
+    <string name="updates_auto_title">Otomatik güncelleme tamamlandı</string>
+    <string name="updates_auto_text">%1$d güncellendi, %2$d başarısız</string>
+    <string name="updates_auto_text_ok">%1$d modül güncellendi</string>
+    <string name="settings_updates_section">Güncellemeler</string>
+    <string name="settings_background_check">Arka planda denetle</string>
+    <string name="settings_background_check_desc">Modül deposunu çeker ve zamanlanmış olarak yeni sürümleri bildirir.</string>
+    <string name="settings_check_interval">Denetim aralığı</string>
+    <string name="settings_interval_days">%1$d g</string>
+    <string name="settings_wifi_only">Yalnızca Wi-Fi</string>
+    <string name="settings_wifi_only_desc">Arka plan denetimini yalnızca ölçümlenmeyen ağlarda çalıştır.</string>
+    <string name="settings_auto_update">Güncellemeleri otomatik yükle</string>
+    <string name="settings_auto_update_desc">Arka plan denetiminden sonra güncellemeleri root üzerinden sessizce yükler.</string>
+    <string name="settings_auto_update_needs_root">Önce "Kök sessiz kurulum"u açın.</string>
+    <string name="settings_notifications_needed">Bildirimler kapalı: arka plan denetimi güncellemeleri bildiremez.</string>
 </resources>

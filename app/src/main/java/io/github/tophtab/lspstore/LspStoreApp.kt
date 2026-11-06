@@ -10,6 +10,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
+import io.github.tophtab.lspstore.data.update.UpdateScheduler
 import io.github.tophtab.lspstore.di.AppContainer
 import io.github.tophtab.lspstore.domain.variant.ModuleVariantState
 import io.github.tophtab.lspstore.domain.variant.VariantSignature
@@ -26,6 +27,7 @@ class LspStoreApp : Application(), ImageLoaderFactory {
         super.onCreate()
         container = AppContainer(this)
         applyMirror()
+        syncUpdateSchedule()
         reconcilePendingInstalls()
         seedVariantStates()
         refreshDeviceProfile()
@@ -104,6 +106,23 @@ class LspStoreApp : Application(), ImageLoaderFactory {
             container.settingsRepository.preferredMirror.collect { host ->
                 container.mirrorState.preferred = host
             }
+        }
+    }
+
+    /**
+     * Re-enqueues the periodic check with the stored settings. `reset = false`
+     * keeps a schedule WorkManager already holds, so a restart does not postpone
+     * the next run; only a settings change restarts the cycle.
+     */
+    private fun syncUpdateSchedule() {
+        appScope.launch {
+            UpdateScheduler.sync(
+                context = this@LspStoreApp,
+                enabled = container.settingsRepository.backgroundCheck.first(),
+                intervalHours = container.settingsRepository.checkIntervalHours.first(),
+                wifiOnly = container.settingsRepository.wifiOnly.first(),
+                reset = false,
+            )
         }
     }
 

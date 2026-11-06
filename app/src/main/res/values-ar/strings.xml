@@ -271,4 +271,24 @@
     <string name="variant_incompatible_group">غير متوافق مع هذا الجهاز (%1$d)</string>
     <string name="installed_update_skipped">تم تجاهل هذا الإصدار من %1$s</string>
     <string name="error_repository_stale">لا يزال المستودع يقدّم إصدارًا أقدم. حاول مرة أخرى.</string>
+
+    <!-- Background update check -->
+    <string name="updates_channel_name">تحديثات الوحدات</string>
+    <string name="updates_channel_desc">تنبيهات التحديث من الفحص في الخلفية</string>
+    <string name="updates_notification_title_one">يتوفر تحديث لـ %1$s</string>
+    <string name="updates_notification_title_many">تتوفر %1$d تحديثات للوحدات</string>
+    <string name="updates_auto_title">اكتمل التحديث التلقائي</string>
+    <string name="updates_auto_text">تم تحديث %1$d وفشل %2$d</string>
+    <string name="updates_auto_text_ok">تم تحديث %1$d من الوحدات</string>
+    <string name="settings_updates_section">التحديثات</string>
+    <string name="settings_background_check">الفحص في الخلفية</string>
+    <string name="settings_background_check_desc">اجلب مستودع الوحدات وأبلغ عن الإصدارات الجديدة وفق جدول.</string>
+    <string name="settings_check_interval">فاصل الفحص</string>
+    <string name="settings_interval_days">%1$d ي</string>
+    <string name="settings_wifi_only">Wi-Fi فقط</string>
+    <string name="settings_wifi_only_desc">شغّل الفحص في الخلفية على الشبكات غير المقننة فقط.</string>
+    <string name="settings_auto_update">تثبيت التحديثات تلقائيًا</string>
+    <string name="settings_auto_update_desc">يثبّت التحديثات بصمت عبر الجذر بعد الفحص في الخلفية.</string>
+    <string name="settings_auto_update_needs_root">شغّل "تثبيت الجذر الصامت" أولًا.</string>
+    <string name="settings_notifications_needed">الإشعارات متوقفة: لا يمكن للفحص في الخلفية الإبلاغ عن التحديثات.</string>
 </resources>

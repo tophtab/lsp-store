@@ -271,4 +271,24 @@
     <string name="variant_incompatible_group">इस डिवाइस के साथ संगत नहीं है (%1$d)</string>
     <string name="installed_update_skipped">%1$s का यह संस्करण अनदेखा किया गया</string>
     <string name="error_repository_stale">रिपॉज़िटरी अभी भी पुराना रिलीज़ दे रही है। फिर से कोशिश करें।</string>
+
+    <!-- Background update check -->
+    <string name="updates_channel_name">मॉड्यूल अपडेट</string>
+    <string name="updates_channel_desc">बैकग्राउंड जाँच से अपडेट सूचनाएँ</string>
+    <string name="updates_notification_title_one">%1$s के लिए अपडेट उपलब्ध</string>
+    <string name="updates_notification_title_many">%1$d मॉड्यूल अपडेट उपलब्ध</string>
+    <string name="updates_auto_title">स्वचालित अपडेट पूरा हुआ</string>
+    <string name="updates_auto_text">%1$d अपडेट हुए, %2$d विफल</string>
+    <string name="updates_auto_text_ok">%1$d मॉड्यूल अपडेट हुए</string>
+    <string name="settings_updates_section">अपडेट</string>
+    <string name="settings_background_check">बैकग्राउंड में जाँचें</string>
+    <string name="settings_background_check_desc">निर्धारित समय पर मॉड्यूल रिपॉज़िटरी लाएँ और नए संस्करणों की सूचना दें।</string>
+    <string name="settings_check_interval">जाँच अंतराल</string>
+    <string name="settings_interval_days">%1$d दिन</string>
+    <string name="settings_wifi_only">केवल Wi-Fi</string>
+    <string name="settings_wifi_only_desc">बैकग्राउंड जाँच केवल अनमीटर्ड नेटवर्क पर चलाएँ।</string>
+    <string name="settings_auto_update">अपडेट स्वचालित रूप से इंस्टॉल करें</string>
+    <string name="settings_auto_update_desc">बैकग्राउंड जाँच के बाद रूट के माध्यम से अपडेट चुपचाप इंस्टॉल करता है।</string>
+    <string name="settings_auto_update_needs_root">पहले "रूट साइलेंट इंस्टाल" चालू करें।</string>
+    <string name="settings_notifications_needed">सूचनाएँ बंद हैं: बैकग्राउंड जाँच अपडेट की सूचना नहीं दे सकती।</string>
 </resources>

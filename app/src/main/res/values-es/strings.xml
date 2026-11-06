@@ -271,4 +271,24 @@
     <string name="variant_incompatible_group">No compatible con este dispositivo (%1$d)</string>
     <string name="installed_update_skipped">Se ha ignorado esta versión de %1$s</string>
     <string name="error_repository_stale">El repositorio sigue sirviendo una versión anterior. Inténtalo de nuevo.</string>
+
+    <!-- Background update check -->
+    <string name="updates_channel_name">Actualizaciones de módulos</string>
+    <string name="updates_channel_desc">Alertas de actualización de la comprobación en segundo plano</string>
+    <string name="updates_notification_title_one">Actualización disponible para %1$s</string>
+    <string name="updates_notification_title_many">%1$d actualizaciones de módulos disponibles</string>
+    <string name="updates_auto_title">Actualización automática finalizada</string>
+    <string name="updates_auto_text">%1$d actualizados, %2$d fallidos</string>
+    <string name="updates_auto_text_ok">%1$d módulos actualizados</string>
+    <string name="settings_updates_section">Actualizaciones</string>
+    <string name="settings_background_check">Comprobar en segundo plano</string>
+    <string name="settings_background_check_desc">Obtén el repositorio de módulos y avisa de nuevas versiones de forma periódica.</string>
+    <string name="settings_check_interval">Intervalo de comprobación</string>
+    <string name="settings_interval_days">%1$d d</string>
+    <string name="settings_wifi_only">Solo Wi-Fi</string>
+    <string name="settings_wifi_only_desc">Ejecuta la comprobación en segundo plano solo en redes no medidas.</string>
+    <string name="settings_auto_update">Instalar actualizaciones automáticamente</string>
+    <string name="settings_auto_update_desc">Instala actualizaciones silenciosamente mediante root tras una comprobación en segundo plano.</string>
+    <string name="settings_auto_update_needs_root">Activa antes "Instalación silenciosa root".</string>
+    <string name="settings_notifications_needed">Las notificaciones están desactivadas: la comprobación en segundo plano no puede avisar de actualizaciones.</string>
 </resources>

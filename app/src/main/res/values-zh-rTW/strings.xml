@@ -306,4 +306,24 @@
     <string name="detail_logs">安裝日誌</string>
     <string name="variant_field_choose">選擇 APK（%1$d 個）</string>
     <string name="variant_incompatible_group">與此裝置不相容（%1$d 個）</string>
+
+    <!-- Background update check -->
+    <string name="updates_channel_name">模組更新</string>
+    <string name="updates_channel_desc">背景檢查的更新提醒</string>
+    <string name="updates_notification_title_one">%1$s 有可用更新</string>
+    <string name="updates_notification_title_many">有 %1$d 個模組更新可用</string>
+    <string name="updates_auto_title">自動更新完成</string>
+    <string name="updates_auto_text">已更新 %1$d 個，失敗 %2$d 個</string>
+    <string name="updates_auto_text_ok">已更新 %1$d 個模組</string>
+    <string name="settings_updates_section">更新</string>
+    <string name="settings_background_check">背景檢查</string>
+    <string name="settings_background_check_desc">依排程取得模組儲存庫並提示新版本。</string>
+    <string name="settings_check_interval">檢查間隔</string>
+    <string name="settings_interval_days">%1$d 天</string>
+    <string name="settings_wifi_only">僅 Wi-Fi</string>
+    <string name="settings_wifi_only_desc">僅在非計量網路上執行背景檢查。</string>
+    <string name="settings_auto_update">自動安裝更新</string>
+    <string name="settings_auto_update_desc">背景檢查後透過 Root 靜默安裝更新。</string>
+    <string name="settings_auto_update_needs_root">請先開啟「Root 靜默安裝」。</string>
+    <string name="settings_notifications_needed">通知已關閉：背景檢查無法提示更新。</string>
 </resources>

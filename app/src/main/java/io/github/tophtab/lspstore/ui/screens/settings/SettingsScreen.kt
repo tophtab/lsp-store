@@ -2,6 +2,11 @@
 
 package io.github.tophtab.lspstore.ui.screens.settings
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -26,15 +31,19 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.tophtab.lspstore.R
 import io.github.tophtab.lspstore.data.install.DownloadSlots
+import io.github.tophtab.lspstore.data.update.UpdateScheduler
 import io.github.tophtab.lspstore.domain.model.ThemeMode
 import io.github.tophtab.lspstore.domain.model.TranslationProvider
 import io.github.tophtab.lspstore.ui.LocalAppContainer
@@ -53,6 +62,7 @@ import io.github.tophtab.lspstore.ui.design.KomiText
 import io.github.tophtab.lspstore.ui.design.KomiTextField
 import io.github.tophtab.lspstore.ui.design.rootContentWindowInsets
 import io.github.tophtab.lspstore.ui.labelRes
+import kotlinx.coroutines.launch
 import io.github.tophtab.lspstore.ui.theme.KomiTextRole
 
 private val ThemeModeOrder = listOf(ThemeMode.LIGHT, ThemeMode.DARK, ThemeMode.SYSTEM)
@@ -74,6 +84,30 @@ fun SettingsScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scrollState = rememberScrollState()
     var translationExpanded by rememberSaveable { mutableStateOf(false) }
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    // Resolved in composition: LocalContext.getString would keep a stale value
+    // across a configuration change (LocalContextGetResourceValueCall).
+    val notificationsNeeded = stringResource(R.string.settings_notifications_needed)
+
+    // Turning the check on is useful with or without notifications; only the
+    // announcement depends on the permission, so a denial is reported and the
+    // setting stays on.
+    val notificationPermission = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { granted ->
+        if (!granted) {
+            scope.launch { snackbarHostState.showSnackbar(notificationsNeeded) }
+        }
+    }
+    fun requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
+            PackageManager.PERMISSION_GRANTED
+        ) {
+            notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
 
     LaunchedEffect(state.message) {
         state.message?.let {
@@ -277,6 +311,57 @@ fun SettingsScreen(
                         },
                         checked = state.rootInstall,
                         onCheckedChange = viewModel::setRootInstall,
+                        last = true,
+                    )
+                }
+
+                KomiSettingsSectionHead(stringResource(R.string.settings_updates_section))
+                KomiSettingsGroup {
+                    KomiSettingsSwitchRow(
+                        title = stringResource(R.string.settings_background_check),
+                        subtitle = stringResource(R.string.settings_background_check_desc),
+                        checked = state.backgroundCheck,
+                        onCheckedChange = { checked ->
+                            if (checked) requestNotificationPermission()
+                            viewModel.setBackgroundCheck(checked)
+                        },
+                        last = !state.backgroundCheck,
+                    )
+                    if (state.backgroundCheck) {
+                        KomiSettingsRow(
+                            title = stringResource(R.string.settings_check_interval),
+                            trailing = {
+                                KomiCompactSegmented(
+                                    segments = UpdateScheduler.INTERVAL_OPTIONS.map {
+                                        KomiSegment(stringResource(R.string.settings_interval_days, it / 24))
+                                    },
+                                    selectedIndex = UpdateScheduler.INTERVAL_OPTIONS
+                                        .indexOf(state.checkIntervalHours).coerceAtLeast(0),
+                                    onSelect = {
+                                        viewModel.setCheckIntervalHours(
+                                            UpdateScheduler.INTERVAL_OPTIONS[it],
+                                        )
+                                    },
+                                )
+                            },
+                        )
+                        KomiSettingsSwitchRow(
+                            title = stringResource(R.string.settings_wifi_only),
+                            subtitle = stringResource(R.string.settings_wifi_only_desc),
+                            checked = state.wifiOnly,
+                            onCheckedChange = viewModel::setWifiOnly,
+                        )
+                    }
+                    KomiSettingsSwitchRow(
+                        title = stringResource(R.string.settings_auto_update),
+                        subtitle = if (state.rootInstall) {
+                            stringResource(R.string.settings_auto_update_desc)
+                        } else {
+                            stringResource(R.string.settings_auto_update_needs_root)
+                        },
+                        checked = state.autoUpdateRoot,
+                        onCheckedChange = viewModel::setAutoUpdateRoot,
+                        enabled = state.rootInstall,
                         last = true,
                     )
                 }

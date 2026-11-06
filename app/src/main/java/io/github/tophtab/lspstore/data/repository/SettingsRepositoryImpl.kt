@@ -30,6 +30,21 @@ interface SettingsRepository {
     /** APK transfers allowed to run at once, shared by batches and module pages. */
     val maxConcurrentDownloads: Flow<Int>
 
+    /** Periodic background check; off until the user turns it on. */
+    val backgroundCheck: Flow<Boolean>
+
+    /** Hours between background checks; one of UpdateScheduler.INTERVAL_OPTIONS. */
+    val checkIntervalHours: Flow<Int>
+
+    /** Require an unmetered network for the background check. */
+    val wifiOnly: Flow<Boolean>
+
+    /** Silent root install of updates found by the background check. */
+    val autoUpdateRoot: Flow<Boolean>
+
+    /** Notification dedup state: update set already announced. Not user-facing. */
+    val notifiedUpdateSignature: Flow<String>
+
     suspend fun setSortOrder(order: SortOrder)
     suspend fun setRootInstall(enabled: Boolean)
     suspend fun setThemeMode(mode: ThemeMode)
@@ -39,6 +54,11 @@ interface SettingsRepository {
     suspend fun setTranslationSettings(settings: TranslationSettings)
     suspend fun setPreferredMirror(host: String)
     suspend fun setMaxConcurrentDownloads(count: Int)
+    suspend fun setBackgroundCheck(enabled: Boolean)
+    suspend fun setCheckIntervalHours(hours: Int)
+    suspend fun setWifiOnly(enabled: Boolean)
+    suspend fun setAutoUpdateRoot(enabled: Boolean)
+    suspend fun setNotifiedUpdateSignature(signature: String)
 }
 
 class SettingsRepositoryImpl(private val context: Context) : SettingsRepository {
@@ -59,6 +79,11 @@ class SettingsRepositoryImpl(private val context: Context) : SettingsRepository 
         val MICROSOFT_REGION = stringPreferencesKey("microsoft_region")
         val PREFERRED_MIRROR = stringPreferencesKey("preferred_mirror")
         val MAX_CONCURRENT_DOWNLOADS = intPreferencesKey("max_concurrent_downloads")
+        val BACKGROUND_CHECK = booleanPreferencesKey("background_check_enabled")
+        val CHECK_INTERVAL_HOURS = intPreferencesKey("check_interval_hours")
+        val WIFI_ONLY = booleanPreferencesKey("wifi_only")
+        val AUTO_UPDATE_ROOT = booleanPreferencesKey("auto_update_root")
+        val NOTIFIED_UPDATE_SIGNATURE = stringPreferencesKey("notified_update_signature")
     }
 
     override val sortOrder: Flow<SortOrder> = context.settingsDataStore.data
@@ -87,6 +112,21 @@ class SettingsRepositoryImpl(private val context: Context) : SettingsRepository 
             (prefs[Keys.MAX_CONCURRENT_DOWNLOADS] ?: DownloadSlots.DEFAULT_LIMIT)
                 .coerceIn(1, DownloadSlots.MAX_LIMIT)
         }
+
+    override val backgroundCheck: Flow<Boolean> = context.settingsDataStore.data
+        .map { it[Keys.BACKGROUND_CHECK] ?: false }
+
+    override val checkIntervalHours: Flow<Int> = context.settingsDataStore.data
+        .map { (it[Keys.CHECK_INTERVAL_HOURS] ?: 24).coerceIn(1, 168) }
+
+    override val wifiOnly: Flow<Boolean> = context.settingsDataStore.data
+        .map { it[Keys.WIFI_ONLY] ?: false }
+
+    override val autoUpdateRoot: Flow<Boolean> = context.settingsDataStore.data
+        .map { it[Keys.AUTO_UPDATE_ROOT] ?: false }
+
+    override val notifiedUpdateSignature: Flow<String> = context.settingsDataStore.data
+        .map { it[Keys.NOTIFIED_UPDATE_SIGNATURE] ?: "" }
 
     override val translationSettings: Flow<TranslationSettings> = context.settingsDataStore.data.map { prefs ->
         TranslationSettings(
@@ -146,5 +186,25 @@ class SettingsRepositoryImpl(private val context: Context) : SettingsRepository 
         context.settingsDataStore.edit {
             it[Keys.MAX_CONCURRENT_DOWNLOADS] = count.coerceIn(1, DownloadSlots.MAX_LIMIT)
         }
+    }
+
+    override suspend fun setBackgroundCheck(enabled: Boolean) {
+        context.settingsDataStore.edit { it[Keys.BACKGROUND_CHECK] = enabled }
+    }
+
+    override suspend fun setCheckIntervalHours(hours: Int) {
+        context.settingsDataStore.edit { it[Keys.CHECK_INTERVAL_HOURS] = hours.coerceIn(1, 168) }
+    }
+
+    override suspend fun setWifiOnly(enabled: Boolean) {
+        context.settingsDataStore.edit { it[Keys.WIFI_ONLY] = enabled }
+    }
+
+    override suspend fun setAutoUpdateRoot(enabled: Boolean) {
+        context.settingsDataStore.edit { it[Keys.AUTO_UPDATE_ROOT] = enabled }
+    }
+
+    override suspend fun setNotifiedUpdateSignature(signature: String) {
+        context.settingsDataStore.edit { it[Keys.NOTIFIED_UPDATE_SIGNATURE] = signature }
     }
 }

@@ -11,6 +11,7 @@ import kotlinx.coroutines.withContext
 import io.github.tophtab.lspstore.R
 import io.github.tophtab.lspstore.domain.model.ReleaseAsset
 import java.io.File
+import java.util.concurrent.TimeUnit
 
 // komi-store's AndroidInstaller hands the APK to the device's installer of record
 // through a plain VIEW intent; nothing here targets a specific installer app.
@@ -58,14 +59,18 @@ class ApkInstaller(
         onProgress: (downloaded: Long, total: Long) -> Unit = { _, _ -> },
     ): File = downloadManager.downloadBlocking(asset, onProgress)
 
-    suspend fun isRootAvailable(): Boolean = withContext(Dispatchers.IO) {
+    suspend fun isRootAvailable(timeoutMs: Long = 15_000L): Boolean = withContext(Dispatchers.IO) {
         runCatching {
             val process = ProcessBuilder("su", "-c", "id")
                 .redirectErrorStream(true)
                 .start()
-            val output = process.inputStream.bufferedReader().use { it.readText() }
-            process.waitFor()
-            output.contains("uid=0")
+            val output = process.inputStream.bufferedReader()
+            val finished = process.waitFor(timeoutMs, TimeUnit.MILLISECONDS)
+            if (!finished) {
+                process.destroyForcibly()
+                return@runCatching false
+            }
+            output.readText().contains("uid=0")
         }.getOrDefault(false)
     }
 

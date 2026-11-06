@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import io.github.tophtab.lspstore.R
 import io.github.tophtab.lspstore.data.install.DownloadSlots
+import io.github.tophtab.lspstore.data.update.UpdateScheduler
 import io.github.tophtab.lspstore.di.AppContainer
 import io.github.tophtab.lspstore.domain.model.ThemeMode
 import io.github.tophtab.lspstore.domain.model.TranslationSettings
@@ -23,6 +24,10 @@ data class SettingsUiState(
     val dynamicColor: Boolean = false,
     val translation: TranslationSettings = TranslationSettings(),
     val maxConcurrentDownloads: Int = DownloadSlots.DEFAULT_LIMIT,
+    val backgroundCheck: Boolean = false,
+    val checkIntervalHours: Int = UpdateScheduler.DEFAULT_INTERVAL_HOURS,
+    val wifiOnly: Boolean = false,
+    val autoUpdateRoot: Boolean = false,
     val downloadsSize: Long = 0,
     val indexCacheSize: Long = 0,
     val message: String? = null,
@@ -72,6 +77,26 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
                 _state.update { it.copy(maxConcurrentDownloads = value) }
             }
         }
+        viewModelScope.launch {
+            settingsRepository.backgroundCheck.collect { enabled ->
+                _state.update { it.copy(backgroundCheck = enabled) }
+            }
+        }
+        viewModelScope.launch {
+            settingsRepository.checkIntervalHours.collect { hours ->
+                _state.update { it.copy(checkIntervalHours = hours) }
+            }
+        }
+        viewModelScope.launch {
+            settingsRepository.wifiOnly.collect { enabled ->
+                _state.update { it.copy(wifiOnly = enabled) }
+            }
+        }
+        viewModelScope.launch {
+            settingsRepository.autoUpdateRoot.collect { enabled ->
+                _state.update { it.copy(autoUpdateRoot = enabled) }
+            }
+        }
     }
 
     /**
@@ -112,6 +137,64 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
                 }
             }
             settingsRepository.setRootInstall(enabled)
+            // A disabled root switch cannot keep silent auto-updates on: the
+            // switch below would stay checked while the root path is unreachable.
+            if (!enabled) settingsRepository.setAutoUpdateRoot(false)
+        }
+    }
+
+    fun setBackgroundCheck(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.setBackgroundCheck(enabled)
+            UpdateScheduler.sync(
+                context = appContext,
+                enabled = enabled,
+                intervalHours = _state.value.checkIntervalHours,
+                wifiOnly = _state.value.wifiOnly,
+                reset = true,
+            )
+        }
+    }
+
+    fun setCheckIntervalHours(hours: Int) {
+        viewModelScope.launch {
+            settingsRepository.setCheckIntervalHours(hours)
+            if (_state.value.backgroundCheck) {
+                UpdateScheduler.sync(
+                    context = appContext,
+                    enabled = true,
+                    intervalHours = hours,
+                    wifiOnly = _state.value.wifiOnly,
+                    reset = true,
+                )
+            }
+        }
+    }
+
+    fun setWifiOnly(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.setWifiOnly(enabled)
+            if (_state.value.backgroundCheck) {
+                UpdateScheduler.sync(
+                    context = appContext,
+                    enabled = true,
+                    intervalHours = _state.value.checkIntervalHours,
+                    wifiOnly = enabled,
+                    reset = true,
+                )
+            }
+        }
+    }
+
+    fun setAutoUpdateRoot(enabled: Boolean) {
+        viewModelScope.launch {
+            if (enabled && !_state.value.rootInstall) {
+                _state.update {
+                    it.copy(message = appContext.getString(R.string.settings_auto_update_needs_root))
+                }
+                return@launch
+            }
+            settingsRepository.setAutoUpdateRoot(enabled)
         }
     }
 

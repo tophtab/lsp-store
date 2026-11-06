@@ -37,6 +37,8 @@ import io.github.tophtab.lspstore.data.repository.PendingInstallRepositoryImpl
 import io.github.tophtab.lspstore.data.repository.SettingsRepository
 import io.github.tophtab.lspstore.data.repository.SettingsRepositoryImpl
 import io.github.tophtab.lspstore.data.translation.TranslationRepository
+import io.github.tophtab.lspstore.data.update.UpdateNotifier
+import io.github.tophtab.lspstore.domain.usecase.BackgroundUpdateCheck
 import io.github.tophtab.lspstore.domain.usecase.BatchInstallUseCase
 import io.github.tophtab.lspstore.domain.usecase.InstallPreparedApkUseCase
 import io.github.tophtab.lspstore.domain.usecase.PendingSettlement
@@ -154,6 +156,43 @@ class AppContainer(context: Context) {
         installPrepared = installPreparedApkUseCase,
         abandonDownload = { asset -> downloadManager.cancel(downloadManager.keyOf(asset)) },
         downloadSlots = downloadSlots,
+    )
+
+    /** Background twin: same bookkeeping, never opens an installer UI. */
+    private val silentInstallPreparedApkUseCase: InstallPreparedApkUseCase = InstallPreparedApkUseCase(
+        installer = installer,
+        settingsRepository = settingsRepository,
+        libraryRepository = libraryRepository,
+        pendingRepository = pendingInstallRepository,
+        systemInstallSerializer = systemInstallSerializer,
+        deviceProfile = { deviceProfile },
+        context = appContext,
+        allowUi = false,
+    )
+
+    /** "Update all" for the background check: a non-root install just fails. */
+    private val backgroundBatchInstallUseCase: BatchInstallUseCase = BatchInstallUseCase(
+        prepareInstall = prepareModuleInstallUseCase,
+        installPrepared = silentInstallPreparedApkUseCase,
+        abandonDownload = { asset -> downloadManager.cancel(downloadManager.keyOf(asset)) },
+        downloadSlots = downloadSlots,
+    )
+
+    val updateNotifier = UpdateNotifier(appContext)
+
+    /** One periodic cycle: refresh, find updates, install silently or notify. */
+    val backgroundUpdateCheck: BackgroundUpdateCheck = BackgroundUpdateCheck(
+        moduleRepository = moduleRepository,
+        installedRepository = installedRepository,
+        libraryRepository = libraryRepository,
+        pendingRepository = pendingInstallRepository,
+        settingsRepository = settingsRepository,
+        installer = installer,
+        batchInstall = backgroundBatchInstallUseCase,
+        coordinator = moduleInstallCoordinator,
+        notifier = updateNotifier,
+        selfPackage = appContext.packageName,
+        prunePending = { installed -> prunePendingInstalls(installed) },
     )
 
     /**

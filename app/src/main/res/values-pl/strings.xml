@@ -271,4 +271,24 @@
     <string name="variant_incompatible_group">Niekompatybilny z tym urządzeniem (%1$d)</string>
     <string name="installed_update_skipped">Zignorowano tę wersję %1$s</string>
     <string name="error_repository_stale">Repozytorium nadal zwraca starsze wydanie. Spróbuj ponownie.</string>
+
+    <!-- Background update check -->
+    <string name="updates_channel_name">Aktualizacje modułów</string>
+    <string name="updates_channel_desc">Powiadomienia o aktualizacjach ze sprawdzania w tle</string>
+    <string name="updates_notification_title_one">Dostępna aktualizacja %1$s</string>
+    <string name="updates_notification_title_many">Dostępne aktualizacje modułów: %1$d</string>
+    <string name="updates_auto_title">Automatyczna aktualizacja zakończona</string>
+    <string name="updates_auto_text">Zaktualizowano: %1$d, niepowodzenia: %2$d</string>
+    <string name="updates_auto_text_ok">Zaktualizowano moduły: %1$d</string>
+    <string name="settings_updates_section">Aktualizacje</string>
+    <string name="settings_background_check">Sprawdzaj w tle</string>
+    <string name="settings_background_check_desc">Pobieraj repozytorium modułów i zgłaszaj nowe wersje według harmonogramu.</string>
+    <string name="settings_check_interval">Interwał sprawdzania</string>
+    <string name="settings_interval_days">%1$d d</string>
+    <string name="settings_wifi_only">Tylko Wi-Fi</string>
+    <string name="settings_wifi_only_desc">Uruchamiaj sprawdzanie w tle tylko w sieciach bez limitu danych.</string>
+    <string name="settings_auto_update">Instaluj aktualizacje automatycznie</string>
+    <string name="settings_auto_update_desc">Instaluje aktualizacje cicho przez root po sprawdzeniu w tle.</string>
+    <string name="settings_auto_update_needs_root">Najpierw włącz „Zrootuj cichą instalację”.</string>
+    <string name="settings_notifications_needed">Powiadomienia są wyłączone: sprawdzanie w tle nie może zgłaszać aktualizacji.</string>
 </resources>
