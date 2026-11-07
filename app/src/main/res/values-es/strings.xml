@@ -97,7 +97,10 @@
     <string name="detail_no_readme">Sin archivo Léame</string>
     <string name="detail_share_module">Compartir módulo</string>
     <string name="detail_skip_version">Ignorar esta versión</string>
-    <string name="detail_unskip_version">Dejar de ignorar esta versión</string>
+    <string name="detail_ignore_module">Ignorar módulo</string>
+    <string name="detail_unignore_module">Dejar de ignorar el módulo</string>
+    <string name="detail_module_ignored">Módulo ignorado</string>
+    <string name="detail_module_unignored">Módulo restaurado</string>
     <string name="detail_open_app">Abrir app</string>
     <string name="detail_app_info">Información de la aplicación</string>
     <string name="detail_uninstall">Desinstalar</string>
@@ -112,9 +115,11 @@
     <string name="library_favourites">Favoritos</string>
     <string name="library_recently_viewed">Visto recientemente</string>
     <string name="library_skipped">Módulos con actualizaciones ignoradas</string>
+    <string name="library_ignored_modules">Módulos del repositorio ignorados</string>
     <string name="library_empty_favourites">Aún no hay favoritos</string>
     <string name="library_empty_recent">Nada visto todavía</string>
     <string name="library_empty_skipped">No hay módulos de actualización ignorados</string>
+    <string name="library_empty_ignored_modules">No hay módulos del repositorio ignorados</string>
     <string name="library_remove_favourite">Quitar de favoritos</string>
     <string name="library_skipped_version">Versión ignorada %1$s</string>
     <string name="library_skipped_latest">, último %1$s</string>

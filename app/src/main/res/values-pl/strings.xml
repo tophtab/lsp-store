@@ -97,7 +97,10 @@
     <string name="detail_no_readme">Brak pliku Readme</string>
     <string name="detail_share_module">Udostępnij moduł</string>
     <string name="detail_skip_version">Ignoruj tę wersję</string>
-    <string name="detail_unskip_version">Przestań ignorować tę wersję</string>
+    <string name="detail_ignore_module">Ignoruj moduł</string>
+    <string name="detail_unignore_module">Przestań ignorować moduł</string>
+    <string name="detail_module_ignored">Zignorowano moduł</string>
+    <string name="detail_module_unignored">Przywrócono moduł</string>
     <string name="detail_open_app">Otwórz aplikację</string>
     <string name="detail_app_info">Informacje o aplikacji</string>
     <string name="detail_uninstall">Odinstaluj</string>
@@ -112,9 +115,11 @@
     <string name="library_favourites">Ulubione</string>
     <string name="library_recently_viewed">Ostatnio przeglądane</string>
     <string name="library_skipped">Moduły z ignorowanymi aktualizacjami</string>
+    <string name="library_ignored_modules">Zignorowane moduły repozytorium</string>
     <string name="library_empty_favourites">Nie ma jeszcze ulubionych</string>
     <string name="library_empty_recent">Jeszcze nic nie było oglądane</string>
     <string name="library_empty_skipped">Brak ignorowanych modułów aktualizacji</string>
+    <string name="library_empty_ignored_modules">Brak zignorowanych modułów repozytorium</string>
     <string name="library_remove_favourite">Usuń z ulubionych</string>
     <string name="library_skipped_version">Zignorowana wersja %1$s</string>
     <string name="library_skipped_latest">, najnowsze %1$s</string>

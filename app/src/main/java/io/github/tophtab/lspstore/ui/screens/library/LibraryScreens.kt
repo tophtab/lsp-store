@@ -178,6 +178,94 @@ private fun LibraryRow(
 }
 
 @Composable
+fun IgnoredModulesScreen(onBack: () -> Unit, onOpenModule: (String) -> Unit) {
+    val container = LocalAppContainer.current
+    val viewModel: IgnoredModulesViewModel = viewModel(
+        factory = IgnoredModulesViewModel.factory(container),
+    )
+    val state by viewModel.state.collectAsStateWithLifecycle()
+
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
+        topBar = {
+            KomiTopBar(
+                title = stringResource(R.string.library_ignored_modules),
+                onBack = onBack,
+                backContentDescription = stringResource(R.string.action_back),
+                actions = {
+                    if (state.items.isNotEmpty()) {
+                        KomiButton(
+                            onClick = viewModel::clearAll,
+                            label = stringResource(R.string.action_clear),
+                            variant = KomiButtonVariant.Text,
+                            size = KomiButtonSize.Small,
+                        )
+                    }
+                },
+            )
+        },
+    ) { innerPadding ->
+        when {
+            state.isLoading -> LoadingBox(Modifier.padding(innerPadding))
+            state.error != null ->
+                ErrorBox(state.error!!, viewModel::refresh, Modifier.padding(innerPadding))
+            state.items.isEmpty() -> EmptyBox(
+                stringResource(R.string.library_empty_ignored_modules),
+                Modifier.padding(innerPadding),
+            )
+
+            else -> KomiConstrainedContent(
+                modifier = Modifier.fillMaxSize().padding(innerPadding),
+                maxWidth = 1120.dp,
+            ) {
+                LazyVerticalStaggeredGrid(
+                    columns = StaggeredGridCells.Adaptive(minSize = 320.dp),
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(start = 12.dp, end = 12.dp, bottom = 32.dp),
+                    verticalItemSpacing = 10.dp,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    items(state.items, key = { it.packageName }) { item ->
+                        KomiSurface(
+                            modifier = Modifier.fillMaxWidth(),
+                            onClick = { onOpenModule(item.packageName) },
+                            contentPadding = PaddingValues(14.dp),
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    KomiText(
+                                        text = item.title,
+                                        role = KomiTextRole.Title,
+                                        fontSize = 15.sp,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                    KomiText(
+                                        text = item.packageName,
+                                        role = KomiTextRole.Body,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        fontSize = 11.sp,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        modifier = Modifier.padding(top = 2.dp),
+                                    )
+                                }
+                                KomiButton(
+                                    onClick = { viewModel.restore(item.packageName) },
+                                    label = stringResource(R.string.action_unskip),
+                                    variant = KomiButtonVariant.Outline,
+                                    size = KomiButtonSize.Small,
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
 fun SkippedUpdatesScreen(onBack: () -> Unit) {
     val container = LocalAppContainer.current
     val viewModel: SkippedUpdatesViewModel = viewModel(factory = SkippedUpdatesViewModel.factory(container))

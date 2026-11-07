@@ -73,6 +73,7 @@ fun SettingsScreen(
     onOpenFavourites: () -> Unit,
     onOpenRecentlyViewed: () -> Unit,
     onOpenSkipped: () -> Unit,
+    onOpenIgnoredModules: () -> Unit,
     onOpenImports: () -> Unit,
     onOpenAbout: () -> Unit,
     onOpenDiagnostics: () -> Unit,
@@ -388,6 +389,10 @@ fun SettingsScreen(
                     KomiSettingsRow(
                         title = stringResource(R.string.library_recently_viewed),
                         onClick = onOpenRecentlyViewed,
+                    )
+                    KomiSettingsRow(
+                        title = stringResource(R.string.library_ignored_modules),
+                        onClick = onOpenIgnoredModules,
                     )
                     KomiSettingsRow(
                         title = stringResource(R.string.library_skipped),

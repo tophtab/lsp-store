@@ -48,7 +48,6 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.OpenInBrowser
 import androidx.compose.material.icons.filled.OpenInNew
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Smartphone
@@ -304,11 +303,6 @@ fun ModuleDetailScreen(packageName: String, onBack: () -> Unit, onOpenAuthor: (S
                     onClick = { menuOpen = false; viewModel.toggleFavourite() },
                 )
                 ActionSheetRow(
-                    icon = Icons.Filled.Refresh,
-                    label = stringResource(R.string.action_refresh),
-                    onClick = { menuOpen = false; viewModel.load() },
-                )
-                ActionSheetRow(
                     icon = Icons.Filled.Share,
                     label = stringResource(R.string.action_share),
                     onClick = {
@@ -330,19 +324,17 @@ fun ModuleDetailScreen(packageName: String, onBack: () -> Unit, onOpenAuthor: (S
                         }
                     },
                 )
-                if (state.latestVersionCode != null) {
-                    ActionSheetRow(
-                        icon = if (state.isUpdateSkipped) Icons.Filled.Restore else Icons.Filled.Block,
-                        label = stringResource(
-                            if (state.isUpdateSkipped) R.string.detail_unskip_version
-                            else R.string.detail_skip_version,
-                        ),
-                        onClick = {
-                            menuOpen = false
-                            if (state.isUpdateSkipped) viewModel.unskipVersion() else viewModel.skipThisVersion()
-                        },
-                    )
-                }
+                ActionSheetRow(
+                    icon = if (state.isModuleIgnored) Icons.Filled.Restore else Icons.Filled.Block,
+                    label = stringResource(
+                        if (state.isModuleIgnored) R.string.detail_unignore_module
+                        else R.string.detail_ignore_module,
+                    ),
+                    onClick = {
+                        menuOpen = false
+                        viewModel.setModuleIgnored(!state.isModuleIgnored)
+                    },
+                )
                 state.installed?.let {
                     ActionSheetRow(
                         icon = Icons.Filled.OpenInNew,

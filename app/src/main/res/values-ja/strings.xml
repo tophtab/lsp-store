@@ -97,7 +97,10 @@
     <string name="detail_no_readme">Readme なし</string>
     <string name="detail_share_module">共有モジュール</string>
     <string name="detail_skip_version">このバージョンを無視</string>
-    <string name="detail_unskip_version">このバージョンの無視を解除</string>
+    <string name="detail_ignore_module">モジュールを無視</string>
+    <string name="detail_unignore_module">モジュールの無視を解除</string>
+    <string name="detail_module_ignored">モジュールを無視しました</string>
+    <string name="detail_module_unignored">モジュールを復元しました</string>
     <string name="detail_open_app">アプリを開く</string>
     <string name="detail_app_info">アプリ情報</string>
     <string name="detail_uninstall">アンインストール</string>
@@ -112,9 +115,11 @@
     <string name="library_favourites">お気に入り</string>
     <string name="library_recently_viewed">最近見た</string>
     <string name="library_skipped">更新を無視したモジュール</string>
+    <string name="library_ignored_modules">無視したリポジトリのモジュール</string>
     <string name="library_empty_favourites">まだお気に入りはありません</string>
     <string name="library_empty_recent">まだ何も閲覧されていません</string>
     <string name="library_empty_skipped">無視された更新モジュールはありません</string>
+    <string name="library_empty_ignored_modules">無視したリポジトリのモジュールはありません</string>
     <string name="library_remove_favourite">お気に入りから削除</string>
     <string name="library_skipped_version">無視したバージョン %1$s</string>
     <string name="library_skipped_latest">、最新 %1$s</string>

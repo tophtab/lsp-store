@@ -105,7 +105,10 @@
     <string name="detail_no_readme">沒有說明</string>
     <string name="detail_share_module">分享模組</string>
     <string name="detail_skip_version">忽略此版本</string>
-    <string name="detail_unskip_version">取消忽略此版本</string>
+    <string name="detail_ignore_module">忽略模組</string>
+    <string name="detail_unignore_module">取消忽略模組</string>
+    <string name="detail_module_ignored">已忽略模組</string>
+    <string name="detail_module_unignored">已恢復模組</string>
     <string name="detail_open_app">開啟應用</string>
     <string name="detail_app_info">應用資訊</string>
     <string name="detail_uninstall">解除安裝</string>
@@ -118,9 +121,11 @@
     <string name="library_favourites">收藏</string>
     <string name="library_recently_viewed">最近瀏覽</string>
     <string name="library_skipped">已忽略更新模組</string>
+    <string name="library_ignored_modules">已忽略倉庫模組</string>
     <string name="library_empty_favourites">還沒有收藏</string>
     <string name="library_empty_recent">還沒有瀏覽記錄</string>
     <string name="library_empty_skipped">沒有已忽略更新模組</string>
+    <string name="library_empty_ignored_modules">沒有已忽略倉庫模組</string>
     <string name="library_remove_favourite">取消收藏</string>
     <string name="library_skipped_version">已忽略版本 %1$s</string>
     <string name="library_skipped_latest">，最新 %1$s</string>

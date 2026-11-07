@@ -97,7 +97,10 @@
     <string name="detail_no_readme">কোন রিডমি</string>
     <string name="detail_share_module">শেয়ার মডিউল</string>
     <string name="detail_skip_version">এই সংস্করণ উপেক্ষা করুন</string>
-    <string name="detail_unskip_version">এই সংস্করণ আর উপেক্ষা করবেন না</string>
+    <string name="detail_ignore_module">মডিউল উপেক্ষা করুন</string>
+    <string name="detail_unignore_module">মডিউল আর উপেক্ষা করবেন না</string>
+    <string name="detail_module_ignored">মডিউল উপেক্ষা করা হয়েছে</string>
+    <string name="detail_module_unignored">মডিউল পুনরুদ্ধার করা হয়েছে</string>
     <string name="detail_open_app">অ্যাপ খুলুন</string>
     <string name="detail_app_info">অ্যাপের তথ্য</string>
     <string name="detail_uninstall">আনইনস্টল</string>
@@ -112,9 +115,11 @@
     <string name="library_favourites">প্রিয়</string>
     <string name="library_recently_viewed">সম্প্রতি দেখা হয়েছে</string>
     <string name="library_skipped">উপেক্ষা করা আপডেট মডিউল</string>
+    <string name="library_ignored_modules">উপেক্ষা করা রিপোজিটরি মডিউল</string>
     <string name="library_empty_favourites">এখনও কোন প্রিয়</string>
     <string name="library_empty_recent">এখনও কিছু দেখা হয়নি</string>
     <string name="library_empty_skipped">কোনো উপেক্ষা করা আপডেট মডিউল নেই</string>
+    <string name="library_empty_ignored_modules">কোনো উপেক্ষা করা রিপোজিটরি মডিউল নেই</string>
     <string name="library_remove_favourite">পছন্দের তালিকা থেকে সরান</string>
     <string name="library_skipped_version">উপেক্ষিত সংস্করণ %1$s</string>
     <string name="library_skipped_latest">, সর্বশেষ %1$s</string>

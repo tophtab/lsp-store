@@ -45,6 +45,7 @@ class LibraryListViewModel(
     private var names: List<String> = emptyList()
     private var installedRaw: Set<String> = emptySet()
     private var links: Map<String, String> = emptyMap()
+    private var ignoredModules: Set<String> = emptySet()
 
     init {
         when (kind) {
@@ -59,6 +60,14 @@ class LibraryListViewModel(
             libraryRepository.links.collect { value ->
                 links = value
                 refreshInstalledBadges()
+            }
+        }
+        viewModelScope.launch {
+            // An ignored module stays in the stored list so ignoring is
+            // reversible, but it is not shown on any browsing screen.
+            libraryRepository.ignoredModules.collect { value ->
+                ignoredModules = value
+                rebuild()
             }
         }
         load()
@@ -106,7 +115,13 @@ class LibraryListViewModel(
     private fun rebuild() {
         if (index.isEmpty()) return
         val byPackage = index.associateBy { it.packageName }
-        _state.update { it.copy(modules = names.mapNotNull { name -> byPackage[name] }) }
+        _state.update {
+            it.copy(
+                modules = names
+                    .filterNot { name -> name in ignoredModules }
+                    .mapNotNull { name -> byPackage[name] },
+            )
+        }
     }
 
     private fun refreshInstalledBadges() {

@@ -97,7 +97,10 @@
     <string name="detail_no_readme">Нет файла readme</string>
     <string name="detail_share_module">Поделиться модулем</string>
     <string name="detail_skip_version">Игнорировать эту версию</string>
-    <string name="detail_unskip_version">Не игнорировать эту версию</string>
+    <string name="detail_ignore_module">Игнорировать модуль</string>
+    <string name="detail_unignore_module">Не игнорировать модуль</string>
+    <string name="detail_module_ignored">Модуль игнорируется</string>
+    <string name="detail_module_unignored">Модуль восстановлен</string>
     <string name="detail_open_app">Открыть</string>
     <string name="detail_app_info">Информация о приложении</string>
     <string name="detail_uninstall">Удалить</string>
@@ -112,9 +115,11 @@
     <string name="library_favourites">Избранное</string>
     <string name="library_recently_viewed">Недавно просмотренные</string>
     <string name="library_skipped">Модули с игнорируемыми обновлениями</string>
+    <string name="library_ignored_modules">Игнорируемые модули репозитория</string>
     <string name="library_empty_favourites">Пока нет избранных</string>
     <string name="library_empty_recent">Еще ничего не просмотрено</string>
     <string name="library_empty_skipped">Нет игнорируемых модулей обновления</string>
+    <string name="library_empty_ignored_modules">Нет игнорируемых модулей репозитория</string>
     <string name="library_remove_favourite">Удалить из избранного</string>
     <string name="library_skipped_version">Проигнорированная версия %1$s</string>
     <string name="library_skipped_latest">, последний %1$s</string>
