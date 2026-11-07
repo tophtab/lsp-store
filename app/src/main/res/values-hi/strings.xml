@@ -126,6 +126,13 @@
     <string name="settings_amoled_desc">डार्क मोड में शुद्ध काली सतहों का उपयोग करें</string>
     <string name="settings_dynamic">गतिशील रंग</string>
     <string name="settings_dynamic_desc">वॉलपेपर से रंगों का उपयोग करें</string>
+
+    <string name="settings_hide_icon">लॉन्चर आइकन छिपाएं</string>
+    <string name="settings_hide_icon_desc">LSP Store को लॉन्चर से हटाएं। LSPosed Manager से इसे फिर खोलें।</string>
+    <string name="settings_hide_icon_confirm_title">लॉन्चर आइकन छिपाएं?</string>
+    <string name="settings_hide_icon_confirm_message">LSP Store लॉन्चर से गायब हो जाएगा। इसे फिर खोलने के लिए LSPosed Manager > मॉड्यूल > LSP Store पर जाएं।</string>
+    <string name="settings_hide_icon_confirm_action">छिपाएं</string>
+    <string name="settings_hide_icon_hidden">लॉन्चर आइकन छिपा दिया गया। LSPosed Manager से LSP Store फिर खोलें।</string>
     <string name="settings_root_section">Root</string>
     <string name="settings_root">रूट साइलेंट इंस्टाल</string>
     <string name="settings_root_detected">सु का पता चला, APK चुपचाप इंस्टॉल हो जाते हैं</string>

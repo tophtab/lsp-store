@@ -126,6 +126,13 @@
     <string name="settings_amoled_desc">다크 모드에서는 순수한 검은색 표면을 사용하세요.</string>
     <string name="settings_dynamic">동적 색상</string>
     <string name="settings_dynamic_desc">재료 사용 벽지의 색상</string>
+
+    <string name="settings_hide_icon">런처 아이콘 숨기기</string>
+    <string name="settings_hide_icon_desc">런처에서 LSP Store를 제거합니다. LSPosed Manager에서 다시 열 수 있습니다.</string>
+    <string name="settings_hide_icon_confirm_title">런처 아이콘을 숨길까요?</string>
+    <string name="settings_hide_icon_confirm_message">LSP Store가 런처에서 사라집니다. 다시 열려면 LSPosed Manager > 모듈 > LSP Store로 이동하세요.</string>
+    <string name="settings_hide_icon_confirm_action">숨기기</string>
+    <string name="settings_hide_icon_hidden">런처 아이콘을 숨겼습니다. LSPosed Manager에서 LSP Store를 다시 여세요.</string>
     <string name="settings_root_section">Root</string>
     <string name="settings_root">루트 자동 설치</string>
     <string name="settings_root_detected">감지됨, APK가 자동으로 설치됨</string>

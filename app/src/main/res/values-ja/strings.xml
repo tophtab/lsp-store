@@ -126,6 +126,13 @@
     <string name="settings_amoled_desc">ダークモードで純粋な黒い表面を使用する</string>
     <string name="settings_dynamic">ダイナミックカラー</string>
     <string name="settings_dynamic_desc">壁紙からマテリアルの色を使用する</string>
+
+    <string name="settings_hide_icon">ランチャーアイコンを隠す</string>
+    <string name="settings_hide_icon_desc">LSP Store をランチャーから削除します。LSPosed Manager から再度開けます。</string>
+    <string name="settings_hide_icon_confirm_title">ランチャーアイコンを隠しますか？</string>
+    <string name="settings_hide_icon_confirm_message">LSP Store はランチャーから消えます。再度開くには、LSPosed Manager > モジュール > LSP Store に移動してください。</string>
+    <string name="settings_hide_icon_confirm_action">隠す</string>
+    <string name="settings_hide_icon_hidden">ランチャーアイコンを隠しました。LSPosed Manager から LSP Store を再度開けます。</string>
     <string name="settings_root_section">Root</string>
     <string name="settings_root">ルートサイレントインストール</string>
     <string name="settings_root_detected">su が検出され、APK がサイレントにインストールされます</string>

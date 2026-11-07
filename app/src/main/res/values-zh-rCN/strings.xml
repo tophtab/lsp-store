@@ -132,6 +132,13 @@
     <string name="settings_amoled_desc">深色模式下使用纯黑背景</string>
     <string name="settings_dynamic">动态取色</string>
     <string name="settings_dynamic_desc">使用壁纸的 Material You 配色</string>
+
+    <string name="settings_hide_icon">隐藏桌面图标</string>
+    <string name="settings_hide_icon_desc">从桌面移除 LSP Store，可通过 LSPosed 管理器重新打开。</string>
+    <string name="settings_hide_icon_confirm_title">隐藏桌面图标？</string>
+    <string name="settings_hide_icon_confirm_message">LSP Store 将从桌面消失。如需再次打开，请前往 LSPosed 管理器 > 模块 > LSP Store。</string>
+    <string name="settings_hide_icon_confirm_action">隐藏</string>
+    <string name="settings_hide_icon_hidden">已隐藏桌面图标。可从 LSPosed 管理器重新打开 LSP Store。</string>
     <string name="settings_root_section">Root 权限</string>
     <string name="settings_root">Root 静默安装</string>
     <string name="settings_root_detected">检测到 su，APK 将静默安装</string>

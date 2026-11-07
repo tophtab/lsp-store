@@ -126,6 +126,13 @@
     <string name="settings_amoled_desc">Utilisez des surfaces noires pures en mode sombre</string>
     <string name="settings_dynamic">Couleur dynamique</string>
     <string name="settings_dynamic_desc">Utilisez les couleurs Material You du papier peint</string>
+
+    <string name="settings_hide_icon">Masquer l\'icône du lanceur</string>
+    <string name="settings_hide_icon_desc">Retirez LSP Store du lanceur. Rouvrez-le depuis LSPosed Manager.</string>
+    <string name="settings_hide_icon_confirm_title">Masquer l\'icône du lanceur ?</string>
+    <string name="settings_hide_icon_confirm_message">LSP Store disparaîtra du lanceur. Pour le rouvrir, allez dans LSPosed Manager > Modules > LSP Store.</string>
+    <string name="settings_hide_icon_confirm_action">Masquer</string>
+    <string name="settings_hide_icon_hidden">Icône du lanceur masquée. Rouvrez LSP Store depuis LSPosed Manager.</string>
     <string name="settings_root_section">Root</string>
     <string name="settings_root">Installation silencieuse root</string>
     <string name="settings_root_detected">su détecté, les APK s\'installent silencieusement</string>

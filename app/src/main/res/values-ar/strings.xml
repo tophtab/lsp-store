@@ -126,6 +126,13 @@
     <string name="settings_amoled_desc">استخدم الأسطح السوداء النقية في الوضع المظلم</string>
     <string name="settings_dynamic">اللون الديناميكي</string>
     <string name="settings_dynamic_desc">استخدم ألوان المادة من ورق الحائط</string>
+
+    <string name="settings_hide_icon">إخفاء رمز المشغّل</string>
+    <string name="settings_hide_icon_desc">أزل LSP Store من المشغّل. أعد فتحه من مدير LSPosed.</string>
+    <string name="settings_hide_icon_confirm_title">إخفاء رمز المشغّل؟</string>
+    <string name="settings_hide_icon_confirm_message">سيختفي LSP Store من المشغّل. لإعادة فتحه، انتقل إلى مدير LSPosed > الوحدات > LSP Store.</string>
+    <string name="settings_hide_icon_confirm_action">إخفاء</string>
+    <string name="settings_hide_icon_hidden">تم إخفاء رمز المشغّل. أعد فتح LSP Store من مدير LSPosed.</string>
     <string name="settings_root_section">Root</string>
     <string name="settings_root">تثبيت الجذر الصامت</string>
     <string name="settings_root_detected">تم اكتشاف su، ويتم تثبيت ملفات APK بصمت</string>

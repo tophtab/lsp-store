@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import io.github.tophtab.lspstore.R
+import io.github.tophtab.lspstore.data.device.LauncherIcon
 import io.github.tophtab.lspstore.data.install.DownloadSlots
 import io.github.tophtab.lspstore.data.update.UpdateScheduler
 import io.github.tophtab.lspstore.di.AppContainer
@@ -28,6 +29,7 @@ data class SettingsUiState(
     val checkIntervalHours: Int = UpdateScheduler.DEFAULT_INTERVAL_HOURS,
     val wifiOnly: Boolean = false,
     val autoUpdateRoot: Boolean = false,
+    val hideLauncherIcon: Boolean = false,
     val downloadsSize: Long = 0,
     val indexCacheSize: Long = 0,
     val message: String? = null,
@@ -95,6 +97,11 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
         viewModelScope.launch {
             settingsRepository.autoUpdateRoot.collect { enabled ->
                 _state.update { it.copy(autoUpdateRoot = enabled) }
+            }
+        }
+        viewModelScope.launch {
+            settingsRepository.hideLauncherIcon.collect { hidden ->
+                _state.update { it.copy(hideLauncherIcon = hidden) }
             }
         }
     }
@@ -195,6 +202,28 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
                 return@launch
             }
             settingsRepository.setAutoUpdateRoot(enabled)
+        }
+    }
+
+    /**
+     * Hides or restores the desktop entry. The setting is persisted only after
+     * the component state changed, so the two cannot disagree after a restart.
+     */
+    fun setHideLauncherIcon(hidden: Boolean) {
+        viewModelScope.launch {
+            val applied = runCatching { LauncherIcon.setHidden(appContext, hidden) }.isSuccess
+            if (!applied) return@launch
+            settingsRepository.setHideLauncherIcon(hidden)
+            _state.update {
+                it.copy(
+                    hideLauncherIcon = hidden,
+                    message = if (hidden) {
+                        appContext.getString(R.string.settings_hide_icon_hidden)
+                    } else {
+                        null
+                    },
+                )
+            }
         }
     }
 
