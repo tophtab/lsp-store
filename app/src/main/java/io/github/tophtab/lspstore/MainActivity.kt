@@ -90,6 +90,7 @@ import io.github.tophtab.lspstore.ui.screens.diagnostics.DiagnosticsScreen
 import io.github.tophtab.lspstore.ui.screens.home.HomeScreen
 import io.github.tophtab.lspstore.ui.screens.imports.ExternalImportScreen
 import io.github.tophtab.lspstore.ui.screens.installed.InstalledScreen
+import io.github.tophtab.lspstore.ui.screens.library.IgnoredModulesScreen
 import io.github.tophtab.lspstore.ui.screens.library.LibraryKind
 import io.github.tophtab.lspstore.ui.screens.library.LibraryListScreen
 import io.github.tophtab.lspstore.ui.screens.library.SkippedUpdatesScreen
@@ -389,6 +390,7 @@ private fun AppNavHost(
                 onOpenFavourites = { navController.navigate(Routes.FAVOURITES) },
                 onOpenRecentlyViewed = { navController.navigate(Routes.RECENTLY_VIEWED) },
                 onOpenSkipped = { navController.navigate(Routes.SKIPPED) },
+                onOpenIgnoredModules = { navController.navigate(Routes.IGNORED_MODULES) },
                 onOpenAbout = { navController.navigate(Routes.ABOUT) },
                 onOpenImports = { navController.navigate(Routes.IMPORTS) },
                 onOpenDiagnostics = { navController.navigate(Routes.DIAGNOSTICS) },
@@ -430,6 +432,12 @@ private fun AppNavHost(
         }
         composable(Routes.SKIPPED) {
             SkippedUpdatesScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Routes.IGNORED_MODULES) {
+            IgnoredModulesScreen(
+                onBack = { navController.popBackStack() },
+                onOpenModule = { navController.navigate(Routes.detail(it)) },
+            )
         }
         composable(Routes.ABOUT) {
             AboutScreen(onBack = { navController.popBackStack() })

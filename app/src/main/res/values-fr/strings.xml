@@ -97,7 +97,10 @@
     <string name="detail_no_readme">Pas de fichier Lisez-moi</string>
     <string name="detail_share_module">Module de partage</string>
     <string name="detail_skip_version">Ignorer cette version</string>
-    <string name="detail_unskip_version">Ne plus ignorer cette version</string>
+    <string name="detail_ignore_module">Ignorer le module</string>
+    <string name="detail_unignore_module">Ne plus ignorer le module</string>
+    <string name="detail_module_ignored">Module ignoré</string>
+    <string name="detail_module_unignored">Module restauré</string>
     <string name="detail_open_app">Ouvrir l\'application</string>
     <string name="detail_app_info">Informations sur l\'application</string>
     <string name="detail_uninstall">Désinstaller</string>
@@ -112,9 +115,11 @@
     <string name="library_favourites">Favoris</string>
     <string name="library_recently_viewed">Récemment consulté</string>
     <string name="library_skipped">Modules aux mises à jour ignorées</string>
+    <string name="library_ignored_modules">Modules du dépôt ignorés</string>
     <string name="library_empty_favourites">Pas encore de favoris</string>
     <string name="library_empty_recent">Rien de vu pour l\'instant</string>
     <string name="library_empty_skipped">Aucun module de mise à jour ignoré</string>
+    <string name="library_empty_ignored_modules">Aucun module du dépôt ignoré</string>
     <string name="library_remove_favourite">Retirer des favoris</string>
     <string name="library_skipped_version">Version ignorée %1$s</string>
     <string name="library_skipped_latest">, le dernier %1$s</string>

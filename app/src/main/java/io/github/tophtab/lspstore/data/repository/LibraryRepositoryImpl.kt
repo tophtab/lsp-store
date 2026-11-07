@@ -21,8 +21,8 @@ import io.github.tophtab.lspstore.domain.variant.parseTraits
 private val Context.libraryDataStore by preferencesDataStore(name = "library")
 
 /**
- * User-curated lists: favourites, recently viewed and ignored updates.
- * Ordered lists are stored newline separated; skipped updates as
+ * User-curated lists: favourites, recently viewed, ignored modules and ignored
+ * updates. Ordered lists are stored newline separated; skipped updates as
  * "package:tag" lines (older builds wrote "package:versionCode").
  */
 interface LibraryRepository {
@@ -30,6 +30,9 @@ interface LibraryRepository {
     val recentlyViewed: Flow<List<String>>
     val skippedUpdates: Flow<Map<String, SkippedVersion>>
     val ignoredUpdates: Flow<Set<String>>
+
+    /** Repository package names hidden from every browsing list. */
+    val ignoredModules: Flow<Set<String>>
 
     /** Repository package names whose update checks also follow pre-releases. */
     val preReleaseModules: Flow<Set<String>>
@@ -44,6 +47,8 @@ interface LibraryRepository {
     suspend fun unskipUpdate(packageName: String)
     suspend fun clearSkippedUpdates()
     suspend fun setUpdateCheckEnabled(packageName: String, enabled: Boolean)
+    suspend fun setModuleIgnored(packageName: String, ignored: Boolean)
+    suspend fun clearIgnoredModules()
     suspend fun setPreReleasesEnabled(packageName: String, enabled: Boolean)
     suspend fun clearIgnoredUpdates()
     suspend fun addSearchQuery(query: String)
@@ -69,6 +74,7 @@ class LibraryRepositoryImpl(private val context: Context) : LibraryRepository {
         val RECENTLY_VIEWED = stringPreferencesKey("recently_viewed")
         val SKIPPED = stringPreferencesKey("skipped")
         val IGNORED_UPDATES = stringPreferencesKey("ignored_updates")
+        val IGNORED_MODULES = stringPreferencesKey("ignored_modules")
         val PRE_RELEASE_MODULES = stringPreferencesKey("pre_release_modules")
         val SEARCH_HISTORY = stringPreferencesKey("search_history")
         val LINKS = stringPreferencesKey("manual_links")
@@ -97,6 +103,10 @@ class LibraryRepositoryImpl(private val context: Context) : LibraryRepository {
     /** Installed or repository package names whose updates the user ignored. */
     override val ignoredUpdates: Flow<Set<String>> = context.libraryDataStore.data
         .map { decodeList(it[Keys.IGNORED_UPDATES]).toSet() }
+
+    /** Repository package names the user hid from browsing. */
+    override val ignoredModules: Flow<Set<String>> = context.libraryDataStore.data
+        .map { decodeList(it[Keys.IGNORED_MODULES]).toSet() }
 
     /** Repository package names that opted into pre-release tracking. */
     override val preReleaseModules: Flow<Set<String>> = context.libraryDataStore.data
@@ -174,6 +184,20 @@ class LibraryRepositoryImpl(private val context: Context) : LibraryRepository {
 
     override suspend fun clearIgnoredUpdates() {
         context.libraryDataStore.edit { it[Keys.IGNORED_UPDATES] = "" }
+    }
+
+    override suspend fun setModuleIgnored(packageName: String, ignored: Boolean) {
+        context.libraryDataStore.edit { prefs ->
+            val current = decodeList(prefs[Keys.IGNORED_MODULES])
+            prefs[Keys.IGNORED_MODULES] = encodeList(
+                // Newest first, so the ignored list opens on what was just hidden.
+                if (ignored) listOf(packageName) + (current - packageName) else current - packageName,
+            )
+        }
+    }
+
+    override suspend fun clearIgnoredModules() {
+        context.libraryDataStore.edit { it[Keys.IGNORED_MODULES] = "" }
     }
 
     override suspend fun addSearchQuery(query: String) {

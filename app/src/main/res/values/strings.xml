@@ -117,7 +117,10 @@
     <string name="detail_no_readme">No readme</string>
     <string name="detail_share_module">Share module</string>
     <string name="detail_skip_version">Ignore this version</string>
-    <string name="detail_unskip_version">Unignore this version</string>
+    <string name="detail_ignore_module">Ignore module</string>
+    <string name="detail_unignore_module">Unignore module</string>
+    <string name="detail_module_ignored">Module ignored</string>
+    <string name="detail_module_unignored">Module restored</string>
     <string name="detail_open_app">Open app</string>
     <string name="detail_app_info">App info</string>
     <string name="detail_uninstall">Uninstall</string>
@@ -134,9 +137,11 @@
     <string name="library_favourites">Favourites</string>
     <string name="library_recently_viewed">Recently viewed</string>
     <string name="library_skipped">Ignored update modules</string>
+    <string name="library_ignored_modules">Ignored repository modules</string>
     <string name="library_empty_favourites">No favourites yet</string>
     <string name="library_empty_recent">Nothing viewed yet</string>
     <string name="library_empty_skipped">No ignored update modules</string>
+    <string name="library_empty_ignored_modules">No ignored repository modules</string>
     <string name="library_remove_favourite">Remove from favourites</string>
     <string name="library_skipped_version">Ignored version %1$s</string>
     <string name="library_skipped_latest">, latest %1$s</string>

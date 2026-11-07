@@ -97,7 +97,10 @@
     <string name="detail_no_readme">कोई रीडमी नहीं</string>
     <string name="detail_share_module">शेयर मॉड्यूल</string>
     <string name="detail_skip_version">इस संस्करण को अनदेखा करें</string>
-    <string name="detail_unskip_version">इस संस्करण को अनदेखा करना बंद करें</string>
+    <string name="detail_ignore_module">मॉड्यूल अनदेखा करें</string>
+    <string name="detail_unignore_module">मॉड्यूल को अनदेखा करना बंद करें</string>
+    <string name="detail_module_ignored">मॉड्यूल अनदेखा किया गया</string>
+    <string name="detail_module_unignored">मॉड्यूल पुनर्स्थापित किया गया</string>
     <string name="detail_open_app">ऐप खोलें</string>
     <string name="detail_app_info">अनुप्रयोग की जानकारी</string>
     <string name="detail_uninstall">अनइंस्टॉल करें</string>
@@ -112,9 +115,11 @@
     <string name="library_favourites">पसंदीदा</string>
     <string name="library_recently_viewed">हाल में देखा गया</string>
     <string name="library_skipped">अनदेखा किए गए अपडेट मॉड्यूल</string>
+    <string name="library_ignored_modules">अनदेखा किए गए रिपॉज़िटरी मॉड्यूल</string>
     <string name="library_empty_favourites">अभी तक कोई पसंदीदा नहीं</string>
     <string name="library_empty_recent">अभी तक कुछ भी नहीं देखा गया</string>
     <string name="library_empty_skipped">कोई उपेक्षित अद्यतन मॉड्यूल नहीं</string>
+    <string name="library_empty_ignored_modules">कोई अनदेखा किया गया रिपॉज़िटरी मॉड्यूल नहीं</string>
     <string name="library_remove_favourite">पसंदीदा से हटाएँ</string>
     <string name="library_skipped_version">अनदेखा किया गया संस्करण %1$s</string>
     <string name="library_skipped_latest">, नवीनतम %1$s</string>

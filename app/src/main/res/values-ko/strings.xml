@@ -97,7 +97,10 @@
     <string name="detail_no_readme">읽어보기 없음</string>
     <string name="detail_share_module">모듈 공유</string>
     <string name="detail_skip_version">이 버전 무시</string>
-    <string name="detail_unskip_version">이 버전 무시 해제</string>
+    <string name="detail_ignore_module">모듈 무시</string>
+    <string name="detail_unignore_module">모듈 무시 해제</string>
+    <string name="detail_module_ignored">모듈을 무시했습니다</string>
+    <string name="detail_module_unignored">모듈을 복원했습니다</string>
     <string name="detail_open_app">앱 열기</string>
     <string name="detail_app_info">앱 정보</string>
     <string name="detail_uninstall">제거</string>
@@ -112,9 +115,11 @@
     <string name="library_favourites">즐겨찾기</string>
     <string name="library_recently_viewed">최근 본</string>
     <string name="library_skipped">업데이트를 무시한 모듈</string>
+    <string name="library_ignored_modules">무시한 저장소 모듈</string>
     <string name="library_empty_favourites">아직 즐겨찾기가 없습니다.</string>
     <string name="library_empty_recent">아직 조회한 항목이 없습니다.</string>
     <string name="library_empty_skipped">무시된 업데이트 모듈 없음</string>
+    <string name="library_empty_ignored_modules">무시한 저장소 모듈 없음</string>
     <string name="library_remove_favourite">즐겨찾기에서 제거</string>
     <string name="library_skipped_version">무시한 버전 %1$s</string>
     <string name="library_skipped_latest">, 최신 %1$s</string>

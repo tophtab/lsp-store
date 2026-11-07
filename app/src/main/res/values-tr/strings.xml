@@ -97,7 +97,10 @@
     <string name="detail_no_readme">Benioku yok</string>
     <string name="detail_share_module">Paylaşım modülü</string>
     <string name="detail_skip_version">Bu sürümü yoksay</string>
-    <string name="detail_unskip_version">Bu sürümü yoksaymayı bırak</string>
+    <string name="detail_ignore_module">Modülü yoksay</string>
+    <string name="detail_unignore_module">Modülü yoksaymayı bırak</string>
+    <string name="detail_module_ignored">Modül yoksayıldı</string>
+    <string name="detail_module_unignored">Modül geri yüklendi</string>
     <string name="detail_open_app">Uygulamayı aç</string>
     <string name="detail_app_info">Uygulama bilgisi</string>
     <string name="detail_uninstall">Kaldır</string>
@@ -112,9 +115,11 @@
     <string name="library_favourites">Favoriler</string>
     <string name="library_recently_viewed">Son görüntülenenler</string>
     <string name="library_skipped">Güncellemeleri yoksayılan modüller</string>
+    <string name="library_ignored_modules">Yoksayılan depo modülleri</string>
     <string name="library_empty_favourites">Henüz favori yok</string>
     <string name="library_empty_recent">Henüz hiçbir şey görüntülenmedi</string>
     <string name="library_empty_skipped">Göz ardı edilen güncelleme modülü yok</string>
+    <string name="library_empty_ignored_modules">Yoksayılan depo modülü yok</string>
     <string name="library_remove_favourite">Favorilerden kaldır</string>
     <string name="library_skipped_version">Yoksayılan sürüm %1$s</string>
     <string name="library_skipped_latest">, en son %1$s</string>

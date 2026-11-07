@@ -29,13 +29,22 @@ class AuthorViewModel(
 
     private val moduleRepository = container.moduleRepository
     private val installedRepository = container.installedRepository
+    private val libraryRepository = container.libraryRepository
 
     private val _state = MutableStateFlow(AuthorUiState(author = author))
     val state = _state.asStateFlow()
 
     private var index: List<Module> = emptyList()
+    private var installedPackages: Set<String> = emptySet()
+    private var ignoredModules: Set<String> = emptySet()
 
     init {
+        viewModelScope.launch {
+            libraryRepository.ignoredModules.collect { value ->
+                ignoredModules = value
+                applyIndex()
+            }
+        }
         load()
     }
 
@@ -53,12 +62,9 @@ class AuthorViewModel(
                 modules to installed
             }.onSuccess { (modules, installed) ->
                 index = modules
-                val mine = modules
-                    .filter { it.contributor.equals(author, ignoreCase = true) }
-                    .sortedByDescending { it.lastPublishedAt ?: Instant.EPOCH }
-                _state.update {
-                    it.copy(isLoading = false, modules = mine, installedPackages = installed)
-                }
+                installedPackages = installed
+                _state.update { it.copy(isLoading = false) }
+                applyIndex()
             }.onFailure { error ->
                 _state.update {
                     it.copy(
@@ -67,6 +73,17 @@ class AuthorViewModel(
                     )
                 }
             }
+        }
+    }
+
+    /** The author's shelf, minus modules the user chose to ignore. */
+    private fun applyIndex() {
+        val mine = index
+            .filter { it.contributor.equals(author, ignoreCase = true) }
+            .filterNot { it.packageName in ignoredModules }
+            .sortedByDescending { it.lastPublishedAt ?: Instant.EPOCH }
+        _state.update {
+            it.copy(modules = mine, installedPackages = installedPackages)
         }
     }
 

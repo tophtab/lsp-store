@@ -58,6 +58,7 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
     private var index: List<Module> = emptyList()
     private var installed: List<InstalledModule> = emptyList()
     private var links: Map<String, String> = emptyMap()
+    private var ignoredModules: Set<String> = emptySet()
     private var loadJob: Job? = null
     private val refreshScrollGate = RefreshScrollGate()
     private val searchScrollGate = RefreshScrollGate()
@@ -65,6 +66,12 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
     init {
         viewModelScope.launch {
             libraryRepository.links.collect { links = it; rebuild() }
+        }
+        viewModelScope.launch {
+            // Ignoring a module hides it from every shelf and from search, but
+            // not from the installed tab: the package is still installed and
+            // still needs managing.
+            libraryRepository.ignoredModules.collect { ignoredModules = it; rebuild() }
         }
         load(force = false)
     }
@@ -216,16 +223,17 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
         // the only place to browse modules, so a fixed limit hid the rest.
         // Zero-star modules stay at the end of the "Most starred" list instead
         // of being dropped.
-        val recentlyUpdated = index
+        val visible = index.filterNot { it.packageName in ignoredModules }
+        val recentlyUpdated = visible
             .sortedByDescending { it.lastPublishedAt ?: Instant.EPOCH }
-        val mostStarred = index
+        val mostStarred = visible
             .sortedWith(compareByDescending<Module> { it.stars }.thenBy { it.title })
 
         val query = _state.value.searchQuery.trim()
         val searchResults = if (query.isBlank()) {
             emptyList()
         } else {
-            index
+            visible
                 .filter { module ->
                     module.title.contains(query, ignoreCase = true) ||
                         module.packageName.contains(query, ignoreCase = true) ||

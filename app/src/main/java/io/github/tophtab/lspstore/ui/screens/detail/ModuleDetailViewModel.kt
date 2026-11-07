@@ -29,7 +29,6 @@ import io.github.tophtab.lspstore.domain.model.PendingInstall
 import io.github.tophtab.lspstore.domain.model.Release
 import io.github.tophtab.lspstore.domain.model.ReleaseAsset
 import io.github.tophtab.lspstore.domain.model.ReleaseChannel
-import io.github.tophtab.lspstore.domain.model.SkippedVersion
 import io.github.tophtab.lspstore.domain.variant.ApkMeta
 import io.github.tophtab.lspstore.domain.variant.ModuleVariantState
 import io.github.tophtab.lspstore.domain.variant.ScoredAsset
@@ -59,7 +58,8 @@ data class ModuleDetailUiState(
      */
     val channel: ReleaseChannel = ReleaseChannel.STABLE,
     val isFavourite: Boolean = false,
-    val skippedVersion: SkippedVersion? = null,
+    /** Whether the user hid this module from the repository's browsing lists. */
+    val isModuleIgnored: Boolean = false,
     /** Resolving the variant: no download has started yet. */
     val isBusy: Boolean = false,
     /** Download/install started from this page, still running. */
@@ -93,9 +93,6 @@ data class ModuleDetailUiState(
     val latestVersion: ModuleVersion?
         get() = detail?.module?.latestFor(channel)
 
-    val latestVersionCode: Long?
-        get() = latestVersion?.versionCode
-
     val updateAvailable: Boolean
         get() {
             val installed = installed ?: return false
@@ -103,12 +100,6 @@ data class ModuleDetailUiState(
             // Same rule as UpdateChecker: a versionName-only difference caused by
             // author naming is not an update.
             return latest.versionCode > installed.versionCode
-        }
-
-    val isUpdateSkipped: Boolean
-        get() {
-            val latest = latestVersion ?: return false
-            return skippedVersion?.matches(latest) == true
         }
 }
 
@@ -171,8 +162,8 @@ class ModuleDetailViewModel(
             }
         }
         viewModelScope.launch {
-            libraryRepository.skippedUpdates.collect { skipped ->
-                _state.update { it.copy(skippedVersion = skipped[packageName]) }
+            libraryRepository.ignoredModules.collect { ignored ->
+                _state.update { it.copy(isModuleIgnored = packageName in ignored) }
             }
         }
         viewModelScope.launch {
@@ -342,13 +333,23 @@ class ModuleDetailViewModel(
         viewModelScope.launch { libraryRepository.toggleFavourite(packageName) }
     }
 
-    fun skipThisVersion() {
-        val version = _state.value.latestVersion ?: return
-        viewModelScope.launch { libraryRepository.skipUpdate(packageName, version) }
-    }
-
-    fun unskipVersion() {
-        viewModelScope.launch { libraryRepository.unskipUpdate(packageName) }
+    /**
+     * Hides the module from the repository's browsing lists, or restores it.
+     * The detail page stays open either way; the change lands in the lists the
+     * user came from.
+     */
+    fun setModuleIgnored(ignored: Boolean) {
+        viewModelScope.launch {
+            libraryRepository.setModuleIgnored(packageName, ignored)
+            _state.update {
+                it.copy(
+                    message = container.appContext.getString(
+                        if (ignored) R.string.detail_module_ignored
+                        else R.string.detail_module_unignored,
+                    ),
+                )
+            }
+        }
     }
 
     fun installLatest() {
