@@ -51,6 +51,7 @@ import io.github.tophtab.lspstore.ui.design.KomiButton
 import io.github.tophtab.lspstore.ui.design.KomiButtonSize
 import io.github.tophtab.lspstore.ui.design.KomiButtonVariant
 import io.github.tophtab.lspstore.ui.design.KomiCompactSegmented
+import io.github.tophtab.lspstore.ui.design.KomiDialog
 import io.github.tophtab.lspstore.ui.design.KomiFilterChip
 import io.github.tophtab.lspstore.ui.design.KomiSegment
 import io.github.tophtab.lspstore.ui.design.KomiSettingsExpandableRow
@@ -84,6 +85,7 @@ fun SettingsScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scrollState = rememberScrollState()
     var translationExpanded by rememberSaveable { mutableStateOf(false) }
+    var hideIconConfirm by rememberSaveable { mutableStateOf(false) }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     // Resolved in composition: LocalContext.getString would keep a stale value
@@ -170,6 +172,17 @@ fun SettingsScreen(
                         subtitle = stringResource(R.string.settings_dynamic_desc),
                         checked = state.dynamicColor,
                         onCheckedChange = viewModel::setDynamicColor,
+                    )
+                    KomiSettingsSwitchRow(
+                        title = stringResource(R.string.settings_hide_icon),
+                        subtitle = stringResource(R.string.settings_hide_icon_desc),
+                        checked = state.hideLauncherIcon,
+                        onCheckedChange = { checked ->
+                            // Hiding removes the only obvious way back in, so it
+                            // is confirmed first; restoring needs no ceremony.
+                            if (checked) hideIconConfirm = true
+                            else viewModel.setHideLauncherIcon(false)
+                        },
                         last = true,
                     )
                 }
@@ -437,6 +450,27 @@ fun SettingsScreen(
                     )
                 }
             }
+        }
+    }
+
+    if (hideIconConfirm) {
+        KomiDialog(
+            onDismissRequest = { hideIconConfirm = false },
+            title = stringResource(R.string.settings_hide_icon_confirm_title),
+            confirmLabel = stringResource(R.string.settings_hide_icon_confirm_action),
+            onConfirm = {
+                hideIconConfirm = false
+                viewModel.setHideLauncherIcon(true)
+            },
+            dismissLabel = stringResource(R.string.action_cancel),
+            onDismiss = { hideIconConfirm = false },
+        ) {
+            KomiText(
+                text = stringResource(R.string.settings_hide_icon_confirm_message),
+                role = KomiTextRole.Body,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontSize = 13.sp,
+            )
         }
     }
 }

@@ -126,6 +126,13 @@
     <string name="settings_amoled_desc">অন্ধকার মোডে খাঁটি কালো পৃষ্ঠ ব্যবহার করুন</string>
     <string name="settings_dynamic">গতিশীল রঙ</string>
     <string name="settings_dynamic_desc">ওয়ালপেপার থেকে উপাদান আপনি রং ব্যবহার করুন</string>
+
+    <string name="settings_hide_icon">লঞ্চার আইকন লুকান</string>
+    <string name="settings_hide_icon_desc">লঞ্চার থেকে LSP Store সরান। LSPosed ম্যানেজার থেকে আবার খুলুন।</string>
+    <string name="settings_hide_icon_confirm_title">লঞ্চার আইকন লুকাবেন?</string>
+    <string name="settings_hide_icon_confirm_message">LSP Store লঞ্চার থেকে অদৃশ্য হবে। আবার খুলতে LSPosed ম্যানেজার > মডিউল > LSP Store-এ যান।</string>
+    <string name="settings_hide_icon_confirm_action">লুকান</string>
+    <string name="settings_hide_icon_hidden">লঞ্চার আইকন লুকানো হয়েছে। LSPosed ম্যানেজার থেকে LSP Store আবার খুলুন।</string>
     <string name="settings_root_section">Root</string>
     <string name="settings_root">রুট নীরব ইনস্টল</string>
     <string name="settings_root_detected">su সনাক্ত করা হয়েছে, APK গুলি নিঃশব্দে ইনস্টল হয়৷</string>

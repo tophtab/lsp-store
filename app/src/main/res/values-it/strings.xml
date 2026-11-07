@@ -126,6 +126,13 @@
     <string name="settings_amoled_desc">Utilizza superfici nere pure in modalità oscura</string>
     <string name="settings_dynamic">Colore dinamico</string>
     <string name="settings_dynamic_desc">Usa i colori del materiale che hai dallo sfondo</string>
+
+    <string name="settings_hide_icon">Nascondi icona del launcher</string>
+    <string name="settings_hide_icon_desc">Rimuovi LSP Store dal launcher. Riaprilo da LSPosed Manager.</string>
+    <string name="settings_hide_icon_confirm_title">Nascondere l\'icona del launcher?</string>
+    <string name="settings_hide_icon_confirm_message">LSP Store scomparirà dal launcher. Per riaprirlo, vai su LSPosed Manager > Moduli > LSP Store.</string>
+    <string name="settings_hide_icon_confirm_action">Nascondi</string>
+    <string name="settings_hide_icon_hidden">Icona del launcher nascosta. Riapri LSP Store da LSPosed Manager.</string>
     <string name="settings_root_section">Root</string>
     <string name="settings_root">Installazione silenziosa root</string>
     <string name="settings_root_detected">su rilevato, gli APK vengono installati in modalità silenziosa</string>

@@ -10,6 +10,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
+import io.github.tophtab.lspstore.data.device.LauncherIcon
 import io.github.tophtab.lspstore.data.update.UpdateScheduler
 import io.github.tophtab.lspstore.di.AppContainer
 import io.github.tophtab.lspstore.domain.variant.ModuleVariantState
@@ -27,6 +28,7 @@ class LspStoreApp : Application(), ImageLoaderFactory {
         super.onCreate()
         container = AppContainer(this)
         applyMirror()
+        applyLauncherIcon()
         syncUpdateSchedule()
         reconcilePendingInstalls()
         seedVariantStates()
@@ -97,6 +99,20 @@ class LspStoreApp : Application(), ImageLoaderFactory {
                     )
                 }
                 prefs.edit().putBoolean(KEY_VARIANT_SEED_DONE, true).apply()
+            }
+        }
+    }
+
+    /**
+     * Re-applies the stored launcher visibility. Component state lives in
+     * PackageManager, not in the app's data, so a package update or a restored
+     * backup can leave the alias out of sync with the setting.
+     */
+    private fun applyLauncherIcon() {
+        appScope.launch {
+            runCatching {
+                val hidden = container.settingsRepository.hideLauncherIcon.first()
+                LauncherIcon.setHidden(this@LspStoreApp, hidden)
             }
         }
     }

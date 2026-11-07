@@ -150,6 +150,13 @@
     <string name="settings_amoled_desc">Use pure black surfaces in dark mode</string>
     <string name="settings_dynamic">Dynamic color</string>
     <string name="settings_dynamic_desc">Use Material You colors from the wallpaper</string>
+
+    <string name="settings_hide_icon">Hide launcher icon</string>
+    <string name="settings_hide_icon_desc">Remove LSP Store from the launcher. Reopen it from LSPosed Manager.</string>
+    <string name="settings_hide_icon_confirm_title">Hide launcher icon?</string>
+    <string name="settings_hide_icon_confirm_message">LSP Store will disappear from your launcher. To open it again, go to LSPosed Manager > Modules > LSP Store.</string>
+    <string name="settings_hide_icon_confirm_action">Hide</string>
+    <string name="settings_hide_icon_hidden">Launcher icon hidden. Reopen LSP Store from LSPosed Manager.</string>
     <string name="settings_root_section">Root</string>
     <string name="settings_root">Root silent install</string>
     <string name="settings_root_detected">su detected, APKs install silently</string>

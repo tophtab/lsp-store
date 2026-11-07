@@ -126,6 +126,13 @@
     <string name="settings_amoled_desc">Karanlık modda saf siyah yüzeyler kullanın</string>
     <string name="settings_dynamic">Dinamik renk</string>
     <string name="settings_dynamic_desc">Duvar kağıdındaki Material You renklerini kullanın</string>
+
+    <string name="settings_hide_icon">Başlatıcı simgesini gizle</string>
+    <string name="settings_hide_icon_desc">LSP Store\'u başlatıcıdan kaldırın. LSPosed Manager\'dan yeniden açın.</string>
+    <string name="settings_hide_icon_confirm_title">Başlatıcı simgesi gizlensin mi?</string>
+    <string name="settings_hide_icon_confirm_message">LSP Store başlatıcıdan kaybolacak. Yeniden açmak için LSPosed Manager > Modüller > LSP Store bölümüne gidin.</string>
+    <string name="settings_hide_icon_confirm_action">Gizle</string>
+    <string name="settings_hide_icon_hidden">Başlatıcı simgesi gizlendi. LSP Store\'u LSPosed Manager\'dan yeniden açın.</string>
     <string name="settings_root_section">Root</string>
     <string name="settings_root">Kök sessiz kurulum</string>
     <string name="settings_root_detected">su algılandı, APK\'lar sessizce yükleniyor</string>

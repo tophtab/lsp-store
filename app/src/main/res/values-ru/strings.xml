@@ -126,6 +126,13 @@
     <string name="settings_amoled_desc">Используйте чисто черные поверхности в темном режиме.</string>
     <string name="settings_dynamic">Динамический цвет</string>
     <string name="settings_dynamic_desc">Используйте цвета Material You с обоев.</string>
+
+    <string name="settings_hide_icon">Скрыть значок в лаунчере</string>
+    <string name="settings_hide_icon_desc">Уберите LSP Store из лаунчера. Откройте его снова из LSPosed Manager.</string>
+    <string name="settings_hide_icon_confirm_title">Скрыть значок в лаунчере?</string>
+    <string name="settings_hide_icon_confirm_message">LSP Store исчезнет из лаунчера. Чтобы снова открыть его, перейдите в LSPosed Manager > Модули > LSP Store.</string>
+    <string name="settings_hide_icon_confirm_action">Скрыть</string>
+    <string name="settings_hide_icon_hidden">Значок в лаунчере скрыт. Откройте LSP Store снова из LSPosed Manager.</string>
     <string name="settings_root_section">Root</string>
     <string name="settings_root">Тихая установка root</string>
     <string name="settings_root_detected">su обнаружен, APK устанавливаются автоматически</string>
