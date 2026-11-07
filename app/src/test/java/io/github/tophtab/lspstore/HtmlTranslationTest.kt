@@ -55,11 +55,35 @@ class HtmlTranslationTest {
     }
 
     @Test
-    fun `reordered tokens reject the translation`() {
-        val protected = HtmlTranslation.protect("<p><b>Hello</b></p>")
-        val reordered = "⟦1⟧⟦0⟧⟦2⟧⟦3⟧"
+    fun `reordered tokens keep the markup they stand for`() {
+        val html = "<li>Download <code>app.apk</code> from the " +
+            "<a href=\"https://example.com\">latest release</a> and install it.</li>"
+        val protected = HtmlTranslation.protect(html)
 
-        assertNull(HtmlTranslation.restore(reordered, protected.tokens))
+        // Providers reorder words while translating and each token travels with
+        // its word, so the link can come back before the file name.
+        val reordered = "⟦0⟧从⟦2⟧最新版本⟦3⟧下载⟦1⟧并安装。⟦4⟧"
+
+        assertEquals(
+            "<li>从<a href=\"https://example.com\">最新版本</a>下载" +
+                "<code>app.apk</code>并安装。</li>",
+            HtmlTranslation.restore(reordered, protected.tokens),
+        )
+    }
+
+    @Test
+    fun `a duplicated token rejects the translation`() {
+        val protected = HtmlTranslation.protect("<p>Hello</p>")
+        val duplicated = "⟦0⟧Hello⟦1⟧⟦1⟧"
+
+        assertNull(HtmlTranslation.restore(duplicated, protected.tokens))
+    }
+
+    @Test
+    fun `a token outside the protected list rejects the translation`() {
+        val protected = HtmlTranslation.protect("<p>Hello</p>")
+
+        assertNull(HtmlTranslation.restore("⟦0⟧Hello⟦7⟧", protected.tokens))
     }
 
     @Test
