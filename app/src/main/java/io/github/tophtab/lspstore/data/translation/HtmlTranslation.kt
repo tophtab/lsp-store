@@ -47,13 +47,17 @@ internal object HtmlTranslation {
     }
 
     /**
-     * Puts every token back. A translator that lost, duplicated or reordered a
-     * token produces HTML that no longer matches the original structure, so that
-     * result is rejected instead of rendering it.
+     * Puts every token back. A translator reorders words while translating, so a
+     * token, which travels with its word, may come back in a different position;
+     * each token still goes back to the markup it stands for, wherever the
+     * translation put it. A lost or duplicated token would leave the HTML
+     * without a tag (or with two), so that result is rejected instead of
+     * rendering it.
      */
     fun restore(text: String, tokens: List<String>): String? {
-        val found = TOKEN.findAll(text).map { it.groupValues[1].toInt() }.toList()
-        if (found != tokens.indices.toList()) return null
+        val found = TOKEN.findAll(text).map { it.groupValues[1].toIntOrNull() }.toList()
+        if (found.any { it == null } || found.size != tokens.size) return null
+        if (found.toSet() != tokens.indices.toSet()) return null
         return TOKEN.replace(text) { tokens[it.groupValues[1].toInt()] }
     }
 
