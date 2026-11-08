@@ -77,7 +77,6 @@ fun SettingsScreen(
     onOpenSkipped: () -> Unit,
     onOpenIgnoredModules: () -> Unit,
     onOpenAbout: () -> Unit,
-    onOpenDiagnostics: () -> Unit,
     onOpenMirrors: () -> Unit,
     reselectTick: Int = 0,
 ) {
@@ -507,10 +506,6 @@ fun SettingsScreen(
                     KomiSettingsRow(
                         title = stringResource(R.string.mirror_title),
                         onClick = onOpenMirrors,
-                    )
-                    KomiSettingsRow(
-                        title = stringResource(R.string.diagnostics_title),
-                        onClick = onOpenDiagnostics,
                     )
                     KomiSettingsRow(
                         title = stringResource(R.string.settings_about),

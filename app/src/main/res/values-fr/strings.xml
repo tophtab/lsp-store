@@ -138,8 +138,8 @@
     <string name="settings_hide_icon_confirm_message">LSP Store disparaîtra du lanceur. Pour le rouvrir, allez dans LSPosed Manager > Modules > LSP Store.</string>
     <string name="settings_hide_icon_confirm_action">Masquer</string>
     <string name="settings_hide_icon_hidden">Icône du lanceur masquée. Rouvrez LSP Store depuis LSPosed Manager.</string>
-    <string name="settings_root_section">Root</string>
-    <string name="settings_root">Installation silencieuse root</string>
+    <string name="settings_root_section">Installation</string>
+    <string name="settings_root">Installation silencieuse</string>
     <string name="settings_root_detected">su détecté, les APK s\'installent silencieusement</string>
     <string name="settings_root_unavailable">su n\'est pas disponible sur cet appareil</string>
     <string name="settings_root_desc">Installez et mettez à jour les APK en silence via su</string>
@@ -190,7 +190,6 @@
     <string name="settings_download_location_reset">Emplacement des téléchargements réinitialisé</string>
     <string name="settings_download_location_failed">Ce dossier ne peut pas être utilisé. Choisissez-en un autre.</string>
     <string name="action_reset">Réinitialiser</string>
-    <string name="diagnostics_title">Informations sur l\'application et diagnostics</string>
     <string name="diagnostics_app">Application</string>
     <string name="diagnostics_version">Version</string>
     <string name="diagnostics_android">Androïde</string>
@@ -328,6 +327,6 @@
     <string name="settings_wifi_only_desc">Lance la vérification en arrière-plan uniquement sur les réseaux non limités.</string>
     <string name="settings_auto_update">Installer les mises à jour automatiquement</string>
     <string name="settings_auto_update_desc">Installe les mises à jour en silence via root après une vérification en arrière-plan.</string>
-    <string name="settings_auto_update_needs_root">Activez d\'abord « Installation silencieuse root ».</string>
+    <string name="settings_auto_update_needs_root">Activez d\'abord « Installation silencieuse ».</string>
     <string name="settings_notifications_needed">Les notifications sont désactivées : la vérification en arrière-plan ne peut pas signaler les mises à jour.</string>
 </resources>
