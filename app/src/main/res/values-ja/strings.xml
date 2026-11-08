@@ -260,6 +260,7 @@
     <string name="error_install_failed">インストールに失敗しました</string>
     <string name="installer_silent_failed">サイレントインストールに失敗しました (su)</string>
     <string name="installer_launch_failed">インストーラーを起動できません</string>
+    <string name="installer_uninstall_launch_failed">アンインストーラーを開けません</string>
     <string name="installer_no_handler">このデバイスには APK をインストールできるアプリはありません</string>
     <string name="installer_unknown_sources">LSP Store に対して「不明なアプリのインストール」を許可して、もう一度お試しください</string>
     <string name="installer_apk_missing">APK ファイルが見つかりません: %1$s</string>
@@ -282,6 +283,8 @@
     <string name="variant_field_choose">APK を選択してください (%1$d)</string>
     <string name="variant_incompatible_group">このデバイスと互換性がありません (%1$d)</string>
     <string name="installed_update_skipped">%1$s のこのバージョンを無視しました</string>
+    <string name="installed_uninstalled">%1$s をアンインストールしました</string>
+    <string name="installed_uninstall_confirm_message">%1$s をアンインストールしますか？この操作は元に戻せません。</string>
     <string name="error_repository_stale">リポジトリがまだ古いリリースを返しています。もう一度お試しください。</string>
 
     <!-- Background update check -->

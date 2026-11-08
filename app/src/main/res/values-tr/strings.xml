@@ -260,6 +260,7 @@
     <string name="error_install_failed">Yükleme başarısız oldu</string>
     <string name="installer_silent_failed">Sessiz yükleme başarısız oldu (su)</string>
     <string name="installer_launch_failed">Yükleyici başlatılamıyor</string>
+    <string name="installer_uninstall_launch_failed">Kaldırıcı açılamadı</string>
     <string name="installer_no_handler">Bu cihazdaki hiçbir uygulama APK yükleyemez</string>
     <string name="installer_unknown_sources">LSP Store için \\"Bilinmeyen uygulamaları yükle\\" seçeneğine izin verin ve tekrar deneyin</string>
     <string name="installer_apk_missing">APK dosyası eksik: %1$s</string>
@@ -282,6 +283,8 @@
     <string name="variant_field_choose">Bir APK seçin (%1$d)</string>
     <string name="variant_incompatible_group">Bu cihazla uyumlu değil (%1$d)</string>
     <string name="installed_update_skipped">%1$s uygulamasının bu sürümü yoksayıldı</string>
+    <string name="installed_uninstalled">%1$s kaldırıldı</string>
+    <string name="installed_uninstall_confirm_message">%1$s kaldırılsın mı? Bu işlem geri alınamaz.</string>
     <string name="error_repository_stale">Depo hâlâ daha eski bir sürüm sunuyor. Tekrar deneyin.</string>
 
     <!-- Background update check -->

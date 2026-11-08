@@ -14,6 +14,7 @@ import io.github.tophtab.lspstore.R
 import io.github.tophtab.lspstore.data.install.InstallStage
 import io.github.tophtab.lspstore.data.install.ModuleInstallRequest
 import io.github.tophtab.lspstore.data.install.ModuleInstallRun
+import io.github.tophtab.lspstore.data.install.UninstallOutcome
 import io.github.tophtab.lspstore.data.repository.PendingInstallRepository
 import io.github.tophtab.lspstore.di.AppContainer
 import io.github.tophtab.lspstore.domain.model.InstalledModule
@@ -85,6 +86,8 @@ data class InstalledUiState(
     val unknown: List<InstalledModule> = emptyList(),
     val repoPackageByInstalled: Map<String, String> = emptyMap(),
     val installedCount: Int = 0,
+    /** Mirrors the root switch: a silent uninstall asks for confirmation first. */
+    val rootInstall: Boolean = false,
     /** Repository packages whose updates follow pre-releases too. */
     val preReleases: Set<String> = emptySet(),
     /** Repository packages that publish pre-releases at all (menu visibility). */
@@ -157,6 +160,11 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
     private var batchGeneration: Int = 0
 
     init {
+        viewModelScope.launch {
+            settingsRepository.rootInstall.collect { enabled ->
+                _state.update { it.copy(rootInstall = enabled) }
+            }
+        }
         viewModelScope.launch {
             libraryRepository.skippedUpdates.collect { value -> skipped = value; recompute() }
         }
@@ -596,6 +604,35 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
 
     fun dismissPending(packageName: String) {
         viewModelScope.launch { pendingRepository.clear(packageName) }
+    }
+
+    /**
+     * Uninstalls [packageName] from a row's menu. With the root switch on, su
+     * removes the package in-process and the list refreshes without leaving the
+     * screen; otherwise the system uninstaller takes over, and its confirmation
+     * page is the report.
+     */
+    fun uninstall(packageName: String, label: String) {
+        viewModelScope.launch {
+            when (val outcome = container.uninstallModule(packageName)) {
+                UninstallOutcome.Completed -> {
+                    reloadInstalled()
+                    _state.update {
+                        it.copy(
+                            message = container.appContext.getString(
+                                R.string.installed_uninstalled,
+                                label,
+                            ),
+                        )
+                    }
+                }
+
+                UninstallOutcome.DelegatedToSystem -> Unit
+
+                is UninstallOutcome.Failure ->
+                    _state.update { it.copy(message = outcome.message) }
+            }
+        }
     }
 
     /** Loads the latest release's variants so the user can pin the one updates use. */

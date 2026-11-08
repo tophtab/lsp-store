@@ -85,6 +85,8 @@
     <string name="installed_variant_saved">已儲存偏好變體</string>
     <string name="installed_variant_auto_saved">已改為自動選擇變體</string>
     <string name="installed_update_ignored">已忽略 %1$s 的更新</string>
+    <string name="installed_uninstalled">已解除安裝 %1$s</string>
+    <string name="installed_uninstall_confirm_message">解除安裝 %1$s？此操作無法復原。</string>
     <string name="installed_update_unignored">已恢復 %1$s 的更新</string>
 
     <!-- Detail -->
@@ -278,6 +280,7 @@
     <string name="error_no_apk_asset">未找到 APK 檔案</string>
     <string name="error_install_failed">安裝失敗</string>
     <string name="installer_launch_failed">無法啟動安裝器</string>
+    <string name="installer_uninstall_launch_failed">無法開啟解除安裝程式</string>
 
     <!-- Notifications -->
     <string name="detail_install_finished">安裝完成</string>

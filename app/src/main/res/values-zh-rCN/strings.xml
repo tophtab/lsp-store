@@ -84,6 +84,8 @@
     <string name="installed_update_ignored">已忽略 %1$s 的更新</string>
     <string name="installed_update_unignored">已恢复 %1$s 的更新</string>
     <string name="installed_update_skipped">已忽略 %1$s 的此版本</string>
+    <string name="installed_uninstalled">已卸载 %1$s</string>
+    <string name="installed_uninstall_confirm_message">卸载 %1$s？此操作无法撤销。</string>
 
     <!-- Detail -->
     <string name="detail_readme">说明</string>
@@ -277,6 +279,7 @@
     <string name="error_repository_stale">仓库仍在返回旧版本，请稍后重试</string>
     <string name="error_install_failed">安装失败</string>
     <string name="installer_launch_failed">无法启动安装器</string>
+    <string name="installer_uninstall_launch_failed">无法打开卸载程序</string>
     <string name="installer_no_handler">这台设备上没有可以安装 APK 的应用</string>
     <string name="installer_unknown_sources">请先允许 LSP Store 「安装未知应用」，然后重试</string>
     <string name="installer_apk_missing">APK 文件不存在：%1$s</string>

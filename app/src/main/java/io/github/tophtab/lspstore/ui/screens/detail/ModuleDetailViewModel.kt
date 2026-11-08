@@ -13,6 +13,7 @@ import kotlinx.coroutines.launch
 import io.github.tophtab.lspstore.R
 import io.github.tophtab.lspstore.data.install.ModuleInstallRequest
 import io.github.tophtab.lspstore.data.install.ModuleInstallRun
+import io.github.tophtab.lspstore.data.install.UninstallOutcome
 import io.github.tophtab.lspstore.data.repository.InstalledModulesRepository
 import io.github.tophtab.lspstore.data.repository.LibraryRepository
 import io.github.tophtab.lspstore.data.repository.ModuleRepository
@@ -86,6 +87,8 @@ data class ModuleDetailUiState(
     val isProbing: Boolean = false,
     val pendingInstall: PendingInstall? = null,
     val installLogs: List<String> = emptyList(),
+    /** Mirrors the root switch: a silent uninstall asks for confirmation first. */
+    val rootInstall: Boolean = false,
 ) {
     val isTranslating: Boolean
         get() = translationsInFlight > 0
@@ -159,6 +162,11 @@ class ModuleDetailViewModel(
             // the manual top-bar action stays a one-shot request.
             settingsRepository.translationSettings.collect { settings ->
                 _state.update { it.copy(autoTranslate = settings.autoTranslate) }
+            }
+        }
+        viewModelScope.launch {
+            settingsRepository.rootInstall.collect { enabled ->
+                _state.update { it.copy(rootInstall = enabled) }
             }
         }
         viewModelScope.launch {
@@ -432,6 +440,35 @@ class ModuleDetailViewModel(
     fun dismissPending() {
         val target = _state.value.pendingInstall?.packageName ?: return
         viewModelScope.launch { pendingRepository.clear(target) }
+    }
+
+    /**
+     * Uninstalls the copy this page found. With the root switch on, su removes
+     * it in-process, the page rescans the device and the snackbar confirms;
+     * otherwise the system uninstaller confirmation page takes over.
+     */
+    fun uninstall() {
+        val installed = _state.value.installed ?: return
+        viewModelScope.launch {
+            when (val outcome = container.uninstallModule(installed.packageName)) {
+                UninstallOutcome.Completed -> {
+                    resolveInstalled()
+                    _state.update {
+                        it.copy(
+                            message = container.appContext.getString(
+                                R.string.installed_uninstalled,
+                                installed.label,
+                            ),
+                        )
+                    }
+                }
+
+                UninstallOutcome.DelegatedToSystem -> Unit
+
+                is UninstallOutcome.Failure ->
+                    _state.update { it.copy(message = outcome.message) }
+            }
+        }
     }
 
     fun dismissVariantPicker() {

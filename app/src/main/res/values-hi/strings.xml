@@ -260,6 +260,7 @@
     <string name="error_install_failed">इंस्टॉल विफल</string>
     <string name="installer_silent_failed">मौन स्थापना विफल (सु)</string>
     <string name="installer_launch_failed">इंस्टॉलर लॉन्च करने में असमर्थ</string>
+    <string name="installer_uninstall_launch_failed">अनइंस्टॉलर खोलने में असमर्थ</string>
     <string name="installer_no_handler">इस डिवाइस पर कोई भी ऐप APK इंस्टॉल नहीं कर सकता</string>
     <string name="installer_unknown_sources">LSP Store के लिए \\"अज्ञात ऐप्स इंस्टॉल करें\\" की अनुमति दें और पुनः प्रयास करें</string>
     <string name="installer_apk_missing">एपीके फ़ाइल गायब है: %1$s</string>
@@ -282,6 +283,8 @@
     <string name="variant_field_choose">एक एपीके चुनें (%1$d)</string>
     <string name="variant_incompatible_group">इस डिवाइस के साथ संगत नहीं है (%1$d)</string>
     <string name="installed_update_skipped">%1$s का यह संस्करण अनदेखा किया गया</string>
+    <string name="installed_uninstalled">%1$s अनइंस्टॉल किया गया</string>
+    <string name="installed_uninstall_confirm_message">%1$s अनइंस्टॉल करें? इसे पूर्ववत नहीं किया जा सकता।</string>
     <string name="error_repository_stale">रिपॉज़िटरी अभी भी पुराना रिलीज़ दे रही है। फिर से कोशिश करें।</string>
 
     <!-- Background update check -->

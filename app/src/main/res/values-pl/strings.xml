@@ -260,6 +260,7 @@
     <string name="error_install_failed">Instalacja nie powiodła się</string>
     <string name="installer_silent_failed">Cicha instalacja nie powiodła się (su)</string>
     <string name="installer_launch_failed">Nie można uruchomić instalatora</string>
+    <string name="installer_uninstall_launch_failed">Nie można otworzyć deinstalatora</string>
     <string name="installer_no_handler">Żadna aplikacja na tym urządzeniu nie może instalować plików APK</string>
     <string name="installer_unknown_sources">Zezwól na „Zainstaluj nieznane aplikacje” w LSP Store i spróbuj ponownie</string>
     <string name="installer_apk_missing">Brak pliku APK: %1$s</string>
@@ -282,6 +283,8 @@
     <string name="variant_field_choose">Wybierz plik APK (%1$d)</string>
     <string name="variant_incompatible_group">Niekompatybilny z tym urządzeniem (%1$d)</string>
     <string name="installed_update_skipped">Zignorowano tę wersję %1$s</string>
+    <string name="installed_uninstalled">Odinstalowano %1$s</string>
+    <string name="installed_uninstall_confirm_message">Odinstalować %1$s? Tej czynności nie można cofnąć.</string>
     <string name="error_repository_stale">Repozytorium nadal zwraca starsze wydanie. Spróbuj ponownie.</string>
 
     <!-- Background update check -->

@@ -260,6 +260,7 @@
     <string name="error_install_failed">La instalación falló</string>
     <string name="installer_silent_failed">Error en la instalación silenciosa (su)</string>
     <string name="installer_launch_failed">No se puede iniciar el instalador</string>
+    <string name="installer_uninstall_launch_failed">No se pudo abrir el desinstalador</string>
     <string name="installer_no_handler">Ninguna aplicación en este dispositivo puede instalar APK</string>
     <string name="installer_unknown_sources">Permita \\"Instalar aplicaciones desconocidas\\" para LSP Store e inténtelo de nuevo</string>
     <string name="installer_apk_missing">Falta el archivo APK: %1$s</string>
@@ -282,6 +283,8 @@
     <string name="variant_field_choose">Elija un APK (%1$d)</string>
     <string name="variant_incompatible_group">No compatible con este dispositivo (%1$d)</string>
     <string name="installed_update_skipped">Se ha ignorado esta versión de %1$s</string>
+    <string name="installed_uninstalled">%1$s desinstalado</string>
+    <string name="installed_uninstall_confirm_message">¿Desinstalar %1$s? Esta acción no se puede deshacer.</string>
     <string name="error_repository_stale">El repositorio sigue sirviendo una versión anterior. Inténtalo de nuevo.</string>
 
     <!-- Background update check -->

@@ -260,6 +260,7 @@
     <string name="error_install_failed">Установка не удалась</string>
     <string name="installer_silent_failed">Тихая установка не удалась (su)</string>
     <string name="installer_launch_failed">Невозможно запустить установщик</string>
+    <string name="installer_uninstall_launch_failed">Не удалось открыть программу удаления</string>
     <string name="installer_no_handler">Ни одно приложение на этом устройстве не может устанавливать APK-файлы.</string>
     <string name="installer_unknown_sources">Разрешите «Установку неизвестных приложений» для LSP Store и повторите попытку.</string>
     <string name="installer_apk_missing">APK-файл отсутствует: %1$s</string>
@@ -282,6 +283,8 @@
     <string name="variant_field_choose">Выберите APK (%1$d)</string>
     <string name="variant_incompatible_group">Несовместимо с этим устройством (%1$d)</string>
     <string name="installed_update_skipped">Эта версия %1$s игнорируется</string>
+    <string name="installed_uninstalled">Удалено: %1$s</string>
+    <string name="installed_uninstall_confirm_message">Удалить %1$s? Это действие нельзя отменить.</string>
     <string name="error_repository_stale">Репозиторий всё ещё отдаёт более старый выпуск. Повторите попытку.</string>
 
     <!-- Background update check -->

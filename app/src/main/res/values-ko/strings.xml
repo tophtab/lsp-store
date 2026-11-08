@@ -260,6 +260,7 @@
     <string name="error_install_failed">설치 실패</string>
     <string name="installer_silent_failed">자동 설치 실패(su)</string>
     <string name="installer_launch_failed">설치 프로그램을 시작할 수 없습니다</string>
+    <string name="installer_uninstall_launch_failed">제거 프로그램을 열 수 없습니다</string>
     <string name="installer_no_handler">이 기기에는 APK를 설치할 수 있는 앱이 없습니다.</string>
     <string name="installer_unknown_sources">LSP Store에 대해 \\"알 수 없는 앱 설치\\"를 허용하고 다시 시도하세요.</string>
     <string name="installer_apk_missing">APK 파일이 없습니다: %1$s</string>
@@ -282,6 +283,8 @@
     <string name="variant_field_choose">APK 선택(%1$d)</string>
     <string name="variant_incompatible_group">이 장치와 호환되지 않습니다(%1$d)</string>
     <string name="installed_update_skipped">%1$s의 이 버전을 무시했습니다</string>
+    <string name="installed_uninstalled">%1$s 제거됨</string>
+    <string name="installed_uninstall_confirm_message">%1$s을(를) 제거할까요? 이 작업은 되돌릴 수 없습니다.</string>
     <string name="error_repository_stale">저장소가 아직 이전 릴리스를 제공하고 있습니다. 다시 시도하세요.</string>
 
     <!-- Background update check -->
