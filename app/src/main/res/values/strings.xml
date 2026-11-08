@@ -164,8 +164,8 @@
     <string name="settings_hide_icon_confirm_message">LSP Store will disappear from your launcher. To open it again, go to LSPosed Manager > Modules > LSP Store.</string>
     <string name="settings_hide_icon_confirm_action">Hide</string>
     <string name="settings_hide_icon_hidden">Launcher icon hidden. Reopen LSP Store from LSPosed Manager.</string>
-    <string name="settings_root_section">Root</string>
-    <string name="settings_root">Root silent install</string>
+    <string name="settings_root_section">Install</string>
+    <string name="settings_root">Silent install</string>
     <string name="settings_root_detected">su detected, APKs install silently</string>
     <string name="settings_root_unavailable">su not available on this device</string>
     <string name="settings_root_desc">Install and update APKs silently via su</string>
@@ -194,7 +194,6 @@
     <string name="settings_apks_cleared">Downloaded APKs cleared</string>
 
     <!-- Diagnostics -->
-    <string name="diagnostics_title">App info &amp; diagnostics</string>
     <string name="diagnostics_app">App</string>
     <string name="diagnostics_version">Version</string>
     <string name="diagnostics_android">Android</string>
@@ -347,6 +346,6 @@
     <string name="settings_wifi_only_desc">Run the background check on unmetered networks only.</string>
     <string name="settings_auto_update">Install updates automatically</string>
     <string name="settings_auto_update_desc">Installs updates silently through root after a background check.</string>
-    <string name="settings_auto_update_needs_root">Turn on Root silent install first.</string>
+    <string name="settings_auto_update_needs_root">Turn on Silent install first.</string>
     <string name="settings_notifications_needed">Notifications are off: background checks cannot report updates.</string>
 </resources>

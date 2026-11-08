@@ -138,8 +138,8 @@
     <string name="settings_hide_icon_confirm_message">LSP Store লঞ্চার থেকে অদৃশ্য হবে। আবার খুলতে LSPosed ম্যানেজার > মডিউল > LSP Store-এ যান।</string>
     <string name="settings_hide_icon_confirm_action">লুকান</string>
     <string name="settings_hide_icon_hidden">লঞ্চার আইকন লুকানো হয়েছে। LSPosed ম্যানেজার থেকে LSP Store আবার খুলুন।</string>
-    <string name="settings_root_section">Root</string>
-    <string name="settings_root">রুট নীরব ইনস্টল</string>
+    <string name="settings_root_section">ইনস্টল</string>
+    <string name="settings_root">নীরব ইনস্টল</string>
     <string name="settings_root_detected">su সনাক্ত করা হয়েছে, APK গুলি নিঃশব্দে ইনস্টল হয়৷</string>
     <string name="settings_root_unavailable">su এই ডিভাইসে উপলব্ধ নয়</string>
     <string name="settings_root_desc">su এর মাধ্যমে চুপচাপ APK ইনস্টল এবং আপডেট করুন</string>
@@ -166,7 +166,6 @@
     <string name="settings_advanced">উন্নত</string>
     <string name="settings_index_cleared">ইনডেক্স ক্যাশে সাফ করা হয়েছে</string>
     <string name="settings_apks_cleared">ডাউনলোড করা APK সাফ করা হয়েছে</string>
-    <string name="diagnostics_title">অ্যাপের তথ্য ও ডায়াগনস্টিকস</string>
     <string name="diagnostics_app">অ্যাপ</string>
     <string name="diagnostics_version">সংস্করণ</string>
     <string name="diagnostics_android">অ্যান্ড্রয়েড</string>
@@ -304,6 +303,6 @@
     <string name="settings_wifi_only_desc">শুধুমাত্র আনমিটারড নেটওয়ার্কে ব্যাকগ্রাউন্ড চেক চালান।</string>
     <string name="settings_auto_update">আপডেট স্বয়ংক্রিয়ভাবে ইনস্টল করুন</string>
     <string name="settings_auto_update_desc">ব্যাকগ্রাউন্ড চেকের পরে রুটের মাধ্যমে নীরবে আপডেট ইনস্টল করে।</string>
-    <string name="settings_auto_update_needs_root">প্রথমে "রুট নীরব ইনস্টল" চালু করুন।</string>
+    <string name="settings_auto_update_needs_root">প্রথমে "নীরব ইনস্টল" চালু করুন।</string>
     <string name="settings_notifications_needed">বিজ্ঞপ্তি বন্ধ আছে: ব্যাকগ্রাউন্ড চেক আপডেট জানাতে পারবে না।</string>
 </resources>

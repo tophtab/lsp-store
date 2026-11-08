@@ -138,8 +138,8 @@
     <string name="settings_hide_icon_confirm_message">LSP Store はランチャーから消えます。再度開くには、LSPosed Manager > モジュール > LSP Store に移動してください。</string>
     <string name="settings_hide_icon_confirm_action">隠す</string>
     <string name="settings_hide_icon_hidden">ランチャーアイコンを隠しました。LSPosed Manager から LSP Store を再度開けます。</string>
-    <string name="settings_root_section">Root</string>
-    <string name="settings_root">ルートサイレントインストール</string>
+    <string name="settings_root_section">インストール</string>
+    <string name="settings_root">サイレントインストール</string>
     <string name="settings_root_detected">su が検出され、APK がサイレントにインストールされます</string>
     <string name="settings_root_unavailable">このデバイスでは su を利用できません</string>
     <string name="settings_root_desc">su 経由で APK をサイレントにインストールおよび更新する</string>
@@ -166,7 +166,6 @@
     <string name="settings_advanced">高度な</string>
     <string name="settings_index_cleared">インデックスキャッシュがクリアされました</string>
     <string name="settings_apks_cleared">ダウンロードしたAPKがクリアされました</string>
-    <string name="diagnostics_title">アプリ情報と診断</string>
     <string name="diagnostics_app">アプリ</string>
     <string name="diagnostics_version">バージョン</string>
     <string name="diagnostics_android">アンドロイド</string>
@@ -304,6 +303,6 @@
     <string name="settings_wifi_only_desc">バックグラウンド確認を従量制でないネットワークでのみ実行します。</string>
     <string name="settings_auto_update">更新を自動でインストール</string>
     <string name="settings_auto_update_desc">バックグラウンド確認後、root 経由で更新をサイレントにインストールします。</string>
-    <string name="settings_auto_update_needs_root">先に「ルートサイレントインストール」をオンにしてください。</string>
+    <string name="settings_auto_update_needs_root">先に「サイレントインストール」をオンにしてください。</string>
     <string name="settings_notifications_needed">通知がオフです: バックグラウンド確認は更新を通知できません。</string>
 </resources>

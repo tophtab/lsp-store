@@ -138,8 +138,8 @@
     <string name="settings_hide_icon_confirm_message">LSP Store scomparirà dal launcher. Per riaprirlo, vai su LSPosed Manager > Moduli > LSP Store.</string>
     <string name="settings_hide_icon_confirm_action">Nascondi</string>
     <string name="settings_hide_icon_hidden">Icona del launcher nascosta. Riapri LSP Store da LSPosed Manager.</string>
-    <string name="settings_root_section">Root</string>
-    <string name="settings_root">Installazione silenziosa root</string>
+    <string name="settings_root_section">Installazione</string>
+    <string name="settings_root">Installazione silenziosa</string>
     <string name="settings_root_detected">su rilevato, gli APK vengono installati in modalità silenziosa</string>
     <string name="settings_root_unavailable">su non disponibile su questo dispositivo</string>
     <string name="settings_root_desc">Installa e aggiorna gli APK in modalità silenziosa tramite su</string>
@@ -166,7 +166,6 @@
     <string name="settings_advanced">Avanzato</string>
     <string name="settings_index_cleared">Cache dell\'indice cancellata</string>
     <string name="settings_apks_cleared">Gli APK scaricati sono stati cancellati</string>
-    <string name="diagnostics_title">Informazioni e diagnostica sull\'app</string>
     <string name="diagnostics_app">App</string>
     <string name="diagnostics_version">Versione</string>
     <string name="diagnostics_android">Androide</string>
@@ -304,6 +303,6 @@
     <string name="settings_wifi_only_desc">Esegui il controllo in background solo su reti non a consumo.</string>
     <string name="settings_auto_update">Installa gli aggiornamenti automaticamente</string>
     <string name="settings_auto_update_desc">Installa gli aggiornamenti in silenzio tramite root dopo un controllo in background.</string>
-    <string name="settings_auto_update_needs_root">Attiva prima "Installazione silenziosa root".</string>
+    <string name="settings_auto_update_needs_root">Attiva prima "Installazione silenziosa".</string>
     <string name="settings_notifications_needed">Le notifiche sono disattivate: il controllo in background non può segnalare aggiornamenti.</string>
 </resources>

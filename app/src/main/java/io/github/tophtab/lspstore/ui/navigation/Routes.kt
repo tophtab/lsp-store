@@ -11,7 +11,6 @@ object Routes {
     const val IGNORED_MODULES = "library/ignored-modules"
     const val IMPORTS = "library/imports"
     const val ABOUT = "about"
-    const val DIAGNOSTICS = "diagnostics"
     const val LICENSES = "licenses"
     const val MIRRORS = "mirrors"
     const val AUTHOR_ARG = "author"

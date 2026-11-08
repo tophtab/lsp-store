@@ -1,4 +1,4 @@
-package io.github.tophtab.lspstore.ui.screens.diagnostics
+package io.github.tophtab.lspstore.ui.screens.about
 
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -55,8 +55,6 @@ class DiagnosticsViewModel(private val container: AppContainer) : ViewModel() {
     init {
         load()
     }
-
-    fun refresh() = load()
 
     fun clearMessage() {
         _state.update { it.copy(message = null) }

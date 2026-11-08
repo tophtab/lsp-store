@@ -138,8 +138,8 @@
     <string name="settings_hide_icon_confirm_message">LSP Store가 런처에서 사라집니다. 다시 열려면 LSPosed Manager > 모듈 > LSP Store로 이동하세요.</string>
     <string name="settings_hide_icon_confirm_action">숨기기</string>
     <string name="settings_hide_icon_hidden">런처 아이콘을 숨겼습니다. LSPosed Manager에서 LSP Store를 다시 여세요.</string>
-    <string name="settings_root_section">Root</string>
-    <string name="settings_root">루트 자동 설치</string>
+    <string name="settings_root_section">설치</string>
+    <string name="settings_root">자동 설치</string>
     <string name="settings_root_detected">감지됨, APK가 자동으로 설치됨</string>
     <string name="settings_root_unavailable">이 장치에서는 su를 사용할 수 없습니다</string>
     <string name="settings_root_desc">su를 통해 자동으로 APK 설치 및 업데이트</string>
@@ -166,7 +166,6 @@
     <string name="settings_advanced">고급의</string>
     <string name="settings_index_cleared">인덱스 캐시가 지워졌습니다.</string>
     <string name="settings_apks_cleared">다운로드한 APK가 삭제되었습니다.</string>
-    <string name="diagnostics_title">앱 정보 및 진단</string>
     <string name="diagnostics_app">앱</string>
     <string name="diagnostics_version">버전</string>
     <string name="diagnostics_android">기계적 인조 인간</string>
@@ -304,6 +303,6 @@
     <string name="settings_wifi_only_desc">종량제가 아닌 네트워크에서만 백그라운드 확인을 실행합니다.</string>
     <string name="settings_auto_update">업데이트 자동 설치</string>
     <string name="settings_auto_update_desc">백그라운드 확인 후 루트를 통해 업데이트를 자동으로 설치합니다.</string>
-    <string name="settings_auto_update_needs_root">먼저 "루트 자동 설치"를 켜세요.</string>
+    <string name="settings_auto_update_needs_root">먼저 "자동 설치"를 켜세요.</string>
     <string name="settings_notifications_needed">알림이 꺼져 있습니다: 백그라운드 확인이 업데이트를 알릴 수 없습니다.</string>
 </resources>

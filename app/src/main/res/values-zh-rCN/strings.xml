@@ -146,8 +146,8 @@
     <string name="settings_hide_icon_confirm_message">LSP Store 将从桌面消失。如需再次打开，请前往 LSPosed 管理器 > 模块 > LSP Store。</string>
     <string name="settings_hide_icon_confirm_action">隐藏</string>
     <string name="settings_hide_icon_hidden">已隐藏桌面图标。可从 LSPosed 管理器重新打开 LSP Store。</string>
-    <string name="settings_root_section">Root 权限</string>
-    <string name="settings_root">Root 静默安装</string>
+    <string name="settings_root_section">安装</string>
+    <string name="settings_root">静默安装</string>
     <string name="settings_root_detected">检测到 su，APK 将静默安装</string>
     <string name="settings_root_unavailable">此设备没有 su</string>
     <string name="settings_root_desc">通过 su 静默安装和更新 APK</string>
@@ -176,7 +176,6 @@
     <string name="settings_apks_cleared">已清除下载的 APK</string>
 
     <!-- Diagnostics -->
-    <string name="diagnostics_title">应用信息与诊断</string>
     <string name="diagnostics_app">应用</string>
     <string name="diagnostics_version">版本</string>
     <string name="diagnostics_android">Android</string>
@@ -341,6 +340,6 @@
     <string name="settings_wifi_only_desc">仅在非计费网络上运行后台检查。</string>
     <string name="settings_auto_update">自动安装更新</string>
     <string name="settings_auto_update_desc">后台检查后通过 Root 静默安装更新。</string>
-    <string name="settings_auto_update_needs_root">请先开启“Root 静默安装”。</string>
+    <string name="settings_auto_update_needs_root">请先开启“静默安装”。</string>
     <string name="settings_notifications_needed">通知已关闭：后台检查无法提示更新。</string>
 </resources>

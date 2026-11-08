@@ -86,7 +86,6 @@ import io.github.tophtab.lspstore.ui.navigation.tabSwitchPopTarget
 import io.github.tophtab.lspstore.ui.screens.about.AboutScreen
 import io.github.tophtab.lspstore.ui.screens.author.AuthorScreen
 import io.github.tophtab.lspstore.ui.screens.detail.ModuleDetailScreen
-import io.github.tophtab.lspstore.ui.screens.diagnostics.DiagnosticsScreen
 import io.github.tophtab.lspstore.ui.screens.home.HomeScreen
 import io.github.tophtab.lspstore.ui.screens.imports.ExternalImportScreen
 import io.github.tophtab.lspstore.ui.screens.installed.InstalledScreen
@@ -393,19 +392,12 @@ private fun AppNavHost(
                 onOpenIgnoredModules = { navController.navigate(Routes.IGNORED_MODULES) },
                 onOpenAbout = { navController.navigate(Routes.ABOUT) },
                 onOpenImports = { navController.navigate(Routes.IMPORTS) },
-                onOpenDiagnostics = { navController.navigate(Routes.DIAGNOSTICS) },
                 onOpenMirrors = { navController.navigate(Routes.MIRRORS) },
                 reselectTick = if (reselectRoute == Routes.SETTINGS) reselectTick else 0,
             )
         }
         composable(Routes.MIRRORS) {
             MirrorPickerScreen(onBack = { navController.popBackStack() })
-        }
-        composable(Routes.DIAGNOSTICS) {
-            DiagnosticsScreen(
-                onBack = { navController.popBackStack() },
-                onOpenLicenses = { navController.navigate(Routes.LICENSES) },
-            )
         }
         composable(Routes.LICENSES) {
             LicensesScreen(onBack = { navController.popBackStack() })
@@ -440,7 +432,10 @@ private fun AppNavHost(
             )
         }
         composable(Routes.ABOUT) {
-            AboutScreen(onBack = { navController.popBackStack() })
+            AboutScreen(
+                onBack = { navController.popBackStack() },
+                onOpenLicenses = { navController.navigate(Routes.LICENSES) },
+            )
         }
         composable(
             route = Routes.DETAIL,
