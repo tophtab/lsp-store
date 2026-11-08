@@ -166,6 +166,17 @@ fun ModuleDetailScreen(packageName: String, onBack: () -> Unit, onOpenAuthor: (S
     }
     val shareTitle = stringResource(R.string.detail_share_module)
     val installedPackage = state.installed?.packageName ?: packageName
+    val uninstallLabel = state.installed?.label ?: state.detail?.module?.title ?: packageName
+    // A silent (root) uninstall would delete without any system prompt, so ask
+    // here first; without root the system confirmation page is the prompt.
+    var uninstallConfirm by remember { mutableStateOf(false) }
+    fun requestUninstall() {
+        if (state.rootInstall) {
+            uninstallConfirm = true
+        } else {
+            viewModel.uninstall()
+        }
+    }
     val sourceUrl = state.detail?.sourceUrl ?: state.detail?.module?.url
     val canTranslate = state.detail?.let { detail ->
         !detail.module.summary.isNullOrBlank() ||
@@ -364,9 +375,7 @@ fun ModuleDetailScreen(packageName: String, onBack: () -> Unit, onOpenAuthor: (S
                         tint = MaterialTheme.colorScheme.error,
                         onClick = {
                             menuOpen = false
-                            context.startActivity(
-                                Intent(Intent.ACTION_DELETE, "package:$installedPackage".toUri()),
-                            )
+                            requestUninstall()
                         },
                     )
                 }
@@ -383,6 +392,27 @@ fun ModuleDetailScreen(packageName: String, onBack: () -> Unit, onOpenAuthor: (S
             },
             onDismiss = viewModel::dismissVariantPicker,
         )
+    }
+
+    if (uninstallConfirm) {
+        KomiDialog(
+            onDismissRequest = { uninstallConfirm = false },
+            title = uninstallLabel,
+            confirmLabel = stringResource(R.string.detail_uninstall),
+            onConfirm = {
+                uninstallConfirm = false
+                viewModel.uninstall()
+            },
+            dismissLabel = stringResource(R.string.action_cancel),
+            onDismiss = { uninstallConfirm = false },
+        ) {
+            KomiText(
+                text = stringResource(R.string.installed_uninstall_confirm_message, uninstallLabel),
+                role = KomiTextRole.Body,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontSize = 13.sp,
+            )
+        }
     }
 }
 

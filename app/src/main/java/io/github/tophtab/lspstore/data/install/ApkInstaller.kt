@@ -2,6 +2,7 @@ package io.github.tophtab.lspstore.data.install
 
 import android.content.Context
 import android.content.Intent
+import android.os.Process
 import android.provider.Settings
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
@@ -16,6 +17,9 @@ import java.util.concurrent.TimeUnit
 // komi-store's AndroidInstaller hands the APK to the device's installer of record
 // through a plain VIEW intent; nothing here targets a specific installer app.
 private const val APK_MIME_TYPE = "application/vnd.android.package-archive"
+
+/** Hidden UserHandle constant; uid = userId * range + appId. */
+private const val PER_USER_RANGE = 100_000
 
 /**
  * Result of an install request.
@@ -33,6 +37,22 @@ sealed interface InstallOutcome {
     data object DelegatedToSystem : InstallOutcome
 
     data class Failure(val message: String) : InstallOutcome
+}
+
+/**
+ * Result of an uninstall request.
+ *
+ * A non-privileged caller has no in-process result: the system uninstaller owns
+ * the confirmation page, and [PackageEventReceiver] reports the removal.
+ */
+sealed interface UninstallOutcome {
+    /** su removed the package in-process. */
+    data object Completed : UninstallOutcome
+
+    /** The package was handed to the system uninstaller confirmation page. */
+    data object DelegatedToSystem : UninstallOutcome
+
+    data class Failure(val message: String) : UninstallOutcome
 }
 
 class ApkInstaller(
@@ -119,6 +139,28 @@ class ApkInstaller(
     }
 
     /**
+     * Removes [packageName], preferring the privileged path when [useRoot] is
+     * set.
+     *
+     * Like [install], an unavailable or failed su falls back to the system
+     * uninstaller instead of leaving the user with nothing. The fallback always
+     * opens the confirmation page: a normal app cannot delete a package itself.
+     */
+    suspend fun uninstall(packageName: String, useRoot: Boolean): UninstallOutcome {
+        if (useRoot && uninstallSilently(packageName)) {
+            return UninstallOutcome.Completed
+        }
+        return runCatching {
+            delegateToSystemUninstaller(packageName)
+            UninstallOutcome.DelegatedToSystem
+        }.getOrElse {
+            UninstallOutcome.Failure(
+                it.message ?: context.getString(R.string.installer_uninstall_launch_failed),
+            )
+        }
+    }
+
+    /**
      * komi's `AndroidInstaller.ensurePermissionsOrThrow`: send the user to the
      * "Install unknown apps" toggle and abort instead of letting the installer
      * silently cancel the request.
@@ -160,9 +202,31 @@ class ApkInstaller(
         return InstallOutcome.DelegatedToSystem
     }
 
+    private fun delegateToSystemUninstaller(packageName: String) {
+        val intent = Intent(Intent.ACTION_DELETE, "package:$packageName".toUri())
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        context.startActivity(intent)
+    }
+
     private suspend fun installSilently(file: File): Boolean = withContext(Dispatchers.IO) {
         runCatching {
             val command = "pm install -r ${shellQuote(file.absolutePath)}"
+            val process = ProcessBuilder("su", "-c", command)
+                .redirectErrorStream(true)
+                .start()
+            val output = process.inputStream.bufferedReader().use { it.readText() }
+            process.waitFor()
+            process.exitValue() == 0 || output.contains("Success", ignoreCase = true)
+        }.getOrDefault(false)
+    }
+
+    private suspend fun uninstallSilently(packageName: String): Boolean = withContext(Dispatchers.IO) {
+        runCatching {
+            // Per-user, like the system's own uninstaller: the installed list is
+            // scanned for the calling user, so touching other users' copies would
+            // be a surprise.
+            val userId = Process.myUid() / PER_USER_RANGE
+            val command = "pm uninstall --user $userId ${shellQuote(packageName)}"
             val process = ProcessBuilder("su", "-c", command)
                 .redirectErrorStream(true)
                 .start()

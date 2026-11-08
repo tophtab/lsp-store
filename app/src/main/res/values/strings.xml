@@ -98,6 +98,8 @@
     <string name="installed_update_ignored">Update ignored for %1$s</string>
     <string name="installed_update_unignored">Update restored for %1$s</string>
     <string name="installed_update_skipped">Ignored this version of %1$s</string>
+    <string name="installed_uninstalled">Uninstalled %1$s</string>
+    <string name="installed_uninstall_confirm_message">Uninstall %1$s? This cannot be undone.</string>
 
     <!-- Detail -->
     <string name="detail_readme">Readme</string>
@@ -303,6 +305,7 @@
     <string name="error_install_failed">Install failed</string>
     <string name="installer_silent_failed">Silent install failed (su)</string>
     <string name="installer_launch_failed">Unable to launch installer</string>
+    <string name="installer_uninstall_launch_failed">Unable to open the uninstaller</string>
     <string name="installer_no_handler">No app on this device can install APKs</string>
     <string name="installer_unknown_sources">Allow \"Install unknown apps\" for LSP Store and try again</string>
     <string name="installer_apk_missing">APK file is missing: %1$s</string>

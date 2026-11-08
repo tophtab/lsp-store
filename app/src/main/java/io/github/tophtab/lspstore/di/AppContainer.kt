@@ -18,6 +18,7 @@ import io.github.tophtab.lspstore.data.install.DownloadManager
 import io.github.tophtab.lspstore.data.install.DownloadSlots
 import io.github.tophtab.lspstore.data.install.ModuleInstallCoordinator
 import io.github.tophtab.lspstore.data.install.SystemInstallSerializer
+import io.github.tophtab.lspstore.data.install.UninstallOutcome
 import io.github.tophtab.lspstore.data.probe.RangeProbe
 import io.github.tophtab.lspstore.data.remote.LsposedRepoApi
 import io.github.tophtab.lspstore.data.remote.MirrorState
@@ -222,6 +223,15 @@ class AppContainer(context: Context) {
         pendingInstallRepository.clear(packageName)
         systemInstallSerializer.markCompleted(packageName)
     }
+
+    /**
+     * Removes a package through su when the root switch is on, otherwise (or
+     * when su fails) through the system uninstaller's confirmation page. Both
+     * the installed list and the module page share this decision so the two
+     * uninstall buttons cannot drift apart.
+     */
+    suspend fun uninstallModule(packageName: String): UninstallOutcome =
+        installer.uninstall(packageName, settingsRepository.rootInstall.first())
 
     /**
      * Handles one package broadcast. Only a pending package is interesting:

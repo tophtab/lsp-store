@@ -260,6 +260,7 @@
     <string name="error_install_failed">فشل التثبيت</string>
     <string name="installer_silent_failed">فشل التثبيت الصامت (su)</string>
     <string name="installer_launch_failed">غير قادر على تشغيل المثبت</string>
+    <string name="installer_uninstall_launch_failed">تعذّر فتح أداة إلغاء التثبيت</string>
     <string name="installer_no_handler">لا يمكن لأي تطبيق على هذا الجهاز تثبيت ملفات APK</string>
     <string name="installer_unknown_sources">اسمح بـ \\"تثبيت تطبيقات غير معروفة\\" لـ LSP Store وحاول مرة أخرى</string>
     <string name="installer_apk_missing">ملف APK مفقود: %1$s</string>
@@ -282,6 +283,8 @@
     <string name="variant_field_choose">اختر ملف APK (%1$d)</string>
     <string name="variant_incompatible_group">غير متوافق مع هذا الجهاز (%1$d)</string>
     <string name="installed_update_skipped">تم تجاهل هذا الإصدار من %1$s</string>
+    <string name="installed_uninstalled">تم إلغاء تثبيت %1$s</string>
+    <string name="installed_uninstall_confirm_message">هل تريد إلغاء تثبيت %1$s؟ لا يمكن التراجع عن هذا الإجراء.</string>
     <string name="error_repository_stale">لا يزال المستودع يقدّم إصدارًا أقدم. حاول مرة أخرى.</string>
 
     <!-- Background update check -->

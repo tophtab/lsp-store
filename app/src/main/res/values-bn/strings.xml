@@ -260,6 +260,7 @@
     <string name="error_install_failed">ইনস্টল ব্যর্থ হয়েছে</string>
     <string name="installer_silent_failed">নীরব ইনস্টল ব্যর্থ হয়েছে (সু)</string>
     <string name="installer_launch_failed">ইনস্টলার চালু করতে অক্ষম৷</string>
+    <string name="installer_uninstall_launch_failed">আনইনস্টলার খোলা যায়নি</string>
     <string name="installer_no_handler">এই ডিভাইসে কোনো অ্যাপ APK ইনস্টল করতে পারবে না</string>
     <string name="installer_unknown_sources">LSP Store-এর জন্য \\"অজানা অ্যাপ ইনস্টল করুন\\" এর অনুমতি দিন এবং আবার চেষ্টা করুন</string>
     <string name="installer_apk_missing">APK ফাইল অনুপস্থিত: %1$s</string>
@@ -282,6 +283,8 @@
     <string name="variant_field_choose">একটি APK চয়ন করুন (%1$d)</string>
     <string name="variant_incompatible_group">এই ডিভাইসের সাথে সামঞ্জস্যপূর্ণ নয় (%1$d)</string>
     <string name="installed_update_skipped">%1$s-এর এই সংস্করণটি উপেক্ষা করা হয়েছে</string>
+    <string name="installed_uninstalled">%1$s আনইনস্টল করা হয়েছে</string>
+    <string name="installed_uninstall_confirm_message">%1$s আনইনস্টল করবেন? এটি ফেরানো যাবে না।</string>
     <string name="error_repository_stale">রিপোজিটরি এখনও একটি পুরোনো রিলিজ দিচ্ছে। আবার চেষ্টা করুন।</string>
 
     <!-- Background update check -->

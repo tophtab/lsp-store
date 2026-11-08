@@ -3,7 +3,6 @@
 package io.github.tophtab.lspstore.ui.screens.installed
 
 import android.app.Activity
-import android.content.Intent
 import android.text.format.Formatter
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -85,7 +84,6 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.tophtab.lspstore.R
@@ -167,6 +165,18 @@ fun InstalledScreen(
     ): Boolean {
         return installedPackage in state.ignoredUpdates ||
             (repoPackageName != null && repoPackageName in state.ignoredUpdates)
+    }
+
+    // A silent (root) uninstall would delete without any system prompt, so the
+    // row menu asks here first. Without root the system confirmation page is
+    // already the prompt, and a second dialog would be noise.
+    var uninstallConfirm by remember { mutableStateOf<Pair<String, String>?>(null) }
+    fun requestUninstall(packageName: String, label: String) {
+        if (state.rootInstall) {
+            uninstallConfirm = packageName to label
+        } else {
+            viewModel.uninstall(packageName, label)
+        }
     }
 
     val updates = state.updates
@@ -384,6 +394,12 @@ fun InstalledScreen(
                                                 onTogglePreReleases = {
                                                     viewModel.togglePreReleases(info.module.packageName)
                                                 },
+                                                onUninstall = {
+                                                    requestUninstall(
+                                                        info.installed.packageName,
+                                                        info.module.title,
+                                                    )
+                                                },
                                             )
                                         }
                                         items(upToDate, key = { "c:${it.packageName}" }) { module ->
@@ -411,6 +427,9 @@ fun InstalledScreen(
                                                 onTogglePreReleases = repoPackage?.let { name ->
                                                     { viewModel.togglePreReleases(name) }
                                                 },
+                                                onUninstall = {
+                                                    requestUninstall(module.packageName, module.label)
+                                                },
                                             )
                                         }
                                     }
@@ -434,6 +453,9 @@ fun InstalledScreen(
                                                 preReleasesEnabled = false,
                                                 canTrackPreReleases = false,
                                                 onTogglePreReleases = null,
+                                                onUninstall = {
+                                                    requestUninstall(module.packageName, module.label)
+                                                },
                                             )
                                         }
                                     }
@@ -454,6 +476,27 @@ fun InstalledScreen(
         )
     }
 
+    uninstallConfirm?.let { (packageName, label) ->
+        KomiDialog(
+            onDismissRequest = { uninstallConfirm = null },
+            title = label,
+            confirmLabel = stringResource(R.string.detail_uninstall),
+            onConfirm = {
+                uninstallConfirm = null
+                viewModel.uninstall(packageName, label)
+            },
+            dismissLabel = stringResource(R.string.action_cancel),
+            onDismiss = { uninstallConfirm = null },
+        ) {
+            KomiText(
+                text = stringResource(R.string.installed_uninstall_confirm_message, label),
+                role = KomiTextRole.Body,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontSize = 13.sp,
+            )
+        }
+    }
+
 }
 
 @Composable
@@ -470,6 +513,7 @@ private fun UpdateRow(
     preReleasesEnabled: Boolean,
     canTrackPreReleases: Boolean,
     onTogglePreReleases: () -> Unit,
+    onUninstall: () -> Unit,
 ) {
     var actionsOpen by remember { mutableStateOf(false) }
     val active = install?.takeIf {
@@ -555,7 +599,6 @@ private fun UpdateRow(
         ModuleActionsSheet(
             title = info.module.title,
             repoPackageName = info.module.packageName,
-            uninstallPackageName = info.installed.packageName,
             isUpdateIgnored = isUpdateIgnored,
             onDismiss = { actionsOpen = false },
             onChooseVariant = onChooseVariant,
@@ -563,6 +606,7 @@ private fun UpdateRow(
             onToggleIgnoreUpdate = onToggleIgnoreUpdate,
             preReleasesEnabled = if (canTrackPreReleases) preReleasesEnabled else null,
             onTogglePreReleases = onTogglePreReleases,
+            onUninstall = onUninstall,
         )
     }
 }
@@ -701,6 +745,7 @@ private fun InstalledRow(
     preReleasesEnabled: Boolean,
     canTrackPreReleases: Boolean,
     onTogglePreReleases: (() -> Unit)?,
+    onUninstall: () -> Unit,
 ) {
     val context = LocalContext.current
     var actionsOpen by remember { mutableStateOf(false) }
@@ -780,13 +825,13 @@ private fun InstalledRow(
         ModuleActionsSheet(
             title = module.label,
             repoPackageName = repoPackageName,
-            uninstallPackageName = module.packageName,
             isUpdateIgnored = isUpdateIgnored,
             onDismiss = { actionsOpen = false },
             onChooseVariant = onChooseVariant,
             onToggleIgnoreUpdate = onToggleIgnoreUpdate,
             preReleasesEnabled = if (canTrackPreReleases) preReleasesEnabled else null,
             onTogglePreReleases = onTogglePreReleases,
+            onUninstall = onUninstall,
         )
     }
 }
@@ -812,7 +857,6 @@ private fun MoreActionsButton(onClick: () -> Unit) {
 private fun ModuleActionsSheet(
     title: String,
     repoPackageName: String?,
-    uninstallPackageName: String,
     isUpdateIgnored: Boolean,
     onDismiss: () -> Unit,
     onChooseVariant: (() -> Unit)?,
@@ -820,8 +864,8 @@ private fun ModuleActionsSheet(
     onToggleIgnoreUpdate: (() -> Unit)?,
     preReleasesEnabled: Boolean? = null,
     onTogglePreReleases: (() -> Unit)? = null,
+    onUninstall: () -> Unit,
 ) {
-    val context = LocalContext.current
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         containerColor = MaterialTheme.colorScheme.surface,
@@ -890,9 +934,7 @@ private fun ModuleActionsSheet(
                 tint = MaterialTheme.colorScheme.error,
             ) {
                 onDismiss()
-                context.startActivity(
-                    Intent(Intent.ACTION_DELETE, "package:$uninstallPackageName".toUri()),
-                )
+                onUninstall()
             }
         }
     }
