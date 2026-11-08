@@ -129,6 +129,7 @@ import io.github.tophtab.lspstore.ui.LocalAppContainer
 import io.github.tophtab.lspstore.ui.components.ErrorBox
 import io.github.tophtab.lspstore.ui.components.LoadingBox
 import io.github.tophtab.lspstore.ui.components.PullToRefreshBox
+import io.github.tophtab.lspstore.ui.components.SnackbarMessageEffect
 import io.github.tophtab.lspstore.ui.components.formatRelativeTime
 import io.github.tophtab.lspstore.ui.design.KomiButton
 import io.github.tophtab.lspstore.ui.design.KomiButtonSize
@@ -184,12 +185,11 @@ fun ModuleDetailScreen(packageName: String, onBack: () -> Unit, onOpenAuthor: (S
             listOf(detail.releases, detail.betaReleases, detail.snapshotReleases)
                 .any { releases -> releases.any { !it.descriptionHtml.isNullOrBlank() } }
     } == true
-    LaunchedEffect(state.message) {
-        state.message?.let {
-            snackbarHostState.showSnackbar(it)
-            viewModel.clearMessage()
-        }
-    }
+    SnackbarMessageEffect(
+        message = state.message,
+        hostState = snackbarHostState,
+        onConsumed = viewModel::clearMessage,
+    )
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -399,6 +399,7 @@ fun ModuleDetailScreen(packageName: String, onBack: () -> Unit, onOpenAuthor: (S
             onDismissRequest = { uninstallConfirm = false },
             title = uninstallLabel,
             confirmLabel = stringResource(R.string.detail_uninstall),
+            confirmVariant = KomiButtonVariant.Destructive,
             onConfirm = {
                 uninstallConfirm = false
                 viewModel.uninstall()

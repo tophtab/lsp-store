@@ -35,6 +35,7 @@ fun KomiDialog(
     modifier: Modifier = Modifier,
     title: String? = null,
     confirmLabel: String? = null,
+    confirmVariant: KomiButtonVariant = KomiButtonVariant.Text,
     onConfirm: (() -> Unit)? = null,
     dismissLabel: String? = null,
     onDismiss: (() -> Unit)? = null,
@@ -87,7 +88,7 @@ fun KomiDialog(
                             KomiButton(
                                 onClick = { onConfirm?.invoke() },
                                 label = confirmLabel,
-                                variant = KomiButtonVariant.Text,
+                                variant = confirmVariant,
                                 size = KomiButtonSize.Small,
                             )
                         }

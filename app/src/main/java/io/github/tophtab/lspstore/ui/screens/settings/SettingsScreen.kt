@@ -49,6 +49,7 @@ import io.github.tophtab.lspstore.data.update.UpdateScheduler
 import io.github.tophtab.lspstore.domain.model.ThemeMode
 import io.github.tophtab.lspstore.domain.model.TranslationProvider
 import io.github.tophtab.lspstore.ui.LocalAppContainer
+import io.github.tophtab.lspstore.ui.components.SnackbarMessageEffect
 import io.github.tophtab.lspstore.ui.design.KomiButton
 import io.github.tophtab.lspstore.ui.design.KomiButtonSize
 import io.github.tophtab.lspstore.ui.design.KomiButtonVariant
@@ -126,12 +127,11 @@ fun SettingsScreen(
         ActivityResultContracts.OpenDocumentTree(),
     ) { uri -> if (uri != null) viewModel.setDownloadLocation(uri) }
 
-    LaunchedEffect(state.message) {
-        state.message?.let {
-            snackbarHostState.showSnackbar(it)
-            viewModel.clearMessage()
-        }
-    }
+    SnackbarMessageEffect(
+        message = state.message,
+        hostState = snackbarHostState,
+        onConsumed = viewModel::clearMessage,
+    )
 
     LaunchedEffect(reselectTick) {
         if (reselectTick > 0) scrollState.animateScrollTo(0)

@@ -99,6 +99,7 @@ import io.github.tophtab.lspstore.ui.components.LoadingBox
 import io.github.tophtab.lspstore.ui.components.ModuleAvatar
 import io.github.tophtab.lspstore.ui.components.PackageAvatar
 import io.github.tophtab.lspstore.ui.components.PullToRefreshBox
+import io.github.tophtab.lspstore.ui.components.SnackbarMessageEffect
 import io.github.tophtab.lspstore.ui.design.KomiButton
 import io.github.tophtab.lspstore.domain.usecase.BatchInstallPhase
 import io.github.tophtab.lspstore.domain.usecase.BatchInstallState
@@ -130,17 +131,18 @@ fun InstalledScreen(
     val listState = rememberLazyListState()
     val focusManager = LocalFocusManager.current
 
-    LaunchedEffect(state.message) {
-        state.message?.let {
-            // Batch summaries carry one line per failed module; the short
-            // duration is not enough to read that.
-            snackbarHostState.showSnackbar(
-                message = it,
-                duration = if (it.contains('\n')) SnackbarDuration.Long else SnackbarDuration.Short,
-            )
-            viewModel.clearMessage()
-        }
-    }
+    SnackbarMessageEffect(
+        message = state.message,
+        hostState = snackbarHostState,
+        onConsumed = viewModel::clearMessage,
+        // Batch summaries carry one line per failed module; the short
+        // duration is not enough to read that.
+        duration = if (state.message?.contains('\n') == true) {
+            SnackbarDuration.Long
+        } else {
+            SnackbarDuration.Short
+        },
+    )
 
     var query by rememberSaveable { mutableStateOf("") }
     // The query the list was last reset for. Saveable for the same reason as the
@@ -255,6 +257,12 @@ fun InstalledScreen(
         if (segments.isNotEmpty()) listState.animateScrollToItem(0)
     }
 
+    // The list reserves room for the FAB only when a FAB is actually on
+    // screen; otherwise the unknown segment and a clean repository segment
+    // would end in dead space.
+    val fabVisible = state.batchRunning && state.batchTotal > 1 ||
+        !state.batchRunning && state.updates.isNotEmpty()
+
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         contentWindowInsets = rootContentWindowInsets(),
@@ -361,8 +369,13 @@ fun InstalledScreen(
                                 state = listState,
                                 modifier = Modifier.fillMaxSize(),
                                 // Extra bottom room so the last row stays tappable
-                                // behind the update-all FAB.
-                                contentPadding = PaddingValues(start = 12.dp, end = 12.dp, bottom = 96.dp),
+                                // behind the update-all FAB. Without a FAB the
+                                // list matches the other screens' 32.dp end.
+                                contentPadding = PaddingValues(
+                                    start = 12.dp,
+                                    end = 12.dp,
+                                    bottom = if (fabVisible) 96.dp else 32.dp,
+                                ),
                                 verticalArrangement = Arrangement.spacedBy(10.dp),
                             ) {
                                 when {
@@ -481,6 +494,7 @@ fun InstalledScreen(
             onDismissRequest = { uninstallConfirm = null },
             title = label,
             confirmLabel = stringResource(R.string.detail_uninstall),
+            confirmVariant = KomiButtonVariant.Destructive,
             onConfirm = {
                 uninstallConfirm = null
                 viewModel.uninstall(packageName, label)
