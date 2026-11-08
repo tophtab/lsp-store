@@ -166,6 +166,24 @@
     <string name="settings_advanced">高度な</string>
     <string name="settings_index_cleared">インデックスキャッシュがクリアされました</string>
     <string name="settings_apks_cleared">ダウンロードしたAPKがクリアされました</string>
+
+    <!-- Backup & restore -->
+    <string name="settings_backup">バックアップと復元</string>
+    <string name="backup_export">ライブラリをエクスポート</string>
+    <string name="backup_export_desc">お気に入り、無視した項目、スキップしたバージョン、リンク、バリアントの選択を JSON ファイルに保存します。</string>
+    <string name="backup_import">ライブラリをインポート</string>
+    <string name="backup_import_desc">バックアップファイルから復元します。マージは現在のデータを保持し、置き換えは上書きします。</string>
+    <string name="backup_export_done">ライブラリをエクスポートしました</string>
+    <string name="backup_export_failed">ライブラリをエクスポートできませんでした</string>
+    <string name="backup_import_title">ライブラリをインポートしますか？</string>
+    <string name="backup_import_summary">バックアップにはお気に入り %1$d 件、無視したモジュール %2$d 件、スキップしたバージョン %3$d 件が含まれています。</string>
+    <string name="backup_import_note">マージは不足している項目を追加し、現在の選択を保持します。置き換えは現在のライブラリを先に削除します。</string>
+    <string name="backup_import_merge">マージ（推奨）</string>
+    <string name="backup_import_replace">現在のデータを置き換える</string>
+    <string name="backup_import_done">ライブラリをインポートしました</string>
+    <string name="backup_import_failed">ライブラリをインポートできませんでした</string>
+    <string name="backup_import_invalid">このファイルは有効な LSP Store のバックアップではありません</string>
+    <string name="backup_import_unsupported">このバックアップは新しいバージョンの LSP Store で作成されました</string>
     <string name="settings_download_location">ダウンロード先</string>
     <string name="settings_download_location_default">既定: Download/LSP_Store</string>
     <string name="settings_download_location_picked">APK は %1$s に保存されます</string>

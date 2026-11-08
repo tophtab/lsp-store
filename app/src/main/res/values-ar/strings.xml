@@ -166,6 +166,24 @@
     <string name="settings_advanced">متقدم</string>
     <string name="settings_index_cleared">تم مسح ذاكرة التخزين المؤقت للفهرس</string>
     <string name="settings_apks_cleared">تم مسح ملفات APK التي تم تنزيلها</string>
+
+    <!-- Backup & restore -->
+    <string name="settings_backup">النسخ الاحتياطي والاستعادة</string>
+    <string name="backup_export">تصدير المكتبة</string>
+    <string name="backup_export_desc">احفظ المفضلة والعناصر المتجاهلة والإصدارات المتجاهَلة والروابط واختيارات المتغيرات في ملف JSON.</string>
+    <string name="backup_import">استيراد المكتبة</string>
+    <string name="backup_import_desc">استعد من ملف نسخة احتياطية. يحتفظ الدمج بالبيانات الحالية، بينما يستبدلها الاستبدال.</string>
+    <string name="backup_export_done">تم تصدير المكتبة</string>
+    <string name="backup_export_failed">تعذّر تصدير المكتبة</string>
+    <string name="backup_import_title">استيراد المكتبة؟</string>
+    <string name="backup_import_summary">تحتوي النسخة الاحتياطية على %1$d من المفضلة، و%2$d من الوحدات المتجاهلة، و%3$d من الإصدارات المتجاهَلة.</string>
+    <string name="backup_import_note">يضيف الدمج العناصر المفقودة ويحتفظ بالخيارات الحالية. يحذف الاستبدال المكتبة الحالية أولاً.</string>
+    <string name="backup_import_merge">دمج (مُوصى به)</string>
+    <string name="backup_import_replace">استبدال البيانات الحالية</string>
+    <string name="backup_import_done">تم استيراد المكتبة</string>
+    <string name="backup_import_failed">تعذّر استيراد المكتبة</string>
+    <string name="backup_import_invalid">هذا الملف ليس نسخة احتياطية صالحة من LSP Store</string>
+    <string name="backup_import_unsupported">أُنشئت هذه النسخة الاحتياطية بإصدار أحدث من LSP Store</string>
     <string name="settings_download_location">موقع التنزيل</string>
     <string name="settings_download_location_default">الافتراضي: Download/LSP_Store</string>
     <string name="settings_download_location_picked">تُحفظ ملفات APK في %1$s</string>

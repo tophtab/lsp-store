@@ -166,6 +166,24 @@
     <string name="settings_advanced">विकसित</string>
     <string name="settings_index_cleared">इंडेक्स कैश साफ़ किया गया</string>
     <string name="settings_apks_cleared">डाउनलोड किए गए APK साफ़ किए गए</string>
+
+    <!-- Backup & restore -->
+    <string name="settings_backup">बैकअप और पुनर्स्थापना</string>
+    <string name="backup_export">लाइब्रेरी निर्यात करें</string>
+    <string name="backup_export_desc">पसंदीदा, अनदेखे आइटम, छोड़े गए संस्करण, लिंक और वेरिएंट चयन को JSON फ़ाइल में सहेजें।</string>
+    <string name="backup_import">लाइब्रेरी आयात करें</string>
+    <string name="backup_import_desc">बैकअप फ़ाइल से पुनर्स्थापित करें। मर्ज मौजूदा डेटा रखता है; बदलें उसे अधिलेखित करता है।</string>
+    <string name="backup_export_done">लाइब्रेरी निर्यात हो गई</string>
+    <string name="backup_export_failed">लाइब्रेरी निर्यात नहीं हो सकी</string>
+    <string name="backup_import_title">लाइब्रेरी आयात करें?</string>
+    <string name="backup_import_summary">बैकअप में %1$d पसंदीदा, %2$d अनदेखे मॉड्यूल और %3$d छोड़े गए संस्करण हैं।</string>
+    <string name="backup_import_note">मर्ज छूटी प्रविष्टियाँ जोड़ता है और मौजूदा चयन रखता है। बदलें पहले मौजूदा लाइब्रेरी मिटाता है।</string>
+    <string name="backup_import_merge">मर्ज करें (अनुशंसित)</string>
+    <string name="backup_import_replace">मौजूदा डेटा बदलें</string>
+    <string name="backup_import_done">लाइब्रेरी आयात हो गई</string>
+    <string name="backup_import_failed">लाइब्रेरी आयात नहीं हो सकी</string>
+    <string name="backup_import_invalid">यह फ़ाइल मान्य LSP Store बैकअप नहीं है</string>
+    <string name="backup_import_unsupported">यह बैकअप LSP Store के नए संस्करण से बनाया गया है</string>
     <string name="settings_download_location">डाउनलोड स्थान</string>
     <string name="settings_download_location_default">डिफ़ॉल्ट: Download/LSP_Store</string>
     <string name="settings_download_location_picked">APK को %1$s में सहेजा जाता है</string>

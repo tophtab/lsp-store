@@ -166,6 +166,24 @@
     <string name="settings_advanced">Gelişmiş</string>
     <string name="settings_index_cleared">Dizin önbelleği temizlendi</string>
     <string name="settings_apks_cleared">İndirilen APK\'lar temizlendi</string>
+
+    <!-- Backup & restore -->
+    <string name="settings_backup">Yedekleme ve geri yükleme</string>
+    <string name="backup_export">Kitaplığı dışa aktar</string>
+    <string name="backup_export_desc">Favorileri, yok sayılan öğeleri, atlanan sürümleri, bağlantıları ve varyant seçimlerini bir JSON dosyasına kaydedin.</string>
+    <string name="backup_import">Kitaplığı içe aktar</string>
+    <string name="backup_import_desc">Bir yedek dosyasından geri yükleyin. Birleştirme mevcut verileri korur; değiştirme üzerine yazar.</string>
+    <string name="backup_export_done">Kitaplık dışa aktarıldı</string>
+    <string name="backup_export_failed">Kitaplık dışa aktarılamadı</string>
+    <string name="backup_import_title">Kitaplık içe aktarılsın mı?</string>
+    <string name="backup_import_summary">Yedekte %1$d favori, %2$d yok sayılan modül ve %3$d atlanan sürüm var.</string>
+    <string name="backup_import_note">Birleştirme eksik öğeleri ekler ve mevcut seçimleri korur. Değiştirme önce mevcut kitaplığı siler.</string>
+    <string name="backup_import_merge">Birleştir (önerilir)</string>
+    <string name="backup_import_replace">Mevcut verileri değiştir</string>
+    <string name="backup_import_done">Kitaplık içe aktarıldı</string>
+    <string name="backup_import_failed">Kitaplık içe aktarılamadı</string>
+    <string name="backup_import_invalid">Bu dosya geçerli bir LSP Store yedeği değil</string>
+    <string name="backup_import_unsupported">Bu yedek daha yeni bir LSP Store sürümüyle oluşturuldu</string>
     <string name="settings_download_location">İndirme konumu</string>
     <string name="settings_download_location_default">Varsayılan: Download/LSP_Store</string>
     <string name="settings_download_location_picked">APK dosyaları %1$s konumuna kaydedilir</string>

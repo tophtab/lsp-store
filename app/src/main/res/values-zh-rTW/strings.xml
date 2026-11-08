@@ -183,6 +183,24 @@
     <string name="settings_download_location_failed">無法使用此資料夾，請選擇其他資料夾。</string>
     <string name="action_reset">重設</string>
 
+    <!-- Backup & restore -->
+    <string name="settings_backup">備份與復原</string>
+    <string name="backup_export">匯出資料庫</string>
+    <string name="backup_export_desc">將收藏、忽略項目、略過版本、手動關聯和變體選擇儲存為 JSON 檔案。</string>
+    <string name="backup_import">匯入資料庫</string>
+    <string name="backup_import_desc">從備份檔案還原。合併會保留現有資料；覆寫會取代現有資料。</string>
+    <string name="backup_export_done">資料庫已匯出</string>
+    <string name="backup_export_failed">無法匯出資料庫</string>
+    <string name="backup_import_title">匯入資料庫？</string>
+    <string name="backup_import_summary">備份包含 %1$d 個收藏、%2$d 個忽略的模組和 %3$d 個略過的版本。</string>
+    <string name="backup_import_note">合併會補齊缺少項目並保留現有選擇；覆寫會先刪除目前資料庫。</string>
+    <string name="backup_import_merge">合併（建議）</string>
+    <string name="backup_import_replace">覆寫現有資料</string>
+    <string name="backup_import_done">資料庫已匯入</string>
+    <string name="backup_import_failed">無法匯入資料庫</string>
+    <string name="backup_import_invalid">此檔案不是有效的 LSP Store 備份</string>
+    <string name="backup_import_unsupported">此備份由較新版本的 LSP Store 建立</string>
+
     <!-- Diagnostics -->
     <string name="diagnostics_app">應用</string>
     <string name="diagnostics_version">版本</string>

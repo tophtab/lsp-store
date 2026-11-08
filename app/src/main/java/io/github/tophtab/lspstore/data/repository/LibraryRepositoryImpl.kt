@@ -1,6 +1,8 @@
 package io.github.tophtab.lspstore.data.repository
 
 import android.content.Context
+import androidx.datastore.preferences.core.MutablePreferences
+import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -10,6 +12,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
+import io.github.tophtab.lspstore.data.backup.LibraryBackup
+import io.github.tophtab.lspstore.data.backup.LibraryRestoreMode
 import io.github.tophtab.lspstore.domain.model.ModuleVersion
 import io.github.tophtab.lspstore.domain.model.SkippedVersion
 import io.github.tophtab.lspstore.domain.variant.ModuleVariantState
@@ -65,6 +69,16 @@ interface LibraryRepository {
 
     /** Idempotent one-off migration of the legacy asset-name preferences. */
     suspend fun migratePreferredVariants()
+
+    /** Whole library as one payload for an export file. */
+    suspend fun snapshot(): LibraryBackup
+
+    /**
+     * Applies an imported [backup]. [LibraryRestoreMode.MERGE] keeps every local
+     * entry and only adds what is missing; [LibraryRestoreMode.REPLACE] discards
+     * the current library first.
+     */
+    suspend fun restore(backup: LibraryBackup, mode: LibraryRestoreMode)
 }
 
 class LibraryRepositoryImpl(private val context: Context) : LibraryRepository {
@@ -295,6 +309,53 @@ class LibraryRepositoryImpl(private val context: Context) : LibraryRepository {
             prefs[Keys.VARIANT_STATE] = encodeVariantStates(states)
             prefs[Keys.PREFERRED_VARIANTS] = ""
         }
+    }
+
+    override suspend fun snapshot(): LibraryBackup =
+        readBackup(context.libraryDataStore.data.first()).copy(
+            exportedAt = System.currentTimeMillis(),
+        )
+
+    override suspend fun restore(backup: LibraryBackup, mode: LibraryRestoreMode) {
+        context.libraryDataStore.edit { prefs ->
+            val target = when (mode) {
+                LibraryRestoreMode.MERGE -> readBackup(prefs).mergedWith(backup)
+                LibraryRestoreMode.REPLACE -> backup
+            }
+            writeBackup(prefs, target)
+        }
+    }
+
+    private fun readBackup(prefs: Preferences): LibraryBackup = LibraryBackup(
+        schemaVersion = LibraryBackup.SCHEMA_VERSION,
+        favourites = decodeList(prefs[Keys.FAVOURITES]),
+        recentlyViewed = decodeList(prefs[Keys.RECENTLY_VIEWED]),
+        skippedUpdates = decodeSkipped(prefs[Keys.SKIPPED]).mapValues { it.value.raw },
+        ignoredUpdates = decodeList(prefs[Keys.IGNORED_UPDATES]),
+        ignoredModules = decodeList(prefs[Keys.IGNORED_MODULES]),
+        preReleaseModules = decodeList(prefs[Keys.PRE_RELEASE_MODULES]),
+        searchHistory = decodeList(prefs[Keys.SEARCH_HISTORY]),
+        links = decodeLinks(prefs[Keys.LINKS]),
+        variantStates = decodeVariantStates(prefs[Keys.VARIANT_STATE]),
+    )
+
+    /**
+     * Writes every library key, including empty ones: a replace must also clear
+     * entries the backup does not have. The legacy preferred-variants key is left
+     * alone (the migration drains it once) and no settings key is touched.
+     */
+    private fun writeBackup(prefs: MutablePreferences, backup: LibraryBackup) {
+        prefs[Keys.FAVOURITES] = encodeList(backup.favourites)
+        prefs[Keys.RECENTLY_VIEWED] = encodeList(backup.recentlyViewed.take(MAX_RECENT))
+        prefs[Keys.SKIPPED] = backup.skippedUpdates.entries.joinToString("\n") {
+            "${it.key}:${it.value}"
+        }
+        prefs[Keys.IGNORED_UPDATES] = encodeList(backup.ignoredUpdates)
+        prefs[Keys.IGNORED_MODULES] = encodeList(backup.ignoredModules)
+        prefs[Keys.PRE_RELEASE_MODULES] = encodeList(backup.preReleaseModules)
+        prefs[Keys.SEARCH_HISTORY] = encodeList(backup.searchHistory.take(MAX_SEARCH_HISTORY))
+        prefs[Keys.LINKS] = encodeLinks(backup.links)
+        prefs[Keys.VARIANT_STATE] = encodeVariantStates(backup.variantStates)
     }
 
     private fun decodeVariantStates(raw: String?): Map<String, ModuleVariantState> {

@@ -166,6 +166,24 @@
     <string name="settings_advanced">고급의</string>
     <string name="settings_index_cleared">인덱스 캐시가 지워졌습니다.</string>
     <string name="settings_apks_cleared">다운로드한 APK가 삭제되었습니다.</string>
+
+    <!-- Backup & restore -->
+    <string name="settings_backup">백업 및 복원</string>
+    <string name="backup_export">라이브러리 내보내기</string>
+    <string name="backup_export_desc">즐겨찾기, 무시한 항목, 건너뛴 버전, 링크 및 변형 선택을 JSON 파일로 저장합니다.</string>
+    <string name="backup_import">라이브러리 가져오기</string>
+    <string name="backup_import_desc">백업 파일에서 복원합니다. 병합은 현재 데이터를 유지하고, 바꾸기는 덮어씁니다.</string>
+    <string name="backup_export_done">라이브러리를 내보냈습니다</string>
+    <string name="backup_export_failed">라이브러리를 내보낼 수 없습니다</string>
+    <string name="backup_import_title">라이브러리를 가져올까요?</string>
+    <string name="backup_import_summary">백업에 즐겨찾기 %1$d개, 무시한 모듈 %2$d개, 건너뛴 버전 %3$d개가 있습니다.</string>
+    <string name="backup_import_note">병합은 빠진 항목을 추가하고 현재 선택을 유지합니다. 바꾸기는 먼저 현재 라이브러리를 삭제합니다.</string>
+    <string name="backup_import_merge">병합(권장)</string>
+    <string name="backup_import_replace">현재 데이터 바꾸기</string>
+    <string name="backup_import_done">라이브러리를 가져왔습니다</string>
+    <string name="backup_import_failed">라이브러리를 가져올 수 없습니다</string>
+    <string name="backup_import_invalid">이 파일은 유효한 LSP Store 백업이 아닙니다</string>
+    <string name="backup_import_unsupported">이 백업은 최신 버전의 LSP Store에서 만들어졌습니다</string>
     <string name="settings_download_location">다운로드 위치</string>
     <string name="settings_download_location_default">기본값: Download/LSP_Store</string>
     <string name="settings_download_location_picked">APK는 %1$s에 저장됩니다</string>

@@ -166,6 +166,24 @@
     <string name="settings_advanced">Avancé</string>
     <string name="settings_index_cleared">Cache d\'index vidé</string>
     <string name="settings_apks_cleared">APK téléchargés effacés</string>
+
+    <!-- Backup & restore -->
+    <string name="settings_backup">Sauvegarde et restauration</string>
+    <string name="backup_export">Exporter la bibliothèque</string>
+    <string name="backup_export_desc">Enregistrez favoris, éléments ignorés, versions ignorées, liens et choix de variante dans un fichier JSON.</string>
+    <string name="backup_import">Importer la bibliothèque</string>
+    <string name="backup_import_desc">Restaurez depuis un fichier de sauvegarde. Fusionner conserve les données actuelles ; remplacer les écrase.</string>
+    <string name="backup_export_done">Bibliothèque exportée</string>
+    <string name="backup_export_failed">Impossible d\'exporter la bibliothèque</string>
+    <string name="backup_import_title">Importer la bibliothèque ?</string>
+    <string name="backup_import_summary">La sauvegarde contient %1$d favoris, %2$d modules ignorés et %3$d versions ignorées.</string>
+    <string name="backup_import_note">Fusionner ajoute les éléments manquants et conserve les choix actuels. Remplacer supprime d\'abord la bibliothèque actuelle.</string>
+    <string name="backup_import_merge">Fusionner (recommandé)</string>
+    <string name="backup_import_replace">Remplacer les données actuelles</string>
+    <string name="backup_import_done">Bibliothèque importée</string>
+    <string name="backup_import_failed">Impossible d\'importer la bibliothèque</string>
+    <string name="backup_import_invalid">Ce fichier n\'est pas une sauvegarde LSP Store valide</string>
+    <string name="backup_import_unsupported">Cette sauvegarde a été créée par une version plus récente de LSP Store</string>
     <string name="settings_download_location">Emplacement des téléchargements</string>
     <string name="settings_download_location_default">Par défaut : Download/LSP_Store</string>
     <string name="settings_download_location_picked">Les APK sont enregistrés dans %1$s</string>

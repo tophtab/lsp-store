@@ -166,6 +166,24 @@
     <string name="settings_advanced">Avanzado</string>
     <string name="settings_index_cleared">Caché de índice borrado</string>
     <string name="settings_apks_cleared">APK descargados borrados</string>
+
+    <!-- Backup & restore -->
+    <string name="settings_backup">Copia de seguridad y restauración</string>
+    <string name="backup_export">Exportar biblioteca</string>
+    <string name="backup_export_desc">Guarda favoritos, elementos ignorados, versiones omitidas, enlaces y elecciones de variante en un archivo JSON.</string>
+    <string name="backup_import">Importar biblioteca</string>
+    <string name="backup_import_desc">Restaura desde un archivo de copia. Combinar conserva los datos actuales; reemplazar los sobrescribe.</string>
+    <string name="backup_export_done">Biblioteca exportada</string>
+    <string name="backup_export_failed">No se pudo exportar la biblioteca</string>
+    <string name="backup_import_title">¿Importar biblioteca?</string>
+    <string name="backup_import_summary">La copia contiene %1$d favoritos, %2$d módulos ignorados y %3$d versiones omitidas.</string>
+    <string name="backup_import_note">Combinar añade lo que falta y conserva las elecciones actuales. Reemplazar elimina primero la biblioteca actual.</string>
+    <string name="backup_import_merge">Combinar (recomendado)</string>
+    <string name="backup_import_replace">Reemplazar datos actuales</string>
+    <string name="backup_import_done">Biblioteca importada</string>
+    <string name="backup_import_failed">No se pudo importar la biblioteca</string>
+    <string name="backup_import_invalid">Este archivo no es una copia válida de LSP Store</string>
+    <string name="backup_import_unsupported">Esta copia se creó con una versión más reciente de LSP Store</string>
     <string name="settings_download_location">Ubicación de descargas</string>
     <string name="settings_download_location_default">Predeterminada: Download/LSP_Store</string>
     <string name="settings_download_location_picked">Los APK se guardan en %1$s</string>

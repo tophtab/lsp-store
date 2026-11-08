@@ -166,6 +166,24 @@
     <string name="settings_advanced">Передовой</string>
     <string name="settings_index_cleared">Кэш индекса очищен.</string>
     <string name="settings_apks_cleared">Загруженные APK-файлы удалены.</string>
+
+    <!-- Backup & restore -->
+    <string name="settings_backup">Резервное копирование и восстановление</string>
+    <string name="backup_export">Экспорт библиотеки</string>
+    <string name="backup_export_desc">Сохраните избранное, игнорируемые элементы, пропущенные версии, привязки и выбор вариантов в файл JSON.</string>
+    <string name="backup_import">Импорт библиотеки</string>
+    <string name="backup_import_desc">Восстановите из файла резервной копии. Объединение сохраняет текущие данные; замена их перезаписывает.</string>
+    <string name="backup_export_done">Библиотека экспортирована</string>
+    <string name="backup_export_failed">Не удалось экспортировать библиотеку</string>
+    <string name="backup_import_title">Импортировать библиотеку?</string>
+    <string name="backup_import_summary">В резервной копии %1$d избранных, %2$d игнорируемых модулей и %3$d пропущенных версий.</string>
+    <string name="backup_import_note">Объединение добавляет недостающие записи и сохраняет текущий выбор. Замена сначала удаляет текущую библиотеку.</string>
+    <string name="backup_import_merge">Объединить (рекомендуется)</string>
+    <string name="backup_import_replace">Заменить текущие данные</string>
+    <string name="backup_import_done">Библиотека импортирована</string>
+    <string name="backup_import_failed">Не удалось импортировать библиотеку</string>
+    <string name="backup_import_invalid">Этот файл не является допустимой резервной копией LSP Store</string>
+    <string name="backup_import_unsupported">Эта копия создана более новой версией LSP Store</string>
     <string name="settings_download_location">Папка загрузок</string>
     <string name="settings_download_location_default">По умолчанию: Download/LSP_Store</string>
     <string name="settings_download_location_picked">APK сохраняются в %1$s</string>

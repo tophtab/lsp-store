@@ -13,12 +13,16 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import io.github.tophtab.lspstore.R
+import io.github.tophtab.lspstore.data.backup.LibraryBackup
+import io.github.tophtab.lspstore.data.backup.LibraryBackupException
+import io.github.tophtab.lspstore.data.backup.LibraryRestoreMode
 import io.github.tophtab.lspstore.data.device.LauncherIcon
 import io.github.tophtab.lspstore.data.install.DownloadSlots
 import io.github.tophtab.lspstore.data.update.UpdateScheduler
 import io.github.tophtab.lspstore.di.AppContainer
 import io.github.tophtab.lspstore.domain.model.ThemeMode
 import io.github.tophtab.lspstore.domain.model.TranslationSettings
+import java.time.LocalDate
 
 data class SettingsUiState(
     val rootInstall: Boolean = false,
@@ -39,6 +43,8 @@ data class SettingsUiState(
     val downloadLocationLabel: String? = null,
     val downloadsSize: Long = 0,
     val indexCacheSize: Long = 0,
+    /** Parsed import waiting for the user to pick merge or replace. */
+    val pendingImport: LibraryBackup? = null,
     val message: String? = null,
 )
 
@@ -46,6 +52,8 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
 
     private val settingsRepository = container.settingsRepository
     private val moduleRepository = container.moduleRepository
+    private val libraryRepository = container.libraryRepository
+    private val libraryBackupStore = container.libraryBackupStore
     private val installer = container.installer
     private val appContext = container.appContext
 
@@ -273,6 +281,21 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
         }
     }
 
+    /** Default name offered to the document picker for a new export. */
+    fun backupFileName(): String = "lsp-store-backup-${LocalDate.now()}.json"
+
+    fun exportLibrary(uri: Uri) {
+        viewModelScope.launch {
+            runCatching {
+                libraryBackupStore.write(uri, libraryRepository.snapshot())
+            }.onSuccess {
+                _state.update { it.copy(message = appContext.getString(R.string.backup_export_done)) }
+            }.onFailure {
+                _state.update { it.copy(message = appContext.getString(R.string.backup_export_failed)) }
+            }
+        }
+    }
+
     /**
      * Persists the folder picked in the system folder picker. The grant has to
      * be persistable, otherwise the setting would stop working after a restart;
@@ -306,6 +329,43 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
                 it.copy(message = appContext.getString(R.string.settings_download_location_reset))
             }
         }
+    }
+
+    /** Parses the picked file; the user still chooses merge or replace. */
+    fun readLibraryBackup(uri: Uri) {
+        viewModelScope.launch {
+            runCatching { libraryBackupStore.read(uri) }
+                .onSuccess { backup -> _state.update { it.copy(pendingImport = backup) } }
+                .onFailure { error ->
+                    val message = if (
+                        error is LibraryBackupException &&
+                        error.problem == LibraryBackupException.Problem.UNSUPPORTED_VERSION
+                    ) {
+                        R.string.backup_import_unsupported
+                    } else {
+                        R.string.backup_import_invalid
+                    }
+                    _state.update { it.copy(message = appContext.getString(message)) }
+                }
+        }
+    }
+
+    fun applyImport(mode: LibraryRestoreMode) {
+        val backup = _state.value.pendingImport ?: return
+        _state.update { it.copy(pendingImport = null) }
+        viewModelScope.launch {
+            runCatching { libraryRepository.restore(backup, mode) }
+                .onSuccess {
+                    _state.update { it.copy(message = appContext.getString(R.string.backup_import_done)) }
+                }
+                .onFailure {
+                    _state.update { it.copy(message = appContext.getString(R.string.backup_import_failed)) }
+                }
+        }
+    }
+
+    fun dismissImport() {
+        _state.update { it.copy(pendingImport = null) }
     }
 
     private fun releaseGrant(treeUri: String) {

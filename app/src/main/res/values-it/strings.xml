@@ -166,6 +166,24 @@
     <string name="settings_advanced">Avanzato</string>
     <string name="settings_index_cleared">Cache dell\'indice cancellata</string>
     <string name="settings_apks_cleared">Gli APK scaricati sono stati cancellati</string>
+
+    <!-- Backup & restore -->
+    <string name="settings_backup">Backup e ripristino</string>
+    <string name="backup_export">Esporta libreria</string>
+    <string name="backup_export_desc">Salva preferiti, elementi ignorati, versioni saltate, collegamenti e scelte delle varianti in un file JSON.</string>
+    <string name="backup_import">Importa libreria</string>
+    <string name="backup_import_desc">Ripristina da un file di backup. Unisci conserva i dati attuali; sostituisci li sovrascrive.</string>
+    <string name="backup_export_done">Libreria esportata</string>
+    <string name="backup_export_failed">Impossibile esportare la libreria</string>
+    <string name="backup_import_title">Importare la libreria?</string>
+    <string name="backup_import_summary">Il backup contiene %1$d preferiti, %2$d moduli ignorati e %3$d versioni saltate.</string>
+    <string name="backup_import_note">Unisci aggiunge le voci mancanti e conserva le scelte attuali. Sostituisci elimina prima la libreria attuale.</string>
+    <string name="backup_import_merge">Unisci (consigliato)</string>
+    <string name="backup_import_replace">Sostituisci i dati attuali</string>
+    <string name="backup_import_done">Libreria importata</string>
+    <string name="backup_import_failed">Impossibile importare la libreria</string>
+    <string name="backup_import_invalid">Questo file non è un backup LSP Store valido</string>
+    <string name="backup_import_unsupported">Questo backup è stato creato da una versione più recente di LSP Store</string>
     <string name="settings_download_location">Percorso dei download</string>
     <string name="settings_download_location_default">Predefinito: Download/LSP_Store</string>
     <string name="settings_download_location_picked">Gli APK vengono salvati in %1$s</string>
