@@ -138,8 +138,8 @@
     <string name="settings_hide_icon_confirm_message">LSP Store लॉन्चर से गायब हो जाएगा। इसे फिर खोलने के लिए LSPosed Manager > मॉड्यूल > LSP Store पर जाएं।</string>
     <string name="settings_hide_icon_confirm_action">छिपाएं</string>
     <string name="settings_hide_icon_hidden">लॉन्चर आइकन छिपा दिया गया। LSPosed Manager से LSP Store फिर खोलें।</string>
-    <string name="settings_root_section">Root</string>
-    <string name="settings_root">रूट साइलेंट इंस्टाल</string>
+    <string name="settings_root_section">इंस्टॉल</string>
+    <string name="settings_root">साइलेंट इंस्टाल</string>
     <string name="settings_root_detected">सु का पता चला, APK चुपचाप इंस्टॉल हो जाते हैं</string>
     <string name="settings_root_unavailable">su इस डिवाइस पर उपलब्ध नहीं है</string>
     <string name="settings_root_desc">सु के माध्यम से चुपचाप एपीके इंस्टॉल और अपडेट करें</string>
@@ -172,7 +172,6 @@
     <string name="settings_download_location_reset">डाउनलोड स्थान डिफ़ॉल्ट पर रीसेट हो गया</string>
     <string name="settings_download_location_failed">यह फ़ोल्डर उपयोग नहीं किया जा सकता। कोई दूसरा चुनें।</string>
     <string name="action_reset">रीसेट</string>
-    <string name="diagnostics_title">ऐप की जानकारी और निदान</string>
     <string name="diagnostics_app">अनुप्रयोग</string>
     <string name="diagnostics_version">संस्करण</string>
     <string name="diagnostics_android">एंड्रॉइड</string>
@@ -310,6 +309,6 @@
     <string name="settings_wifi_only_desc">बैकग्राउंड जाँच केवल अनमीटर्ड नेटवर्क पर चलाएँ।</string>
     <string name="settings_auto_update">अपडेट स्वचालित रूप से इंस्टॉल करें</string>
     <string name="settings_auto_update_desc">बैकग्राउंड जाँच के बाद रूट के माध्यम से अपडेट चुपचाप इंस्टॉल करता है।</string>
-    <string name="settings_auto_update_needs_root">पहले "रूट साइलेंट इंस्टाल" चालू करें।</string>
+    <string name="settings_auto_update_needs_root">पहले "साइलेंट इंस्टाल" चालू करें।</string>
     <string name="settings_notifications_needed">सूचनाएँ बंद हैं: बैकग्राउंड जाँच अपडेट की सूचना नहीं दे सकती।</string>
 </resources>

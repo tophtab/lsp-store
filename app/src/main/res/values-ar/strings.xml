@@ -138,8 +138,8 @@
     <string name="settings_hide_icon_confirm_message">سيختفي LSP Store من المشغّل. لإعادة فتحه، انتقل إلى مدير LSPosed > الوحدات > LSP Store.</string>
     <string name="settings_hide_icon_confirm_action">إخفاء</string>
     <string name="settings_hide_icon_hidden">تم إخفاء رمز المشغّل. أعد فتح LSP Store من مدير LSPosed.</string>
-    <string name="settings_root_section">Root</string>
-    <string name="settings_root">تثبيت الجذر الصامت</string>
+    <string name="settings_root_section">تثبيت</string>
+    <string name="settings_root">تثبيت صامت</string>
     <string name="settings_root_detected">تم اكتشاف su، ويتم تثبيت ملفات APK بصمت</string>
     <string name="settings_root_unavailable">su غير متوفر على هذا الجهاز</string>
     <string name="settings_root_desc">قم بتثبيت ملفات APK وتحديثها بصمت عبر su</string>
@@ -172,7 +172,6 @@
     <string name="settings_download_location_reset">تمت إعادة موقع التنزيل إلى الافتراضي</string>
     <string name="settings_download_location_failed">لا يمكن استخدام هذا المجلد. اختر مجلدًا آخر.</string>
     <string name="action_reset">إعادة تعيين</string>
-    <string name="diagnostics_title">معلومات التطبيق والتشخيص</string>
     <string name="diagnostics_app">برنامج</string>
     <string name="diagnostics_version">إصدار</string>
     <string name="diagnostics_android">أندرويد</string>
@@ -310,6 +309,6 @@
     <string name="settings_wifi_only_desc">شغّل الفحص في الخلفية على الشبكات غير المقننة فقط.</string>
     <string name="settings_auto_update">تثبيت التحديثات تلقائيًا</string>
     <string name="settings_auto_update_desc">يثبّت التحديثات بصمت عبر الجذر بعد الفحص في الخلفية.</string>
-    <string name="settings_auto_update_needs_root">شغّل "تثبيت الجذر الصامت" أولًا.</string>
+    <string name="settings_auto_update_needs_root">شغّل "تثبيت صامت" أولًا.</string>
     <string name="settings_notifications_needed">الإشعارات متوقفة: لا يمكن للفحص في الخلفية الإبلاغ عن التحديثات.</string>
 </resources>

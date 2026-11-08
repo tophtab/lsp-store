@@ -138,8 +138,8 @@
     <string name="settings_hide_icon_confirm_message">LSP Store desaparecerá del lanzador. Para volver a abrirlo, ve a LSPosed Manager > Módulos > LSP Store.</string>
     <string name="settings_hide_icon_confirm_action">Ocultar</string>
     <string name="settings_hide_icon_hidden">Icono del lanzador oculto. Vuelve a abrir LSP Store desde LSPosed Manager.</string>
-    <string name="settings_root_section">Root</string>
-    <string name="settings_root">Instalación silenciosa raíz</string>
+    <string name="settings_root_section">Instalación</string>
+    <string name="settings_root">Instalación silenciosa</string>
     <string name="settings_root_detected">su detectado, los APK se instalan silenciosamente</string>
     <string name="settings_root_unavailable">su no está disponible en este dispositivo</string>
     <string name="settings_root_desc">Instale y actualice APK silenciosamente a través de su</string>
@@ -172,7 +172,6 @@
     <string name="settings_download_location_reset">Ubicación de descargas restablecida</string>
     <string name="settings_download_location_failed">No se puede usar esta carpeta. Elige otra.</string>
     <string name="action_reset">Restablecer</string>
-    <string name="diagnostics_title">Información y diagnóstico de la aplicación</string>
     <string name="diagnostics_app">Aplicación</string>
     <string name="diagnostics_version">Versión</string>
     <string name="diagnostics_android">Androide</string>
@@ -310,6 +309,6 @@
     <string name="settings_wifi_only_desc">Ejecuta la comprobación en segundo plano solo en redes no medidas.</string>
     <string name="settings_auto_update">Instalar actualizaciones automáticamente</string>
     <string name="settings_auto_update_desc">Instala actualizaciones silenciosamente mediante root tras una comprobación en segundo plano.</string>
-    <string name="settings_auto_update_needs_root">Activa antes "Instalación silenciosa root".</string>
+    <string name="settings_auto_update_needs_root">Activa antes "Instalación silenciosa".</string>
     <string name="settings_notifications_needed">Las notificaciones están desactivadas: la comprobación en segundo plano no puede avisar de actualizaciones.</string>
 </resources>

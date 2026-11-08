@@ -138,8 +138,8 @@
     <string name="settings_hide_icon_confirm_message">LSP Store zniknie z launchera. Aby otworzyć go ponownie, przejdź do LSPosed Manager > Moduły > LSP Store.</string>
     <string name="settings_hide_icon_confirm_action">Ukryj</string>
     <string name="settings_hide_icon_hidden">Ikona w launcherze została ukryta. Otwórz LSP Store ponownie z LSPosed Manager.</string>
-    <string name="settings_root_section">Root</string>
-    <string name="settings_root">Zrootuj cichą instalację</string>
+    <string name="settings_root_section">Instalacja</string>
+    <string name="settings_root">Cicha instalacja</string>
     <string name="settings_root_detected">su, pliki APK instalują się w trybie cichym</string>
     <string name="settings_root_unavailable">su nie jest dostępne na tym urządzeniu</string>
     <string name="settings_root_desc">Instaluj i aktualizuj pliki APK w trybie cichym za pośrednictwem su</string>
@@ -172,7 +172,6 @@
     <string name="settings_download_location_reset">Przywrócono domyślną lokalizację pobierania</string>
     <string name="settings_download_location_failed">Nie można użyć tego folderu. Wybierz inny.</string>
     <string name="action_reset">Przywróć</string>
-    <string name="diagnostics_title">Informacje o aplikacji i diagnostyka</string>
     <string name="diagnostics_app">Aplikacja</string>
     <string name="diagnostics_version">Wersja</string>
     <string name="diagnostics_android">Android</string>
@@ -310,6 +309,6 @@
     <string name="settings_wifi_only_desc">Uruchamiaj sprawdzanie w tle tylko w sieciach bez limitu danych.</string>
     <string name="settings_auto_update">Instaluj aktualizacje automatycznie</string>
     <string name="settings_auto_update_desc">Instaluje aktualizacje cicho przez root po sprawdzeniu w tle.</string>
-    <string name="settings_auto_update_needs_root">Najpierw włącz „Zrootuj cichą instalację”.</string>
+    <string name="settings_auto_update_needs_root">Najpierw włącz „Cichą instalację”.</string>
     <string name="settings_notifications_needed">Powiadomienia są wyłączone: sprawdzanie w tle nie może zgłaszać aktualizacji.</string>
 </resources>

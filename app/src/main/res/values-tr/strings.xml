@@ -138,8 +138,8 @@
     <string name="settings_hide_icon_confirm_message">LSP Store başlatıcıdan kaybolacak. Yeniden açmak için LSPosed Manager > Modüller > LSP Store bölümüne gidin.</string>
     <string name="settings_hide_icon_confirm_action">Gizle</string>
     <string name="settings_hide_icon_hidden">Başlatıcı simgesi gizlendi. LSP Store\'u LSPosed Manager\'dan yeniden açın.</string>
-    <string name="settings_root_section">Root</string>
-    <string name="settings_root">Kök sessiz kurulum</string>
+    <string name="settings_root_section">Kurulum</string>
+    <string name="settings_root">Sessiz kurulum</string>
     <string name="settings_root_detected">su algılandı, APK\'lar sessizce yükleniyor</string>
     <string name="settings_root_unavailable">su bu cihazda mevcut değil</string>
     <string name="settings_root_desc">APK\'ları su aracılığıyla sessizce yükleyin ve güncelleyin</string>
@@ -172,7 +172,6 @@
     <string name="settings_download_location_reset">İndirme konumu varsayılana sıfırlandı</string>
     <string name="settings_download_location_failed">Bu klasör kullanılamıyor. Başka bir klasör seçin.</string>
     <string name="action_reset">Sıfırla</string>
-    <string name="diagnostics_title">Uygulama bilgileri ve teşhis</string>
     <string name="diagnostics_app">Uygulama</string>
     <string name="diagnostics_version">Sürüm</string>
     <string name="diagnostics_android">Android</string>
@@ -310,6 +309,6 @@
     <string name="settings_wifi_only_desc">Arka plan denetimini yalnızca ölçümlenmeyen ağlarda çalıştır.</string>
     <string name="settings_auto_update">Güncellemeleri otomatik yükle</string>
     <string name="settings_auto_update_desc">Arka plan denetiminden sonra güncellemeleri root üzerinden sessizce yükler.</string>
-    <string name="settings_auto_update_needs_root">Önce "Kök sessiz kurulum"u açın.</string>
+    <string name="settings_auto_update_needs_root">Önce "Sessiz kurulum"u açın.</string>
     <string name="settings_notifications_needed">Bildirimler kapalı: arka plan denetimi güncellemeleri bildiremez.</string>
 </resources>
