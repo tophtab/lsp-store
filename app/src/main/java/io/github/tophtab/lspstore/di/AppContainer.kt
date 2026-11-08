@@ -83,13 +83,19 @@ class AppContainer(context: Context) {
     private val _maxConcurrentDownloads = MutableStateFlow(DownloadSlots.DEFAULT_LIMIT)
     val maxConcurrentDownloads: StateFlow<Int> = _maxConcurrentDownloads.asStateFlow()
 
+    /**
+     * Latest "download location" value, mirrored for [ApkExportStore] so an
+     * export never waits on DataStore.
+     */
+    private val _downloadLocation = MutableStateFlow("")
+
     /** One gate for batch updates and module page installs. */
     val downloadSlots: DownloadSlots = DownloadSlots { _maxConcurrentDownloads.value }
 
     val libraryRepository: LibraryRepository = LibraryRepositoryImpl(context)
     val pendingInstallRepository: PendingInstallRepository =
         PendingInstallRepositoryImpl(context)
-    val apkExportStore: ApkExportStore = ApkExportStore(appContext)
+    val apkExportStore: ApkExportStore = ApkExportStore(appContext) { _downloadLocation.value }
     val downloadManager: DownloadManager = DownloadManager(context, apkExportStore)
     val installer: ApkInstaller = ApkInstaller(context, downloadManager)
     val systemInstallSerializer: SystemInstallSerializer = SystemInstallSerializer()
@@ -107,6 +113,11 @@ class AppContainer(context: Context) {
         installScope.launch {
             settingsRepository.maxConcurrentDownloads.collect { value ->
                 _maxConcurrentDownloads.value = value
+            }
+        }
+        installScope.launch {
+            settingsRepository.downloadLocation.collect { value ->
+                _downloadLocation.value = value
             }
         }
     }

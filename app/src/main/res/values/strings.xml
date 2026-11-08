@@ -192,6 +192,12 @@
     <string name="settings_advanced">Advanced</string>
     <string name="settings_index_cleared">Index cache cleared</string>
     <string name="settings_apks_cleared">Downloaded APKs cleared</string>
+    <string name="settings_download_location">Download location</string>
+    <string name="settings_download_location_default">Default: Download/LSP_Store</string>
+    <string name="settings_download_location_picked">APKs are saved in %1$s</string>
+    <string name="settings_download_location_reset">Download location reset to default</string>
+    <string name="settings_download_location_failed">This folder cannot be used. Pick another one.</string>
+    <string name="action_reset">Reset</string>
 
     <!-- Diagnostics -->
     <string name="diagnostics_title">App info &amp; diagnostics</string>

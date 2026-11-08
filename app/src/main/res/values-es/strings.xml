@@ -166,6 +166,12 @@
     <string name="settings_advanced">Avanzado</string>
     <string name="settings_index_cleared">Caché de índice borrado</string>
     <string name="settings_apks_cleared">APK descargados borrados</string>
+    <string name="settings_download_location">Ubicación de descargas</string>
+    <string name="settings_download_location_default">Predeterminada: Download/LSP_Store</string>
+    <string name="settings_download_location_picked">Los APK se guardan en %1$s</string>
+    <string name="settings_download_location_reset">Ubicación de descargas restablecida</string>
+    <string name="settings_download_location_failed">No se puede usar esta carpeta. Elige otra.</string>
+    <string name="action_reset">Restablecer</string>
     <string name="diagnostics_title">Información y diagnóstico de la aplicación</string>
     <string name="diagnostics_app">Aplicación</string>
     <string name="diagnostics_version">Versión</string>

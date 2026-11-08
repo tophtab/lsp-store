@@ -1,5 +1,8 @@
 package io.github.tophtab.lspstore.ui.screens.settings
 
+import android.content.Intent
+import android.net.Uri
+import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
@@ -30,6 +33,10 @@ data class SettingsUiState(
     val wifiOnly: Boolean = false,
     val autoUpdateRoot: Boolean = false,
     val hideLauncherIcon: Boolean = false,
+    /** Document tree URI of the chosen download folder; blank means default. */
+    val downloadLocation: String = "",
+    /** Readable path of [downloadLocation], null while the default is used. */
+    val downloadLocationLabel: String? = null,
     val downloadsSize: Long = 0,
     val indexCacheSize: Long = 0,
     val message: String? = null,
@@ -102,6 +109,20 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
         viewModelScope.launch {
             settingsRepository.hideLauncherIcon.collect { hidden ->
                 _state.update { it.copy(hideLauncherIcon = hidden) }
+            }
+        }
+        viewModelScope.launch {
+            settingsRepository.downloadLocation.collect { uri ->
+                val changed = _state.value.downloadLocation != uri
+                _state.update { it.copy(downloadLocation = uri) }
+                if (!changed) return@collect
+                // The tree label needs a provider query, so it stays off the
+                // main thread and only runs when the setting actually changed.
+                val label = if (uri.isBlank()) null else container.apkExportStore.locationLabel()
+                val size = installer.downloadsSizeBytes()
+                _state.update {
+                    it.copy(downloadLocationLabel = label, downloadsSize = size)
+                }
             }
         }
     }
@@ -252,11 +273,60 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
         }
     }
 
+    /**
+     * Persists the folder picked in the system folder picker. The grant has to
+     * be persistable, otherwise the setting would stop working after a restart;
+     * a provider that refuses is reported instead of stored.
+     */
+    fun setDownloadLocation(uri: Uri) {
+        val granted = runCatching {
+            appContext.contentResolver.takePersistableUriPermission(uri, GRANT_FLAGS)
+        }.isSuccess
+        if (!granted) {
+            _state.update {
+                it.copy(message = appContext.getString(R.string.settings_download_location_failed))
+            }
+            return
+        }
+        val previous = _state.value.downloadLocation
+        viewModelScope.launch {
+            settingsRepository.setDownloadLocation(uri.toString())
+            if (previous != uri.toString()) releaseGrant(previous)
+        }
+    }
+
+    /** Returns to `Download/LSP_Store` and drops the old folder's grant. */
+    fun resetDownloadLocation() {
+        val previous = _state.value.downloadLocation
+        if (previous.isBlank()) return
+        viewModelScope.launch {
+            settingsRepository.setDownloadLocation("")
+            releaseGrant(previous)
+            _state.update {
+                it.copy(message = appContext.getString(R.string.settings_download_location_reset))
+            }
+        }
+    }
+
+    private fun releaseGrant(treeUri: String) {
+        if (treeUri.isBlank()) return
+        runCatching {
+            appContext.contentResolver.releasePersistableUriPermission(
+                treeUri.toUri(),
+                GRANT_FLAGS,
+            )
+        }
+    }
+
     fun clearMessage() {
         _state.update { it.copy(message = null) }
     }
 
     companion object {
+        /** Read and write are both needed to create and later delete exports. */
+        private const val GRANT_FLAGS =
+            Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+
         fun factory(container: AppContainer) = viewModelFactory {
             initializer { SettingsViewModel(container) }
         }
