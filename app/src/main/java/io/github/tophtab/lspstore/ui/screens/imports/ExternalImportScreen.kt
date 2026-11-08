@@ -46,6 +46,7 @@ import io.github.tophtab.lspstore.ui.components.EmptyBox
 import io.github.tophtab.lspstore.ui.components.ErrorBox
 import io.github.tophtab.lspstore.ui.components.LoadingBox
 import io.github.tophtab.lspstore.ui.components.ModuleAvatar
+import io.github.tophtab.lspstore.ui.components.SnackbarMessageEffect
 import io.github.tophtab.lspstore.ui.design.KomiButton
 import io.github.tophtab.lspstore.ui.design.KomiButtonSize
 import io.github.tophtab.lspstore.ui.design.KomiButtonVariant
@@ -63,12 +64,11 @@ fun ExternalImportScreen(onBack: () -> Unit, onOpenModule: (String) -> Unit) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    LaunchedEffect(state.message) {
-        state.message?.let {
-            snackbarHostState.showSnackbar(it)
-            viewModel.clearMessage()
-        }
-    }
+    SnackbarMessageEffect(
+        message = state.message,
+        hostState = snackbarHostState,
+        onConsumed = viewModel::clearMessage,
+    )
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,

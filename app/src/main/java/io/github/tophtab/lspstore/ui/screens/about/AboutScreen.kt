@@ -26,7 +26,6 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -41,6 +40,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.tophtab.lspstore.R
 import io.github.tophtab.lspstore.ui.LocalAppContainer
+import io.github.tophtab.lspstore.ui.components.SnackbarMessageEffect
 import io.github.tophtab.lspstore.ui.design.KomiButton
 import io.github.tophtab.lspstore.ui.design.KomiButtonSize
 import io.github.tophtab.lspstore.ui.design.KomiButtonVariant
@@ -63,12 +63,11 @@ fun AboutScreen(onBack: () -> Unit, onOpenLicenses: () -> Unit) {
     val uriHandler = LocalUriHandler.current
     val snackbarHostState = remember { SnackbarHostState() }
 
-    LaunchedEffect(state.message) {
-        state.message?.let {
-            snackbarHostState.showSnackbar(it)
-            viewModel.clearMessage()
-        }
-    }
+    SnackbarMessageEffect(
+        message = state.message,
+        hostState = snackbarHostState,
+        onConsumed = viewModel::clearMessage,
+    )
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
