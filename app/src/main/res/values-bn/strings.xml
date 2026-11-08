@@ -166,6 +166,12 @@
     <string name="settings_advanced">উন্নত</string>
     <string name="settings_index_cleared">ইনডেক্স ক্যাশে সাফ করা হয়েছে</string>
     <string name="settings_apks_cleared">ডাউনলোড করা APK সাফ করা হয়েছে</string>
+    <string name="settings_download_location">ডাউনলোডের অবস্থান</string>
+    <string name="settings_download_location_default">ডিফল্ট: Download/LSP_Store</string>
+    <string name="settings_download_location_picked">APK ফাইল %1$s-এ সংরক্ষিত হয়</string>
+    <string name="settings_download_location_reset">ডাউনলোডের অবস্থান ডিফল্টে রিসেট হয়েছে</string>
+    <string name="settings_download_location_failed">এই ফোল্ডারটি ব্যবহার করা যাবে না। অন্য একটি চয়ন করুন।</string>
+    <string name="action_reset">রিসেট</string>
     <string name="diagnostics_title">অ্যাপের তথ্য ও ডায়াগনস্টিকস</string>
     <string name="diagnostics_app">অ্যাপ</string>
     <string name="diagnostics_version">সংস্করণ</string>

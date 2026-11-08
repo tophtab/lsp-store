@@ -166,6 +166,12 @@
     <string name="settings_advanced">Gelişmiş</string>
     <string name="settings_index_cleared">Dizin önbelleği temizlendi</string>
     <string name="settings_apks_cleared">İndirilen APK\'lar temizlendi</string>
+    <string name="settings_download_location">İndirme konumu</string>
+    <string name="settings_download_location_default">Varsayılan: Download/LSP_Store</string>
+    <string name="settings_download_location_picked">APK dosyaları %1$s konumuna kaydedilir</string>
+    <string name="settings_download_location_reset">İndirme konumu varsayılana sıfırlandı</string>
+    <string name="settings_download_location_failed">Bu klasör kullanılamıyor. Başka bir klasör seçin.</string>
+    <string name="action_reset">Sıfırla</string>
     <string name="diagnostics_title">Uygulama bilgileri ve teşhis</string>
     <string name="diagnostics_app">Uygulama</string>
     <string name="diagnostics_version">Sürüm</string>

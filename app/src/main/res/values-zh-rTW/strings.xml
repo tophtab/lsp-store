@@ -176,6 +176,12 @@
     <string name="settings_advanced">高階</string>
     <string name="settings_index_cleared">索引快取已清除</string>
     <string name="settings_apks_cleared">已清除下載的 APK</string>
+    <string name="settings_download_location">下載位置</string>
+    <string name="settings_download_location_default">預設：Download/LSP_Store</string>
+    <string name="settings_download_location_picked">APK 儲存於 %1$s</string>
+    <string name="settings_download_location_reset">下載位置已恢復預設</string>
+    <string name="settings_download_location_failed">無法使用此資料夾，請選擇其他資料夾。</string>
+    <string name="action_reset">重設</string>
 
     <!-- Diagnostics -->
     <string name="diagnostics_title">應用資訊與診斷</string>

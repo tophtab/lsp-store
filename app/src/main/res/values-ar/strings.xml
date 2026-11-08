@@ -166,6 +166,12 @@
     <string name="settings_advanced">متقدم</string>
     <string name="settings_index_cleared">تم مسح ذاكرة التخزين المؤقت للفهرس</string>
     <string name="settings_apks_cleared">تم مسح ملفات APK التي تم تنزيلها</string>
+    <string name="settings_download_location">موقع التنزيل</string>
+    <string name="settings_download_location_default">الافتراضي: Download/LSP_Store</string>
+    <string name="settings_download_location_picked">تُحفظ ملفات APK في %1$s</string>
+    <string name="settings_download_location_reset">تمت إعادة موقع التنزيل إلى الافتراضي</string>
+    <string name="settings_download_location_failed">لا يمكن استخدام هذا المجلد. اختر مجلدًا آخر.</string>
+    <string name="action_reset">إعادة تعيين</string>
     <string name="diagnostics_title">معلومات التطبيق والتشخيص</string>
     <string name="diagnostics_app">برنامج</string>
     <string name="diagnostics_version">إصدار</string>
