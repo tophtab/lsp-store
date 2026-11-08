@@ -184,6 +184,12 @@
     <string name="backup_import_failed">Impossibile importare la libreria</string>
     <string name="backup_import_invalid">Questo file non è un backup LSP Store valido</string>
     <string name="backup_import_unsupported">Questo backup è stato creato da una versione più recente di LSP Store</string>
+    <string name="settings_download_location">Percorso dei download</string>
+    <string name="settings_download_location_default">Predefinito: Download/LSP_Store</string>
+    <string name="settings_download_location_picked">Gli APK vengono salvati in %1$s</string>
+    <string name="settings_download_location_reset">Percorso dei download ripristinato</string>
+    <string name="settings_download_location_failed">Impossibile usare questa cartella. Scegli un altro percorso.</string>
+    <string name="action_reset">Ripristina</string>
     <string name="diagnostics_title">Informazioni e diagnostica sull\'app</string>
     <string name="diagnostics_app">App</string>
     <string name="diagnostics_version">Versione</string>

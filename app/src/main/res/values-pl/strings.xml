@@ -184,6 +184,12 @@
     <string name="backup_import_failed">Nie udało się zaimportować biblioteki</string>
     <string name="backup_import_invalid">Ten plik nie jest prawidłową kopią zapasową LSP Store</string>
     <string name="backup_import_unsupported">Ta kopia została utworzona przez nowszą wersję LSP Store</string>
+    <string name="settings_download_location">Lokalizacja pobierania</string>
+    <string name="settings_download_location_default">Domyślnie: Download/LSP_Store</string>
+    <string name="settings_download_location_picked">APK są zapisywane w %1$s</string>
+    <string name="settings_download_location_reset">Przywrócono domyślną lokalizację pobierania</string>
+    <string name="settings_download_location_failed">Nie można użyć tego folderu. Wybierz inny.</string>
+    <string name="action_reset">Przywróć</string>
     <string name="diagnostics_title">Informacje o aplikacji i diagnostyka</string>
     <string name="diagnostics_app">Aplikacja</string>
     <string name="diagnostics_version">Wersja</string>

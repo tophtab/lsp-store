@@ -392,7 +392,6 @@ private fun AppNavHost(
                 onOpenSkipped = { navController.navigate(Routes.SKIPPED) },
                 onOpenIgnoredModules = { navController.navigate(Routes.IGNORED_MODULES) },
                 onOpenAbout = { navController.navigate(Routes.ABOUT) },
-                onOpenImports = { navController.navigate(Routes.IMPORTS) },
                 onOpenDiagnostics = { navController.navigate(Routes.DIAGNOSTICS) },
                 onOpenMirrors = { navController.navigate(Routes.MIRRORS) },
                 reselectTick = if (reselectRoute == Routes.SETTINGS) reselectTick else 0,

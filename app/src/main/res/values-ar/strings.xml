@@ -184,6 +184,12 @@
     <string name="backup_import_failed">تعذّر استيراد المكتبة</string>
     <string name="backup_import_invalid">هذا الملف ليس نسخة احتياطية صالحة من LSP Store</string>
     <string name="backup_import_unsupported">أُنشئت هذه النسخة الاحتياطية بإصدار أحدث من LSP Store</string>
+    <string name="settings_download_location">موقع التنزيل</string>
+    <string name="settings_download_location_default">الافتراضي: Download/LSP_Store</string>
+    <string name="settings_download_location_picked">تُحفظ ملفات APK في %1$s</string>
+    <string name="settings_download_location_reset">تمت إعادة موقع التنزيل إلى الافتراضي</string>
+    <string name="settings_download_location_failed">لا يمكن استخدام هذا المجلد. اختر مجلدًا آخر.</string>
+    <string name="action_reset">إعادة تعيين</string>
     <string name="diagnostics_title">معلومات التطبيق والتشخيص</string>
     <string name="diagnostics_app">برنامج</string>
     <string name="diagnostics_version">إصدار</string>

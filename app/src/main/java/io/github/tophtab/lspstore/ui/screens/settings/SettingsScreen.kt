@@ -39,6 +39,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.tophtab.lspstore.R
@@ -75,7 +76,6 @@ fun SettingsScreen(
     onOpenRecentlyViewed: () -> Unit,
     onOpenSkipped: () -> Unit,
     onOpenIgnoredModules: () -> Unit,
-    onOpenImports: () -> Unit,
     onOpenAbout: () -> Unit,
     onOpenDiagnostics: () -> Unit,
     onOpenMirrors: () -> Unit,
@@ -121,6 +121,11 @@ fun SettingsScreen(
     val backupImport = rememberLauncherForActivityResult(
         ActivityResultContracts.OpenDocument(),
     ) { uri -> if (uri != null) viewModel.readLibraryBackup(uri) }
+    // The system folder picker returns a document tree; the ViewModel persists
+    // its grant, so exports keep working after a restart.
+    val downloadLocationPicker = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocumentTree(),
+    ) { uri -> if (uri != null) viewModel.setDownloadLocation(uri) }
 
     LaunchedEffect(state.message) {
         state.message?.let {
@@ -309,6 +314,36 @@ fun SettingsScreen(
                 KomiSettingsSectionHead(stringResource(R.string.settings_downloads))
                 KomiSettingsGroup {
                     KomiSettingsRow(
+                        title = stringResource(R.string.settings_download_location),
+                        subtitle = if (state.downloadLocation.isBlank()) {
+                            stringResource(R.string.settings_download_location_default)
+                        } else {
+                            stringResource(
+                                R.string.settings_download_location_picked,
+                                state.downloadLocationLabel ?: state.downloadLocation,
+                            )
+                        },
+                        onClick = {
+                            downloadLocationPicker.launch(
+                                state.downloadLocation
+                                    .takeIf { it.isNotBlank() }
+                                    ?.toUri(),
+                            )
+                        },
+                        trailing = if (state.downloadLocation.isNotBlank()) {
+                            {
+                                KomiButton(
+                                    onClick = viewModel::resetDownloadLocation,
+                                    label = stringResource(R.string.action_reset),
+                                    variant = KomiButtonVariant.Text,
+                                    size = KomiButtonSize.Small,
+                                )
+                            }
+                        } else {
+                            null
+                        },
+                    )
+                    KomiSettingsRow(
                         title = stringResource(R.string.settings_max_downloads),
                         trailing = {
                             KomiCompactSegmented(
@@ -407,10 +442,6 @@ fun SettingsScreen(
                     KomiSettingsRow(
                         title = stringResource(R.string.library_skipped),
                         onClick = onOpenSkipped,
-                    )
-                    KomiSettingsRow(
-                        title = stringResource(R.string.import_title),
-                        onClick = onOpenImports,
                         last = true,
                     )
                 }

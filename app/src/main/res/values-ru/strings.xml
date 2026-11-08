@@ -184,6 +184,12 @@
     <string name="backup_import_failed">Не удалось импортировать библиотеку</string>
     <string name="backup_import_invalid">Этот файл не является допустимой резервной копией LSP Store</string>
     <string name="backup_import_unsupported">Эта копия создана более новой версией LSP Store</string>
+    <string name="settings_download_location">Папка загрузок</string>
+    <string name="settings_download_location_default">По умолчанию: Download/LSP_Store</string>
+    <string name="settings_download_location_picked">APK сохраняются в %1$s</string>
+    <string name="settings_download_location_reset">Папка загрузок сброшена по умолчанию</string>
+    <string name="settings_download_location_failed">Эту папку нельзя использовать. Выберите другую.</string>
+    <string name="action_reset">Сбросить</string>
     <string name="diagnostics_title">Информация о приложении и диагностика</string>
     <string name="diagnostics_app">Приложение</string>
     <string name="diagnostics_version">Версия</string>

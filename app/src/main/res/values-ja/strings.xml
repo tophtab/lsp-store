@@ -184,6 +184,12 @@
     <string name="backup_import_failed">ライブラリをインポートできませんでした</string>
     <string name="backup_import_invalid">このファイルは有効な LSP Store のバックアップではありません</string>
     <string name="backup_import_unsupported">このバックアップは新しいバージョンの LSP Store で作成されました</string>
+    <string name="settings_download_location">ダウンロード先</string>
+    <string name="settings_download_location_default">既定: Download/LSP_Store</string>
+    <string name="settings_download_location_picked">APK は %1$s に保存されます</string>
+    <string name="settings_download_location_reset">ダウンロード先を既定に戻しました</string>
+    <string name="settings_download_location_failed">このフォルダーは使用できません。別のフォルダーを選択してください。</string>
+    <string name="action_reset">リセット</string>
     <string name="diagnostics_title">アプリ情報と診断</string>
     <string name="diagnostics_app">アプリ</string>
     <string name="diagnostics_version">バージョン</string>

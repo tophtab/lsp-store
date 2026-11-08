@@ -58,7 +58,7 @@ class DownloadManager(
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val jobs = ConcurrentHashMap<String, Job>()
 
-    /** Copies into Download/LSP_Store, tracked so [clearAll] can wait for them. */
+    /** Copies into the download folder, tracked so [clearAll] can wait for them. */
     private val exports = ConcurrentHashMap<String, Job>()
     private val _tasks = MutableStateFlow<Map<String, DownloadTask>>(emptyMap())
     val tasks = _tasks.asStateFlow()
@@ -261,7 +261,7 @@ class DownloadManager(
     }
 
     /**
-     * Publishes a finished transfer in Download/LSP_Store. Runs on the download
+     * Publishes a finished transfer in the download folder. Runs on the download
      * scope so the caller (install chain) never waits for the copy, and is
      * idempotent for the same asset identity.
      */
@@ -288,7 +288,7 @@ class DownloadManager(
 
     /**
      * Space used by both copies: the private working files and the exported
-     * APKs in Download/LSP_Store. The Settings entry clears both.
+     * APKs in the download folder. The Settings entry clears both.
      */
     suspend fun downloadedBytes(): Long = withContext(Dispatchers.IO) {
         val dir = File(context.cacheDir, "apk")
@@ -313,7 +313,7 @@ class DownloadManager(
 
     /**
      * Cancels transfers, removes the private working files and deletes the
-     * APKs this app exported to Download/LSP_Store. Waits for in-flight exports
+     * APKs this app exported to the download folder. Waits for in-flight exports
      * so none of them can publish a file after the cleanup query ran.
      */
     suspend fun clearAll() = withContext(Dispatchers.IO) {

@@ -45,6 +45,12 @@ interface SettingsRepository {
     /** Remove the launcher entry; off until the user turns it on. */
     val hideLauncherIcon: Flow<Boolean>
 
+    /**
+     * Document tree URI of the folder APKs are exported to. Blank keeps the
+     * default `Download/LSP_Store`.
+     */
+    val downloadLocation: Flow<String>
+
     /** Notification dedup state: update set already announced. Not user-facing. */
     val notifiedUpdateSignature: Flow<String>
 
@@ -62,6 +68,7 @@ interface SettingsRepository {
     suspend fun setWifiOnly(enabled: Boolean)
     suspend fun setAutoUpdateRoot(enabled: Boolean)
     suspend fun setHideLauncherIcon(hidden: Boolean)
+    suspend fun setDownloadLocation(treeUri: String)
     suspend fun setNotifiedUpdateSignature(signature: String)
 }
 
@@ -88,6 +95,7 @@ class SettingsRepositoryImpl(private val context: Context) : SettingsRepository 
         val WIFI_ONLY = booleanPreferencesKey("wifi_only")
         val AUTO_UPDATE_ROOT = booleanPreferencesKey("auto_update_root")
         val HIDE_LAUNCHER_ICON = booleanPreferencesKey("hide_launcher_icon")
+        val DOWNLOAD_LOCATION = stringPreferencesKey("download_location")
         val NOTIFIED_UPDATE_SIGNATURE = stringPreferencesKey("notified_update_signature")
     }
 
@@ -132,6 +140,9 @@ class SettingsRepositoryImpl(private val context: Context) : SettingsRepository 
 
     override val hideLauncherIcon: Flow<Boolean> = context.settingsDataStore.data
         .map { it[Keys.HIDE_LAUNCHER_ICON] ?: false }
+
+    override val downloadLocation: Flow<String> = context.settingsDataStore.data
+        .map { it[Keys.DOWNLOAD_LOCATION].orEmpty() }
 
     override val notifiedUpdateSignature: Flow<String> = context.settingsDataStore.data
         .map { it[Keys.NOTIFIED_UPDATE_SIGNATURE] ?: "" }
@@ -214,6 +225,10 @@ class SettingsRepositoryImpl(private val context: Context) : SettingsRepository 
 
     override suspend fun setHideLauncherIcon(hidden: Boolean) {
         context.settingsDataStore.edit { it[Keys.HIDE_LAUNCHER_ICON] = hidden }
+    }
+
+    override suspend fun setDownloadLocation(treeUri: String) {
+        context.settingsDataStore.edit { it[Keys.DOWNLOAD_LOCATION] = treeUri }
     }
 
     override suspend fun setNotifiedUpdateSignature(signature: String) {

@@ -184,6 +184,12 @@
     <string name="backup_import_failed">Kitaplık içe aktarılamadı</string>
     <string name="backup_import_invalid">Bu dosya geçerli bir LSP Store yedeği değil</string>
     <string name="backup_import_unsupported">Bu yedek daha yeni bir LSP Store sürümüyle oluşturuldu</string>
+    <string name="settings_download_location">İndirme konumu</string>
+    <string name="settings_download_location_default">Varsayılan: Download/LSP_Store</string>
+    <string name="settings_download_location_picked">APK dosyaları %1$s konumuna kaydedilir</string>
+    <string name="settings_download_location_reset">İndirme konumu varsayılana sıfırlandı</string>
+    <string name="settings_download_location_failed">Bu klasör kullanılamıyor. Başka bir klasör seçin.</string>
+    <string name="action_reset">Sıfırla</string>
     <string name="diagnostics_title">Uygulama bilgileri ve teşhis</string>
     <string name="diagnostics_app">Uygulama</string>
     <string name="diagnostics_version">Sürüm</string>
