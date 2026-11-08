@@ -115,7 +115,9 @@ export KEYSTORE_FILE=~/lsp-store-signing/release.keystore.jks \
 ## 每次发版
 
 1. 改 `app/build.gradle.kts` 的 `versionName` / `versionCode`
-   （`versionCode = major * 10000 + minor * 100 + patch`）。
+   （`versionCode = major * 10000 + minor * 100 + patch`）。功能性更新升 minor 位
+   （例如 1.4.0 → 1.5.0）；bug 修复和小幅 UI 调整升 patch 位（例如 1.5.0 → 1.5.1），
+   不要用 patch 位承载一组新功能。
 2. 写 `release-notes/<version>.md`——这份内容就是 GitHub Release 正文，也会被索引页
    当作该版本的更新说明展示。中文在前、英文在后，3–5 条面向用户的改动。
 3. 在 `CHANGELOG.md` 里加一节，使用 `增加：` / `减少：` / `修复：` 三个分类；
