@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import io.ktor.client.HttpClient
 import kotlinx.serialization.json.Json
+import io.github.tophtab.lspstore.data.backup.LibraryBackupStore
 import io.github.tophtab.lspstore.data.device.DeviceProfileProvider
 import io.github.tophtab.lspstore.data.install.ApkExportStore
 import io.github.tophtab.lspstore.data.install.ApkInstaller
@@ -87,6 +88,7 @@ class AppContainer(context: Context) {
     val downloadSlots: DownloadSlots = DownloadSlots { _maxConcurrentDownloads.value }
 
     val libraryRepository: LibraryRepository = LibraryRepositoryImpl(context)
+    val libraryBackupStore: LibraryBackupStore = LibraryBackupStore(appContext)
     val pendingInstallRepository: PendingInstallRepository =
         PendingInstallRepositoryImpl(context)
     val apkExportStore: ApkExportStore = ApkExportStore(appContext)

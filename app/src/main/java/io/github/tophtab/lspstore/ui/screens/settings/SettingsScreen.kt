@@ -42,6 +42,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.tophtab.lspstore.R
+import io.github.tophtab.lspstore.data.backup.LibraryRestoreMode
 import io.github.tophtab.lspstore.data.install.DownloadSlots
 import io.github.tophtab.lspstore.data.update.UpdateScheduler
 import io.github.tophtab.lspstore.domain.model.ThemeMode
@@ -111,6 +112,15 @@ fun SettingsScreen(
             notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
     }
+
+    // Both directions go through the document picker: the user decides where a
+    // backup lives, and no storage permission is needed either way.
+    val backupExport = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/json"),
+    ) { uri -> if (uri != null) viewModel.exportLibrary(uri) }
+    val backupImport = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument(),
+    ) { uri -> if (uri != null) viewModel.readLibraryBackup(uri) }
 
     LaunchedEffect(state.message) {
         state.message?.let {
@@ -438,6 +448,29 @@ fun SettingsScreen(
                     )
                 }
 
+                KomiSettingsSectionHead(stringResource(R.string.settings_backup))
+                KomiSettingsGroup {
+                    KomiSettingsRow(
+                        title = stringResource(R.string.backup_export),
+                        subtitle = stringResource(R.string.backup_export_desc),
+                        onClick = { backupExport.launch(viewModel.backupFileName()) },
+                    )
+                    KomiSettingsRow(
+                        title = stringResource(R.string.backup_import),
+                        subtitle = stringResource(R.string.backup_import_desc),
+                        onClick = {
+                            backupImport.launch(
+                                arrayOf(
+                                    "application/json",
+                                    "text/plain",
+                                    "application/octet-stream",
+                                ),
+                            )
+                        },
+                        last = true,
+                    )
+                }
+
                 KomiSettingsSectionHead(stringResource(R.string.settings_advanced))
                 KomiSettingsGroup {
                     KomiSettingsRow(
@@ -454,6 +487,46 @@ fun SettingsScreen(
                         last = true,
                     )
                 }
+            }
+        }
+    }
+
+    state.pendingImport?.let { backup ->
+        KomiDialog(
+            onDismissRequest = viewModel::dismissImport,
+            title = stringResource(R.string.backup_import_title),
+            dismissLabel = stringResource(R.string.action_cancel),
+            onDismiss = viewModel::dismissImport,
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                KomiText(
+                    text = stringResource(
+                        R.string.backup_import_summary,
+                        backup.favourites.size,
+                        backup.ignoredModules.size,
+                        backup.skippedUpdates.size,
+                    ),
+                    role = KomiTextRole.Body,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 13.sp,
+                )
+                KomiText(
+                    text = stringResource(R.string.backup_import_note),
+                    role = KomiTextRole.Label,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 12.sp,
+                )
+                KomiButton(
+                    onClick = { viewModel.applyImport(LibraryRestoreMode.MERGE) },
+                    label = stringResource(R.string.backup_import_merge),
+                    fullWidth = true,
+                )
+                KomiButton(
+                    onClick = { viewModel.applyImport(LibraryRestoreMode.REPLACE) },
+                    label = stringResource(R.string.backup_import_replace),
+                    variant = KomiButtonVariant.Destructive,
+                    fullWidth = true,
+                )
             }
         }
     }

@@ -166,6 +166,24 @@
     <string name="settings_advanced">Zaawansowany</string>
     <string name="settings_index_cleared">Pamięć podręczna indeksu została wyczyszczona</string>
     <string name="settings_apks_cleared">Pobrane pliki APK zostały usunięte</string>
+
+    <!-- Backup & restore -->
+    <string name="settings_backup">Kopia zapasowa i przywracanie</string>
+    <string name="backup_export">Eksportuj bibliotekę</string>
+    <string name="backup_export_desc">Zapisz ulubione, ignorowane elementy, pominięte wersje, powiązania i wybory wariantów w pliku JSON.</string>
+    <string name="backup_import">Importuj bibliotekę</string>
+    <string name="backup_import_desc">Przywróć z pliku kopii zapasowej. Scalanie zachowuje bieżące dane; zastąpienie je nadpisuje.</string>
+    <string name="backup_export_done">Biblioteka wyeksportowana</string>
+    <string name="backup_export_failed">Nie udało się wyeksportować biblioteki</string>
+    <string name="backup_import_title">Importować bibliotekę?</string>
+    <string name="backup_import_summary">Kopia zawiera %1$d ulubionych, %2$d ignorowanych modułów i %3$d pominiętych wersji.</string>
+    <string name="backup_import_note">Scalanie dodaje brakujące wpisy i zachowuje bieżące wybory. Zastąpienie najpierw usuwa bieżącą bibliotekę.</string>
+    <string name="backup_import_merge">Scal (zalecane)</string>
+    <string name="backup_import_replace">Zastąp bieżące dane</string>
+    <string name="backup_import_done">Biblioteka zaimportowana</string>
+    <string name="backup_import_failed">Nie udało się zaimportować biblioteki</string>
+    <string name="backup_import_invalid">Ten plik nie jest prawidłową kopią zapasową LSP Store</string>
+    <string name="backup_import_unsupported">Ta kopia została utworzona przez nowszą wersję LSP Store</string>
     <string name="diagnostics_title">Informacje o aplikacji i diagnostyka</string>
     <string name="diagnostics_app">Aplikacja</string>
     <string name="diagnostics_version">Wersja</string>

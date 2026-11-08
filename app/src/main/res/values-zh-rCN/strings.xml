@@ -175,6 +175,24 @@
     <string name="settings_index_cleared">索引缓存已清除</string>
     <string name="settings_apks_cleared">已清除下载的 APK</string>
 
+    <!-- Backup & restore -->
+    <string name="settings_backup">备份与恢复</string>
+    <string name="backup_export">导出资料库</string>
+    <string name="backup_export_desc">将收藏、忽略项、跳过版本、手动关联和变体选择保存为 JSON 文件。</string>
+    <string name="backup_import">导入资料库</string>
+    <string name="backup_import_desc">从备份文件恢复。合并会保留现有数据；覆盖会替换现有数据。</string>
+    <string name="backup_export_done">资料库已导出</string>
+    <string name="backup_export_failed">无法导出资料库</string>
+    <string name="backup_import_title">导入资料库？</string>
+    <string name="backup_import_summary">备份包含 %1$d 个收藏、%2$d 个忽略的模块和 %3$d 个跳过的版本。</string>
+    <string name="backup_import_note">合并会补齐缺失项并保留现有选择；覆盖会先删除当前资料库。</string>
+    <string name="backup_import_merge">合并（推荐）</string>
+    <string name="backup_import_replace">覆盖现有数据</string>
+    <string name="backup_import_done">资料库已导入</string>
+    <string name="backup_import_failed">无法导入资料库</string>
+    <string name="backup_import_invalid">此文件不是有效的 LSP Store 备份</string>
+    <string name="backup_import_unsupported">此备份由更新版本的 LSP Store 创建</string>
+
     <!-- Diagnostics -->
     <string name="diagnostics_title">应用信息与诊断</string>
     <string name="diagnostics_app">应用</string>

@@ -166,6 +166,24 @@
     <string name="settings_advanced">উন্নত</string>
     <string name="settings_index_cleared">ইনডেক্স ক্যাশে সাফ করা হয়েছে</string>
     <string name="settings_apks_cleared">ডাউনলোড করা APK সাফ করা হয়েছে</string>
+
+    <!-- Backup & restore -->
+    <string name="settings_backup">ব্যাকআপ ও পুনরুদ্ধার</string>
+    <string name="backup_export">লাইব্রেরি রপ্তানি করুন</string>
+    <string name="backup_export_desc">প্রিয় তালিকা, উপেক্ষিত আইটেম, এড়িয়ে যাওয়া সংস্করণ, লিঙ্ক এবং ভ্যারিয়েন্ট পছন্দ একটি JSON ফাইলে সংরক্ষণ করুন।</string>
+    <string name="backup_import">লাইব্রেরি আমদানি করুন</string>
+    <string name="backup_import_desc">ব্যাকআপ ফাইল থেকে পুনরুদ্ধার করুন। একত্রিত করলে বর্তমান ডেটা থাকে; প্রতিস্থাপন করলে তা মুছে যায়।</string>
+    <string name="backup_export_done">লাইব্রেরি রপ্তানি হয়েছে</string>
+    <string name="backup_export_failed">লাইব্রেরি রপ্তানি করা যায়নি</string>
+    <string name="backup_import_title">লাইব্রেরি আমদানি করবেন?</string>
+    <string name="backup_import_summary">ব্যাকআপে %1$dটি প্রিয়, %2$dটি উপেক্ষিত মডিউল এবং %3$dটি এড়িয়ে যাওয়া সংস্করণ আছে।</string>
+    <string name="backup_import_note">একত্রিত করলে অনুপস্থিত এন্ট্রি যোগ হয় এবং বর্তমান পছন্দ থাকে। প্রতিস্থাপন আগে বর্তমান লাইব্রেরি মুছে দেয়।</string>
+    <string name="backup_import_merge">একত্রিত করুন (প্রস্তাবিত)</string>
+    <string name="backup_import_replace">বর্তমান ডেটা প্রতিস্থাপন করুন</string>
+    <string name="backup_import_done">লাইব্রেরি আমদানি হয়েছে</string>
+    <string name="backup_import_failed">লাইব্রেরি আমদানি করা যায়নি</string>
+    <string name="backup_import_invalid">এই ফাইলটি বৈধ LSP Store ব্যাকআপ নয়</string>
+    <string name="backup_import_unsupported">এই ব্যাকআপটি LSP Store-এর একটি নতুন সংস্করণে তৈরি</string>
     <string name="diagnostics_title">অ্যাপের তথ্য ও ডায়াগনস্টিকস</string>
     <string name="diagnostics_app">অ্যাপ</string>
     <string name="diagnostics_version">সংস্করণ</string>

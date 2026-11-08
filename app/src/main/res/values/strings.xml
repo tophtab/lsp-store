@@ -193,6 +193,24 @@
     <string name="settings_index_cleared">Index cache cleared</string>
     <string name="settings_apks_cleared">Downloaded APKs cleared</string>
 
+    <!-- Backup & restore -->
+    <string name="settings_backup">Backup &amp; restore</string>
+    <string name="backup_export">Export library</string>
+    <string name="backup_export_desc">Save favourites, ignored items, skipped versions, links and variant choices to a JSON file.</string>
+    <string name="backup_import">Import library</string>
+    <string name="backup_import_desc">Restore from a backup file. Merge keeps current data; replace overwrites it.</string>
+    <string name="backup_export_done">Library exported</string>
+    <string name="backup_export_failed">Could not export the library</string>
+    <string name="backup_import_title">Import library?</string>
+    <string name="backup_import_summary">Backup has %1$d favourites, %2$d ignored modules and %3$d skipped versions.</string>
+    <string name="backup_import_note">Merge adds missing entries and keeps current choices. Replace deletes the current library first.</string>
+    <string name="backup_import_merge">Merge (recommended)</string>
+    <string name="backup_import_replace">Replace current data</string>
+    <string name="backup_import_done">Library imported</string>
+    <string name="backup_import_failed">Could not import the library</string>
+    <string name="backup_import_invalid">This file is not a valid LSP Store backup</string>
+    <string name="backup_import_unsupported">This backup was made by a newer LSP Store version</string>
+
     <!-- Diagnostics -->
     <string name="diagnostics_title">App info &amp; diagnostics</string>
     <string name="diagnostics_app">App</string>
