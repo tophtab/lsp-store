@@ -166,6 +166,12 @@
     <string name="settings_advanced">高度な</string>
     <string name="settings_index_cleared">インデックスキャッシュがクリアされました</string>
     <string name="settings_apks_cleared">ダウンロードしたAPKがクリアされました</string>
+    <string name="settings_download_location">ダウンロード先</string>
+    <string name="settings_download_location_default">既定: Download/LSP_Store</string>
+    <string name="settings_download_location_picked">APK は %1$s に保存されます</string>
+    <string name="settings_download_location_reset">ダウンロード先を既定に戻しました</string>
+    <string name="settings_download_location_failed">このフォルダーは使用できません。別のフォルダーを選択してください。</string>
+    <string name="action_reset">リセット</string>
     <string name="diagnostics_app">アプリ</string>
     <string name="diagnostics_version">バージョン</string>
     <string name="diagnostics_android">アンドロイド</string>

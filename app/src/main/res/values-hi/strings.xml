@@ -166,6 +166,12 @@
     <string name="settings_advanced">विकसित</string>
     <string name="settings_index_cleared">इंडेक्स कैश साफ़ किया गया</string>
     <string name="settings_apks_cleared">डाउनलोड किए गए APK साफ़ किए गए</string>
+    <string name="settings_download_location">डाउनलोड स्थान</string>
+    <string name="settings_download_location_default">डिफ़ॉल्ट: Download/LSP_Store</string>
+    <string name="settings_download_location_picked">APK को %1$s में सहेजा जाता है</string>
+    <string name="settings_download_location_reset">डाउनलोड स्थान डिफ़ॉल्ट पर रीसेट हो गया</string>
+    <string name="settings_download_location_failed">यह फ़ोल्डर उपयोग नहीं किया जा सकता। कोई दूसरा चुनें।</string>
+    <string name="action_reset">रीसेट</string>
     <string name="diagnostics_app">अनुप्रयोग</string>
     <string name="diagnostics_version">संस्करण</string>
     <string name="diagnostics_android">एंड्रॉइड</string>

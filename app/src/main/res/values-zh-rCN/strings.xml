@@ -174,6 +174,12 @@
     <string name="settings_advanced">高级</string>
     <string name="settings_index_cleared">索引缓存已清除</string>
     <string name="settings_apks_cleared">已清除下载的 APK</string>
+    <string name="settings_download_location">下载位置</string>
+    <string name="settings_download_location_default">默认：Download/LSP_Store</string>
+    <string name="settings_download_location_picked">APK 保存到 %1$s</string>
+    <string name="settings_download_location_reset">下载位置已恢复默认</string>
+    <string name="settings_download_location_failed">无法使用此文件夹，请选择其他文件夹。</string>
+    <string name="action_reset">重置</string>
 
     <!-- Diagnostics -->
     <string name="diagnostics_app">应用</string>

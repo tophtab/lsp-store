@@ -17,7 +17,8 @@ private val GENERIC_NAMES = setOf(
 )
 
 /**
- * Name for the public copy in `Download/LSP_Store`.
+ * Name for the public copy in the download folder (`Download/LSP_Store` by
+ * default).
  *
  * The identity hash goes after the human-readable part and before the
  * extension (`Wren-1a2b3c4d5e6f7a8b.apk`), so two modules that both publish

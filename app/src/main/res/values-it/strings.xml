@@ -166,6 +166,12 @@
     <string name="settings_advanced">Avanzato</string>
     <string name="settings_index_cleared">Cache dell\'indice cancellata</string>
     <string name="settings_apks_cleared">Gli APK scaricati sono stati cancellati</string>
+    <string name="settings_download_location">Percorso dei download</string>
+    <string name="settings_download_location_default">Predefinito: Download/LSP_Store</string>
+    <string name="settings_download_location_picked">Gli APK vengono salvati in %1$s</string>
+    <string name="settings_download_location_reset">Percorso dei download ripristinato</string>
+    <string name="settings_download_location_failed">Impossibile usare questa cartella. Scegli un altro percorso.</string>
+    <string name="action_reset">Ripristina</string>
     <string name="diagnostics_app">App</string>
     <string name="diagnostics_version">Versione</string>
     <string name="diagnostics_android">Androide</string>

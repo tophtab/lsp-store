@@ -166,6 +166,12 @@
     <string name="settings_advanced">Zaawansowany</string>
     <string name="settings_index_cleared">Pamięć podręczna indeksu została wyczyszczona</string>
     <string name="settings_apks_cleared">Pobrane pliki APK zostały usunięte</string>
+    <string name="settings_download_location">Lokalizacja pobierania</string>
+    <string name="settings_download_location_default">Domyślnie: Download/LSP_Store</string>
+    <string name="settings_download_location_picked">APK są zapisywane w %1$s</string>
+    <string name="settings_download_location_reset">Przywrócono domyślną lokalizację pobierania</string>
+    <string name="settings_download_location_failed">Nie można użyć tego folderu. Wybierz inny.</string>
+    <string name="action_reset">Przywróć</string>
     <string name="diagnostics_app">Aplikacja</string>
     <string name="diagnostics_version">Wersja</string>
     <string name="diagnostics_android">Android</string>

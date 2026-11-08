@@ -166,6 +166,12 @@
     <string name="settings_advanced">Передовой</string>
     <string name="settings_index_cleared">Кэш индекса очищен.</string>
     <string name="settings_apks_cleared">Загруженные APK-файлы удалены.</string>
+    <string name="settings_download_location">Папка загрузок</string>
+    <string name="settings_download_location_default">По умолчанию: Download/LSP_Store</string>
+    <string name="settings_download_location_picked">APK сохраняются в %1$s</string>
+    <string name="settings_download_location_reset">Папка загрузок сброшена по умолчанию</string>
+    <string name="settings_download_location_failed">Эту папку нельзя использовать. Выберите другую.</string>
+    <string name="action_reset">Сбросить</string>
     <string name="diagnostics_app">Приложение</string>
     <string name="diagnostics_version">Версия</string>
     <string name="diagnostics_android">Андроид</string>
