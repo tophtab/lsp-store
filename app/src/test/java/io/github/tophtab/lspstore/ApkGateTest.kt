@@ -42,10 +42,12 @@ class ApkGateTest {
     )
 
     @Test
-    fun minSdkAboveDeviceIsRejected() {
+    fun minSdkAboveDeviceOnlyWarns() {
         val result = ApkGate.evaluate(info(minSdk = 37), "com.example.module", device)
-        assertTrue(result is GateResult.Reject)
-        assertEquals(Reason.Kind.MIN_SDK_TOO_HIGH, (result as GateResult.Reject).reason.kind)
+        // The system installer refuses the package, not the gate: the user asked
+        // for the attempt and only sees the reason in the install log (#75).
+        assertTrue(result is GateResult.Warn)
+        assertEquals(Reason.Kind.MIN_SDK_TOO_HIGH, (result as GateResult.Warn).reason.kind)
     }
 
     @Test

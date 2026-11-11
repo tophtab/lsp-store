@@ -22,10 +22,15 @@ fun Context.variantReasonText(reason: Reason): String = when (reason.kind) {
     Reason.Kind.DEBUG_BUILD -> getString(R.string.variant_debug_badge)
 
     Reason.Kind.MIN_SDK_TOO_HIGH -> {
-        val required = reason.args.getOrNull(0)?.toIntOrNull() ?: 0
+        val requiredSdk = reason.args.getOrNull(0)?.toIntOrNull() ?: 0
         val deviceSdk = reason.args.getOrNull(1)?.toIntOrNull() ?: 0
-        val deviceVersion = androidVersionFromSdk(deviceSdk) ?: deviceSdk
-        getString(R.string.variant_incompatible_min_sdk, required, deviceVersion)
+        // Both sides are API levels; the string talks about Android versions, so
+        // both are converted (35 -> "Android 15") to keep the units consistent.
+        getString(
+            R.string.variant_incompatible_min_sdk,
+            androidVersionFromSdk(requiredSdk) ?: requiredSdk,
+            androidVersionFromSdk(deviceSdk) ?: deviceSdk,
+        )
     }
 
     Reason.Kind.ABI_INCOMPATIBLE -> getString(

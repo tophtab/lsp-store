@@ -341,15 +341,23 @@ class VariantResolverTest {
     }
 
     @Test
-    fun probesBlockMinSdkAboveTheDevice() {
+    fun aProbedMinSdkAboveTheDeviceOnlyWarns() {
         val release = releaseOf("app.apk")
         val probes = mapOf("app.apk" to ApkMeta(minSdk = 37, hasXposedDeclaration = true))
+        // The manifest value is real, but refusing here would grey out the only
+        // candidate: the system installer rejects the package, so the user is
+        // warned and may still try (#75).
         val decision = resolver.resolve(release, probes = probes, expectedPackage = "com.example")
-        assertTrue(decision is VariantDecision.NotApplicable)
-        assertEquals(
-            Reason.Kind.MIN_SDK_TOO_HIGH,
-            (decision as VariantDecision.NotApplicable).reason.kind,
-        )
+        assertTrue(decision is VariantDecision.Pick)
+        assertEquals("app.apk", (decision as VariantDecision.Pick).asset.name)
+        val candidate = resolver.candidates(
+            release,
+            probes = probes,
+            expectedPackage = "com.example",
+        ).single()
+        assertNull(candidate.blocked)
+        assertEquals(Reason.Kind.MIN_SDK_TOO_HIGH, candidate.warning?.kind)
+        assertEquals(listOf("37", "36"), candidate.warning?.args)
     }
 
     @Test

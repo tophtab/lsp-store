@@ -9,8 +9,8 @@ P1（设备画像）/ P2（Range 探测）的详细规格在 `docs/variant-imple
 1. 删掉“静默 `first()`”：低置信 → 弹选择器并**要求确认**。
 2. 引入模块状态 `UNKNOWN / TRUSTED / SUSPECT / NOT_APPLICABLE`（懒验证，见 7.1）。
 3. 用已装 APK 的 `PackageInfo` 做**冷启动种子**，让已有用户零网络进入 `TRUSTED`。
-4. 下载后、安装前的**本地门禁**（0 网络）：minSdk / Xposed 声明 / 内部 ABI / `minApiVersion`。
-5. 单 APK 也走同一判定：不可安装 → `NOT_APPLICABLE`（不更新、不通知、不下载）。
+4. 下载后、安装前的**本地门禁**（0 网络）：Xposed 声明 / 内部 ABI；`minSdk` / ABI / API 号只写日志不拦（#75）。
+5. 单 APK 也走同一判定：配套 App → `NOT_APPLICABLE`（不更新、不通知、不下载）。
 6. debug 只降权、不拦截；单 APK 是 debug 也直接装、不弹窗。
 7. 变体偏好与状态持久化（本地 DataStore；不提供备份导出/导入）。
 
@@ -209,8 +209,8 @@ fun check(file: File, expectedPackage: String, device: DeviceProfile): GateResul
   `minApiVersion` 拒绝模块，见 #47）。
 - 包名不一致：**有声明 → 放行 + 警告**；**无声明 → 拒绝**（实测 2.5% 合法模块包名不同，别一刀切）。
   包名一致时不需要声明也能放行。
-- `minSdk > device.sdkInt` → 拒绝且 `fatal = true`（→ `NOT_APPLICABLE`）。
-- 内部 ABI：读 zip 的 `lib/<abi>/`；非空且与设备无交集且无 universal → 拒绝且 `fatal = true`。
+- `minSdk > device.sdkInt` → 只记一行日志（系统安装器自己会拒），**不再**拒绝或禁用安装（#75）。
+- 内部 ABI：读 zip 的 `lib/<abi>/`；非空且与设备无交集 → 只警告（安装不会因此失败）。
 
 ## 8. 冷启动种子
 
@@ -225,7 +225,7 @@ fun check(file: File, expectedPackage: String, device: DeviceProfile): GateResul
 
 - 选择器：每行 `[推荐]` 徽章 + 大小/下载量/ABI 标签；推荐行下加一句理由；低置信时顶部提示“此版本包含多个变体，请确认”。
 - 配套 App 折叠区：`同版本附带的其他应用（N）`，灰显不可直接装。
-- `NOT_APPLICABLE`：安装按钮禁用 + 一行原因（`minSdk 35 > 你的 Android 13` / `仅提供 riscv64`），详情页仍可手动切换版本。
+- `NOT_APPLICABLE`：安装按钮禁用 + 一行原因（仅限“没有 APK” / 全是配套 App）；`minSdk` / ABI 只提示不拦，详情页仍可手动切换版本。
 - debug：详情页小徽章，不弹窗。
 - 新增字符串（先加 `values/strings.xml`，再用 Android Studio 的 Translations Editor 机翻；漏翻/多余翻译由 lint 的 `MissingTranslation` / `ExtraTranslation` 直接报错）：
 

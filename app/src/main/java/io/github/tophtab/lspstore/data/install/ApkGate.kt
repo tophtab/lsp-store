@@ -5,6 +5,8 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import io.github.tophtab.lspstore.data.probe.AxmlParser
+import io.github.tophtab.lspstore.data.probe.ManifestFacts
 import io.github.tophtab.lspstore.domain.variant.DeviceProfile
 import io.github.tophtab.lspstore.domain.variant.Reason
 import io.github.tophtab.lspstore.domain.variant.libXposedApiRequirement
@@ -40,12 +42,12 @@ sealed interface GateResult {
     data class Warn(val reason: Reason) : GateResult
 
     /**
-     * The APK was not handed to the installer because the device or the archive
-     * itself says it cannot work: a manifest minSdk above this device, a foreign
-     * package without any Xposed declaration, or a broken download. This is not a
-     * verdict about the module - the caller records one failed attempt, which
-     * makes the module re-probe its variants and keeps it in the update list
-     * (see [io.github.tophtab.lspstore.domain.variant.onInstallFailed]).
+     * The APK was not handed to the installer because the archive itself says it
+     * cannot work: an unreadable download, or a foreign package without any
+     * Xposed declaration (a companion app shipped in the same release). This is
+     * not a verdict about the module - the caller records one failed attempt,
+     * which makes the module re-probe its variants and keeps it in the update
+     * list (see [io.github.tophtab.lspstore.domain.variant.onInstallFailed]).
      */
     data class Reject(val reason: Reason) : GateResult
 }
@@ -57,16 +59,6 @@ sealed interface GateResult {
 object ApkGate {
 
     fun evaluate(info: ArchiveInfo, expectedPackage: String, device: DeviceProfile): GateResult {
-        info.minSdk?.let { minSdk ->
-            if (minSdk > device.sdkInt) {
-                return GateResult.Reject(
-                    Reason(
-                        Reason.Kind.MIN_SDK_TOO_HIGH,
-                        listOf(minSdk.toString(), device.sdkInt.toString()),
-                    ),
-                )
-            }
-        }
         val packageMismatch = info.packageName != null && info.packageName != expectedPackage
         // A renamed module is legitimate; a renamed app without any Xposed
         // declaration is a companion app shipped in the same release. This is a
@@ -87,6 +79,17 @@ object ApkGate {
                 Reason(
                     Reason.Kind.PACKAGE_MISMATCH,
                     listOf(info.packageName.orEmpty(), expectedPackage),
+                ),
+            )
+        }
+        if (info.minSdk != null && info.minSdk > device.sdkInt) {
+            // Advisory like the ABI and the API number: the system installer is
+            // what refuses this package, and the user asked for the attempt
+            // (#47, #75).
+            return GateResult.Warn(
+                Reason(
+                    Reason.Kind.MIN_SDK_TOO_HIGH,
+                    listOf(info.minSdk.toString(), device.sdkInt.toString()),
                 ),
             )
         }
@@ -129,26 +132,42 @@ object ApkGate {
         return evaluate(info, expectedPackage, device)
     }
 
+    /**
+     * Everything the gate needs, read from the downloaded file.
+     *
+     * PackageManager is the cheap source, but it refuses to describe an archive
+     * whose `minSdkVersion` is above the platform - the same check that fails the
+     * install - and simply returns null for it. That is exactly the case the gate
+     * must not mistake for "not an APK", so the manifest inside the archive (the
+     * reader the remote probe uses) is the fallback.
+     */
     private fun readArchiveInfo(context: Context, file: File): ArchiveInfo? {
-        val flags = PackageManager.GET_META_DATA or PackageManager.GET_PROVIDERS
-        val pkg = runCatching {
-            context.packageManager.getPackageArchiveInfo(file.absolutePath, flags)
-        }.getOrNull() ?: return null
-        val app = pkg.applicationInfo ?: return null
-        val meta = app.metaData
-        val moduleProp = readModuleProp(file)
         val zipFacts = readZipFacts(file)
+        val moduleProp = readModuleProp(file)
+        val pkg = runCatching {
+            context.packageManager.getPackageArchiveInfo(
+                file.absolutePath,
+                PackageManager.GET_META_DATA or PackageManager.GET_PROVIDERS,
+            )
+        }.getOrNull()
+        val app = pkg?.applicationInfo
+        val meta = app?.metaData
+        val facts = if (pkg == null) readManifestFacts(file) else null
+        if (pkg == null && facts == null) return null
+        val legacyMeta = meta != null &&
+            (meta.containsKey(XPOSED_MODULE) || meta.containsKey(XPOSED_MIN_VERSION)) ||
+            facts?.metaData?.any { (key, _) -> key == XPOSED_MODULE || key == XPOSED_MIN_VERSION } == true
         return ArchiveInfo(
-            packageName = pkg.packageName,
-            minSdk = app.minSdkVersion.takeIf { it > 0 },
-            targetSdk = app.targetSdkVersion.takeIf { it > 0 },
-            debuggable = app.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0,
+            packageName = pkg?.packageName ?: facts?.packageName,
+            minSdk = app?.minSdkVersion?.takeIf { it > 0 } ?: facts?.minSdk,
+            targetSdk = app?.targetSdkVersion?.takeIf { it > 0 } ?: facts?.targetSdk,
+            debuggable = (app != null && app.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0) ||
+                facts?.debuggable == true,
             libAbis = zipFacts.abis,
-            hasLegacyXposedMeta = meta != null &&
-                (meta.containsKey("xposedmodule") || meta.containsKey("xposedminversion")),
-            hasLibXposedProvider = pkg.providers?.any {
+            hasLegacyXposedMeta = legacyMeta,
+            hasLibXposedProvider = pkg?.providers?.any {
                 it.name == XPOSED_PROVIDER
-            } == true,
+            } == true || facts?.hasLibXposedProvider == true,
             hasModuleProp = moduleProp != null,
             minApiVersion = moduleProp?.get("minApiVersion")?.toIntOrNull(),
             targetApiVersion = moduleProp?.get("targetApiVersion")?.toIntOrNull(),
@@ -157,6 +176,14 @@ object ApkGate {
     }
 
     private class ZipFacts(val abis: Set<String>, val hasLegacyInit: Boolean)
+
+    /** Manifest facts straight from the archive, for when PackageManager refuses. */
+    private fun readManifestFacts(file: File): ManifestFacts? = runCatching {
+        ZipFile(file).use { zip ->
+            val entry = zip.getEntry(ANDROID_MANIFEST) ?: return@use null
+            AxmlParser.parse(zip.getInputStream(entry).readBytes())
+        }
+    }.getOrNull()
 
     private fun readZipFacts(file: File): ZipFacts = runCatching {
         ZipFile(file).use { zip ->
@@ -189,5 +216,8 @@ object ApkGate {
 
     private const val MODULE_PROP = "META-INF/xposed/module.prop"
     private const val LEGACY_INIT = "assets/xposed_init"
+    private const val ANDROID_MANIFEST = "AndroidManifest.xml"
+    private const val XPOSED_MODULE = "xposedmodule"
+    private const val XPOSED_MIN_VERSION = "xposedminversion"
     private const val XPOSED_PROVIDER = "io.github.libxposed.service.XposedProvider"
 }

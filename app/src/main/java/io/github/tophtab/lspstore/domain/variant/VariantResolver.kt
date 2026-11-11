@@ -25,7 +25,7 @@ class VariantResolver(private val device: DeviceProfile) {
 
     /**
      * Scores every APK of [release] and marks the ones that must not be offered
-     * for direct installation (bundled apps, impossible minSdk, ...).
+     * for direct installation (companion apps shipped in the same release).
      */
     fun candidates(
         release: Release,
@@ -96,11 +96,9 @@ class VariantResolver(private val device: DeviceProfile) {
         }
 
         if (eligible.isEmpty()) {
-            // Only hard reasons can get here (see [blockReason]); the order is
-            // "this build cannot run here" before "this APK is not the module".
-            val reason = scored.mapNotNull { it.blocked }
-                .firstOrNull { it.kind == Reason.Kind.MIN_SDK_TOO_HIGH }
-                ?: scored.mapNotNull { it.blocked }.firstOrNull()
+            // Only hard reasons get here (see [blockReason]): every APK of the
+            // release is a companion app, not the module.
+            val reason = scored.mapNotNull { it.blocked }.firstOrNull()
                 ?: Reason(Reason.Kind.NO_APK)
             return VariantDecision.NotApplicable(reason)
         }
@@ -200,11 +198,11 @@ class VariantResolver(private val device: DeviceProfile) {
     }
 
     /**
-     * Only what the platform enforces (the manifest minSdk) or what the APK
-     * proves about itself (a foreign package without any Xposed declaration) may
-     * block a candidate. Everything inferred from a file name - an `minsdk35`
-     * token, an ABI token, the libxposed API number - is advisory: it ranks and
-     * warns, and the APK itself decides later (#47, #65, #69).
+     * Only what the APK proves about itself (a foreign package without any Xposed
+     * declaration) may block a candidate, plus a companion-app looking name that
+     * no probe has cleared yet. Everything else - a `minsdk35` token or the
+     * manifest minSdk, an ABI token, the libxposed API number - is advisory: it
+     * ranks and warns, and the system installer decides later (#47, #65, #69).
      *
      * The name layer is still what keeps a companion app out of the picker when
      * nothing has been probed yet, so a bundled name blocks until the archive is
@@ -216,13 +214,6 @@ class VariantResolver(private val device: DeviceProfile) {
         multiVariant: Boolean,
         expectedPackage: String?,
     ): Reason? {
-        val minSdk = meta?.minSdk
-        if (minSdk != null && minSdk > device.sdkInt) {
-            return Reason(
-                Reason.Kind.MIN_SDK_TOO_HIGH,
-                listOf(minSdk.toString(), device.sdkInt.toString()),
-            )
-        }
         if (meta?.packageName != null && expectedPackage != null &&
             meta.packageName != expectedPackage && !meta.hasXposedDeclaration
         ) {
@@ -383,24 +374,25 @@ class VariantResolver(private val device: DeviceProfile) {
 
     /**
      * The single advisory line a picker row can show. A build that probably does
-     * not fit this device (a minsdk/ABI hinted only by the file name) is the most
-     * useful hint, then the libxposed API number (#47).
+     * not fit this device (a minsdk above the device, ABI) is the most useful
+     * hint, then the libxposed API number (#47).
      */
     private fun warning(traits: VariantTraits, meta: ApkMeta?): Reason? =
-        nameMinSdkWarning(traits, meta) ?: abiWarning(meta) ?: apiWarning(meta, traits)
+        minSdkWarning(traits, meta) ?: abiWarning(meta) ?: apiWarning(meta, traits)
 
     /**
-     * A `minsdkNN` token above the device is advisory: authors mislabel files,
-     * and the manifest - read by the probe, enforced at install - is the truth.
-     * Nothing here may hide the candidate (#65, #69).
+     * A minSdk above the device - read from the manifest or guessed from a
+     * `minsdkNN` token - is advisory like the ABI and the API number: the system
+     * installer is the only thing that can refuse the package, and the user
+     * decides whether to try. Nothing here may hide or grey out a candidate
+     * (#65, #69).
      */
-    private fun nameMinSdkWarning(traits: VariantTraits, meta: ApkMeta?): Reason? {
-        if (meta?.minSdk != null) return null
-        val token = traits.minSdkToken ?: return null
-        return if (token > device.sdkInt) {
+    private fun minSdkWarning(traits: VariantTraits, meta: ApkMeta?): Reason? {
+        val required = meta?.minSdk ?: traits.minSdkToken ?: return null
+        return if (required > device.sdkInt) {
             Reason(
                 Reason.Kind.MIN_SDK_TOO_HIGH,
-                listOf(token.toString(), device.sdkInt.toString()),
+                listOf(required.toString(), device.sdkInt.toString()),
             )
         } else {
             null

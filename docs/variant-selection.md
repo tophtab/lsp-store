@@ -179,8 +179,8 @@ META-INF/xposed/scope.list     作用域包名（30 个里有 13 个是 system�
 
 | 结论 | 条件 | UI |
 | --- | --- | --- |
-| BLOCK | `minSdk > 设备 SDK`；或真实 `lib/` ABI 不兼容且无 universal；或（包名不符 + 无 Xposed 声明） | 详情页说明“不适用”，安装按钮禁用；不进更新/通知/批量 |
-| WARN | 包名不符但有声明；`versionName` 与 tag 不一致 | 小字提示 + 徽章，不拦 |
+| BLOCK | 探测到的包名不符且无任何 Xposed 声明（配套 App） | 详情页说明“不适用”，安装按钮禁用；不进更新/通知/批量 |
+| WARN | `minSdk > 设备 SDK`（清单或文件名）；真实 `lib/` ABI 不兼容；libxposed API 号过新；包名不符但有声明；`versionName` 与 tag 不一致 | 小字提示 + 徽章，不拦 |
 | OK | 其余（含 debug-only 单 APK） | 正常一键安装 |
 
 `versionName` 与 tag 不一致时，更新检查里要把“同 versionCode 不同 versionName”判为**不算更新**
@@ -206,8 +206,9 @@ META-INF/xposed/scope.list     作用域包名（30 个里有 13 个是 system�
 ## 5. 设计目标与原则
 
 1. **零静默错误**：宁可弹选择器，也不要默认一个“看起来像”的包。
-2. **硬约束优先**：不合法/不兼容的候选先剔除，不要靠打分把它压下去（`minSdk > 设备 SDK`、
-   真实 ABI 全不兼容、Xposed API 超出 LSPosed 能力、“包名不符 + 无声明”）。debug 不是硬约束，是降权项。
+2. **硬约束优先**：不合法/不兼容的候选先剔除，不要靠打分把它压下去（“包名不符 + 无声明”，
+   以及没被探测澄清的配套包名字）。其余（`minSdk`、ABI、API 号）都只是排序 + 提示：
+   能不能装由系统安装器说了算，见 6 节末尾的变更记录。debug 不是硬约束，是降权项。
 3. **可解释**：每个默认值都能说清“为什么是它”。UI 上给一句话理由。
 4. **可覆盖、可记忆**：用户手动选过就以用户为准；跨版本记住“语义偏好”而不是 asset 文件名（文件名带版本号）。
 5. **成本可控**：只在详情页 / 安装 / 更新检查时探测，不探测列表页；结果按 `(assetName, size)` 永久缓存，
@@ -227,14 +228,19 @@ META-INF/xposed/scope.list     作用域包名（30 个里有 13 个是 system�
    `debuggable` 判定）。单 APK 时不过滤。
 3. **包名不符 + 没有任何 Xposed 声明**（manifest meta / provider / `META-INF/xposed/module.prop`）→ 剔除
    （这是解决第 8 类的唯一手段；只包名不符时不要拦，见 3.3）。
-4. APK `minSdk > Build.VERSION.SDK_INT` → 剔除；`maxSdk < SDK_INT` → 剔除。
+4. `minSdk > Build.VERSION.SDK_INT` → ~~剔除~~ **降权 + 警告，不剔除**（见下方变更记录）。
 5. 有 ABI 限定且设备 ABI 无一兼容、也无 universal → 剔除（读 `lib/` 精确，不用猜）。
 6. APK 的 `module.prop` API 号（`targetApiVersion` 优先，legacy 入口则无要求）> 已装 LSPosed 支持的 API
    → 降权 + 警告，**不剔除**（加载器不会拒绝，#47）。
 
-> 实现落地时这两条又收紧了一次：**文件名**里的 ABI / `minsdk` token 一律只排序 + 警告，
-> 只有 APK 自己读出来的 `minSdk` 才是硬门槛；ABI 即使来自 `lib/` 也只警告（安装不会因此失败，
-> 模块也可能不加载 native 部分）。名字像配套包的条目在探测到“它就是本模块”后也不再剔除。
+> 实现落地时这两条又收紧了一次：**文件名**里的 ABI / `minsdk` token 一律只排序 + 警告；
+> ABI 即使来自 `lib/` 也只警告（安装不会因此失败，模块也可能不加载 native 部分）。
+> 名字像配套包的条目在探测到“它就是本模块”后也不再剔除。
+>
+> 再往后（1.5.4）**清单里的 `minSdk` 也降级为提示**：Android 11+ 的 `getPackageArchiveInfo()`
+> 对 `minSdk` 高于平台的包直接返回 null，之前会被当成“不是 Xposed 模块”硬拒（#75）。现在本地门禁
+> 改读安装包内的清单，只记一行提示就交给系统安装器，详情页不再灰掉候选行或禁用安装按钮。
+>
 > 原因：硬门槛一旦被写进持久结论，就会像 API 号那样把模块永久藏起来（#47、#65、#69）。
 
 候选空间是 **(release, asset) 对**，但**只在当前 release 内选择**：当前 release 全被过滤时，
@@ -339,8 +345,10 @@ OS3_HyperCeiler-2.10.166-20260331-release.apk     [推荐]
 ### 验证兜底（很便宜，建议和 P0 一起做）
 
 见 7.2：下载完成后、交给安装器之前，用 `PackageManager.getPackageArchiveInfo(path, GET_META_DATA)` 校验
-`minSdk`、Xposed 声明、内部 ABI（API 号只警告，不拦）。不通过则拒绝安装 + 置 `SUSPECT`，**不是**提示一下就放行。
-包名不一致只**提示**不拦（实测 2.5% 的合法模块包名与仓库名不同）；只有“包名不一致 + 无声明”才当配套 App 拦下。
+Xposed 声明与内部 ABI；`minSdk` / ABI / API 号都只写进安装日志，不拦（系统安装器自己会拒绝装不上的包，
+#75）。不通过（不是 APK / 配套 App）则拒绝安装。包名不一致只**提示**不拦（实测 2.5% 的合法模块包名与仓库名
+不同）；只有“包名不一致 + 无声明”才当配套 App 拦下。注意 Android 11+ 的 `getPackageArchiveInfo()` 对
+`minSdk` 高于平台的包返回 null，必须回退到安装包内的清单，否则会把“装不上”误报成“不是 Xposed 模块”。
 
 ---
 
@@ -477,7 +485,7 @@ CD 本身就能给出精确 ABI（`lib/arm64-v8a/…`）；manifest 给出版本
   `TRUSTED` 时更新路径不探测、不重排。
 - 详情页写入/读取 `preferredVariants`；批量更新跳过“低置信且无记忆”的模块。
 - **单 APK 也走同一个 resolver 的判定分支**：debug 命名 / `versionName` ≠ tag → 徽章（**不弹窗**）；
-  `minSdk` 不兼容 / 真实 ABI 不兼容 → 标记 `NOT_APPLICABLE`，禁用安装、不进更新。
+  `minSdk` 不兼容 / 真实 ABI 不兼容 → 只提示，不禁用安装（1.5.4 起，#75）。
 - 多 APK 且出现 debug 包时：降权非 debug，不额外提问。
 - **下载后本地门禁**（见 7.2）：校验 minSdk / Xposed 声明 / ABI（API 号只警告），不通过则拒绝安装 + 置 `SUSPECT`。
 
@@ -490,7 +498,7 @@ CD 本身就能给出精确 ABI（`lib/arm64-v8a/…`）；manifest 给出版本
 - Range 探测（CD + manifest + `module.prop` + `scope.list`）+ AXML 解析 + 缓存 + 整包 fallback。
 - **只用于 7.1 规定的四个时机**（`UNKNOWN` 首次安装 / 名字层歧义 / `SUSPECT` 失败恢复 / 用户主动打开选择器），
   `TRUSTED` 模块的常规更新永不探测。
-- 用真实包名 + Xposed 声明识别第 8 类；`minSdk` 硬过滤；`lib/` 做精确 ABI；`targetApiVersion`/`minApiVersion` 只做 API 轴排序与警告。
+- 用真实包名 + Xposed 声明识别第 8 类；`minSdk` 只提示；`lib/` 做精确 ABI；`targetApiVersion`/`minApiVersion` 只做 API 轴排序与警告。
 - 选择器展示精确元数据；用 `debuggable` 做 debug 降权；无可用时标 `NOT_APPLICABLE`（不回退旧版）。
 
 **P3（语义记忆与先验）**
@@ -507,7 +515,7 @@ CD 本身就能给出精确 ABI（`lib/arm64-v8a/…`）；manifest 给出版本
    - **本地门禁拒绝后必须置 `SUSPECT`**，并在下一次探测时重排
    - 任何自动决策都不得是 debug（当同 release 存在非 debug 时）
    - **单 APK 是 debug 时不弹窗、不阻止**（可直接装）
-   - 不得选 `minSdk > 设备` 的候选，也不得选真实 ABI 不兼容的候选
+   - 不得选真实 ABI 不兼容的候选；`minSdk > 设备` 的候选只降权 + 提示，不得因此禁用安装（#75）
    - **候选全不可用时返回 NOT_APPLICABLE，不得回退到旧 release**
    - 不得把“包名不符 + 无 Xposed 声明”的候选当作模块
    - 不得因包名不符单独拦下 `dev.wtonec` / `ReaMicroExtend` 这类合法改名模块
