@@ -24,6 +24,10 @@ data class ModuleVariantState(
         get() = status == Status.NOT_APPLICABLE
 
     companion object {
+        /**
+         * Upper bound of the failure counter. It never changes the verdict, so a
+         * module that keeps failing stays visible instead of disappearing.
+         */
         const val MAX_FAILURES = 3
     }
 }
@@ -40,26 +44,23 @@ fun ModuleVariantState.onInstallSucceeded(
     updatedAt = now,
 )
 
-/** Install failed: probe again next time, and give up after [ModuleVariantState.MAX_FAILURES]. */
+/**
+ * Install failed: probe again next time and re-rank the candidates.
+ *
+ * This is deliberately not a verdict about the module. The installer, root, a
+ * stale mirror or a variant that did not fit can all fail once, and a stored
+ * "not applicable" outlives the cause: three such failures used to hide the
+ * module from updates, notifications and batch installs exactly like the API
+ * -number block did (#65, #69). The counter stays bounded for diagnostics only.
+ */
 fun ModuleVariantState.onInstallFailed(
     now: Long = System.currentTimeMillis(),
-): ModuleVariantState {
-    val failures = failures + 1
-    return if (failures >= ModuleVariantState.MAX_FAILURES) {
-        copy(
-            status = ModuleVariantState.Status.NOT_APPLICABLE,
-            failures = failures,
-            reason = null,
-            updatedAt = now,
-        )
-    } else {
-        copy(
-            status = ModuleVariantState.Status.SUSPECT,
-            failures = failures,
-            updatedAt = now,
-        )
-    }
-}
+): ModuleVariantState = copy(
+    status = ModuleVariantState.Status.SUSPECT,
+    failures = (failures + 1).coerceAtMost(ModuleVariantState.MAX_FAILURES),
+    reason = null,
+    updatedAt = now,
+)
 
 /** The user explicitly chose a variant, so trust it immediately. */
 fun ModuleVariantState.onUserPicked(

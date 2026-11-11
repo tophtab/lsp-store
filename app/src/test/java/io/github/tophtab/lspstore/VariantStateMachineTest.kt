@@ -2,6 +2,7 @@ package io.github.tophtab.lspstore
 
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import io.github.tophtab.lspstore.domain.model.ModuleVersion
@@ -55,11 +56,27 @@ class VariantStateMachineTest {
     }
 
     @Test
-    fun threeConsecutiveFailuresGiveUp() {
+    fun repeatedFailuresKeepTheModuleVisibleAndBoundTheCounter() {
         var state = ModuleVariantState()
-        repeat(3) { state = state.onInstallFailed() }
-        assertEquals(ModuleVariantState.Status.NOT_APPLICABLE, state.status)
-        assertEquals(3, state.failures)
+        repeat(5) { state = state.onInstallFailed() }
+        // An install failure is not a verdict about the device: the module keeps
+        // re-probing its variants and stays in the update list (#65, #69).
+        assertEquals(ModuleVariantState.Status.SUSPECT, state.status)
+        assertEquals(ModuleVariantState.MAX_FAILURES, state.failures)
+        assertNull(state.reason)
+    }
+
+    @Test
+    fun aFailureAfterAVerdictClearsItButKeepsTheDeviceVerdictsRecoverable() {
+        val verdict = ModuleVariantState().onEvaluatedNoCandidate(
+            Reason(Reason.Kind.MIN_SDK_TOO_HIGH, listOf("35", "33")),
+            now = 5L,
+        )
+        val retried = verdict.onInstallFailed(now = 10L)
+
+        assertEquals(ModuleVariantState.Status.SUSPECT, retried.status)
+        assertNull(retried.reason)
+        assertEquals(10L, retried.updatedAt)
     }
 
     @Test

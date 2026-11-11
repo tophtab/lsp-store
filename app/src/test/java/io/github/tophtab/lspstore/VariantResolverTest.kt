@@ -210,13 +210,17 @@ class VariantResolverTest {
     }
 
     @Test
-    fun incompatibleMinSdkMakesTheModuleNotApplicable() {
+    fun aMinsdkTokenInTheFileNameOnlyWarns() {
         val oldDevice = VariantResolver(DeviceProfile(sdkInt = 33, abis = listOf("arm64-v8a")))
-        val decision = oldDevice.resolve(releaseOf("app-arm64Minsdk35-release.apk"))
-        assertTrue(decision is VariantDecision.NotApplicable)
-        val reason = (decision as VariantDecision.NotApplicable).reason
-        assertEquals(Reason.Kind.MIN_SDK_TOO_HIGH, reason.kind)
-        assertEquals(listOf("35", "33"), reason.args)
+        val release = releaseOf("app-arm64Minsdk35-release.apk")
+        // Authors mislabel files, and the manifest - which the probe reads and the
+        // installer enforces - is the truth, so the token may not hide the build.
+        val decision = oldDevice.resolve(release)
+        assertTrue(decision is VariantDecision.Pick)
+        assertEquals("app-arm64Minsdk35-release.apk", (decision as VariantDecision.Pick).asset.name)
+        val candidate = oldDevice.candidates(release).single()
+        assertEquals(Reason.Kind.MIN_SDK_TOO_HIGH, candidate.warning?.kind)
+        assertEquals(listOf("35", "33"), candidate.warning?.args)
     }
 
     @Test
@@ -292,16 +296,47 @@ class VariantResolverTest {
     }
 
     @Test
-    fun probesBlockARealIncompatibleAbi() {
+    fun aForeignAbiFromTheProbeOnlyWarns() {
         val release = releaseOf("app.apk")
         val probes = mapOf(
             "app.apk" to ApkMeta(abis = setOf("riscv64"), hasXposedDeclaration = true),
         )
+        // Installing never fails on a foreign lib/ directory and the module may
+        // not load its native part at all, so this is advisory like the API (#47).
         val decision = resolver.resolve(release, probes = probes, expectedPackage = "com.example")
-        assertTrue(decision is VariantDecision.NotApplicable)
+        assertTrue(decision is VariantDecision.Pick)
+        val candidate = resolver.candidates(release, probes = probes, expectedPackage = "com.example")
+            .single()
+        assertEquals(Reason.Kind.ABI_INCOMPATIBLE, candidate.warning?.kind)
+        assertEquals(listOf("riscv64"), candidate.warning?.args)
+    }
+
+    @Test
+    fun aCompanionLookingNameIsKeptWhenTheArchiveIsTheModule() {
+        val release = releaseOf("module.apk", "Module_Client.apk")
+        val probes = mapOf(
+            "Module_Client.apk" to ApkMeta(
+                packageName = "com.example.module",
+                hasXposedDeclaration = true,
+            ),
+        )
+        val candidate = resolver.candidates(
+            release,
+            probes = probes,
+            expectedPackage = "com.example.module",
+        ).first { it.asset.name == "Module_Client.apk" }
+
+        assertNull("the archive identifies itself as the module", candidate.blocked)
+    }
+
+    @Test
+    fun aBundledNameIsStillFoldedWithoutProbeEvidence() {
+        val release = releaseOf("module.apk", "Module_Client.apk")
+        val candidates = resolver.candidates(release, expectedPackage = "com.example.module")
+
         assertEquals(
-            Reason.Kind.ABI_INCOMPATIBLE,
-            (decision as VariantDecision.NotApplicable).reason.kind,
+            Reason.Kind.BUNDLED_APP,
+            candidates.first { it.asset.name == "Module_Client.apk" }.blocked?.kind,
         )
     }
 

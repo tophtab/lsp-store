@@ -39,7 +39,7 @@ class VariantResolver(private val device: DeviceProfile) {
         return assets.map { asset ->
             val traits = parseTraits(asset.name)
             val meta = if (allowProbes) probes[asset.name] else null
-            val blocked = blockReason(asset.name, traits, meta, multiVariant, expectedPackage)
+            val blocked = blockReason(asset.name, meta, multiVariant, expectedPackage)
             val debug = meta?.debuggable ?: traits.debugName
             ScoredAsset(
                 asset = asset,
@@ -47,7 +47,7 @@ class VariantResolver(private val device: DeviceProfile) {
                 score = if (blocked != null) 0 else score(asset, traits, meta, maxDownloads),
                 recommended = false,
                 blocked = blocked,
-                warning = apiWarning(meta, traits),
+                warning = warning(traits, meta),
                 debug = debug,
                 meta = meta,
             )
@@ -96,12 +96,10 @@ class VariantResolver(private val device: DeviceProfile) {
         }
 
         if (eligible.isEmpty()) {
+            // Only hard reasons can get here (see [blockReason]); the order is
+            // "this build cannot run here" before "this APK is not the module".
             val reason = scored.mapNotNull { it.blocked }
-                .firstOrNull {
-                    it.kind == Reason.Kind.MIN_SDK_TOO_HIGH ||
-                        it.kind == Reason.Kind.ABI_INCOMPATIBLE ||
-                        it.kind == Reason.Kind.API_TOO_NEW
-                }
+                .firstOrNull { it.kind == Reason.Kind.MIN_SDK_TOO_HIGH }
                 ?: scored.mapNotNull { it.blocked }.firstOrNull()
                 ?: Reason(Reason.Kind.NO_APK)
             return VariantDecision.NotApplicable(reason)
@@ -201,24 +199,29 @@ class VariantResolver(private val device: DeviceProfile) {
         )
     }
 
+    /**
+     * Only what the platform enforces (the manifest minSdk) or what the APK
+     * proves about itself (a foreign package without any Xposed declaration) may
+     * block a candidate. Everything inferred from a file name - an `minsdk35`
+     * token, an ABI token, the libxposed API number - is advisory: it ranks and
+     * warns, and the APK itself decides later (#47, #65, #69).
+     *
+     * The name layer is still what keeps a companion app out of the picker when
+     * nothing has been probed yet, so a bundled name blocks until the archive is
+     * read; a probe that shows the module's own package or declaration wins.
+     */
     private fun blockReason(
         assetName: String,
-        traits: VariantTraits,
         meta: ApkMeta?,
         multiVariant: Boolean,
         expectedPackage: String?,
     ): Reason? {
-        val minSdk = meta?.minSdk ?: traits.minSdkToken
+        val minSdk = meta?.minSdk
         if (minSdk != null && minSdk > device.sdkInt) {
             return Reason(
                 Reason.Kind.MIN_SDK_TOO_HIGH,
                 listOf(minSdk.toString(), device.sdkInt.toString()),
             )
-        }
-        if (meta != null && meta.abis.isNotEmpty() &&
-            meta.abis.none { it in device.abis } && !meta.universal
-        ) {
-            return Reason(Reason.Kind.ABI_INCOMPATIBLE, listOf(meta.abis.joinToString(", ")))
         }
         if (meta?.packageName != null && expectedPackage != null &&
             meta.packageName != expectedPackage && !meta.hasXposedDeclaration
@@ -230,10 +233,17 @@ class VariantResolver(private val device: DeviceProfile) {
         }
         // Bundled apps only exist inside multi-APK releases; a single APK named
         // "Pro" is still the module itself.
-        if (multiVariant && isBundledName(assetName)) {
+        if (multiVariant && isBundledName(assetName) && !identifiesAsModule(meta, expectedPackage)) {
             return Reason(Reason.Kind.BUNDLED_APP)
         }
         return null
+    }
+
+    /** The archive says it is the module, so a companion-app looking name is moot. */
+    private fun identifiesAsModule(meta: ApkMeta?, expectedPackage: String?): Boolean {
+        if (meta == null) return false
+        return meta.hasXposedDeclaration ||
+            (expectedPackage != null && meta.packageName == expectedPackage)
     }
 
     private fun score(
@@ -370,6 +380,43 @@ class VariantResolver(private val device: DeviceProfile) {
             hasLegacyInit = meta?.hasLegacyInit == true,
             minApiVersion = meta?.minApiVersion ?: traits.libxposedApi,
         )
+
+    /**
+     * The single advisory line a picker row can show. A build that probably does
+     * not fit this device (a minsdk/ABI hinted only by the file name) is the most
+     * useful hint, then the libxposed API number (#47).
+     */
+    private fun warning(traits: VariantTraits, meta: ApkMeta?): Reason? =
+        nameMinSdkWarning(traits, meta) ?: abiWarning(meta) ?: apiWarning(meta, traits)
+
+    /**
+     * A `minsdkNN` token above the device is advisory: authors mislabel files,
+     * and the manifest - read by the probe, enforced at install - is the truth.
+     * Nothing here may hide the candidate (#65, #69).
+     */
+    private fun nameMinSdkWarning(traits: VariantTraits, meta: ApkMeta?): Reason? {
+        if (meta?.minSdk != null) return null
+        val token = traits.minSdkToken ?: return null
+        return if (token > device.sdkInt) {
+            Reason(
+                Reason.Kind.MIN_SDK_TOO_HIGH,
+                listOf(token.toString(), device.sdkInt.toString()),
+            )
+        } else {
+            null
+        }
+    }
+
+    /**
+     * A foreign `lib/<abi>/` directory is advisory too: installing never fails on
+     * one, a module may not load its native part at all, and an ARM translation
+     * layer can still run it.
+     */
+    private fun abiWarning(meta: ApkMeta?): Reason? {
+        if (meta == null || meta.abis.isEmpty() || meta.universal) return null
+        if (meta.abis.any { it in device.abis }) return null
+        return Reason(Reason.Kind.ABI_INCOMPATIBLE, listOf(meta.abis.joinToString(", ")))
+    }
 
     /**
      * A newer API than the framework reports is advisory: LSPosed/Vector load

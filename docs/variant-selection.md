@@ -232,6 +232,11 @@ META-INF/xposed/scope.list     作用域包名（30 个里有 13 个是 system�
 6. APK 的 `module.prop` API 号（`targetApiVersion` 优先，legacy 入口则无要求）> 已装 LSPosed 支持的 API
    → 降权 + 警告，**不剔除**（加载器不会拒绝，#47）。
 
+> 实现落地时这两条又收紧了一次：**文件名**里的 ABI / `minsdk` token 一律只排序 + 警告，
+> 只有 APK 自己读出来的 `minSdk` 才是硬门槛；ABI 即使来自 `lib/` 也只警告（安装不会因此失败，
+> 模块也可能不加载 native 部分）。名字像配套包的条目在探测到“它就是本模块”后也不再剔除。
+> 原因：硬门槛一旦被写进持久结论，就会像 API 号那样把模块永久藏起来（#47、#65、#69）。
+
 候选空间是 **(release, asset) 对**，但**只在当前 release 内选择**：当前 release 全被过滤时，
 不往旧 release 回退（见 3.2 的数据），而是给该模块一个 `NOT_APPLICABLE` 结果：
 不进更新列表、不通知、不下载，详情页写明原因。

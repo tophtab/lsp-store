@@ -49,13 +49,19 @@ class ApkGateTest {
     }
 
     @Test
-    fun foreignLibAbiIsRejectedButCompatibleOrEmptyIsFine() {
+    fun aForeignLibAbiOnlyWarns() {
         val incompatible = ApkGate.evaluate(
             info(libAbis = setOf("riscv64")),
             "com.example.module",
             device,
         )
-        assertTrue(incompatible is GateResult.Reject)
+        // A foreign lib/ directory never fails an install, and the module may not
+        // load its native part at all, so it is advisory like the API number.
+        assertTrue(incompatible is GateResult.Warn)
+        assertEquals(
+            Reason.Kind.ABI_INCOMPATIBLE,
+            (incompatible as GateResult.Warn).reason.kind,
+        )
 
         assertEquals(
             GateResult.Ok,
@@ -63,6 +69,17 @@ class ApkGateTest {
         )
         // Pure-Java modules have no lib/ at all.
         assertEquals(GateResult.Ok, ApkGate.evaluate(info(), "com.example.module", device))
+    }
+
+    @Test
+    fun aCompanionAppIsRejectedEvenWhenItsApiAndAbiOnlyWarn() {
+        val result = ApkGate.evaluate(
+            info(packageName = "com.example.wearable", minApiVersion = 103, libAbis = setOf("riscv64")),
+            "com.example.module",
+            device,
+        )
+        assertTrue(result is GateResult.Reject)
+        assertEquals(Reason.Kind.PACKAGE_MISMATCH, (result as GateResult.Reject).reason.kind)
     }
 
     @Test
