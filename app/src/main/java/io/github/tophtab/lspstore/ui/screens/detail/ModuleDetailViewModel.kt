@@ -31,6 +31,8 @@ import io.github.tophtab.lspstore.domain.model.PendingInstall
 import io.github.tophtab.lspstore.domain.model.Release
 import io.github.tophtab.lspstore.domain.model.ReleaseAsset
 import io.github.tophtab.lspstore.domain.model.ReleaseChannel
+import io.github.tophtab.lspstore.domain.model.expectedPackage
+import io.github.tophtab.lspstore.domain.model.tracksPreReleases
 import io.github.tophtab.lspstore.domain.variant.ApkMeta
 import io.github.tophtab.lspstore.domain.variant.InstalledVariantHint
 import io.github.tophtab.lspstore.domain.variant.ModuleVariantState
@@ -131,6 +133,7 @@ class ModuleDetailViewModel(
     private var links: Map<String, String> = emptyMap()
     private var variantStates: Map<String, ModuleVariantState> = emptyMap()
     private var pendingInstalls: Map<String, PendingInstall> = emptyMap()
+    private var preReleaseModules: Set<String> = emptySet()
 
     private var summaryTranslationJob: Job? = null
     private var readmeTranslationJob: Job? = null
@@ -186,8 +189,9 @@ class ModuleDetailViewModel(
         }
         viewModelScope.launch {
             libraryRepository.preReleaseModules.collect { value ->
-                val tracked = packageName in value
+                preReleaseModules = value
                 _state.update {
+                    val tracked = isPreReleaseTracked(it.installed)
                     it.copy(
                         preRelease = tracked,
                         // Until the user touches the channel buttons, the page
@@ -243,8 +247,11 @@ class ModuleDetailViewModel(
                 container.completePendingInstall(installedPackage)
                 val installed = findInstalled()
                 _state.update {
+                    val tracked = isPreReleaseTracked(installed)
                     it.copy(
                         installed = installed,
+                        preRelease = tracked,
+                        channel = if (channelChosen) it.channel else defaultChannel(it.detail, tracked),
                         message = container.appContext.getString(R.string.detail_install_finished),
                     )
                 }
@@ -276,15 +283,17 @@ class ModuleDetailViewModel(
                 detail to installed
             }.onSuccess { (detail, installed) ->
                 _state.update {
+                    val tracked = isPreReleaseTracked(installed)
                     it.copy(
                         isLoading = false,
                         isRefreshing = false,
                         detail = detail,
                         installed = installed,
                         variantState = stateForModule(variantStates, installed),
+                        preRelease = tracked,
                         // The persisted opt-in may point at a stream this module
                         // no longer publishes; fall back to stable in that case.
-                        channel = if (channelChosen) it.channel else defaultChannel(detail, it.preRelease),
+                        channel = if (channelChosen) it.channel else defaultChannel(detail, tracked),
                     )
                 }
                 updatePendingState()
@@ -317,6 +326,10 @@ class ModuleDetailViewModel(
             ReleaseChannel.STABLE
         }
 
+    /** Canonical repo key, with the installed-package key accepted for old data. */
+    private fun isPreReleaseTracked(installed: InstalledModule?): Boolean =
+        preReleaseModules.tracksPreReleases(installed?.packageName, packageName)
+
     /**
      * Switches the stream the page shows (stable / pre-release / all).
      *
@@ -335,15 +348,25 @@ class ModuleDetailViewModel(
         channelChosen = true
         _state.update { it.copy(channel = channel) }
         when (channel) {
-            ReleaseChannel.STABLE -> if (current.preRelease) {
-                viewModelScope.launch { libraryRepository.setPreReleasesEnabled(packageName, false) }
-            }
-
-            ReleaseChannel.PRE_RELEASE -> if (!current.preRelease) {
-                viewModelScope.launch { libraryRepository.setPreReleasesEnabled(packageName, true) }
-            }
-
+            ReleaseChannel.STABLE -> setPreReleaseTracking(false)
+            ReleaseChannel.PRE_RELEASE -> setPreReleaseTracking(true)
             ReleaseChannel.ALL -> Unit
+        }
+    }
+
+    /**
+     * Writes the canonical repository key and drops the legacy installed-package
+     * alias. Both identities are read, so an old backup keeps working, but a
+     * toggle must turn the preference off everywhere instead of leaving a stale
+     * installed-package entry behind.
+     */
+    private fun setPreReleaseTracking(enabled: Boolean) {
+        viewModelScope.launch {
+            libraryRepository.setPreReleasesEnabled(packageName, enabled)
+            val installedPackage = _state.value.installed?.packageName
+            if (installedPackage != null && installedPackage != packageName) {
+                libraryRepository.setPreReleasesEnabled(installedPackage, false)
+            }
         }
     }
 
@@ -382,7 +405,10 @@ class ModuleDetailViewModel(
                 release = release,
                 state = state,
                 device = container.deviceProfile,
-                expectedPackage = packageName,
+                expectedPackage = expectedPackage(
+                    installedPackage = _state.value.installed?.packageName,
+                    repoPackage = packageName,
+                ),
                 installed = _state.value.installed?.let(InstalledVariantHint::of),
             )
             _state.update {
@@ -420,7 +446,10 @@ class ModuleDetailViewModel(
                 release = release,
                 state = state,
                 device = container.deviceProfile,
-                expectedPackage = packageName,
+                expectedPackage = expectedPackage(
+                    installedPackage = _state.value.installed?.packageName,
+                    repoPackage = packageName,
+                ),
                 forceProbe = true,
                 installed = _state.value.installed?.let(InstalledVariantHint::of),
             )
@@ -698,9 +727,12 @@ class ModuleDetailViewModel(
         if (hadRun && run == null) {
             val installed = findInstalled()
             _state.update {
+                val tracked = isPreReleaseTracked(installed)
                 it.copy(
                     installed = installed,
                     variantState = stateForModule(variantStates, installed),
+                    preRelease = tracked,
+                    channel = if (channelChosen) it.channel else defaultChannel(it.detail, tracked),
                 )
             }
             updatePendingState()
@@ -710,7 +742,13 @@ class ModuleDetailViewModel(
     private suspend fun resolveInstalled() {
         val installed = findInstalled()
         _state.update {
-            it.copy(installed = installed, variantState = stateForModule(variantStates, installed))
+            val tracked = isPreReleaseTracked(installed)
+            it.copy(
+                installed = installed,
+                variantState = stateForModule(variantStates, installed),
+                preRelease = tracked,
+                channel = if (channelChosen) it.channel else defaultChannel(it.detail, tracked),
+            )
         }
         updatePendingState()
     }

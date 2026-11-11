@@ -6,6 +6,7 @@ import io.github.tophtab.lspstore.domain.model.Module
 import io.github.tophtab.lspstore.domain.model.ModuleVersion
 import io.github.tophtab.lspstore.domain.model.SkippedVersion
 import io.github.tophtab.lspstore.domain.model.UpdateInfo
+import io.github.tophtab.lspstore.domain.model.tracksPreReleases
 import io.github.tophtab.lspstore.domain.variant.ModuleVariantState
 
 object UpdateChecker {
@@ -35,8 +36,10 @@ object UpdateChecker {
                     ?: variantStates[installedModule.packageName]
                 // Pre-release tracking is per module and keyed by either the
                 // installed or the linked repository package.
-                val includePreReleases = module.packageName in preReleases ||
-                    installedModule.packageName in preReleases
+                val includePreReleases = preReleases.tracksPreReleases(
+                    installedPackage = installedModule.packageName,
+                    repoPackage = module.packageName,
+                )
                 val latest = module.latestFor(includePreReleases) ?: return@mapNotNull null
                 // A verdict only covers the release it was computed for; a newer upload
                 // is re-checked instead of staying hidden (variant-selection.md 7.1).

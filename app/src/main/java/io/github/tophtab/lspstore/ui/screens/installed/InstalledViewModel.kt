@@ -23,8 +23,10 @@ import io.github.tophtab.lspstore.domain.model.PendingInstall
 import io.github.tophtab.lspstore.domain.model.ReleaseAsset
 import io.github.tophtab.lspstore.domain.model.SkippedVersion
 import io.github.tophtab.lspstore.domain.model.UpdateInfo
+import io.github.tophtab.lspstore.domain.model.expectedPackage
 import io.github.tophtab.lspstore.domain.model.repoModuleFor
 import io.github.tophtab.lspstore.domain.model.sortedByLabel
+import io.github.tophtab.lspstore.domain.model.tracksPreReleases
 import io.github.tophtab.lspstore.domain.usecase.BatchFailure
 import io.github.tophtab.lspstore.domain.usecase.BatchFailureKind
 import io.github.tophtab.lspstore.domain.usecase.BatchInstallControl
@@ -349,7 +351,11 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
             try {
                 runCatching { moduleRepository.getDetail(repoPackage) }
                     .onSuccess { detail ->
-                        val release = detail.latestReleaseFor(repoPackage in preReleases)
+                        val includePreReleases = preReleases.tracksPreReleases(
+                            installedPackage = info.installed.packageName,
+                            repoPackage = repoPackage,
+                        )
+                        val release = detail.latestReleaseFor(includePreReleases)
                         if (release == null) {
                             _state.update {
                                 it.copy(
@@ -455,7 +461,12 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
             val result = batchInstall.run(
                 targets = targets,
                 control = control,
-                includePreReleases = { packageName -> preReleases.contains(packageName) },
+                includePreReleases = { info ->
+                    preReleases.tracksPreReleases(
+                        installedPackage = info.installed.packageName,
+                        repoPackage = info.module.packageName,
+                    )
+                },
                 variantStates = variantStates,
                 isActive = { isCurrentBatch(generation) },
                 installLast = { info ->
@@ -656,7 +667,14 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
         viewModelScope.launch {
             runCatching { moduleRepository.getDetail(repoPackageName) }
                 .onSuccess { detail ->
-                    val release = detail.latestReleaseFor(repoPackageName in preReleases)
+                    val installedModule = caller?.installed
+                        ?: installed.firstOrNull { it.packageName == repoPackageName }
+                        ?: installed.firstOrNull { links[it.packageName] == repoPackageName }
+                    val includePreReleases = preReleases.tracksPreReleases(
+                        installedPackage = installedModule?.packageName,
+                        repoPackage = repoPackageName,
+                    )
+                    val release = detail.latestReleaseFor(includePreReleases)
                     if (release == null) {
                         _state.update { current ->
                             val picker = current.variantPicker ?: return@update current
@@ -675,15 +693,16 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
                     val state = variantStates[repoPackageName] ?: ModuleVariantState()
                     // The user explicitly opened the picker: probing is allowed
                     // even when the module is currently NOT_APPLICABLE.
-                    val installedHint = (
-                        caller?.installed
-                            ?: installed.firstOrNull { it.packageName == repoPackageName }
-                        )?.let(InstalledVariantHint::of)
+                    val installedHint = installedModule?.let(InstalledVariantHint::of)
+                    val expectedPackageName = expectedPackage(
+                        installedPackage = installedModule?.packageName,
+                        repoPackage = repoPackageName,
+                    )
                     val resolution = container.resolveVariantUseCase.resolve(
                         release = release,
                         state = state,
                         device = container.deviceProfile,
-                        expectedPackage = repoPackageName,
+                        expectedPackage = expectedPackageName,
                         forceProbe = true,
                         installed = installedHint,
                     )
@@ -693,13 +712,15 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
                         resolver.candidates(
                             release,
                             probes = resolution.probes,
-                            expectedPackage = repoPackageName,
+                            expectedPackage = expectedPackageName,
                             installed = installedHint,
                         ),
                     ).map { it.copy(recommended = it.asset.name == recommendedName) }
                     val selectedName = state.signature?.let { signature ->
-                        candidates.firstOrNull { signature.matches(it.traits) }?.asset?.name
-                    }
+                        candidates.firstOrNull {
+                            it.blocked == null && signature.matches(it.traits)
+                        }?.asset?.name
+                    } ?: recommendedName
                     _state.update { current ->
                         val picker = current.variantPicker ?: return@update current
                         if (picker.repoPackageName != repoPackageName) return@update current
@@ -813,9 +834,17 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
      */
     fun togglePreReleases(repoPackageName: String) {
         val module = index.firstOrNull { it.packageName == repoPackageName } ?: return
-        val enabled = repoPackageName !in preReleases
+        val installedPackage = installed.firstOrNull { it.packageName == repoPackageName }?.packageName
+            ?: links.entries.firstOrNull { it.value == repoPackageName }?.key
+        val enabled = !preReleases.tracksPreReleases(installedPackage, repoPackageName)
         viewModelScope.launch {
             libraryRepository.setPreReleasesEnabled(repoPackageName, enabled)
+            if (installedPackage != null && installedPackage != repoPackageName) {
+                // Older data may hold the preference under the installed package
+                // name; a toggle must update both so the read-back cannot keep a
+                // stale "on" entry.
+                libraryRepository.setPreReleasesEnabled(installedPackage, false)
+            }
             _state.update {
                 it.copy(
                     message = container.appContext.getString(
@@ -901,9 +930,15 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
         val pendingInstalls = pending.values
             .sortedByDescending { it.createdAt }
 
+        // The UI keys rows by repository package. A legacy preference stored
+        // under the installed package must still light the toggle, so project
+        // those entries onto their linked repository module.
+        val effectivePreReleases = preReleases +
+            links.filterKeys { it in preReleases }.values
+
         _state.update {
             it.copy(
-                preReleases = preReleases,
+                preReleases = effectivePreReleases,
                 preReleaseCapable = index.filter { it.hasPreReleases }.map { it.packageName }.toSet(),
                 updates = updates,
                 pendingInstalls = pendingInstalls,
