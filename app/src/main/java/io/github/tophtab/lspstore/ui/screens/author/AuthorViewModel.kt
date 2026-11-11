@@ -50,6 +50,15 @@ class AuthorViewModel(
 
     fun refresh() = load()
 
+    /**
+     * Hides [packageName] from this author's shelf. The ignored-modules stream
+     * collected in `init` re-applies the index, so the card disappears as soon
+     * as the preference write lands.
+     */
+    fun ignoreModule(packageName: String) {
+        viewModelScope.launch { libraryRepository.setModuleIgnored(packageName, ignored = true) }
+    }
+
     private fun load() {
         viewModelScope.launch {
             _state.update { it.copy(isLoading = index.isEmpty(), error = null) }

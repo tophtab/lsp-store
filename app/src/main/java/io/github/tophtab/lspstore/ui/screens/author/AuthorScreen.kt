@@ -71,6 +71,7 @@ fun AuthorScreen(author: String, onBack: () -> Unit, onOpenModule: (String) -> U
                         module = module,
                         installed = module.packageName in state.installedPackages,
                         onOpen = { onOpenModule(module.packageName) },
+                        onIgnore = { viewModel.ignoreModule(module.packageName) },
                     )
                 }
             }

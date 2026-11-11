@@ -118,6 +118,15 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
         onSearchQueryChange("")
     }
 
+    /**
+     * Hides [packageName] from both shelves and from search. The ignored-modules
+     * stream collected above rebuilds the lists, so the card disappears as soon
+     * as the preference write lands.
+     */
+    fun ignoreModule(packageName: String) {
+        viewModelScope.launch { libraryRepository.setModuleIgnored(packageName, ignored = true) }
+    }
+
     private fun load(force: Boolean) {
         loadJob?.cancel()
         // The entry load is automatic, but it still hits the network on the
