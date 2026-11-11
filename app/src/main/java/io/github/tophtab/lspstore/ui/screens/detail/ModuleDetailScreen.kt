@@ -119,6 +119,7 @@ import io.github.tophtab.lspstore.domain.model.ModuleVersion
 import io.github.tophtab.lspstore.domain.model.Release
 import io.github.tophtab.lspstore.domain.model.ReleaseAsset
 import io.github.tophtab.lspstore.domain.model.ReleaseChannel
+import io.github.tophtab.lspstore.domain.model.expectedPackage
 import io.github.tophtab.lspstore.domain.variant.ModuleVariantState
 import io.github.tophtab.lspstore.domain.variant.Reason
 import io.github.tophtab.lspstore.domain.variant.ScoredAsset
@@ -126,6 +127,7 @@ import io.github.tophtab.lspstore.domain.variant.InstalledVariantHint
 import io.github.tophtab.lspstore.domain.variant.VariantDecision
 import io.github.tophtab.lspstore.domain.variant.VariantResolver
 import io.github.tophtab.lspstore.domain.variant.parseTraits
+import io.github.tophtab.lspstore.domain.variant.selectInstallAsset
 import io.github.tophtab.lspstore.ui.LocalAppContainer
 import io.github.tophtab.lspstore.ui.components.ErrorBox
 import io.github.tophtab.lspstore.ui.components.LoadingBox
@@ -481,13 +483,17 @@ private fun DetailContent(
     val installedHint = remember(state.installed) {
         state.installed?.let(InstalledVariantHint::of)
     }
-    val decision = remember(selectedRelease, variantState, probes, installedHint) {
+    val expectedPackageName = expectedPackage(
+        installedPackage = state.installed?.packageName,
+        repoPackage = detail.module.packageName,
+    )
+    val decision = remember(selectedRelease, variantState, probes, installedHint, expectedPackageName) {
         selectedRelease?.let {
             resolver.resolveForUpdate(
                 variantState,
                 it,
                 probes,
-                expectedPackage = detail.module.packageName,
+                expectedPackage = expectedPackageName,
                 installed = installedHint,
             )
         }
@@ -497,14 +503,14 @@ private fun DetailContent(
     LaunchedEffect(selectedRelease?.tagName) {
         selectedRelease?.let { onProbeAssets(it) }
     }
-    val candidates = remember(selectedRelease, decision, probes, installedHint) {
+    val candidates = remember(selectedRelease, decision, probes, installedHint, expectedPackageName) {
         val base = selectedRelease?.let {
             // Same expected package and installed hint as the decision above, so
             // a candidate row and the install button never disagree.
             resolver.candidates(
                 it,
                 probes = probes,
-                expectedPackage = detail.module.packageName,
+                expectedPackage = expectedPackageName,
                 installed = installedHint,
             )
         } ?: emptyList()
@@ -513,10 +519,14 @@ private fun DetailContent(
         // of the resource sheet too.
         resolver.ranked(base).map { it.copy(recommended = it.asset.name == recommendedName) }
     }
-    var selectedAssetName by rememberSaveable(selectedRelease?.tagName, variantState) {
-        mutableStateOf(decision?.defaultAsset()?.name.orEmpty())
+    var userPickedAssetName by rememberSaveable(selectedRelease?.tagName) {
+        mutableStateOf("")
     }
-    val selectedAsset = candidates.firstOrNull { it.asset.name == selectedAssetName }?.asset
+    val selectedAsset = selectInstallAsset(
+        candidates = candidates,
+        default = decision?.defaultAsset(),
+        userPickedName = userPickedAssetName,
+    )
     // The stored verdict is only a cache of a past decision: the resolver just
     // re-checked it against the release on screen. A stale NOT_APPLICABLE - a
     // framework upgrade, or the pre-1.2.0 API-number block - must not disable the
@@ -602,7 +612,7 @@ private fun DetailContent(
                 state = state,
                 targetVersion = selectedRelease?.version,
                 showUpdateHint = state.updateAvailable && selectedRelease == latestRelease,
-                installEnabled = (selectedAsset != null || decision is VariantDecision.Pick) &&
+                installEnabled = selectedAsset != null &&
                     decision !is VariantDecision.NotApplicable,
                 notApplicableReason = notApplicableReason,
                 debugBuild = selectedDebug,
@@ -689,7 +699,7 @@ private fun DetailContent(
                 candidates = candidates,
                 selectedAsset = selectedAsset,
                 onSelect = { asset ->
-                    selectedAssetName = asset.name
+                    userPickedAssetName = asset.name
                     assetSheetVisible = false
                 },
             )

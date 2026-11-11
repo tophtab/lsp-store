@@ -14,6 +14,7 @@ import io.github.tophtab.lspstore.data.update.UpdateNotifier
 import io.github.tophtab.lspstore.domain.model.InstalledModule
 import io.github.tophtab.lspstore.domain.model.PendingInstall
 import io.github.tophtab.lspstore.domain.model.UpdateInfo
+import io.github.tophtab.lspstore.domain.model.tracksPreReleases
 import io.github.tophtab.lspstore.domain.variant.ModuleVariantState
 
 /** How one background cycle ended. */
@@ -121,7 +122,12 @@ class BackgroundUpdateCheck(
         val result = batchInstall.run(
             targets = targets,
             control = batchInstall.newControl(),
-            includePreReleases = { it in preReleases },
+            includePreReleases = { info ->
+                preReleases.tracksPreReleases(
+                    installedPackage = info.installed.packageName,
+                    repoPackage = info.module.packageName,
+                )
+            },
             variantStates = variantStates,
             isActive = { true },
             installLast = { info ->

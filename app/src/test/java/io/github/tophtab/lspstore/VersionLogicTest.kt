@@ -11,6 +11,8 @@ import io.github.tophtab.lspstore.domain.model.Module
 import io.github.tophtab.lspstore.domain.model.ModuleVersion
 import io.github.tophtab.lspstore.domain.model.Release
 import io.github.tophtab.lspstore.domain.model.SkippedVersion
+import io.github.tophtab.lspstore.domain.model.expectedPackage
+import io.github.tophtab.lspstore.domain.model.tracksPreReleases
 import io.github.tophtab.lspstore.domain.usecase.UpdateChecker
 import io.github.tophtab.lspstore.domain.variant.ModuleVariantState
 import io.github.tophtab.lspstore.domain.variant.Reason
@@ -278,6 +280,50 @@ class VersionLogicTest {
                 listOf(installed), listOf(module), preReleases = setOf("a.b"),
             ).single().latest.versionName,
         )
+    }
+
+    @Test
+    fun identityHelpersPreferInstalledPackageAndAcceptLegacyKeys() {
+        assertEquals("com.vendor.alias", expectedPackage("com.vendor.alias", "repo.pkg"))
+        assertEquals("repo.pkg", expectedPackage(null, "repo.pkg"))
+        assertEquals("repo.pkg", expectedPackage("", "repo.pkg"))
+
+        val tracked = setOf("com.vendor.alias")
+        assertTrue(tracked.tracksPreReleases("com.vendor.alias", "repo.pkg"))
+        assertTrue(tracked.tracksPreReleases("other.pkg", "com.vendor.alias"))
+        assertFalse(tracked.tracksPreReleases(null, "repo.pkg"))
+    }
+
+    @Test
+    fun updateCheckerHonoursPreReleaseKeyStoredUnderInstalledPackage() {
+        val module = Module(
+            packageName = "repo.pkg",
+            title = "T",
+            summary = null,
+            url = null,
+            homepageUrl = null,
+            sourceUrl = null,
+            updatedAt = null,
+            stars = 0,
+            contributor = null,
+            contributorAvatarUrl = null,
+            latestRelease = ModuleVersion.parse("10-1.0"),
+            latestBetaRelease = ModuleVersion.parse("12-1.2-beta"),
+            latestSnapshotRelease = null,
+            latestReleaseTime = "2026-09-01T00:00:00Z",
+            latestBetaReleaseTime = "2026-09-02T00:00:00Z",
+        )
+        val installed = InstalledModule("com.vendor.alias", 9, "0.9", "T", true, null)
+        val links = mapOf("com.vendor.alias" to "repo.pkg")
+
+        val updates = UpdateChecker.findUpdates(
+            listOf(installed),
+            listOf(module),
+            preReleases = setOf("com.vendor.alias"),
+            links = links,
+        )
+
+        assertEquals("1.2-beta", updates.single().latest.versionName)
     }
 
     /** Modules that never shipped a stable build surface once opted in. */

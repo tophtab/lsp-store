@@ -169,7 +169,7 @@ class BatchInstallUseCase(
     suspend fun run(
         targets: List<UpdateInfo>,
         control: BatchInstallControl,
-        includePreReleases: (packageName: String) -> Boolean,
+        includePreReleases: (target: UpdateInfo) -> Boolean,
         variantStates: Map<String, ModuleVariantState>,
         isActive: () -> Boolean,
         /**
@@ -286,7 +286,7 @@ class BatchInstallUseCase(
                                 }
                                 val prepared = prepareInstall.prepare(
                                     info = info,
-                                    includePreReleases = includePreReleases(packageName),
+                                    includePreReleases = includePreReleases(info),
                                     state = variantStates[packageName]
                                         ?: variantStates[info.installed.packageName]
                                         ?: ModuleVariantState(),
