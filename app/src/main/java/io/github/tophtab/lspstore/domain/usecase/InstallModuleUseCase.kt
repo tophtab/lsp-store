@@ -18,6 +18,7 @@ import io.github.tophtab.lspstore.domain.model.PendingInstall
 import io.github.tophtab.lspstore.domain.model.ReleaseAsset
 import io.github.tophtab.lspstore.domain.model.UpdateInfo
 import io.github.tophtab.lspstore.domain.variant.DeviceProfile
+import io.github.tophtab.lspstore.domain.variant.InstalledVariantHint
 import io.github.tophtab.lspstore.domain.variant.ModuleVariantState
 import io.github.tophtab.lspstore.domain.variant.VariantDecision
 import io.github.tophtab.lspstore.domain.variant.VariantSignature
@@ -39,7 +40,11 @@ sealed interface PreparedInstall {
 
     data class Failed(override val info: UpdateInfo, val message: String) : PreparedInstall
 
-    /** Low confidence and no remembered choice: the user must pick a variant. */
+    /**
+     * Low confidence and no remembered choice: the user must pick a variant.
+     * The resolver always returns a default, so this is a safety net for a future
+     * decision type rather than a state the current resolver produces.
+     */
     data class NeedsVariant(override val info: UpdateInfo) : PreparedInstall
 }
 
@@ -81,16 +86,22 @@ class PrepareModuleInstallUseCase(
                 state = state,
                 device = deviceProfile(),
                 expectedPackage = info.installed.packageName,
+                // An update follows the copy that is already on the device; this
+                // is the one path where the installed build, not the repository's
+                // most popular one, is the reference.
+                installed = InstalledVariantHint.of(info.installed),
             )
             when (val decision = resolution.decision) {
                 is VariantDecision.Pick -> {
+                    // Every decision carries a default now, including the ones that
+                    // only the preference ladder decided: "update all" and the
+                    // single update button download it instead of stopping to ask.
+                    // The module page's resource picker stays the override.
                     val asset = decision.asset
                     onAssetResolved(asset)
                     val file = downloadManager.downloadBlocking(asset, onProgress)
                     PreparedInstall.Ready(info, file, asset, state)
                 }
-
-                is VariantDecision.Choose -> PreparedInstall.NeedsVariant(info)
 
                 is VariantDecision.NotApplicable -> {
                     libraryRepository.setVariantState(

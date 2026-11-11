@@ -17,7 +17,6 @@ fun Context.variantReasonText(reason: Reason): String = when (reason.kind) {
     )
 
     Reason.Kind.REMEMBERED -> getString(R.string.variant_remembered)
-    Reason.Kind.NEEDS_CONFIRM -> getString(R.string.variant_needs_confirm)
     Reason.Kind.BUNDLED_APP -> getString(R.string.variant_bundled_app)
     Reason.Kind.DEBUG_BUILD -> getString(R.string.variant_debug_badge)
 
@@ -64,7 +63,7 @@ fun variantTags(traits: VariantTraits, meta: ApkMeta? = null): List<String> {
         abis.isNotEmpty() -> tags += abis.sorted().joinToString(", ")
         meta?.universal == true || traits.universal -> tags += "universal"
     }
-    (meta?.minSdk ?: traits.minSdkToken)?.let { tags += "minSdk $it" }
+    // Row order is fixed: ABI, API generation, minSdk, then OS/edition/flavour.
     val api = if (meta != null) {
         libXposedApiRequirement(meta.targetApiVersion, meta.hasLegacyInit, meta.minApiVersion)
     } else {
@@ -75,6 +74,7 @@ fun variantTags(traits: VariantTraits, meta: ApkMeta? = null): List<String> {
         traits.modernWord -> tags += "modern"
         traits.legacyWord -> tags += "legacy"
     }
+    (meta?.minSdk ?: traits.minSdkToken)?.let { tags += "minSdk $it" }
     traits.android?.let { tags += "Android $it" }
     traits.vendor?.let { (family, major) -> tags += VendorOs(family, major).label() }
     tags += traits.edition.sorted()

@@ -32,19 +32,14 @@ import io.github.tophtab.lspstore.domain.model.Release
 import io.github.tophtab.lspstore.domain.model.ReleaseAsset
 import io.github.tophtab.lspstore.domain.model.ReleaseChannel
 import io.github.tophtab.lspstore.domain.variant.ApkMeta
+import io.github.tophtab.lspstore.domain.variant.InstalledVariantHint
 import io.github.tophtab.lspstore.domain.variant.ModuleVariantState
-import io.github.tophtab.lspstore.domain.variant.ScoredAsset
 import io.github.tophtab.lspstore.domain.variant.VariantDecision
 import io.github.tophtab.lspstore.domain.variant.VariantSignature
 import io.github.tophtab.lspstore.domain.variant.onEvaluatedNoCandidate
 import io.github.tophtab.lspstore.domain.variant.onUserPicked
 import io.github.tophtab.lspstore.domain.variant.parseTraits
 import kotlin.coroutines.cancellation.CancellationException
-
-data class VariantPicker(
-    val release: Release,
-    val candidates: List<ScoredAsset>,
-)
 
 data class ModuleDetailUiState(
     val isLoading: Boolean = true,
@@ -81,7 +76,6 @@ data class ModuleDetailUiState(
     val translateRequest: Int = 0,
     /** Number of translation requests currently in flight. */
     val translationsInFlight: Int = 0,
-    val variantPicker: VariantPicker? = null,
     val variantState: ModuleVariantState? = null,
     /** P2 probe results for [probedTag], shown in the picker/sheet. */
     val probes: Map<String, ApkMeta> = emptyMap(),
@@ -389,6 +383,7 @@ class ModuleDetailViewModel(
                 state = state,
                 device = container.deviceProfile,
                 expectedPackage = packageName,
+                installed = _state.value.installed?.let(InstalledVariantHint::of),
             )
             _state.update {
                 it.copy(
@@ -398,10 +393,10 @@ class ModuleDetailViewModel(
                 )
             }
             when (val decision = resolution.decision) {
+                // The resolver always picks one asset, including the ambiguous
+                // releases that used to open a confirmation dialog: the resource
+                // picker above the button is where the choice is changed.
                 is VariantDecision.Pick -> startInstall(decision.asset, announceRemembered = false)
-                is VariantDecision.Choose -> _state.update {
-                    it.copy(variantPicker = VariantPicker(release, decision.candidates))
-                }
 
                 is VariantDecision.NotApplicable -> {
                     val message = container.appContext.variantReasonText(decision.reason)
@@ -427,6 +422,7 @@ class ModuleDetailViewModel(
                 device = container.deviceProfile,
                 expectedPackage = packageName,
                 forceProbe = true,
+                installed = _state.value.installed?.let(InstalledVariantHint::of),
             )
             _state.update {
                 it.copy(
@@ -485,10 +481,6 @@ class ModuleDetailViewModel(
                     _state.update { it.copy(message = outcome.message) }
             }
         }
-    }
-
-    fun dismissVariantPicker() {
-        _state.update { it.copy(variantPicker = null) }
     }
 
     /**
@@ -675,7 +667,7 @@ class ModuleDetailViewModel(
         val current = _state.value
         if (current.isBusy || current.activeInstall != null) return
         val version = versionFor(asset)
-        _state.update { it.copy(message = null, variantPicker = null) }
+        _state.update { it.copy(message = null) }
         coordinator.start(
             ModuleInstallRequest(
                 repoPackageName = packageName,

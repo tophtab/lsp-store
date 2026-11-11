@@ -14,7 +14,6 @@ data class Reason(
     enum class Kind {
         MATCHES_DEVICE,
         REMEMBERED,
-        NEEDS_CONFIRM,
         BUNDLED_APP,
         DEBUG_BUILD,
         MIN_SDK_TOO_HIGH,
@@ -56,34 +55,46 @@ data class ScoredAsset(
     val debug: Boolean = traits.debugName,
     /** P2 probe result, null while only the name layer is known. */
     val meta: ApkMeta? = null,
+    /**
+     * How much this candidate looks like the copy already installed on the
+     * device (package, ABI, libxposed generation, API levels). 0 when the module
+     * is not installed, which is what makes a first install follow the device
+     * while an update follows what the user already runs.
+     */
+    val installedFit: Int = 0,
 )
 
 sealed interface VariantDecision {
+    /**
+     * One asset to install. [confidence] says *why* it was picked, not whether it
+     * may be used: every install path (detail page, single update, update all,
+     * background worker) installs a [Pick] without asking, and the resource
+     * picker stays the place to change it afterwards.
+     */
     data class Pick(
         val asset: ReleaseAsset,
         val reasons: List<Reason>,
         val confidence: Confidence,
     ) : VariantDecision
 
-    data class Choose(
-        val candidates: List<ScoredAsset>,
-        val hint: Reason? = Reason(Reason.Kind.NEEDS_CONFIRM),
-    ) : VariantDecision
-
     data class NotApplicable(val reason: Reason) : VariantDecision
 
-    enum class Confidence { HIGH, NEEDS_CONFIRM }
+    enum class Confidence {
+        /** A device signal (ABI, API, OS version, minSdk, debug split) decided. */
+        HIGH,
 
-    /**
-     * Asset a list should start with; null when nothing should be preselected.
-     *
-     * `Choose` only preselects when the name layer produced a *recommended*
-     * candidate. Falling back to the first eligible asset is what made the
-     * detail page silently show `OS2_...` for HyperCeiler.
-     */
+        /**
+         * The release only differs in author-defined flavours/editions (or not at
+         * all): the most installed eligible build is the default. It is still a
+         * real pick - update all installs it - but the archive is worth probing
+         * once, and the picker shows the alternative builds one tap away.
+         */
+        DEFAULT,
+    }
+
+    /** Asset the page should preselect; null only when nothing can be installed. */
     fun defaultAsset(): ReleaseAsset? = when (this) {
         is Pick -> asset
-        is Choose -> candidates.firstOrNull { it.blocked == null && it.recommended }?.asset
         is NotApplicable -> null
     }
 }

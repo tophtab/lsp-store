@@ -122,6 +122,7 @@ import io.github.tophtab.lspstore.domain.model.ReleaseChannel
 import io.github.tophtab.lspstore.domain.variant.ModuleVariantState
 import io.github.tophtab.lspstore.domain.variant.Reason
 import io.github.tophtab.lspstore.domain.variant.ScoredAsset
+import io.github.tophtab.lspstore.domain.variant.InstalledVariantHint
 import io.github.tophtab.lspstore.domain.variant.VariantDecision
 import io.github.tophtab.lspstore.domain.variant.VariantResolver
 import io.github.tophtab.lspstore.domain.variant.parseTraits
@@ -382,17 +383,6 @@ fun ModuleDetailScreen(packageName: String, onBack: () -> Unit, onOpenAuthor: (S
         }
     }
 
-    state.variantPicker?.let { picker ->
-        VariantPickerDialog(
-            picker = picker,
-            onSelect = { asset ->
-                viewModel.dismissVariantPicker()
-                viewModel.installAsset(asset)
-            },
-            onDismiss = viewModel::dismissVariantPicker,
-        )
-    }
-
     if (uninstallConfirm) {
         KomiDialog(
             onDismissRequest = { uninstallConfirm = false },
@@ -488,13 +478,17 @@ private fun DetailContent(
     val probes = remember(state.probedTag, state.probes, selectedRelease) {
         if (state.probedTag == selectedRelease?.tagName) state.probes else emptyMap()
     }
-    val decision = remember(selectedRelease, variantState, probes) {
+    val installedHint = remember(state.installed) {
+        state.installed?.let(InstalledVariantHint::of)
+    }
+    val decision = remember(selectedRelease, variantState, probes, installedHint) {
         selectedRelease?.let {
             resolver.resolveForUpdate(
                 variantState,
                 it,
                 probes,
                 expectedPackage = detail.module.packageName,
+                installed = installedHint,
             )
         }
     }
@@ -503,30 +497,26 @@ private fun DetailContent(
     LaunchedEffect(selectedRelease?.tagName) {
         selectedRelease?.let { onProbeAssets(it) }
     }
-    val candidates = remember(selectedRelease, decision, probes) {
+    val candidates = remember(selectedRelease, decision, probes, installedHint) {
         val base = selectedRelease?.let {
-            // Same expected package as the decision above, so a candidate row and
-            // the install button never disagree about what is blocked.
+            // Same expected package and installed hint as the decision above, so
+            // a candidate row and the install button never disagree.
             resolver.candidates(
                 it,
                 probes = probes,
                 expectedPackage = detail.module.packageName,
+                installed = installedHint,
             )
         } ?: emptyList()
-        val recommendedName = when (decision) {
-            is VariantDecision.Pick -> decision.asset.name
-            is VariantDecision.Choose ->
-                decision.candidates.firstOrNull { it.recommended }?.asset?.name
-
-            else -> null
-        }
-        base.map { it.copy(recommended = it.asset.name == recommendedName) }
+        val recommendedName = (decision as? VariantDecision.Pick)?.asset?.name
+        // Best fit first, so the default the install button uses is the first row
+        // of the resource sheet too.
+        resolver.ranked(base).map { it.copy(recommended = it.asset.name == recommendedName) }
     }
     var selectedAssetName by rememberSaveable(selectedRelease?.tagName, variantState) {
         mutableStateOf(decision?.defaultAsset()?.name.orEmpty())
     }
     val selectedAsset = candidates.firstOrNull { it.asset.name == selectedAssetName }?.asset
-    var userPickedAsset by rememberSaveable(selectedRelease?.tagName, variantState) { mutableStateOf(false) }
     // The stored verdict is only a cache of a past decision: the resolver just
     // re-checked it against the release on screen. A stale NOT_APPLICABLE - a
     // framework upgrade, or the pre-1.2.0 API-number block - must not disable the
@@ -612,18 +602,15 @@ private fun DetailContent(
                 state = state,
                 targetVersion = selectedRelease?.version,
                 showUpdateHint = state.updateAvailable && selectedRelease == latestRelease,
-                installEnabled = (selectedAsset != null || decision is VariantDecision.Choose) &&
+                installEnabled = (selectedAsset != null || decision is VariantDecision.Pick) &&
                     decision !is VariantDecision.NotApplicable,
                 notApplicableReason = notApplicableReason,
                 debugBuild = selectedDebug,
                 onInstall = {
+                    // The resource row above already shows the chosen APK, so the
+                    // button installs it directly; changing it is one tap away.
                     val asset = selectedAsset
-                    when {
-                        // Ambiguous release: the user must confirm in the picker.
-                        !userPickedAsset && decision is VariantDecision.Choose -> onInstallLatest()
-                        asset != null -> onInstallAsset(asset)
-                        else -> onInstallLatest()
-                    }
+                    if (asset != null) onInstallAsset(asset) else onInstallLatest()
                 },
                 onCancel = onCancel,
             )
@@ -703,7 +690,6 @@ private fun DetailContent(
                 selectedAsset = selectedAsset,
                 onSelect = { asset ->
                     selectedAssetName = asset.name
-                    userPickedAsset = true
                     assetSheetVisible = false
                 },
             )

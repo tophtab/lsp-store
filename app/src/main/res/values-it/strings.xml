@@ -239,7 +239,6 @@
     <string name="variant_picker_subtitle">Questa versione include più di un APK.</string>
     <string name="variant_recommended">Raccomandato</string>
     <string name="variant_reason_matches_device">Corrisponde al tuo dispositivo (%1$s)</string>
-    <string name="variant_needs_confirm">Questa versione include diverse varianti: scegline una</string>
     <string name="variant_bundled_apps">Altre app in questa versione (%1$d)</string>
     <string name="variant_bundled_app">Spedito insieme al modulo nella stessa versione</string>
     <string name="variant_incompatible_min_sdk">Richiede Android %1$d+ (hai %2$d)</string>
@@ -247,7 +246,6 @@
     <string name="variant_incompatible_api">Richiede l\'API LSPosed %1$d</string>
     <string name="variant_remembered">Ricorda la tua scelta per futuri aggiornamenti</string>
     <string name="variant_debug_badge">eseguire il debug della build</string>
-    <string name="variant_not_applicable">Non disponibile per questo dispositivo</string>
     <string name="variant_not_module">Questo APK non è un modulo Xposed</string>
     <string name="installed_finished_skipped">%1$d i moduli richiedono una scelta di variante: aprili per l\'aggiornamento</string>
     <string name="installed_finished_cancelled">Annullati: %1$d</string>

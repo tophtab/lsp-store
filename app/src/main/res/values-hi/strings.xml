@@ -239,7 +239,6 @@
     <string name="variant_picker_subtitle">यह रिलीज़ एक से अधिक एपीके शिप करता है।</string>
     <string name="variant_recommended">अनुशंसित</string>
     <string name="variant_reason_matches_device">आपके डिवाइस से मेल खाता है (%1$s)</string>
-    <string name="variant_needs_confirm">यह रिलीज़ कई वेरिएंट पेश करती है - एक चुनें</string>
     <string name="variant_bundled_apps">इस रिलीज़ में अन्य ऐप्स (%1$d)</string>
     <string name="variant_bundled_app">उसी रिलीज़ में मॉड्यूल के साथ भेजा गया</string>
     <string name="variant_incompatible_min_sdk">Android की आवश्यकता है %1$d+ (आपके पास %2$d है)</string>
@@ -247,7 +246,6 @@
     <string name="variant_incompatible_api">एलएसपोज़्ड एपीआई की आवश्यकता है %1$d</string>
     <string name="variant_remembered">भविष्य के अपडेट के लिए आपकी पसंद को याद रखा</string>
     <string name="variant_debug_badge">डिबग बिल्ड</string>
-    <string name="variant_not_applicable">इस डिवाइस के लिए उपलब्ध नहीं है</string>
     <string name="variant_not_module">यह एपीके एक एक्सपोज़ड मॉड्यूल नहीं है</string>
     <string name="installed_finished_skipped">%1$d मॉड्यूल को एक भिन्न विकल्प की आवश्यकता होती है - उन्हें अपडेट करने के लिए खोलें</string>
     <string name="installed_finished_cancelled">रद्द किए गए: %1$d</string>

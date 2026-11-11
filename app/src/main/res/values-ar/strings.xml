@@ -239,7 +239,6 @@
     <string name="variant_picker_subtitle">يأتي هذا الإصدار بأكثر من ملف APK واحد.</string>
     <string name="variant_recommended">مُستَحسَن</string>
     <string name="variant_reason_matches_device">يطابق جهازك (%1$s)</string>
-    <string name="variant_needs_confirm">يأتي هذا الإصدار بعدة إصدارات - اختر واحدًا</string>
     <string name="variant_bundled_apps">تطبيقات أخرى في هذا الإصدار (%1$d)</string>
     <string name="variant_bundled_app">يتم شحنها جنبًا إلى جنب مع الوحدة في نفس الإصدار</string>
     <string name="variant_incompatible_min_sdk">يتطلب Android %1$d+ (لديك %2$d)</string>
@@ -247,7 +246,6 @@
     <string name="variant_incompatible_api">يتطلب LSPosed API %1$d</string>
     <string name="variant_remembered">تذكرت اختيارك للتحديثات المستقبلية</string>
     <string name="variant_debug_badge">بناء التصحيح</string>
-    <string name="variant_not_applicable">غير متوفر لهذا الجهاز</string>
     <string name="variant_not_module">ملف APK هذا ليس وحدة Xpose</string>
     <string name="installed_finished_skipped">%1$d تحتاج الوحدات إلى خيار مختلف - افتحها للتحديث</string>
     <string name="installed_finished_cancelled">تم الإلغاء: %1$d</string>

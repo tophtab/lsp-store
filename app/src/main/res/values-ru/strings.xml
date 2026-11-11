@@ -239,7 +239,6 @@
     <string name="variant_picker_subtitle">В этот выпуск входит более одного APK.</string>
     <string name="variant_recommended">Рекомендуется</string>
     <string name="variant_reason_matches_device">Соответствует вашему устройству (%1$s)</string>
-    <string name="variant_needs_confirm">В этом выпуске представлено несколько вариантов — выберите один</string>
     <string name="variant_bundled_apps">Другие приложения в этом выпуске (%1$d)</string>
     <string name="variant_bundled_app">Поставляется вместе с модулем в том же выпуске.</string>
     <string name="variant_incompatible_min_sdk">Требуется Android %1$d+ (у вас есть %2$d)</string>
@@ -247,7 +246,6 @@
     <string name="variant_incompatible_api">Требуется API LSPosed %1$d</string>
     <string name="variant_remembered">Запомнил ваш выбор для будущих обновлений.</string>
     <string name="variant_debug_badge">отладочная сборка</string>
-    <string name="variant_not_applicable">Недоступно для этого устройства</string>
     <string name="variant_not_module">Этот APK не является модулем Xposed.</string>
     <string name="installed_finished_skipped">%1$d модулям нужен выбор варианта — откройте их для обновления</string>
     <string name="installed_finished_cancelled">Отменено: %1$d</string>

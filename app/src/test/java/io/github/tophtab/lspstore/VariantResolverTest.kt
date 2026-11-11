@@ -14,6 +14,7 @@ import io.github.tophtab.lspstore.domain.model.Release
 import io.github.tophtab.lspstore.domain.model.ReleaseAsset
 import io.github.tophtab.lspstore.domain.variant.ApkMeta
 import io.github.tophtab.lspstore.domain.variant.DeviceProfile
+import io.github.tophtab.lspstore.domain.variant.InstalledVariantHint
 import io.github.tophtab.lspstore.domain.variant.ModuleVariantState
 import io.github.tophtab.lspstore.domain.variant.Reason
 import io.github.tophtab.lspstore.domain.variant.VariantDecision
@@ -44,70 +45,224 @@ class VariantResolverTest {
     }
 
     @Test
-    fun equalScoringCandidatesAreNeverSilentlyPickedAsFirst() {
+    fun everyReleaseResolvesToAnInstallableDefaultOrNothing() {
+        everyRelease().forEach { (pkg, release) ->
+            val decision = resolver.resolve(release)
+            when (decision) {
+                is VariantDecision.Pick -> assertTrue(
+                    "$pkg/${release.tagName} picked a blocked asset",
+                    resolver.candidates(release).none {
+                        it.asset.name == decision.asset.name && it.blocked != null
+                    },
+                )
+
+                // The only allowed "no default" is a release without an APK or a
+                // release whose every APK is a companion app. Nothing else may
+                // stop an install or an update-all run.
+                is VariantDecision.NotApplicable -> {
+                    val eligible = resolver.candidates(release).filter { it.blocked == null }
+                    assertTrue(
+                        "$pkg/${release.tagName} gave up although ${eligible.map { it.asset.name }} fits",
+                        eligible.isEmpty(),
+                    )
+                }
+            }
+        }
+    }
+
+    @Test
+    fun tiedCandidatesDefaultToTheMostInstalledBuildInsteadOfTheAlphabeticalFirst() {
         var checked = 0
         everyRelease().forEach { (pkg, release) ->
             val eligible = resolver.candidates(release).filter { it.blocked == null }
             if (eligible.size < 2) return@forEach
-            if (eligible.map { it.score }.distinct().size != 1) return@forEach
-            // A unique non-debug candidate is a deliberate debug de-prioritisation,
-            // not an arbitrary first() pick.
-            if (eligible.count { !it.traits.debugName } == 1) return@forEach
-            // A different device-ABI fit is a real signal (and the resolver is
-            // expected to use it), so tied scores alone are not "arbitrary".
+            // A unique non-debug candidate, a device ABI fit or a real device
+            // signal is a legitimate reason to rank, so only the remaining pile
+            // (edition/flavour/name-only splits) is inspected here.
             val fits = eligible.map { candidate ->
                 candidate.traits.abis.firstOrNull { it in device.abis }
                     ?: if (candidate.traits.universal) "universal" else "none"
             }
             if (fits.distinct().size > 1) return@forEach
-            checked++
+            if (eligible.map { it.score }.distinct().size != 1) return@forEach
+            // A minSdk split, a different advertised OS/Android version or a
+            // different libxposed API number are real signals too.
+            if (eligible.map { it.meta?.minSdk ?: it.traits.minSdkToken ?: -1 }.distinct().size > 1) {
+                return@forEach
+            }
+            if (eligible.map { it.traits.vendor?.second ?: it.traits.android ?: 0 }
+                    .distinct().size > 1
+            ) {
+                return@forEach
+            }
+            if (eligible.map { it.traits.libxposedApi ?: 0 }.distinct().size > 1) return@forEach
+            if (eligible.count { !it.traits.debugName } == 1) return@forEach
+            val decision = resolver.resolve(release) as VariantDecision.Pick
+            val plain = eligible.filter { it.traits.edition.isEmpty() && it.traits.flavors.isEmpty() }
+                .ifEmpty { eligible }
+            val expected = plain.maxByOrNull { it.asset.downloadCount }!!.asset.name
+            if (expected != eligible.first().asset.name) checked++
+            assertEquals(
+                "$pkg/${release.tagName} did not fall back to the most installed build",
+                expected,
+                decision.asset.name,
+            )
+            if (expected == eligible.first().asset.name) return@forEach
             assertTrue(
-                "$pkg/${release.tagName} tied at ${eligible.first().score} but was not Choose",
-                resolver.resolve(release) is VariantDecision.Choose,
+                "$pkg/${release.tagName} kept the alphabetical first asset",
+                decision.asset.name != eligible.first().asset.name,
             )
         }
         assertTrue("expected tied multi-APK releases in the corpus", checked > 0)
     }
 
     @Test
-    fun hyperCeilerAsksInsteadOfPreselectingOs2() {
+    fun aPlainBuildOutranksADecoratedOneEvenWithFewerDownloads() {
+        val release = Release(
+            tagName = "1-1.0",
+            name = null,
+            url = null,
+            isPrerelease = false,
+            publishedAt = null,
+            descriptionHtml = null,
+            version = ModuleVersion.parse("1-1.0"),
+            assets = listOf(
+                asset("KnoxPatch-v0.8.3.apk", downloads = 10),
+                asset("KnoxPatch-v0.8.3-sep-lite.apk", downloads = 900),
+            ),
+        )
+        val decision = resolver.resolve(release)
+        assertTrue(decision is VariantDecision.Pick)
+        assertEquals("KnoxPatch-v0.8.3.apk", (decision as VariantDecision.Pick).asset.name)
+        assertEquals(VariantDecision.Confidence.DEFAULT, decision.confidence)
+    }
+
+    @Test
+    fun anUpdatePicksTheInstalledPackageOverTheMorePopularAsset() {
+        val release = Release(
+            tagName = "1-1.0",
+            name = null,
+            url = null,
+            isPrerelease = false,
+            publishedAt = null,
+            descriptionHtml = null,
+            version = ModuleVersion.parse("1-1.0"),
+            assets = listOf(
+                asset("Other-App-release.apk", downloads = 9000),
+                asset("Installed-App-release.apk", downloads = 5),
+            ),
+        )
+        val probes = mapOf(
+            "Other-App-release.apk" to ApkMeta(
+                packageName = "com.other.module",
+                hasXposedDeclaration = true,
+            ),
+            "Installed-App-release.apk" to ApkMeta(
+                packageName = "com.example.module",
+                hasXposedDeclaration = true,
+            ),
+        )
+        val installed = InstalledVariantHint(
+            packageName = "com.example.module",
+            abi = "arm64-v8a",
+            minSdk = 29,
+            targetSdk = 34,
+        )
+
+        // An update follows what is on the device, not what other users installed.
+        val decision = resolver.resolve(
+            release,
+            probes = probes,
+            expectedPackage = "com.example.module",
+            installed = installed,
+        )
+        assertTrue(decision is VariantDecision.Pick)
+        assertEquals("Installed-App-release.apk", (decision as VariantDecision.Pick).asset.name)
+        assertEquals(VariantDecision.Confidence.HIGH, decision.confidence)
+
+        // The same release for a device that does not have the module: there is
+        // no installed copy to follow, so the device falls back to the build
+        // most users installed.
+        val firstInstall = resolver.resolve(
+            release,
+            probes = probes,
+            expectedPackage = "com.example.module",
+        )
+        assertEquals(
+            "Other-App-release.apk",
+            (firstInstall as VariantDecision.Pick).asset.name,
+        )
+    }
+
+    @Test
+    fun theInstalledHintOnlyOrdersCandidatesTheDeviceCannotSplit() {
+        val release = releaseOf("app-release.apk", "app-release-lite.apk")
+        val installed = InstalledVariantHint(packageName = "com.example.module", abi = "arm64-v8a")
+        // Neither probe identifies the package, and both names are plain builds:
+        // the hint cannot invent a preference, so the ladder still decides.
+        val decision = resolver.resolve(release, installed = installed)
+        assertTrue(decision is VariantDecision.Pick)
+        assertEquals("app-release.apk", (decision as VariantDecision.Pick).asset.name)
+    }
+
+    @Test
+    fun aBrandNewReleaseWithNoDownloadsResolvesDeterministically() {
+        val release = releaseOf("app-tile.apk", "app-panel.apk")
+        val first = resolver.resolve(release) as VariantDecision.Pick
+        val second = resolver.resolve(release) as VariantDecision.Pick
+        assertEquals(first.asset.name, second.asset.name)
+        assertEquals("app-panel.apk", first.asset.name)
+    }
+
+    @Test
+    fun hyperCeilerDefaultsToTheOsBuildMostUsersInstalled() {
         val release = latestRelease("com.sevtinge.hyperceiler")
         val decision = resolver.resolve(release)
-        assertTrue("OS variants must not be guessed without a device profile", decision is VariantDecision.Choose)
-        val candidates = (decision as VariantDecision.Choose).candidates
+        // No device profile: OS2 and OS3 score the same, so the default is the
+        // build the repository's users actually installed (OS3, 117k vs 60k).
+        assertTrue(decision is VariantDecision.Pick)
+        assertEquals(
+            "OS3_HyperCeiler-2.10.166-20260331-release.apk",
+            (decision as VariantDecision.Pick).asset.name,
+        )
+        assertEquals(VariantDecision.Confidence.DEFAULT, decision.confidence)
+        // Both rows stay one tap away in the resource sheet.
         assertEquals(
             listOf(
-                "OS2_HyperCeiler-2.10.166-20260402-release.apk",
                 "OS3_HyperCeiler-2.10.166-20260331-release.apk",
+                "OS2_HyperCeiler-2.10.166-20260402-release.apk",
             ),
-            candidates.map { it.asset.name },
+            resolver.ranked(resolver.candidates(release)).map { it.asset.name },
         )
-        assertTrue("neither OS variant may be marked recommended", candidates.none { it.recommended })
     }
 
     @Test
-    fun killAppNowAsksButRecommendsTheLibXposedBuild() {
+    fun killAppNowDefaultsToTheAndroid16LibXposedBuild() {
         val decision = resolver.resolve(latestRelease("com.asameer.killappnowext"))
-        assertTrue(decision is VariantDecision.Choose)
-        val candidates = (decision as VariantDecision.Choose).candidates
-        val recommended = candidates.first { it.recommended }
+        assertTrue(decision is VariantDecision.Pick)
         assertEquals(
             "KillAppNow_Ext_3.0_A16_OneUI8.x_API-101.0.1.apk",
-            recommended.asset.name,
+            (decision as VariantDecision.Pick).asset.name,
         )
-        assertEquals(101, recommended.traits.libxposedApi)
     }
 
     @Test
-    fun panelAndTileFlavorsAreNotGuessed() {
+    fun panelAndTileFlavorsDefaultToTheMostInstalledPanel() {
         val decision = resolver.resolve(latestRelease("com.qingyu.mi5g"))
-        assertTrue(decision is VariantDecision.Choose)
+        assertTrue(decision is VariantDecision.Pick)
+        // Both are legitimate flavours; the repository's users picked panel by a
+        // wide margin (20k vs 7.9k), so that is the default.
+        assertEquals("FiveGSwitcher-2.0.4_14-panel.apk", (decision as VariantDecision.Pick).asset.name)
+        assertEquals(VariantDecision.Confidence.DEFAULT, decision.confidence)
         assertEquals(
             setOf(
                 "FiveGSwitcher-2.0.4_14-panel.apk",
                 "FiveGSwitcher-2.0.4_14-tile.apk",
             ),
-            (decision as VariantDecision.Choose).candidates.map { it.asset.name }.toSet(),
+            resolver.candidates(latestRelease("com.qingyu.mi5g"))
+                .filter { it.blocked == null }
+                .map { it.asset.name }
+                .toSet(),
         )
     }
 
@@ -123,7 +278,9 @@ class VariantResolverTest {
 
     @Test
     fun singleDebugApkInstallsWithoutConfirmation() {
-        val decision = resolver.resolve(latestRelease("com.souleven.nothingos"))
+        // Synthetic on purpose: the live corpus changes, and a module that only
+        // ships debug builds must never turn into a confirmation prompt.
+        val decision = resolver.resolve(releaseOf("app-debug.apk"))
         assertTrue(decision is VariantDecision.Pick)
         val pick = decision as VariantDecision.Pick
         assertEquals("app-debug.apk", pick.asset.name)
@@ -148,9 +305,11 @@ class VariantResolverTest {
         assertTrue(decision.reasons.any { it.kind == Reason.Kind.REMEMBERED })
         assertEquals("trusted path must not read probes", 0, probes.reads)
 
-        // A renamed release falls back to the name layer, still without probes.
+        // A renamed release falls back to the name layer, still without probes,
+        // and still produces a usable default.
         val unmatched = resolver.resolve(release, VariantSignature(abi = "x86_64"), probes)
-        assertTrue(unmatched is VariantDecision.Choose)
+        assertTrue(unmatched is VariantDecision.Pick)
+        assertEquals(VariantDecision.Confidence.DEFAULT, (unmatched as VariantDecision.Pick).confidence)
         assertEquals(0, probes.reads)
     }
 
@@ -393,7 +552,7 @@ class VariantResolverTest {
             probes = probes,
             expectedPackage = "com.example.module",
         )
-        assertTrue("renamed modules may only be a warning", decision is VariantDecision.Choose)
+        assertTrue("renamed modules may only be a warning", decision is VariantDecision.Pick)
         val blocked = resolver.candidates(
             release,
             probes = probes,
@@ -479,6 +638,15 @@ class VariantResolverTest {
             older.candidates(release, probes = probes).single().warning?.args,
         )
     }
+
+    private fun asset(name: String, downloads: Int): ReleaseAsset = ReleaseAsset(
+        name = name,
+        downloadUrl = "https://example.invalid/$name",
+        fallbackUrl = null,
+        size = 1024,
+        downloadCount = downloads,
+        contentType = null,
+    )
 
     private fun releaseOf(vararg names: String): Release = Release(
         tagName = "1-1.0",

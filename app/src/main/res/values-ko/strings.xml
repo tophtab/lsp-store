@@ -239,7 +239,6 @@
     <string name="variant_picker_subtitle">이 릴리스에는 두 개 이상의 APK가 제공됩니다.</string>
     <string name="variant_recommended">추천</string>
     <string name="variant_reason_matches_device">귀하의 장치와 일치합니다 (%1$s)</string>
-    <string name="variant_needs_confirm">이 릴리스에는 여러 가지 변형이 제공됩니다. 하나를 선택하세요.</string>
     <string name="variant_bundled_apps">이 릴리스의 다른 앱(%1$d)</string>
     <string name="variant_bundled_app">동일한 릴리스의 모듈과 함께 제공됨</string>
     <string name="variant_incompatible_min_sdk">Android %1$d+ 필요(%2$d 있음)</string>
@@ -247,7 +246,6 @@
     <string name="variant_incompatible_api">LSPosed API가 필요합니다 %1$d</string>
     <string name="variant_remembered">향후 업데이트를 위해 귀하의 선택을 기억했습니다.</string>
     <string name="variant_debug_badge">디버그 빌드</string>
-    <string name="variant_not_applicable">이 장치에서는 사용할 수 없습니다</string>
     <string name="variant_not_module">이 APK는 Xposed 모듈이 아닙니다.</string>
     <string name="installed_finished_skipped">%1$d 모듈에는 변형 선택이 필요합니다. 업데이트하려면 열어야 합니다.</string>
     <string name="installed_finished_cancelled">취소됨: %1$d</string>

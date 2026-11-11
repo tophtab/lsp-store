@@ -5,8 +5,10 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import io.github.tophtab.lspstore.domain.variant.ApkMeta
 import io.github.tophtab.lspstore.domain.variant.VendorOs
 import io.github.tophtab.lspstore.domain.variant.parseTraits
+import io.github.tophtab.lspstore.ui.variant.variantTags
 
 class VariantTraitsTest {
 
@@ -107,6 +109,23 @@ class VariantTraitsTest {
             parseTraits("module_com.google.android.apps.translate.apk").targetApp,
         )
         assertNull(parseTraits("hupu_8.0.74.04035.apk").targetApp)
+    }
+
+    @Test
+    fun resourceRowTagsRunFromAbiToApiToMinSdk() {
+        // The resource picker reads left to right: architecture, libxposed
+        // generation, then the platform floor - the order the user compares them.
+        val tags = variantTags(
+            traits = parseTraits("app-arm64-v8a-api102-minsdk33-release.apk"),
+            meta = ApkMeta(abis = setOf("arm64-v8a"), minSdk = 33, targetApiVersion = 102),
+        )
+        assertEquals(listOf("arm64-v8a", "API 102", "minSdk 33"), tags)
+
+        // File-name fallback keeps the same order.
+        assertEquals(
+            listOf("arm64-v8a", "API 102", "minSdk 33"),
+            variantTags(parseTraits("app-arm64-v8a-api102-minsdk33-release.apk")),
+        )
     }
 
     @Test

@@ -205,7 +205,10 @@ META-INF/xposed/scope.list     作用域包名（30 个里有 13 个是 system�
 
 ## 5. 设计目标与原则
 
-1. **零静默错误**：宁可弹选择器，也不要默认一个“看起来像”的包。
+1. **不静默选错，也不停在半路**：除了“没有 APK / 全是配套 App”，任何 release 都必须给出一个
+   能直接安装的默认包，并在资源列表里说明它、允许一键换掉。默认值必须有据：
+   **已安装的模块跟已装副本，未安装的模块跟设备画像**；设备也分不出来时，才落到
+   原版构建 → 下载量最高 → 文件名（见第 12 节）。
 2. **硬约束优先**：不合法/不兼容的候选先剔除，不要靠打分把它压下去（“包名不符 + 无声明”，
    以及没被探测澄清的配套包名字）。其余（`minSdk`、ABI、API 号）都只是排序 + 提示：
    能不能装由系统安装器说了算，见 6 节末尾的变更记录。debug 不是硬约束，是降权项。
@@ -296,34 +299,45 @@ data class VariantTraits(
 | 仅 universal | +10 | 能用但更大 |
 | libxposed API 与设备能力匹配 | +20 | modern 优先，legacy 兜底 |
 | 与用户历史语义偏好一致（同 edition/flavor） | +30 | 见 L4 |
+| 与已装副本一致（探针包名 / `primaryCpuAbi` / libxposed 代际 / `minSdk`） | 16 / 4 / 4 / 2 | **更新路径专用**，见第 12 节 |
 | `versionCode == release tag code` | +2 | 只做 tie-break，不做筛选 |
-| 下载量（log 归一） | +0..5 | 弱先验，不能主导 |
+| 下载量 | 0 | 不进入 score，只在平局排序里用（见第 12 节） |
 | 目标 App 版本与已装版本一致 | +25 | 第 7 类 |
 
-决策规则：
+决策规则（1.5.5 起；旧版是“分不出来就 `Choose` 让用户确认”，已删除）：
 
 ```
-eligible = filter(candidates)
-if eligible.isEmpty()             -> NOT_APPLICABLE（不是弹选择器！）：不更新、不通知、不下载，详情页说明原因
-if eligible.size == 1             -> 自动选择（高置信）
-gap = top.score - second.score
-if top.score >= 60 && gap >= 30    -> 自动选择 + 显示“推荐理由”
-else                              -> 打开选择器，预选 top，但标注“需要确认”
+eligible = filter(candidates)              // 只有“配套 App / 无 APK”会空
+if eligible.isEmpty()                      -> NOT_APPLICABLE：不更新、不通知、不下载，详情页说明原因
+if 探针包名 == 已装包名，且唯一            -> Pick（高置信；同一 release 混了几个 App 也能认对）
+if eligible.size == 1 / 只有一个非 debug    -> Pick（高置信）
+if isDecisive(top, second)                 -> Pick（高置信，设备信号更强）
+else                                       -> Pick(DEFAULT)：按第 12 节的兜底阶梯排序
 ```
 
-这样 HyperCeiler 在 HyperOS 3 上得 40 分差 → 自动选 OS3；`MiCTS/VISTrigger` 全部 0 分 → 必弹选择器；
-`knoxpatch` 正式包与 sep-lite 都 0 分 → 弹选择器（下载量只用来排序预选，而不是决定装哪个）。
+兜底阶梯（全部是“设备分不出来”时才生效）：
+
+```
+已装副本匹配 → 原版构建（无 edition/flavor）→ OS/API 版本更高 → 下载量最高 → 文件名
+```
+
+结果：HyperCeiler 在 HyperOS 3 上选 OS3，没有设备画像时选下载量最高的 OS3；
+`MiCTS/VISTrigger`、`knoxpatch` 这类按社区实际安装量给默认；`DEFAULT` 置信度会允许再探测一次
+（探针能读出的差异——包名、真实 ABI、`minSdk`、API 代际——会推翻名字层）。
 
 ### L4 记忆（关键，避免每次问）
 
 - 存 `(repoPackage → VariantSignature + 状态)`，`VariantSignature` 是语义标签集合（abis/api/os/edition/flavor），
   **不是**文件名（文件名带版本号，下个版本就失效）。状态用 7.1 的四个状态，跟偏好一起持久化。
 - `TRUSTED` 模块的更新：signature 唯一命中就**直接下**，不探测、不重排、不提问；
-  唯一命中不了（作者改命名/删变体）才回名字层重排，仍歧义则问。
+  唯一命中不了（作者改命名/删变体）才回名字层重排，并按第 12 节的阶梯给出默认值。
 - 新 release 解析后按 signature 相似度匹配：完全一致 → 满分；只剩部分维度 → 默认它但仍展示。
 - 提供一个“不要再提示”的反向记忆：用户可以把某类变体标为忽略（例如永不装 WearOS 配套包）。
-- **更新路径必须复用记忆**：批量更新时，若某模块“无记忆 + 多 APK + 低置信”，不要静默选 `first()`，
-  而是把该行标记成“需选择变体”，批量更新跳过它并在结束时提示。
+- **更新路径必须复用记忆，但不再需要停下来问**：批量更新时，“无记忆 + 多 APK”的模块用
+  已装副本 + 第 12 节的兜底阶梯拿到默认包直接装；装成功后签名写回 `TRUSTED`，下次连排序都省了。
+- **已装副本优先于社区下载量**：`InstalledVariantHint`（包名、`primaryCpuAbi`、debuggable、
+  libxposed 代际、`minSdk`/`targetSdk`）只在“设备分不出来”的候选之间排序，且排在下载量之前。
+  PackageManager 看不到 edition/flavor，这部分靠本店安装后写回的 signature 补齐。
 - 详情页当前完全不写 `preferredVariants`（只有 Installed 页写），要统一到同一个仓库层。
 
 ### L5 UI
@@ -465,13 +479,15 @@ CD 本身就能给出精确 ABI（`lib/arm64-v8a/…`）；manifest 给出版本
 
 ## 8. 反模式（明确不要做）
 
-1. **不要**用下载量当主判据。它会被“用户默认点了第一个/universal”污染，也会随 release 累积。
+1. **不要**用下载量当主判据。它会被“用户默认点了第一个/universal”污染，也会随 release 累积；
+   只允许它排在同一档候选的最后（第 12 节），且永远排在设备信号与已装副本之后。
 2. **不要**用 `versionCode == tag` 过滤候选（oshin 反例）。
 3. **不要**假设“裸名 = 正式版 / 现代 API”（DPIS 与 tipismine 约定相反）。
 4. **不要**用裸数字匹配系统版本（`_14-panel` 是 App 版本）。
-5. **不要**在多 APK 且低置信时静默 `first()`（当前 bug 的根因）。
-6. **不要**在后台批量更新里自动决定 edition/flavor。
-7. **不要**为了判定去下载整个 APK（几十 MB）；Range 探测或干脆问用户。
+5. **不要**在多 APK 且低置信时静默 `first()`（历史 bug 的根因）——兜底必须是第 12 节的显式阶梯。
+6. **不要**让批量更新/后台更新因为“分不出变体”而跳过模块：先按第 12 节的阶梯装默认包，
+   装完写回签名，下次就不需要排序。
+7. **不要**为了判定去下载整个 APK（几十 MB）；Range 探测或按第 12 节的规则决定。
 
 ---
 
@@ -479,11 +495,13 @@ CD 本身就能给出精确 ABI（`lib/arm64-v8a/…`）；manifest 给出版本
 
 **P0（纯名字层 + 懒验证骨架，1 天级）**
 - 把 `bestForAbis()` 换成 `VariantResolver`：`debug 降权 → ABI → universal → 打分 → 置信度`。
-- 删除静默 `first()`：低置信返回 `null`，调用方弹选择器（按你的决定：要求确认）。
+- 删除静默 `first()`：低置信不再返回 `null`/`Choose`，而是按第 12 节的阶梯给出可解释、可覆盖的默认包
+  （1.5.5 起；早期 P0 版本曾经要求用户确认）。
 - 选择器显示推荐徽章 + 理由 + “不兼容/配套包”折叠区（配套包先靠名字黑名单：`demo|wear|pro|bridge|provider|client|trigger`，误判可接受，因为只是折叠）。
 - 引入模块状态 `UNKNOWN / TRUSTED / SUSPECT / NOT_APPLICABLE`，**用已装 APK 的 `PackageInfo` 冷启动种子**；
   `TRUSTED` 时更新路径不探测、不重排。
-- 详情页写入/读取 `preferredVariants`；批量更新跳过“低置信且无记忆”的模块。
+- 详情页写入/读取 `preferredVariants`；批量更新对“低置信且无记忆”的模块也用默认包安装，
+  不再跳过（1.5.5 起）。
 - **单 APK 也走同一个 resolver 的判定分支**：debug 命名 / `versionName` ≠ tag → 徽章（**不弹窗**）；
   `minSdk` 不兼容 / 真实 ABI 不兼容 → 只提示，不禁用安装（1.5.4 起，#75）。
 - 多 APK 且出现 debug 包时：降权非 debug，不额外提问。
@@ -521,7 +539,9 @@ CD 本身就能给出精确 ABI（`lib/arm64-v8a/…`）；manifest 给出版本
    - 不得因包名不符单独拦下 `dev.wtonec` / `ReaMicroExtend` 这类合法改名模块
    - 对已知 OS 变体（HyperCeiler / OneUI / killappnowext）在给定设备画像下必须选对
    - libxposed 优先：同版本同时存在 legacy 与 api102 时默认 api102
-   - 低置信集合必须稳定（快照测试，防止回归成“又静默选了第一个”）
+   - 任何 release 要么 `Pick`、要么 `NotApplicable`（仅无 APK / 全是配套 App）
+   - 同分候选必须等于兜底阶梯（原版构建 → OS/API 更高 → 下载量 → 文件名），不得是字母序第一个
+   - 有已装副本时，更新选择与下载量无关（第 12.3 节）
 3. 输出指标：自动决策率、需要询问率、以及“与下载量第一名一致率”（只做参考，不作目标）。
 
 ---
@@ -530,7 +550,9 @@ CD 本身就能给出精确 ABI（`lib/arm64-v8a/…`）；manifest 给出版本
 
 已确认：
 
-1. 多 APK 歧义：**要求用户确认**（不静默预选后一键装）。
+1. 多 APK 歧义（1.5.5 修订）：**给出默认包，不要求确认**。已安装模块跟已装副本，未安装模块跟
+   设备画像；设备也分不出来时按“原版构建 → 下载量 → 文件名”兜底。资源列表永远可以换。
+   （旧决策是“要求用户确认”，已作废，原因见第 12 节。）
 2. modern / legacy 并存：**默认 api102**（设备 LSPosed 支持的前提下）。
 3. 变体偏好**持久化**（备份导出/导入已取消）。
 4. **做 Range 探测**（每个候选约 150 KB，只读目录尾部 + manifest + module.prop）。
@@ -545,6 +567,64 @@ CD 本身就能给出精确 ABI（`lib/arm64-v8a/…`）；manifest 给出版本
 
 → 已定：**不显示**。设备画像只在内部用于打分，不占界面空间。
 
+
+---
+
+## 12. 默认包选择（1.5.5 起的实现）
+
+### 12.1 数据：多 APK 到底有多常见
+
+2026-11 实时抓取 `modules.lsposed.org`（1351 个模块 / 8996 个 release）：
+
+| 指标 | 数值 |
+| --- | --- |
+| 最新 release 只有 1 个 APK | **1242 / 1351 = 91.9%** |
+| 最新 release 有 2 个 APK | 81 |
+| 最新 release 有 3–5 个 | 25 |
+| 最新 release ≥ 7 个 | 3（最长 16 个） |
+| 全部 release 里多 APK 的 | 912 / 8996 = 10.1% |
+
+多 APK 的差异轴（最新 release，109 个模块，可重叠）：debug/release 31、ABI 29、
+legacy/modern(API) 16、纯命名差异 19、flavor 9、edition 5、目标 App 4、厂商 OS 3、minSdk 2。
+
+用旧代码跑测试语料（784 个多 APK release）：**231 个（29.5%）返回 `Choose`**，
+即“必须让用户确认”。这就是「全部更新」跳过模块、详情页弹框的来源。
+
+### 12.2 规则
+
+**已安装的模块 → 跟已装副本**（`InstalledVariantHint`，纯 PackageManager，零网络）：
+
+1. 探针读出的包名 == 已装包名，且只有一个候选 → 直接选中（同一 release 混了几个 App 也认对）；
+2. 否则在“设备分不出来”的候选里，按 `primaryCpuAbi` → libxposed 代际 → `minSdk`/`targetSdk`
+   的匹配度排序，**排在社区下载量之前**；
+3. 本店装过的模块还有完整 `VariantSignature`（ABI/API/OS/edition/flavor）记忆，优先级最高。
+
+**未安装的模块 → 跟设备**（`DeviceProfile`）：
+
+1. `sdkInt` / `Build.SUPPORTED_ABIS`；
+2. `lsposedApi`：读已装管理器的版本名（`org.lsposed.manager`：<1.9→93、1.9–1.11→100、≥2.0→102；
+   Vector `org.matrix.vector.manager`：2.0→100、2.1→101、≥2.2→102），两个都装取最大值。
+   这是版本号映射，不是框架自报；取不到就跳过 API 轴；
+3. `vendorOs`：`getprop`（`ro.mi.os.version.name` 等），回退解析 `Build.VERSION.INCREMENTAL`。
+
+**设备也分不出来时（纯口味/版本流派）**：原版构建（无 edition/flavor）→ OS/API 版本更高 →
+下载量最高 → 文件名。均为稳定排序，新 release 都是 0 下载时退化为文件名，不会随机。
+
+### 12.3 不变量（单测覆盖）
+
+- 任何 release 要么 `Pick`，要么 `NotApplicable`（仅“无 APK / 全是配套 App”）；
+- 绝不自动选 debug（存在非 debug 时）、配套 App、真实 ABI 不兼容的候选；
+- 同分候选不得落到“字母序第一个”：必须等于兜底阶梯的结果；
+- 已装副本匹配时，更新选择与下载量无关；
+- 未安装时没有已装提示，选择只由设备 + 兜底阶梯决定。
+
+### 12.4 已知限制
+
+- PackageManager 看不到 edition/flavor：**非本店安装**的模块（冷启动 seed 的签名只有 ABI/API 代际），
+  第一次遇到 full/lite 这类拆分时会落到“原版构建”；装过一次后记忆补全。
+- `lsposedApi` 是版本号映射；管理器被隐藏、改名或使用别家 Xposed 时为 null，API 轴不参与排序。
+- 配套 App 的名字黑名单（`client`/`provider`/`bridge`/`demo`…）仍是“未探测前的猜测”，
+  探测到“它就是本模块”后自动放开；真正的兜底是下载后的本地门禁。
 
 ---
 
