@@ -2,6 +2,9 @@
 
 package io.github.tophtab.lspstore.ui.components
 
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -21,8 +24,16 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -38,21 +49,55 @@ import io.github.tophtab.lspstore.ui.design.KomiStat
 import io.github.tophtab.lspstore.ui.design.KomiSurface
 import io.github.tophtab.lspstore.ui.design.KomiText
 import io.github.tophtab.lspstore.ui.theme.KomiTextRole
+import kotlinx.coroutines.withTimeoutOrNull
+
+/** How long a card must be held before it hides itself, in milliseconds. */
+private const val IGNORE_HOLD_MILLIS = 3_000L
 
 /**
  * Full-width module card, modelled on komi's repo card: icon tile, title,
  * owner/package line, two-line summary, chips, then a divider and a stats row.
+ *
+ * Holding anywhere on the card for three seconds calls [onIgnore] without a
+ * confirmation dialog; a shorter press still opens the module. The hold is
+ * deliberately longer than the platform long press so a card never disappears
+ * while the user is only trying to tap or scroll it.
  */
 @Composable
 fun ModuleCard(
     module: Module,
     installed: Boolean,
     onOpen: () -> Unit,
+    onIgnore: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val haptics = LocalHapticFeedback.current
+    val currentOnIgnore by rememberUpdatedState(onIgnore)
+    // A completed hold must not also count as the release half of a tap and
+    // open the page. The flag is set while the finger is still down, so the
+    // surface's click callback swallows that release; the next press clears it.
+    var heldToIgnore by remember(module.packageName) { mutableStateOf(false) }
     KomiSurface(
-        modifier = modifier.fillMaxWidth(),
-        onClick = onOpen,
+        modifier = modifier
+            .fillMaxWidth()
+            .pointerInput(Unit) {
+                awaitEachGesture {
+                    heldToIgnore = false
+                    awaitFirstDown(requireUnconsumed = false)
+                    // null is the timeout: the hold outlived the threshold. A
+                    // release (false) or a cancelled gesture such as a scroll
+                    // or a system takeover (also false) is an ordinary gesture.
+                    val released = withTimeoutOrNull(IGNORE_HOLD_MILLIS) {
+                        waitForUpOrCancellation() != null
+                    }
+                    if (released == null) {
+                        heldToIgnore = true
+                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                        currentOnIgnore()
+                    }
+                }
+            },
+        onClick = { if (!heldToIgnore) onOpen() },
         contentPadding = PaddingValues(15.dp),
     ) {
         Column {

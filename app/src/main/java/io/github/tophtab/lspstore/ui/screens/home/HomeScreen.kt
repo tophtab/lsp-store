@@ -244,6 +244,7 @@ fun HomeScreen(
                                             module = module,
                                             installed = module.packageName in state.installedPackages,
                                             onOpen = { onOpenModule(module.packageName) },
+                                            onIgnore = { viewModel.ignoreModule(module.packageName) },
                                         )
                                     }
                                 }
@@ -274,6 +275,7 @@ fun HomeScreen(
                                         module = module,
                                         installed = module.packageName in state.installedPackages,
                                         onOpen = { onOpenModule(module.packageName) },
+                                        onIgnore = { viewModel.ignoreModule(module.packageName) },
                                     )
                                 }
                             }
