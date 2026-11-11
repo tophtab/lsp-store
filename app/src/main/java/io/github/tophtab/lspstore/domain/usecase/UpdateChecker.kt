@@ -44,7 +44,7 @@ object UpdateChecker {
                 val latest = module.latestFor(includePreReleases) ?: return@mapNotNull null
                 val skippedVersion = skipped[installedModule.packageName] ?: skipped[module.packageName]
                 if (skippedVersion?.matches(latest) == true) return@mapNotNull null
-                if (isUpdate(latest, installedModule, module.latestTimeFor(includePreReleases))) {
+                if (isUpdateAvailable(latest, installedModule, module.latestTimeFor(includePreReleases))) {
                     UpdateInfo(module = module, installed = installedModule, latest = latest)
                 } else {
                     null
@@ -55,6 +55,8 @@ object UpdateChecker {
     }
 
     /**
+     * Whether [latest] is an update over the installed copy.
+     *
      * A higher versionCode is always an update. An equal versionCode only counts
      * when the author re-uploaded the release after the installed copy landed
      * (LSPosed treats "same code, different name" as an update, which is right
@@ -63,8 +65,11 @@ object UpdateChecker {
      *
      * The timestamp keeps both properties: the first check after a re-upload
      * reports it once, and the prompt disappears the moment it is installed.
+     *
+     * Public because the module page asks the same question for its "update
+     * available" hint and the two answers must not drift apart.
      */
-    private fun isUpdate(
+    fun isUpdateAvailable(
         latest: ModuleVersion,
         installed: InstalledModule,
         publishedRaw: String?,

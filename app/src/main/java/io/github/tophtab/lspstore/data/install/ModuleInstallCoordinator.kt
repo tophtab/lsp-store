@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.io.File
@@ -180,16 +180,19 @@ class ModuleInstallCoordinator(
                 }
             }
             try {
+                // A cleared task (Settings > clear downloaded APKs) never reaches
+                // a terminal status; waiting for one would park this run forever.
                 downloadManager.tasks
-                    .mapNotNull { it[key] }
-                    .first {
-                        it.status == DownloadStatus.COMPLETED ||
-                            it.status == DownloadStatus.FAILED ||
-                            it.status == DownloadStatus.CANCELLED
-                    }
+                    .map { it[key] }
+                    .first { it == null || it.status.isTerminal }
             } finally {
                 progressJob.cancel()
             }
+        }
+
+        if (task == null) {
+            finish(repo, context.getString(R.string.download_cancelled))
+            return
         }
 
         when (task.status) {

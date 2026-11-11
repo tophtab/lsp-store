@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -13,6 +14,8 @@ import io.github.tophtab.lspstore.di.AppContainer
 import io.github.tophtab.lspstore.ui.toUserMessage
 import io.github.tophtab.lspstore.domain.model.InstalledModule
 import io.github.tophtab.lspstore.domain.model.Module
+import io.github.tophtab.lspstore.domain.model.repoModuleFor
+import kotlin.coroutines.cancellation.CancellationException
 
 data class UnknownModuleItem(
     val installed: InstalledModule,
@@ -45,6 +48,7 @@ class ExternalImportViewModel(private val container: AppContainer) : ViewModel()
     private var index: List<Module> = emptyList()
     private var installed: List<InstalledModule> = emptyList()
     private var links: Map<String, String> = emptyMap()
+    private var loadJob: Job? = null
 
     init {
         viewModelScope.launch {
@@ -107,7 +111,9 @@ class ExternalImportViewModel(private val container: AppContainer) : ViewModel()
     }
 
     private fun load() {
-        viewModelScope.launch {
+        // A second refresh replaces the first one instead of racing it.
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             _state.update { it.copy(isLoading = index.isEmpty(), error = null) }
             runCatching {
                 val modules = moduleRepository.getIndex(force = false)
@@ -119,6 +125,8 @@ class ExternalImportViewModel(private val container: AppContainer) : ViewModel()
                 _state.update { it.copy(isLoading = false) }
                 rebuild()
             }.onFailure { error ->
+                // A cancelled load was replaced by the one that cancelled it.
+                if (error is CancellationException) return@onFailure
                 _state.update {
                     it.copy(isLoading = false, error = error.toUserMessage(appContext, R.string.import_load_failed))
                 }
@@ -131,7 +139,7 @@ class ExternalImportViewModel(private val container: AppContainer) : ViewModel()
         val byPackage = index.associateBy { it.packageName }
         val unknown = installed
             .filter { it.isXposedModule && it.packageName !in byPackage }
-            .map { UnknownModuleItem(installed = it, linkedModule = links[it.packageName]?.let(byPackage::get)) }
+            .map { UnknownModuleItem(installed = it, linkedModule = repoModuleFor(it.packageName, byPackage, links)) }
             .sortedBy { it.installed.label.lowercase() }
 
         _state.update {

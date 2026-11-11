@@ -41,7 +41,7 @@ class BatchInstallUseCaseTest {
         contentType = "application/vnd.android.package-archive",
     )
 
-    private fun updateInfo(packageName: String): UpdateInfo {
+    private fun updateInfo(packageName: String, installedPackage: String = packageName): UpdateInfo {
         val version = ModuleVersion.parse("10-1.1")!!
         return UpdateInfo(
             module = Module(
@@ -61,10 +61,10 @@ class BatchInstallUseCaseTest {
                 latestReleaseTime = null,
             ),
             installed = InstalledModule(
-                packageName = packageName,
+                packageName = installedPackage,
                 versionCode = 10L,
                 versionName = "1.0",
-                label = packageName,
+                label = installedPackage,
                 isXposedModule = true,
                 description = null,
             ),
@@ -455,5 +455,38 @@ class BatchInstallUseCaseTest {
         )
 
         assertTrue(installs.size < targets.size)
+    }
+
+    /**
+     * A linked module (repository package != installed package) is shown, keyed
+     * and cancelled by its repository package. The install half of the queue used
+     * to report under the installed package, so the row stayed at
+     * "waiting to install" forever and the batch summary counted no outcome.
+     */
+    @Test
+    fun linkedModuleReportsItsInstallPhaseUnderTheRepositoryKey() {
+        val targets = listOf(
+            updateInfo("dev.example.repo", installedPackage = "dev.example.renamed"),
+        )
+
+        val (result, recorder) = run(targets)
+
+        assertEquals(BatchInstallPhase.COMPLETED, recorder.phases["dev.example.repo"])
+        assertFalse(recorder.phases.containsKey("dev.example.renamed"))
+        assertTrue(result.failures.isEmpty())
+    }
+
+    /** The same key mix-up hid failures: a failed install left the row pending. */
+    @Test
+    fun linkedModuleInstallFailureIsMarkedOnTheRepositoryRow() {
+        val targets = listOf(
+            updateInfo("dev.example.repo", installedPackage = "dev.example.renamed"),
+        )
+
+        val (result, recorder) = run(targets, installer = { InstallOutcome.Failure("boom") })
+
+        assertEquals(BatchInstallPhase.FAILED, recorder.phases["dev.example.repo"])
+        assertEquals(1, result.failures.size)
+        assertEquals("dev.example.repo", result.failures.single().packageName)
     }
 }

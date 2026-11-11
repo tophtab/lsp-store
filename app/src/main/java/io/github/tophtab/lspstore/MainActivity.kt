@@ -126,7 +126,7 @@ class MainActivity : ComponentActivity() {
             runCatching { container.settingsRepository.onboardingComplete.first() }
             themeReady = true
         }
-        if (intent?.getBooleanExtra(UpdateNotifier.EXTRA_OPEN_INSTALLED, false) == true) {
+        if (savedInstanceState == null && consumeOpenInstalled(intent)) {
             openInstalledRequests.value++
         }
         setContent {
@@ -141,9 +141,20 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        if (intent.getBooleanExtra(UpdateNotifier.EXTRA_OPEN_INSTALLED, false)) {
+        if (consumeOpenInstalled(intent)) {
             openInstalledRequests.value++
         }
+    }
+
+    /**
+     * Reads and clears the notification extra. One tap means one navigation: the
+     * same intent is redelivered to `onCreate` after a configuration change, and
+     * a second read would pull the user out of whatever page they were on.
+     */
+    private fun consumeOpenInstalled(intent: Intent?): Boolean {
+        val requested = intent?.getBooleanExtra(UpdateNotifier.EXTRA_OPEN_INSTALLED, false) == true
+        if (requested) intent?.removeExtra(UpdateNotifier.EXTRA_OPEN_INSTALLED)
+        return requested
     }
 
     override fun onResume() {

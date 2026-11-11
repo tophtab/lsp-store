@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -13,6 +14,8 @@ import io.github.tophtab.lspstore.R
 import io.github.tophtab.lspstore.di.AppContainer
 import io.github.tophtab.lspstore.ui.toUserMessage
 import io.github.tophtab.lspstore.domain.model.Module
+import io.github.tophtab.lspstore.domain.model.repoModuleFor
+import kotlin.coroutines.cancellation.CancellationException
 
 enum class LibraryKind(
     @param:StringRes val titleRes: Int,
@@ -46,6 +49,7 @@ class LibraryListViewModel(
     private var installedRaw: Set<String> = emptySet()
     private var links: Map<String, String> = emptyMap()
     private var ignoredModules: Set<String> = emptySet()
+    private var loadJob: Job? = null
 
     init {
         when (kind) {
@@ -91,7 +95,10 @@ class LibraryListViewModel(
     fun refresh() = load()
 
     private fun load() {
-        viewModelScope.launch {
+        // A pull-to-refresh while the previous load is still running replaces
+        // it: both would write the index and the installed set.
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             _state.update { it.copy(isLoading = index.isEmpty(), error = null) }
             runCatching {
                 val modules = moduleRepository.getIndex(force = false)
@@ -107,6 +114,8 @@ class LibraryListViewModel(
                 refreshInstalledBadges()
                 rebuild()
             }.onFailure { error ->
+                // A cancelled load was replaced by the one that cancelled it.
+                if (error is CancellationException) return@onFailure
                 _state.update { it.copy(isLoading = false, error = error.toUserMessage(container.appContext, R.string.library_load_failed)) }
             }
         }
@@ -126,15 +135,10 @@ class LibraryListViewModel(
 
     private fun refreshInstalledBadges() {
         if (index.isEmpty()) return
-        val repoPackages = index.map { it.packageName }.toSet()
-        val resolved = installedRaw.mapNotNull { installedPackage ->
-            val repoPackage = links[installedPackage]
-            when {
-                installedPackage in repoPackages -> installedPackage
-                repoPackage != null && repoPackage in repoPackages -> repoPackage
-                else -> null
-            }
-        }.toSet()
+        val byPackage = index.associateBy { it.packageName }
+        val resolved = installedRaw
+            .mapNotNull { repoModuleFor(it, byPackage, links)?.packageName }
+            .toSet()
         _state.update { it.copy(installedPackages = resolved) }
     }
 

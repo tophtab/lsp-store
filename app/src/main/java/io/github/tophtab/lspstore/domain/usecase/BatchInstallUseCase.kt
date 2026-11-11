@@ -202,10 +202,18 @@ class BatchInstallUseCase(
                 val installWorker = launch {
                     for (prepared in installQueue) {
                         if (!isActive()) break
-                        val packageName = prepared.info.installed.packageName
+                        // Rows, the control map and the UI are all keyed by the
+                        // repository package (the download side attaches with the
+                        // same key). Keying the install half by the *installed*
+                        // package left every linked or renamed module stuck at
+                        // WAITING_TO_INSTALL, hid its failure from the summary and
+                        // made a row cancel at the install stage a no-op.
+                        val packageName = prepared.info.module.packageName
+                        val cancelled = control.isCancelled(packageName) ||
+                            control.isCancelled(prepared.info.installed.packageName)
                         // A cancel can land after the download finished and the
                         // APK was queued: drop it instead of installing.
-                        if (control.isCancelled(packageName)) {
+                        if (cancelled) {
                             onItem(packageName) {
                                 it.copy(phase = BatchInstallPhase.CANCELLED)
                             }

@@ -15,6 +15,7 @@ import io.github.tophtab.lspstore.ui.RefreshScrollGate
 import io.github.tophtab.lspstore.ui.toUserMessage
 import io.github.tophtab.lspstore.domain.model.InstalledModule
 import io.github.tophtab.lspstore.domain.model.Module
+import io.github.tophtab.lspstore.domain.model.repoPackagesOf
 import java.time.Instant
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -207,17 +208,7 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
     private fun rebuild() {
         if (index.isEmpty()) return
         val byPackage = index.associateBy { it.packageName }
-        val installedPackages = installed
-            .filter { it.isXposedModule }
-            .mapNotNull { installedModule ->
-                val repoPackage = links[installedModule.packageName]
-                when {
-                    installedModule.packageName in byPackage -> installedModule.packageName
-                    repoPackage != null && repoPackage in byPackage -> repoPackage
-                    else -> null
-                }
-            }
-            .toSet()
+        val installedPackages = repoPackagesOf(installed, byPackage, links)
 
         // Both shelves list the whole index, not a top-N cut: the repository is
         // the only place to browse modules, so a fixed limit hid the rest.
