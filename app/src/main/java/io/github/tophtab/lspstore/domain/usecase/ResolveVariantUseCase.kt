@@ -19,17 +19,21 @@ data class VariantResolution(
 )
 
 /**
- * Applies the lazy-validation rules (variant-selection.md §7.1) around the pure
+ * Applies the lazy-validation rules (variant-selection.md 7.1) around the pure
  * [VariantResolver]:
  *
- *  - TRUSTED: map the signature only, zero probes;
+ *  - TRUSTED: map the remembered signature, zero probes;
  *  - UNKNOWN / SUSPECT: probe the chosen candidate before installing;
  *  - ambiguous name layer: probe the top candidates, then re-resolve;
- *  - NOT_APPLICABLE: only re-check the name layer (unless the user explicitly
- *    opened the variant picker), except for a companion-app looking name, which
- *    is probed once because the archive can show it is the module itself.
+ *  - a name that looks like a companion app: probe it once instead of reporting
+ *    "not applicable", because the archive can show it is the module itself.
  *
- * A probe failure is silent: the name-layer decision stands.
+ * Nothing here decides whether the module is usable on this device - it only
+ * answers "which file" for the call that asked, and the answer is recomputed
+ * from the release and the device every time.
+ *
+ * A probe failure is silent: the name-layer decision stands, and the caller
+ * reports it for this attempt only.
  */
 class ResolveVariantUseCase(
     private val probe: ApkProbe,
@@ -43,7 +47,21 @@ class ResolveVariantUseCase(
         forceProbe: Boolean = false,
     ): VariantResolution {
         val resolver = VariantResolver(device)
-        if (state.isTrusted) {
+        val nameDecision = resolver.resolve(release, expectedPackage = expectedPackage)
+        // "The release ships no APK" is a fact about the release; every other
+        // rejection the name layer can reach on its own is a guess that the
+        // archive can overturn (#71, #73).
+        val bundledOnly = nameDecision is VariantDecision.NotApplicable &&
+            nameDecision.reason.kind == Reason.Kind.BUNDLED_APP
+
+        if (nameDecision is VariantDecision.NotApplicable && !bundledOnly) {
+            return VariantResolution(nameDecision)
+        }
+
+        // A remembered variant is the one memory that skips probing. A name-only
+        // block is the one thing it must not inherit: the memory already proved
+        // the module installs here, so the archive decides instead.
+        if (state.isTrusted && !forceProbe && !bundledOnly) {
             return VariantResolution(
                 decision = resolver.resolve(
                     release = release,
@@ -54,30 +72,7 @@ class ResolveVariantUseCase(
             )
         }
 
-        val nameDecision = resolver.resolve(release, expectedPackage = expectedPackage)
-        // A name-layer "nothing fits" is final only when the release has no APK.
-        // The other reason a file name can produce on its own - looking like a
-        // companion app - is a guess, so it is probed once below.
-        val bundledOnly = nameDecision is VariantDecision.NotApplicable &&
-            nameDecision.reason.kind == Reason.Kind.BUNDLED_APP
-        if (nameDecision is VariantDecision.NotApplicable && !bundledOnly) {
-            return VariantResolution(nameDecision)
-        }
-
-        // NOT_APPLICABLE is re-checked on the name layer only; an explicit user
-        // action (opening the picker) may still probe.
-        val shouldProbe = forceProbe || bundledOnly || (
-            state.status != ModuleVariantState.Status.NOT_APPLICABLE && (
-                state.status == ModuleVariantState.Status.UNKNOWN ||
-                    state.status == ModuleVariantState.Status.SUSPECT ||
-                    nameDecision is VariantDecision.Choose
-                )
-            )
-        if (!shouldProbe) return VariantResolution(nameDecision)
-
         val targets: List<ReleaseAsset> = when {
-            // A name that looks like a companion app is the one name-layer verdict
-            // a probe can overturn, so the blocked candidates are read here.
             bundledOnly -> resolver.candidates(release, expectedPackage = expectedPackage)
                 .filter { it.blocked?.kind == Reason.Kind.BUNDLED_APP }
                 .map { it.asset }
@@ -87,9 +82,23 @@ class ResolveVariantUseCase(
                 .map { it.asset }
 
             nameDecision is VariantDecision.Pick -> listOf(nameDecision.asset)
+
             else -> emptyList()
         }.take(maxProbes)
-        if (targets.isEmpty()) return VariantResolution(nameDecision)
+        if (targets.isEmpty()) {
+            return VariantResolution(
+                decision = if (state.isTrusted) {
+                    resolver.resolve(
+                        release = release,
+                        signature = state.signature,
+                        allowProbes = false,
+                        expectedPackage = expectedPackage,
+                    )
+                } else {
+                    nameDecision
+                },
+            )
+        }
 
         val probes = coroutineScope {
             targets.map { asset ->
@@ -101,7 +110,11 @@ class ResolveVariantUseCase(
         return VariantResolution(
             decision = resolver.resolve(
                 release = release,
+                signature = if (state.isTrusted) state.signature else null,
                 probes = probes,
+                // The probes are the point of this pass; the signature only picks
+                // among what the archive left eligible.
+                allowProbes = true,
                 expectedPackage = expectedPackage,
             ),
             probes = probes,

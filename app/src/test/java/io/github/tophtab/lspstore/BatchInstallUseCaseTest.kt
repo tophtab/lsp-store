@@ -245,6 +245,30 @@ class BatchInstallUseCaseTest {
     }
 
     @Test
+    fun aReleaseWithNothingForThisDeviceIsSkippedNotFailed() {
+        val targets = listOf(updateInfo("com.example.a"), updateInfo("com.example.b"))
+
+        val (result, recorder) = run(
+            targets,
+            prepared = { info ->
+                if (info.module.packageName == "com.example.a") {
+                    PreparedInstall.NoCandidate(info, "needs Android 15")
+                } else {
+                    ready(info)
+                }
+            },
+        )
+
+        assertEquals(1, recorder.installs)
+        assertEquals(BatchInstallPhase.SKIPPED, recorder.phases["com.example.a"])
+        // Not a failure and not something the user must decide: the background
+        // check must not count or announce it (#73).
+        assertTrue(result.failures.isEmpty())
+        assertEquals(listOf("com.example.a"), result.noCandidate)
+        assertEquals(BatchInstallPhase.COMPLETED, recorder.phases["com.example.b"])
+    }
+
+    @Test
     fun failedPreparationIsReportedAsFailure() {
         val targets = listOf(updateInfo("com.example.a"))
 

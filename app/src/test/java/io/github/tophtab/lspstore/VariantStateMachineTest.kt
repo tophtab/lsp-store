@@ -1,8 +1,9 @@
 package io.github.tophtab.lspstore
 
+import kotlinx.serialization.builtins.MapSerializer
+import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import io.github.tophtab.lspstore.domain.model.ModuleVersion
@@ -11,15 +12,12 @@ import io.github.tophtab.lspstore.domain.model.ReleaseAsset
 import io.github.tophtab.lspstore.domain.variant.ApkMeta
 import io.github.tophtab.lspstore.domain.variant.DeviceProfile
 import io.github.tophtab.lspstore.domain.variant.ModuleVariantState
-import io.github.tophtab.lspstore.domain.variant.Reason
 import io.github.tophtab.lspstore.domain.variant.VariantDecision
 import io.github.tophtab.lspstore.domain.variant.VariantResolver
 import io.github.tophtab.lspstore.domain.variant.VariantSignature
-import io.github.tophtab.lspstore.domain.variant.onEvaluatedNoCandidate
 import io.github.tophtab.lspstore.domain.variant.onInstallFailed
 import io.github.tophtab.lspstore.domain.variant.onInstallSucceeded
 import io.github.tophtab.lspstore.domain.variant.onUserPicked
-import io.github.tophtab.lspstore.domain.variant.withoutAdvisoryApiVerdicts
 
 class VariantStateMachineTest {
 
@@ -63,26 +61,12 @@ class VariantStateMachineTest {
         // re-probing its variants and stays in the update list (#65, #69).
         assertEquals(ModuleVariantState.Status.SUSPECT, state.status)
         assertEquals(ModuleVariantState.MAX_FAILURES, state.failures)
-        assertNull(state.reason)
-    }
-
-    @Test
-    fun aFailureAfterAVerdictClearsItButKeepsTheDeviceVerdictsRecoverable() {
-        val verdict = ModuleVariantState().onEvaluatedNoCandidate(
-            Reason(Reason.Kind.MIN_SDK_TOO_HIGH, listOf("35", "33")),
-            now = 5L,
-        )
-        val retried = verdict.onInstallFailed(now = 10L)
-
-        assertEquals(ModuleVariantState.Status.SUSPECT, retried.status)
-        assertNull(retried.reason)
-        assertEquals(10L, retried.updatedAt)
     }
 
     @Test
     fun userPickIsTrustedImmediately() {
         val picked = VariantSignature(os = "hyperos2")
-        val state = ModuleVariantState(status = ModuleVariantState.Status.NOT_APPLICABLE)
+        val state = ModuleVariantState(status = ModuleVariantState.Status.SUSPECT, failures = 2)
             .onUserPicked(picked, now = 30L)
 
         assertEquals(ModuleVariantState.Status.TRUSTED, state.status)
@@ -91,46 +75,48 @@ class VariantStateMachineTest {
     }
 
     @Test
-    fun advisoryApiVerdictsAreForgottenButOtherVerdictsStay() {
-        val apiVerdict = ModuleVariantState().onEvaluatedNoCandidate(
-            Reason(Reason.Kind.API_TOO_NEW, listOf("102")),
-            now = 5L,
-        )
-        val sdkVerdict = ModuleVariantState().onEvaluatedNoCandidate(
-            Reason(Reason.Kind.MIN_SDK_TOO_HIGH, listOf("35", "33")),
-            now = 6L,
-        )
-        val trusted = ModuleVariantState(
-            status = ModuleVariantState.Status.TRUSTED,
-            signature = signature,
+    fun aStoredVerdictFromAnOlderBuildDecodesAsUnknownAndKeepsTheSignature() {
+        // Builds before #73 wrote NOT_APPLICABLE plus a reason key. Neither is part
+        // of the model any more; decoding one costs a probe, never a hidden module.
+        val legacy = """
+            {
+              "verdict": {"status": "NOT_APPLICABLE", "reason": "MIN_SDK_TOO_HIGH\u001f35\u001f33",
+                          "failures": 0, "updatedAt": 5},
+              "trusted": {"status": "TRUSTED", "signature": {"abi": "arm64-v8a"},
+                          "failures": 0, "updatedAt": 7}
+            }
+        """.trimIndent()
+
+        val decoded = json.decodeFromString(
+            MapSerializer(String.serializer(), ModuleVariantState.serializer()),
+            legacy,
         )
 
-        val cleaned = mapOf(
-            "api" to apiVerdict,
-            "sdk" to sdkVerdict,
-            "trusted" to trusted,
-        ).withoutAdvisoryApiVerdicts()
-
-        assertEquals(setOf("sdk", "trusted"), cleaned.keys)
-        assertEquals(sdkVerdict, cleaned["sdk"])
-        assertEquals(trusted, cleaned["trusted"])
+        assertEquals(ModuleVariantState.Status.UNKNOWN, decoded.getValue("verdict").status)
+        assertEquals(ModuleVariantState.Status.TRUSTED, decoded.getValue("trusted").status)
+        assertEquals(VariantSignature(abi = "arm64-v8a"), decoded.getValue("trusted").signature)
     }
 
     @Test
-    fun noCandidateStoresAStorageKeyNotText() {
-        val reason = Reason(
-            Reason.Kind.MIN_SDK_TOO_HIGH,
-            listOf("35", "33"),
+    fun anUnknownStatusIsToleratedByAPlainDecoder() {
+        // No coerceInputValues, no special config: the type itself has to accept a
+        // status it does not know, wherever the bytes come from (#73).
+        val decoded = Json.decodeFromString(
+            ModuleVariantState.serializer(),
+            "{\"status\":\"WITHDRAWN_BY_A_FUTURE_BUILD\"}",
         )
-        val state = ModuleVariantState().onEvaluatedNoCandidate(reason)
-        assertEquals(ModuleVariantState.Status.NOT_APPLICABLE, state.status)
-        assertEquals(reason, Reason.fromStorage(state.reason))
-        assertEquals("MIN_SDK_TOO_HIGH\u001f35\u001f33", state.reason)
+
+        assertEquals(ModuleVariantState.Status.UNKNOWN, decoded.status)
+    }
+
+    /** Mirrors the library repository's JSON config, without any coercion. */
+    private val json = Json {
+        ignoreUnknownKeys = true
+        encodeDefaults = true
     }
 
     @Test
     fun stateRoundTripsThroughJson() {
-        val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
         val state = ModuleVariantState(
             status = ModuleVariantState.Status.TRUSTED,
             signature = signature,

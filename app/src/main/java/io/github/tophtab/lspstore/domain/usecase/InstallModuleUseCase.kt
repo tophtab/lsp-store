@@ -21,7 +21,6 @@ import io.github.tophtab.lspstore.domain.variant.DeviceProfile
 import io.github.tophtab.lspstore.domain.variant.ModuleVariantState
 import io.github.tophtab.lspstore.domain.variant.VariantDecision
 import io.github.tophtab.lspstore.domain.variant.VariantSignature
-import io.github.tophtab.lspstore.domain.variant.onEvaluatedNoCandidate
 import io.github.tophtab.lspstore.domain.variant.parseTraits
 import io.github.tophtab.lspstore.ui.variant.variantReasonText
 import java.io.File
@@ -39,6 +38,13 @@ sealed interface PreparedInstall {
 
     data class Failed(override val info: UpdateInfo, val message: String) : PreparedInstall
 
+    /**
+     * The release has no file this device can run (probed minSdk, or every APK
+     * is the companion app). Nothing is recorded: the next check asks again with
+     * whatever the release and the device look like then (#73).
+     */
+    data class NoCandidate(override val info: UpdateInfo, val message: String) : PreparedInstall
+
     /** Low confidence and no remembered choice: the user must pick a variant. */
     data class NeedsVariant(override val info: UpdateInfo) : PreparedInstall
 }
@@ -50,7 +56,6 @@ sealed interface PreparedInstall {
  */
 class PrepareModuleInstallUseCase(
     private val moduleRepository: ModuleRepository,
-    private val libraryRepository: LibraryRepository,
     private val downloadManager: DownloadManager,
     private val resolveVariant: ResolveVariantUseCase,
     private val deviceProfile: () -> DeviceProfile,
@@ -92,13 +97,8 @@ class PrepareModuleInstallUseCase(
 
                 is VariantDecision.Choose -> PreparedInstall.NeedsVariant(info)
 
-                is VariantDecision.NotApplicable -> {
-                    libraryRepository.setVariantState(
-                        info.module.packageName,
-                        state.onEvaluatedNoCandidate(decision.reason),
-                    )
-                    PreparedInstall.Failed(info, context.variantReasonText(decision.reason))
-                }
+                is VariantDecision.NotApplicable ->
+                    PreparedInstall.NoCandidate(info, context.variantReasonText(decision.reason))
             }
         }
     } catch (cancellation: CancellationException) {

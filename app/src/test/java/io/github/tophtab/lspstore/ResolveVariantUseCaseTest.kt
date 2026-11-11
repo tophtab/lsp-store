@@ -89,24 +89,38 @@ class ResolveVariantUseCaseTest {
     }
 
     @Test
-    fun notApplicableIsOnlyRecheckedOnTheNameLayer() = runBlocking {
-        val release = releaseOf("OS2_Module.apk", "OS3_Module.apk")
+    fun aTrustedModuleIsStillProbedWhenOnlyTheFileNameLooksWrong() = runBlocking {
+        // Every APK name contains a companion-app word, so the name layer alone
+        // would report "not applicable". The memory says this module installs
+        // here, and the archive can prove which file is the module (#71, #73).
+        val release = releaseOf("Module_Client.apk", "Module_Client_Lite.apk")
         val probe = FakeProbe(
             mapOf(
-                "OS2_Module.apk" to ApkMeta(minSdk = 33),
-                "OS3_Module.apk" to ApkMeta(minSdk = 35),
+                "Module_Client.apk" to ApkMeta(
+                    packageName = "com.example.module",
+                    hasXposedDeclaration = true,
+                ),
+                "Module_Client_Lite.apk" to ApkMeta(
+                    packageName = "com.other.app",
+                    hasXposedDeclaration = false,
+                ),
             ),
         )
-        val state = ModuleVariantState(status = ModuleVariantState.Status.NOT_APPLICABLE)
+        val state = ModuleVariantState(
+            status = ModuleVariantState.Status.TRUSTED,
+            signature = VariantSignature(abi = "arm64-v8a"),
+        )
         val resolution = ResolveVariantUseCase(probe)
             .resolve(release, state, device, expectedPackage = "com.example.module")
 
-        assertTrue(resolution.decision is VariantDecision.Choose)
-        assertEquals(0, probe.calls)
+        assertTrue(resolution.decision is VariantDecision.Pick)
+        assertEquals("Module_Client.apk", (resolution.decision as VariantDecision.Pick).asset.name)
+        // Both folded candidates are read: the archive, not the name, decides.
+        assertEquals(2, probe.calls)
     }
 
     @Test
-    fun userOpeningThePickerMayProbeANotApplicableModule() = runBlocking {
+    fun userOpeningThePickerProbesEvenATrustedModule() = runBlocking {
         val release = releaseOf("OS2_Module.apk", "OS3_Module.apk")
         val probe = FakeProbe(
             mapOf(
@@ -114,7 +128,10 @@ class ResolveVariantUseCaseTest {
                 "OS3_Module.apk" to ApkMeta(minSdk = 35, hasXposedDeclaration = true),
             ),
         )
-        val state = ModuleVariantState(status = ModuleVariantState.Status.NOT_APPLICABLE)
+        val state = ModuleVariantState(
+            status = ModuleVariantState.Status.TRUSTED,
+            signature = VariantSignature(os = "hyperos2"),
+        )
         val resolution = ResolveVariantUseCase(probe)
             .resolve(
                 release,

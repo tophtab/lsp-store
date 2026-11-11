@@ -527,10 +527,10 @@ private fun DetailContent(
     }
     val selectedAsset = candidates.firstOrNull { it.asset.name == selectedAssetName }?.asset
     var userPickedAsset by rememberSaveable(selectedRelease?.tagName, variantState) { mutableStateOf(false) }
-    // The stored verdict is only a cache of a past decision: the resolver just
-    // re-checked it against the release on screen. A stale NOT_APPLICABLE - a
-    // framework upgrade, or the pre-1.2.0 API-number block - must not disable the
-    // install button (#65, #69).
+    // The decision is derived from this release and this device right now; the
+    // only thing the store remembers is which variant worked before. A release
+    // that has no file for this device says so for this visit and is asked again
+    // next time (#65, #69, #73).
     val notApplicableReason = (decision as? VariantDecision.NotApplicable)
         ?.let { context.variantReasonText(it.reason) }
     val selectedDebug = selectedAsset?.let { asset ->

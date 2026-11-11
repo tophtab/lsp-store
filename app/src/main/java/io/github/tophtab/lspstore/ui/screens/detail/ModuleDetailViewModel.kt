@@ -36,7 +36,6 @@ import io.github.tophtab.lspstore.domain.variant.ModuleVariantState
 import io.github.tophtab.lspstore.domain.variant.ScoredAsset
 import io.github.tophtab.lspstore.domain.variant.VariantDecision
 import io.github.tophtab.lspstore.domain.variant.VariantSignature
-import io.github.tophtab.lspstore.domain.variant.onEvaluatedNoCandidate
 import io.github.tophtab.lspstore.domain.variant.onUserPicked
 import io.github.tophtab.lspstore.domain.variant.parseTraits
 import kotlin.coroutines.cancellation.CancellationException
@@ -403,13 +402,11 @@ class ModuleDetailViewModel(
                     it.copy(variantPicker = VariantPicker(release, decision.candidates))
                 }
 
-                is VariantDecision.NotApplicable -> {
-                    val message = container.appContext.variantReasonText(decision.reason)
-                    libraryRepository.setVariantState(
-                        packageName,
-                        state.onEvaluatedNoCandidate(decision.reason),
-                    )
-                    _state.update { it.copy(message = message) }
+                // Reported for this attempt only. Whether the module is usable on
+                // this device is asked again next time, from the release and the
+                // device as they are then (#73).
+                is VariantDecision.NotApplicable -> _state.update {
+                    it.copy(message = container.appContext.variantReasonText(decision.reason))
                 }
             }
         }

@@ -146,7 +146,6 @@ class AppContainer(context: Context) {
     /** Resolves the release asset for a device and downloads it (no install). */
     val prepareModuleInstallUseCase: PrepareModuleInstallUseCase = PrepareModuleInstallUseCase(
         moduleRepository = moduleRepository,
-        libraryRepository = libraryRepository,
         downloadManager = downloadManager,
         resolveVariant = resolveVariantUseCase,
         deviceProfile = { deviceProfile },

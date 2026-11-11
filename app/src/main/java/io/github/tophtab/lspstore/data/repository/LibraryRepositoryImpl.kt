@@ -21,7 +21,6 @@ import io.github.tophtab.lspstore.domain.variant.VariantSignature
 import io.github.tophtab.lspstore.domain.variant.onInstallFailed
 import io.github.tophtab.lspstore.domain.variant.onInstallSucceeded
 import io.github.tophtab.lspstore.domain.variant.parseTraits
-import io.github.tophtab.lspstore.domain.variant.withoutAdvisoryApiVerdicts
 
 private val Context.libraryDataStore by preferencesDataStore(name = "library")
 
@@ -70,13 +69,6 @@ interface LibraryRepository {
 
     /** Idempotent one-off migration of the legacy asset-name preferences. */
     suspend fun migratePreferredVariants()
-
-    /**
-     * Idempotent one-off migration: forget NOT_APPLICABLE verdicts that the
-     * pre-1.2.0 API-number block wrote (#65, #69). Since #47 the libxposed API
-     * number only warns, so such a verdict must not disable updates for good.
-     */
-    suspend fun dropAdvisoryApiVerdicts()
 
     /** Whole library as one payload for an export file. */
     suspend fun snapshot(): LibraryBackup
@@ -275,8 +267,7 @@ class LibraryRepositoryImpl(private val context: Context) : LibraryRepository {
 
     /**
      * Records one install attempt. Success remembers the semantic signature and
-     * resets the failure count; three consecutive failures give up and mark the
-     * module as not applicable on this device.
+     * resets the failure count; a failure only makes the next attempt re-probe.
      */
     override suspend fun recordInstallResult(
         packageName: String,
@@ -316,16 +307,6 @@ class LibraryRepositoryImpl(private val context: Context) : LibraryRepository {
             }
             prefs[Keys.VARIANT_STATE] = encodeVariantStates(states)
             prefs[Keys.PREFERRED_VARIANTS] = ""
-        }
-    }
-
-    override suspend fun dropAdvisoryApiVerdicts() {
-        context.libraryDataStore.edit { prefs ->
-            val current = decodeVariantStates(prefs[Keys.VARIANT_STATE])
-            val cleaned = current.withoutAdvisoryApiVerdicts()
-            if (cleaned.size != current.size) {
-                prefs[Keys.VARIANT_STATE] = encodeVariantStates(cleaned)
-            }
         }
     }
 

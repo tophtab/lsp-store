@@ -71,7 +71,6 @@ class BackgroundUpdateCheck(
         val skipped = libraryRepository.skippedUpdates.first()
         val ignored = libraryRepository.ignoredUpdates.first()
         val links = libraryRepository.links.first()
-        val variantStates = libraryRepository.variantStates.first()
         val pending = pendingRepository.pending.first()
 
         val updates = UpdateChecker.findUpdates(
@@ -81,7 +80,6 @@ class BackgroundUpdateCheck(
             skipped = skipped,
             links = links,
             ignored = ignored,
-            variantStates = variantStates,
         ).filterNot { it.installed.packageName in pending.keys }
 
         if (updates.isEmpty()) {
@@ -94,6 +92,7 @@ class BackgroundUpdateCheck(
             installer.isRootAvailable()
 
         if (auto) {
+            val variantStates = libraryRepository.variantStates.first()
             return autoUpdate(updates, pending.keys, preReleases, variantStates)
         }
         return notify(updates)
@@ -143,9 +142,12 @@ class BackgroundUpdateCheck(
 
         // A skipped target needs a variant choice, so it was deliberately not
         // installed silently. Announce it through the normal update notification
-        // instead of leaving it invisible.
+        // instead of leaving it invisible - unless there was nothing to install
+        // on this device at all, which is not the user's decision to make (#73).
+        val silent = result.noCandidate.toSet()
         val skippedTargets = targets.filter {
-            phases[it.module.packageName] == BatchInstallPhase.SKIPPED
+            phases[it.module.packageName] == BatchInstallPhase.SKIPPED &&
+                it.module.packageName !in silent
         }
         val posted = skippedTargets.isNotEmpty() && notifier.notifyUpdates(skippedTargets)
         settingsRepository.setNotifiedUpdateSignature(

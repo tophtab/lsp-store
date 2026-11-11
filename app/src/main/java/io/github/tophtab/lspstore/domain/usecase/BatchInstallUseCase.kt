@@ -161,6 +161,12 @@ class BatchInstallUseCase(
         val failures: List<BatchFailure> = emptyList(),
         /** Installs handed to an external installer; completion arrives later. */
         val delegated: Int = 0,
+        /**
+         * Targets this device has no file for right now. They are not failures and
+         * need no choice from the user, so the background check neither counts nor
+         * announces them (#73).
+         */
+        val noCandidate: List<String> = emptyList(),
     )
 
     /** One control per run; the UI keeps it so a row can cancel itself. */
@@ -185,6 +191,7 @@ class BatchInstallUseCase(
         // Downloads and installs run in different coroutines, so the collector
         // is shared: the caller gets the list only after supervisorScope joins.
         val failures = java.util.Collections.synchronizedList(mutableListOf<BatchFailure>())
+        val noCandidate = java.util.Collections.synchronizedList(mutableListOf<String>())
         val delegated = AtomicInteger()
         fun recordFailure(info: UpdateInfo, kind: BatchFailureKind, detail: String? = null) {
             failures += BatchFailure(
@@ -344,6 +351,13 @@ class BatchInstallUseCase(
                                     is PreparedInstall.NeedsVariant -> onItem(packageName) {
                                         it.copy(phase = BatchInstallPhase.SKIPPED)
                                     }
+
+                                    is PreparedInstall.NoCandidate -> {
+                                        noCandidate += packageName
+                                        onItem(packageName) {
+                                            it.copy(phase = BatchInstallPhase.SKIPPED)
+                                        }
+                                    }
                                 }
                             }
                         } catch (cancellation: CancellationException) {
@@ -390,6 +404,7 @@ class BatchInstallUseCase(
         return Result(
             failures = synchronized(failures) { failures.toList() },
             delegated = delegated.get(),
+            noCandidate = synchronized(noCandidate) { noCandidate.toList() },
         )
     }
 }

@@ -148,10 +148,10 @@
     只有 mihelper 从 35 降到 34）。作者是按一个系统基线构建的，回退几乎拿不到可装的旧包。
   - `vn.kwaiching.live`：最新是 riscv64，arm64 构建要回退到 `6-24.04.26`（比最新版老 16 个月）。
     把这样的包推荐给用户比“没有更新”更糟。
-- 所以正确处理是：**最新 release 没有可用 asset → 该模块在当前设备上标记“不适用”，
-  不进更新列表、不通知、不参与批量更新、不下载**；详情页说明原因（`minSdk 35 > 你的 Android 13` /
-  `仅提供 riscv64/x86_64`），下面已有的版本选择器作为手动出口，让用户自己拿主意。
-  这等价于你说的“忽略这个更新”，且不需要任何新逻辑。
+- 所以正确处理是：**最新 release 没有可用 asset → 这一次不装**（不通知、不自动更新、不进批量），
+  详情页说明原因（`minSdk 35 > 你的 Android 13` / `仅提供 riscv64/x86_64`），下面已有的版本选择器
+  作为手动出口，让用户自己拿主意。**模块仍然留在更新列表里**，下一次检查重新判断；
+  这个结论不落盘（见 7.1），所以误判不会变成“永久消失”。
 - 影响面：Android 13 设备上约 12.5% 的模块会是“不适用”，Android 14 约 7.5%。
   release-per-ABI 的模块只有 3 个（0.25%），其中 2 个最新不可用。
 
@@ -179,9 +179,11 @@ META-INF/xposed/scope.list     作用域包名（30 个里有 13 个是 system�
 
 | 结论 | 条件 | UI |
 | --- | --- | --- |
-| BLOCK | `minSdk > 设备 SDK`；或真实 `lib/` ABI 不兼容且无 universal；或（包名不符 + 无 Xposed 声明） | 详情页说明“不适用”，安装按钮禁用；不进更新/通知/批量 |
-| WARN | 包名不符但有声明；`versionName` 与 tag 不一致 | 小字提示 + 徽章，不拦 |
+| BLOCK | manifest `minSdk > 设备 SDK`；或（包名不符 + 无 Xposed 声明） | 详情页说明原因，本次安装按钮禁用；不通知、不自动更新、不进批量；**模块留在更新列表** |
+| WARN | 文件名里的 `minsdkNN` 或 ABI token；真实 `lib/` ABI 与设备无交集；包名不符但有声明；libxposed API 号高于设备；`versionName` ≠ tag | 小字提示 + 徽章，不拦 |
 | OK | 其余（含 debug-only 单 APK） | 正常一键安装 |
+
+拦不拦只看一条：**这个包是不是平台（或它自己）就能证明装不上**。详见 7.1 末尾的“判定的边界”。
 
 `versionName` 与 tag 不一致时，更新检查里要把“同 versionCode 不同 versionName”判为**不算更新**
 （或标注“作者版本号不规范”），否则永久提示更新。
@@ -238,8 +240,8 @@ META-INF/xposed/scope.list     作用域包名（30 个里有 13 个是 system�
 > 原因：硬门槛一旦被写进持久结论，就会像 API 号那样把模块永久藏起来（#47、#65、#69）。
 
 候选空间是 **(release, asset) 对**，但**只在当前 release 内选择**：当前 release 全被过滤时，
-不往旧 release 回退（见 3.2 的数据），而是给该模块一个 `NOT_APPLICABLE` 结果：
-不进更新列表、不通知、不下载，详情页写明原因。
+不往旧 release 回退（见 3.2 的数据），而是拒绝这一次安装：不通知、不自动更新、不进批量，
+详情页写明原因，模块留在更新列表里，下一次检查重新判（结论不落盘，见 7.1）。
 
 P0 阶段没有探测能力时，L0 只做 1、2、5（名字版）——已经能修掉 1/3 的问题。
 
@@ -298,7 +300,8 @@ data class VariantTraits(
 
 ```
 eligible = filter(candidates)
-if eligible.isEmpty()             -> NOT_APPLICABLE（不是弹选择器！）：不更新、不通知、不下载，详情页说明原因
+if eligible.isEmpty()             -> 本次不可装（不是弹选择器！）：不通知、不自动更新、不进批量，详情页说明原因；
+                                     不写长期状态，下一次检查重新判断（见 7.1）
 if eligible.size == 1             -> 自动选择（高置信）
 gap = top.score - second.score
 if top.score >= 60 && gap >= 30    -> 自动选择 + 显示“推荐理由”
@@ -369,18 +372,22 @@ CD 本身就能给出精确 ABI（`lib/arm64-v8a/…`）；manifest 给出版本
 ### 7.1 懒验证（lazy validation）：探测由失败驱动，不由更新驱动
 
 一个模块只要“装成过一次”，后续更新就**不需要再探测**。只有出现失败信号时才重新进入验证。
-状态机（每个模块一份，随偏好一起持久化）：
+状态机（每个模块一份，随偏好一起持久化）。**它只记两类东西：用户的选择、设备的事实。**
 
 | 状态 | 含义 | 下次更新时 |
 | --- | --- | --- |
 | `UNKNOWN` | 没装过 / 没有可信历史 | 需要探测（首次安装、详情页、或第一次更新） |
-| `TRUSTED(signature)` | 上一次安装/更新成功，记住语义签名 | **不探测、不重排、不提问**，直接下 |
+| `TRUSTED(signature)` | 上一次安装/更新成功，或用户明确选过，记住语义签名 | **不探测、不重排、不提问**，直接下 |
 | `SUSPECT` | 刚失败过（安装报错 / 本地校验拒绝 / 委托安装超时 / 装后版本不符） | 探测 + 重排；必要时问用户 |
-| `NOT_APPLICABLE` | 探测后确认当前设备无可用候选（minSdk / ABI） | 不更新、不通知、不下载；新版本到来时仅用名字层复查 |
 
 转移：`UNKNOWN --装成功--> TRUSTED`；`TRUSTED --失败--> SUSPECT`；`SUSPECT --装成功--> TRUSTED`；
-`SUSPECT/TRUSTED --探测发现无可用--> NOT_APPLICABLE`；`NOT_APPLICABLE --新 release 名字层看起来可用--> UNKNOWN`。
 用户手动改变体 = 直接写入新的 `TRUSTED(signature)`（用户已经明确表态），成功安装后自然生效。
+
+**没有 `NOT_APPLICABLE`。**“这台设备能不能装这一版”每次现算：详情页每次进来算一次，安装/更新动作时再算一次，
+算出来的结果只影响这一次（装/不装、通知/不通知），不写进任何长期状态。原因很简单——
+一个存下来的“不可用”只在作者发新版时才可能变化，而 `minSdk`、配套包、框架版本都可能在我们看不见的时候变
+（用户升级系统、作者替换同版本下的 APK），于是它会比事实活得更久（`#65`、`#69`、`#73`）。
+旧版本留下的这种记录在读取时被忽略（解码成 `UNKNOWN`，代价是多一次探测）。
 
 **首次启用时不需要任何网络**：可以从已安装的 APK 直接读出签名（`PackageInfo` 的
 `versionCode / minSdkVersion / targetSdkVersion / primaryCpuAbi / metaData / FLAG_DEBUGGABLE`），
@@ -407,6 +414,24 @@ CD 本身就能给出精确 ABI（`lib/arm64-v8a/…`）；manifest 给出版本
 ——完全符合你说的懒扫描：**更新成功一次之后就不再验证，直到某次更新失败才重新开始，成功后又停下。**
 我把上一版“每个新版本验证 1 次”的说法撤了，那是多余的。
 
+#### 判定的边界：哪些能拦，哪些只能提示
+
+四个数字常被混为一谈，只有第一个是“平台会在安装时执行的”：
+
+| 来源 | 是什么 | 谁执行 | 现在的处理 |
+| --- | --- | --- | --- |
+| APK manifest 的 `minSdkVersion` | 真的最低安卓版本（`35` = Android 15） | 系统包管理器，装不上就装不上 | **拦** |
+| 文件名里的 `minsdkNN` | 作者把这个数字写进文件名，是声明，可能写错 | 没人 | 只排序 + 提示（`#71`） |
+| `module.prop` 的 `minApiVersion` / `targetApiVersion` | **libxposed 框架 API 号**，不是安卓版本 | 加载器并不按它拒绝 | 只排序 + 提示（`#47`、`#69`） |
+| `app/build.gradle.kts` 的 `minSdk` | lsp-store 自己这个 app 的最低安卓版本 | — | 与本仓库模块无关 |
+
+一句话：**能拦的只有“平台（或包自己）就能证明装不上”的那一条**；作者写下的数字、推断出来的 token 只能排序和提示。
+
+另一个边界同样重要：**更新 = 仓库信息 × 用户偏好；可装性 = 打开安装那一次的设备事实。**
+两者不共享任何持久状态。模块仓库只收 Xposed 模块，每个 release 的候选本来就是 Android APK，
+所以“这一版有没有我的平台”在索引层不存在（对比 komi-store：它一个 repo 里混着 exe/dmg/AppImage/ipa，
+必须先在检查期过滤，而我们不需要）。
+
 ### 7.2 免费安全网：下载后本地校验（0 网络，每次都做）
 
 懒验证唯一的危险是“错包装成功”——例如 release 被换成了配套 App（`XPrivacyLuaPro`、`wearos_app`），
@@ -416,7 +441,7 @@ CD 本身就能给出精确 ABI（`lib/arm64-v8a/…`）；manifest 给出版本
 | 检查 | 代价 | 不通过时 |
 | --- | --- | --- |
 | 包名 / Xposed 声明（三者任一） | 0 | 拒绝安装，置 `SUSPECT`，当场探测重排一次 |
-| `minSdkVersion ≤ SDK_INT` | 0 | 同上 → 重排后通常直接得到 `NOT_APPLICABLE` |
+| `minSdkVersion ≤ SDK_INT` | 0 | 同上 → 拒绝这一次，`SUSPECT`，下次重探 |
 | `lib/` 里有无兼容 ABI | 0 | 同上 |
 | `module.prop` API 号（`targetApiVersion` 优先）≤ 设备 LSPosed API | 0 | 只警告，不拦（#47） |
 | `applicationInfo.flags` 的 DEBUGGABLE | 0 | 只记展示徽章，不拦 |
@@ -428,7 +453,9 @@ CD 本身就能给出精确 ABI（`lib/arm64-v8a/…`）；manifest 给出版本
 
 - 失败：安装器返回错误、本地门禁拒绝、委托安装超时无包事件、安装后 `versionCode` ≠ 期望。
 - 失败一次 → `SUSPECT`，下一次更新才探测（不是立刻疯狂重试）；用户手动点安装则当场探测。
-- 连续 3 次失败，或探测结果显示无可用候选 → `NOT_APPLICABLE` + 详情页写原因，退出批量更新，不再打扰。
+- **连续 3 次失败也只是 `SUSPECT`**：计数封顶后只用于诊断，不改结论、不隐藏模块（`#69`、`#71`）。
+  装不上是这一次的事，不是关于设备或模块的判决。
+- 探测显示这一版没有可用候选 → 这一次不装、不通知、不自动更新，详情页写原因；下一次检查重新判。
 - 用户取消安装、或系统安装器被用户中途退出 → **不算失败**，不改状态。
 
 ### 7.4 缓存键与预算
@@ -473,11 +500,11 @@ CD 本身就能给出精确 ABI（`lib/arm64-v8a/…`）；manifest 给出版本
 - 把 `bestForAbis()` 换成 `VariantResolver`：`debug 降权 → ABI → universal → 打分 → 置信度`。
 - 删除静默 `first()`：低置信返回 `null`，调用方弹选择器（按你的决定：要求确认）。
 - 选择器显示推荐徽章 + 理由 + “不兼容/配套包”折叠区（配套包先靠名字黑名单：`demo|wear|pro|bridge|provider|client|trigger`，误判可接受，因为只是折叠）。
-- 引入模块状态 `UNKNOWN / TRUSTED / SUSPECT / NOT_APPLICABLE`，**用已装 APK 的 `PackageInfo` 冷启动种子**；
-  `TRUSTED` 时更新路径不探测、不重排。
+- 引入模块状态 `UNKNOWN / TRUSTED / SUSPECT`（**只有这两个记忆：用户的选择 + 设备的事实**），
+  **用已装 APK 的 `PackageInfo` 冷启动种子**；`TRUSTED` 时更新路径不探测、不重排。
 - 详情页写入/读取 `preferredVariants`；批量更新跳过“低置信且无记忆”的模块。
 - **单 APK 也走同一个 resolver 的判定分支**：debug 命名 / `versionName` ≠ tag → 徽章（**不弹窗**）；
-  `minSdk` 不兼容 / 真实 ABI 不兼容 → 标记 `NOT_APPLICABLE`，禁用安装、不进更新。
+  manifest `minSdk` 不兼容 / 包名不符且无声明 → 拒绝这一次安装，详情页说明原因；**不写长期状态**。
 - 多 APK 且出现 debug 包时：降权非 debug，不额外提问。
 - **下载后本地门禁**（见 7.2）：校验 minSdk / Xposed 声明 / ABI（API 号只警告），不通过则拒绝安装 + 置 `SUSPECT`。
 
@@ -490,8 +517,9 @@ CD 本身就能给出精确 ABI（`lib/arm64-v8a/…`）；manifest 给出版本
 - Range 探测（CD + manifest + `module.prop` + `scope.list`）+ AXML 解析 + 缓存 + 整包 fallback。
 - **只用于 7.1 规定的四个时机**（`UNKNOWN` 首次安装 / 名字层歧义 / `SUSPECT` 失败恢复 / 用户主动打开选择器），
   `TRUSTED` 模块的常规更新永不探测。
-- 用真实包名 + Xposed 声明识别第 8 类；`minSdk` 硬过滤；`lib/` 做精确 ABI；`targetApiVersion`/`minApiVersion` 只做 API 轴排序与警告。
-- 选择器展示精确元数据；用 `debuggable` 做 debug 降权；无可用时标 `NOT_APPLICABLE`（不回退旧版）。
+- 用真实包名 + Xposed 声明识别第 8 类；manifest `minSdk` 硬拦；`lib/` 做精确 ABI（仅警告）；
+  `targetApiVersion`/`minApiVersion` 只做 API 轴排序与警告。
+- 选择器展示精确元数据；用 `debuggable` 做 debug 降权；无可用时不回退旧版，只拒绝这一次。
 
 **P3（语义记忆与先验）**
 - 语义 signature 记忆、忽略列表、目标 App 版本匹配、下载量弱先验。
@@ -508,7 +536,7 @@ CD 本身就能给出精确 ABI（`lib/arm64-v8a/…`）；manifest 给出版本
    - 任何自动决策都不得是 debug（当同 release 存在非 debug 时）
    - **单 APK 是 debug 时不弹窗、不阻止**（可直接装）
    - 不得选 `minSdk > 设备` 的候选，也不得选真实 ABI 不兼容的候选
-   - **候选全不可用时返回 NOT_APPLICABLE，不得回退到旧 release**
+   - **候选全不可用时只拒绝这一次，不回退到旧 release，也不写长期状态**
    - 不得把“包名不符 + 无 Xposed 声明”的候选当作模块
    - 不得因包名不符单独拦下 `dev.wtonec` / `ReaMicroExtend` 这类合法改名模块
    - 对已知 OS 变体（HyperCeiler / OneUI / killappnowext）在给定设备画像下必须选对

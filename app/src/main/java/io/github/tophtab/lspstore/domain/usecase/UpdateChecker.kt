@@ -6,7 +6,6 @@ import io.github.tophtab.lspstore.domain.model.Module
 import io.github.tophtab.lspstore.domain.model.ModuleVersion
 import io.github.tophtab.lspstore.domain.model.SkippedVersion
 import io.github.tophtab.lspstore.domain.model.UpdateInfo
-import io.github.tophtab.lspstore.domain.variant.ModuleVariantState
 
 object UpdateChecker {
 
@@ -17,7 +16,6 @@ object UpdateChecker {
         skipped: Map<String, SkippedVersion> = emptyMap(),
         links: Map<String, String> = emptyMap(),
         ignored: Set<String> = emptySet(),
-        variantStates: Map<String, ModuleVariantState> = emptyMap(),
     ): List<UpdateInfo> {
         val byPackage = index.associateBy { it.packageName }
         return installed.asSequence()
@@ -31,26 +29,16 @@ object UpdateChecker {
                 if (installedModule.packageName in ignored || module.packageName in ignored) {
                     return@mapNotNull null
                 }
-                val variantState = variantStates[module.packageName]
-                    ?: variantStates[installedModule.packageName]
                 // Pre-release tracking is per module and keyed by either the
                 // installed or the linked repository package.
                 val includePreReleases = module.packageName in preReleases ||
                     installedModule.packageName in preReleases
                 val latest = module.latestFor(includePreReleases) ?: return@mapNotNull null
-                // A verdict only covers the release it was computed for; a newer upload
-                // is re-checked instead of staying hidden (variant-selection.md 7.1).
-                // Without this, one stale verdict - the API-number block removed in
-                // 1.2.0, say - hides the module from updates, notifications and batch
-                // installs for good (#65, #69).
-                if (variantState?.isNotApplicable == true &&
-                    verdictCoversRelease(
-                        variantState,
-                        module.latestTimeFor(includePreReleases),
-                    )
-                ) {
-                    return@mapNotNull null
-                }
+                // Nothing here subtracts a module because it looks unusable on this
+                // device: that judgement is made when an install is attempted, from
+                // the release and the device at that moment. A stored one used to
+                // hide modules from updates, notifications and batch installs for
+                // good (#65, #69, #73).
                 val skippedVersion = skipped[installedModule.packageName] ?: skipped[module.packageName]
                 if (skippedVersion?.matches(latest) == true) return@mapNotNull null
                 if (isUpdateAvailable(latest, installedModule, module.latestTimeFor(includePreReleases))) {
@@ -61,20 +49,6 @@ object UpdateChecker {
             }
             .sortedByDescending { it.latest.versionCode }
             .toList()
-    }
-
-    /**
-     * Whether a NOT_APPLICABLE verdict still describes the latest release. When
-     * the publish time is unknown the verdict is not trusted any more: re-checking
-     * a module costs one row, while hiding it forever is exactly the failure mode
-     * #65 and #69 reported.
-     */
-    private fun verdictCoversRelease(state: ModuleVariantState, publishedRaw: String?): Boolean {
-        val published = publishedRaw
-            ?.let { runCatching { Instant.parse(it) }.getOrNull() }
-            ?.toEpochMilli()
-            ?: return false
-        return state.updatedAt >= published
     }
 
     /**

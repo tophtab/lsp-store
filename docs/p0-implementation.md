@@ -4,13 +4,18 @@
 P1（设备画像）/ P2（Range 探测）的详细规格在 `docs/variant-implementation-reference.md`，**本次不做**，但接口要留好。
 所有产品决策已确认，可以直接动手，不需要再问。
 
+> **历史文档**：本文是 P0 阶段（1.0.x）的实施清单，保留作为当时决策的记录。
+> 当前的状态模型以 `docs/variant-selection.md` 7.1 与 `docs/variant-implementation-reference.md` §7 为准。
+> 与本文最重要的差异：`NOT_APPLICABLE` 已在 1.5.4（`#73`）移除——它是一条不会被覆盖的历史结论，
+> 一旦错了就会把模块从更新列表里永久藏起来。现在状态只有 `UNKNOWN / TRUSTED / SUSPECT`。
+
 ## 0. 目标（P0 范围）
 
 1. 删掉“静默 `first()`”：低置信 → 弹选择器并**要求确认**。
-2. 引入模块状态 `UNKNOWN / TRUSTED / SUSPECT / NOT_APPLICABLE`（懒验证，见 7.1）。
+2. 引入模块状态 `UNKNOWN / TRUSTED / SUSPECT`（懒验证，见 7.1）。
 3. 用已装 APK 的 `PackageInfo` 做**冷启动种子**，让已有用户零网络进入 `TRUSTED`。
-4. 下载后、安装前的**本地门禁**（0 网络）：minSdk / Xposed 声明 / 内部 ABI / `minApiVersion`。
-5. 单 APK 也走同一判定：不可安装 → `NOT_APPLICABLE`（不更新、不通知、不下载）。
+4. 下载后、安装前的**本地门禁**（0 网络）：manifest minSdk / 包名+Xposed 声明 / `minApiVersion`（只警告）。
+5. 单 APK 也走同一判定：本次不可装 → 拒绝这一次（不通知、不自动更新、不下载），**不写长期状态**。
 6. debug 只降权、不拦截；单 APK 是 debug 也直接装、不弹窗。
 7. 变体偏好与状态持久化（本地 DataStore；不提供备份导出/导入）。
 
@@ -139,10 +144,9 @@ data class ModuleVariantState(
     val status: Status = Status.UNKNOWN,
     val signature: VariantSignature? = null,
     val failures: Int = 0,
-    val reason: String? = null,        // NOT_APPLICABLE 的原因（用于 UI，存资源 key 而非文案）
     val updatedAt: Long = 0L,
 ) {
-    enum class Status { UNKNOWN, TRUSTED, SUSPECT, NOT_APPLICABLE }
+    enum class Status { UNKNOWN, TRUSTED, SUSPECT }
 }
 ```
 
@@ -156,9 +160,8 @@ data class ModuleVariantState(
 
 ```
 onInstallSucceeded(pkg, sig) : TRUSTED(sig), failures=0
-onInstallFailed(pkg)         : SUSPECT, failures+1；若 failures>=3 或 gate 报“无可用”→ NOT_APPLICABLE
+onInstallFailed(pkg)         : SUSPECT, failures+1；封顶后只用于诊断，从不改变结论
 onUserPicked(pkg, sig)       : TRUSTED(sig)   // 用户明确表态
-onEvaluatedNoCandidate(pkg, reason) : NOT_APPLICABLE(reason)
 resolveForUpdate(state)      : TRUSTED → 不探测、不重排；否则走 resolver
 ```
 
@@ -172,7 +175,7 @@ resolveForUpdate(state)      : TRUSTED → 不探测、不重排；否则走 res
 | `ui/screens/detail/ModuleDetailScreen.kt` `defaultAsset()` L641 + `VariantPickerDialog` L379 + `AssetSheetContent` L915 | 全部走 `bestForAbis()` | 统一用 resolver；删掉本地 `defaultAsset()`；picker 显示推荐徽章/理由/灰区 |
 | `ui/screens/installed/InstalledViewModel.kt` `performInstall()` L201 | `preferredVariants[assetName]` + `latestAssetFor()` | 用 `variantStates[pkg]` + resolver；`NotApplicable` 跳过并标记；成功后写状态 |
 | 同上 L573 `setPreferredVariant` | 存 asset 文件名 | 存 `VariantSignature` + 置 `TRUSTED` |
-| `domain/usecase/UpdateChecker.kt` | 只比较版本 | 新增参数 `variantStates`：过滤 `NOT_APPLICABLE`；`versionName` 仅因作者命名差异不同时不算更新 |
+| `domain/usecase/UpdateChecker.kt` | 只比较版本 | **不看变体状态、不做可装性过滤**（更新只由仓库信息 + 用户偏好决定）；`versionName` 仅因作者命名差异不同时不算更新 |
 | `data/work/UpdateCheckWorker.kt` L58 | `latestAssetFor(channel, abis)` | 用 resolver 的 `Pick`；`Choose/NotApplicable` 不计入“有更新” |
 | `domain/model/Models.kt` | `bestForAbis` / `latestAssetFor` 公开 | 标 `@Deprecated`，P0 全部调用点迁走后删除；`AbiSelectionTest` 改成 resolver 测试 |
 
@@ -190,7 +193,7 @@ resolveForUpdate(state)      : TRUSTED → 不探测、不重排；否则走 res
 sealed interface GateResult {
     data object Ok : GateResult
     data class Warn(val reason: Reason) : GateResult
-    data class Reject(val reason: Reason, val fatal: Boolean) : GateResult  // fatal=true → NOT_APPLICABLE
+    data class Reject(val reason: Reason) : GateResult   // 这一次不交给安装器；不写长期结论
 }
 
 fun check(file: File, expectedPackage: String, device: DeviceProfile): GateResult
@@ -209,8 +212,9 @@ fun check(file: File, expectedPackage: String, device: DeviceProfile): GateResul
   `minApiVersion` 拒绝模块，见 #47）。
 - 包名不一致：**有声明 → 放行 + 警告**；**无声明 → 拒绝**（实测 2.5% 合法模块包名不同，别一刀切）。
   包名一致时不需要声明也能放行。
-- `minSdk > device.sdkInt` → 拒绝且 `fatal = true`（→ `NOT_APPLICABLE`）。
-- 内部 ABI：读 zip 的 `lib/<abi>/`；非空且与设备无交集且无 universal → 拒绝且 `fatal = true`。
+- `minSdk > device.sdkInt` → 拒绝（系统本来也会拒，`INSTALL_FAILED_OLDER_SDK`）。
+- 内部 ABI：读 zip 的 `lib/<abi>/`；非空且与设备无交集 → **只警告**（安装不会因此失败，模块也可能不用 native 部分，`#71`）。
+- `Reject` 只记一次失败（`SUSPECT`），模块留在更新列表，下次重探。
 
 ## 8. 冷启动种子
 
@@ -225,7 +229,8 @@ fun check(file: File, expectedPackage: String, device: DeviceProfile): GateResul
 
 - 选择器：每行 `[推荐]` 徽章 + 大小/下载量/ABI 标签；推荐行下加一句理由；低置信时顶部提示“此版本包含多个变体，请确认”。
 - 配套 App 折叠区：`同版本附带的其他应用（N）`，灰显不可直接装。
-- `NOT_APPLICABLE`：安装按钮禁用 + 一行原因（`minSdk 35 > 你的 Android 13` / `仅提供 riscv64`），详情页仍可手动切换版本。
+- 本次不可装：安装按钮禁用 + 一行原因（`minSdk 35 > 你的 Android 13` / `仅提供 riscv64`），详情页仍可手动切换版本；
+  这是“这一次”的结果，不落盘、不改变更新列表。
 - debug：详情页小徽章，不弹窗。
 - 新增字符串（先加 `values/strings.xml`，再用 Android Studio 的 Translations Editor 机翻；漏翻/多余翻译由 lint 的 `MissingTranslation` / `ExtraTranslation` 直接报错）：
 
@@ -247,7 +252,8 @@ variant_debug_badge            debug build
    - 不存在“无条件落到 assets.first()”的分支（`Choose` 集合用快照断言）；
    - HyperCeiler / killappnowext / mi5g / micts 的决策符合预期（P0 无设备画像时 HyperCeiler 应返回 `Choose`，而不是 OS2）。
 2. `VariantTraitsTest`：ABI/`minsdk`/`A14`/`OS2`/`_14-panel`/`x86` vs `x86_64` 的解析用例（含 `variant-probes.json` 里的真实文件名）。
-3. `VariantStateMachineTest`：成功→TRUSTED；失败 1 次→SUSPECT；连续 3 次→NOT_APPLICABLE；`TRUSTED` 路径不调用探测回调（传计数的假 probe）。
+3. `VariantStateMachineTest`：成功→TRUSTED；失败 1 次→SUSPECT；封顶 3 次仍为 SUSPECT（不改结论）；
+   `TRUSTED` 路径不调用探测回调（传计数的假 probe）。
 4. `ApkGate` 逻辑抽成纯函数（输入 `ArchiveInfo` 数据类）以便 JVM 单测；Android 部分只做薄封装。
 
 ## 11. 验收

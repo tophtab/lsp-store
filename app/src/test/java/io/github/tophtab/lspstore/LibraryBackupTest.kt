@@ -64,6 +64,39 @@ class LibraryBackupTest {
     }
 
     @Test
+    fun `a backup carrying a verdict from an older build still imports`() {
+        // 1.5.3 wrote NOT_APPLICABLE and a reason key into the same payload. The
+        // status is gone from the model now, but rejecting the whole file would
+        // lose the favourites, links and skipped versions next to it (#73).
+        val legacy =
+            """
+            {
+              "schemaVersion": 1,
+              "favourites": ["com.example.a"],
+              "links": {"com.installed": "com.example.a"},
+              "skippedUpdates": {"com.example.a": "10400-1.4.0"},
+              "variantStates": {
+                "com.example.a": {
+                  "status": "NOT_APPLICABLE",
+                  "signature": {"abi": "arm64-v8a"},
+                  "failures": 0,
+                  "reason": "MIN_SDK_TOO_HIGH\u001f35\u001f33",
+                  "updatedAt": 5
+                }
+              }
+            }
+            """.trimIndent()
+
+        val backup = LibraryBackup.decode(legacy)
+        val state = backup.variantStates.getValue("com.example.a")
+
+        assertEquals(ModuleVariantState.Status.UNKNOWN, state.status)
+        assertEquals("arm64-v8a", state.signature?.abi)
+        assertEquals(listOf("com.example.a"), backup.favourites)
+        assertEquals(mapOf("com.example.a" to "10400-1.4.0"), backup.skippedUpdates)
+    }
+
+    @Test
     fun `non json content is rejected`() {
         val error = assertThrows(LibraryBackupException::class.java) {
             LibraryBackup.decode("not a backup")

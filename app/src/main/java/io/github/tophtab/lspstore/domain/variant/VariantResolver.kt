@@ -122,8 +122,8 @@ class VariantResolver(private val device: DeviceProfile) {
 
     /**
      * TRUSTED modules skip probing and re-ranking; everything else goes through
-     * the normal name/probe path. NOT_APPLICABLE is re-checked on the name layer
-     * when a new release arrives.
+     * the normal name/probe path. Nothing about the device is remembered, so a
+     * new release is judged on its own.
      */
     fun resolveForUpdate(
         state: ModuleVariantState,

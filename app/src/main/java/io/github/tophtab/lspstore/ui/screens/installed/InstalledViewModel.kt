@@ -36,7 +36,6 @@ import io.github.tophtab.lspstore.domain.variant.ScoredAsset
 import io.github.tophtab.lspstore.domain.variant.VariantDecision
 import io.github.tophtab.lspstore.domain.variant.VariantResolver
 import io.github.tophtab.lspstore.domain.variant.VariantSignature
-import io.github.tophtab.lspstore.domain.variant.onEvaluatedNoCandidate
 import io.github.tophtab.lspstore.domain.variant.onUserPicked
 import io.github.tophtab.lspstore.domain.variant.parseTraits
 import io.github.tophtab.lspstore.ui.RefreshScrollGate
@@ -401,18 +400,14 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
 
                             is VariantDecision.Choose -> openVariantPicker(repoPackage, info)
 
-                            is VariantDecision.NotApplicable -> {
-                                libraryRepository.setVariantState(
-                                    repoPackage,
-                                    state.onEvaluatedNoCandidate(decision.reason),
+                            // Reported for this attempt only, never stored: the
+                            // next check asks again (#73).
+                            is VariantDecision.NotApplicable -> _state.update {
+                                it.copy(
+                                    message = container.appContext.variantReasonText(
+                                        decision.reason,
+                                    ),
                                 )
-                                _state.update {
-                                    it.copy(
-                                        message = container.appContext.variantReasonText(
-                                            decision.reason,
-                                        ),
-                                    )
-                                }
                             }
                         }
                     }
@@ -672,8 +667,8 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
                     }
                     val resolver = VariantResolver(container.deviceProfile)
                     val state = variantStates[repoPackageName] ?: ModuleVariantState()
-                    // The user explicitly opened the picker: probing is allowed
-                    // even when the module is currently NOT_APPLICABLE.
+                    // The user explicitly opened the picker, so the remembered
+                    // variant must not short-circuit the probe.
                     val resolution = container.resolveVariantUseCase.resolve(
                         release = release,
                         state = state,
@@ -883,7 +878,6 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
                 skipped = skipped,
                 links = links,
                 ignored = ignoredUpdates,
-                variantStates = variantStates,
             )
             .filterNot { it.installed.packageName in pendingPackages }
         val updating = updates.map { it.module.packageName }.toSet()

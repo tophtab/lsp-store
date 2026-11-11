@@ -16,7 +16,7 @@
 | 2 | `DeviceProfile` | SDK、ABI、厂商 OS（HyperOS/MIUI/OneUI/ColorOS）、LSPosed API |
 | 3 | `RangeProbe` | CD + manifest + `module.prop` + `scope.list`，带缓存与降级 |
 | 4 | `ApkGate` | 下载后本地门禁：minSdk/包名+声明（ABI 与 API 只警告） |
-| 5 | 状态与存储 | `UNKNOWN/TRUSTED/SUSPECT/NOT_APPLICABLE` + 冷启动种子 + DataStore 持久化 |
+| 5 | 状态与存储 | `UNKNOWN/TRUSTED/SUSPECT`（只存用户的选择与设备的事实）+ 冷启动种子 + DataStore 持久化 |
 | 6 | 集成 | 详情页、Installed、批量更新、后台检查、通知 |
 | 7 | UI 与文案 | 推荐徽章/理由、配套包折叠、不可用说明、debug 徽章；8 个新字符串 ×13 语言 |
 | 8 | 测试 | 4 个测试类 + 已入库 fixture |
@@ -228,8 +228,8 @@ class RangeProbe(private val client: HttpClient, private val cacheFile: File) {
 ```kotlin
 sealed interface GateResult {
     data object Ok
-    data class Warn(val reason: Reason)                 // 放行
-    data class Reject(val reason: Reason, val fatal: Boolean) // fatal → NOT_APPLICABLE
+    data class Warn(val reason: Reason)          // 放行
+    data class Reject(val reason: Reason)        // 这一次不交给安装器；不写任何结论
 }
 class ApkGate(private val context: Context, private val device: DeviceProfile) {
     fun check(file: File, expectedPackage: String): GateResult
@@ -241,12 +241,14 @@ class ApkGate(private val context: Context, private val device: DeviceProfile) {
 - Zip 侧（`ZipFile`）：`lib/` 下的 ABI 集合；`META-INF/xposed/module.prop` 是否存在 + `minApiVersion`/`targetApiVersion`；
   `assets/xposed_init` 是否存在（legacy 加载入口）。
 - 规则（严格执行，见 `docs/variant-selection.md` 3.4 / 7.2）：
-  - `minSdk > sdkInt` → `Reject(fatal=true)`。
-  - 包名不一致 + 无声明 → `Reject(fatal=true)`（先判，避免被下面的警告掩盖）。
+  - `minSdk > sdkInt` → `Reject`。
+  - 包名不一致 + 无声明 → `Reject`（先判，避免被下面的警告掩盖）。
   - 包名不一致 + 有声明 → `Warn`；包名一致 → 继续看警告。
-  - `libs` 非空且与设备无交集且无 universal → `Warn`（安装不会因此失败，`#47` 同款处理）。
+  - `libs` 非空且与设备无交集 → `Warn`（安装不会因此失败，`#47` 同款处理）。
   - API 号（按加载器策略取 `targetApiVersion`，legacy 入口则无要求）高于设备 API → `Warn`，
     不拒绝（`#47`）。
+  - 解包失败、文件缺失 → `Reject`（这一次而已；调用方只记一次失败）。
+- `Reject` **不写任何长期状态**：调用方记一次失败（`SUSPECT`），模块留在更新列表、下一次重探。
 
 ## 7. 状态机、存储、冷启动
 
@@ -255,16 +257,20 @@ class ApkGate(private val context: Context, private val device: DeviceProfile) {
 data class ModuleVariantState(
     val status: Status = Status.UNKNOWN,
     val signature: VariantSignature? = null,
-    val failures: Int = 0,
-    val reasonKey: String? = null,   // 资源名，不存文案
+    val failures: Int = 0,          // 诊断用，不改结论
     val updatedAt: Long = 0L,
-) { enum class Status { UNKNOWN, TRUSTED, SUSPECT, NOT_APPLICABLE } }
+) { enum class Status { UNKNOWN, TRUSTED, SUSPECT } }
 ```
 
 - `LibraryRepositoryImpl`：新 key `variant_state`（JSON map）；`variantStates: Flow<Map<String, ModuleVariantState>>`；
-  `recordInstallResult(pkg, ok, signature, reasonKey)`：成功 → `TRUSTED` + `failures=0`；
-  失败 → `SUSPECT` + `failures+1`（计数上限 3，**不改变结论**）。安装失败不是设备结论，
-  所以模块始终留在更新列表里（`#69` 之后）；只有探测确认无可用候选才写 `NOT_APPLICABLE`。
+  `recordInstallResult(pkg, ok, signature)`：成功 → `TRUSTED` + `failures=0`；
+  失败 → `SUSPECT` + `failures+1`（计数封顶 3，**不改变结论、不隐藏任何东西**）。
+- **没有 `NOT_APPLICABLE`。**“这一版在这台设备上能不能装”不落盘，每次现算（详情页每次进来、
+  每次安装/更新动作），结果只影响这一次。理由：卡下来只在作者发新版时才可能变，而 `minSdk`、
+  配套包、框架版本会在我们看不见的时候变（`#65`、`#69`、`#73`）。
+- 旧版本写下的 `NOT_APPLICABLE`（含 1.1.x 的 API 号判决）在读取时容错成 `UNKNOWN`：
+  由 `ModuleVariantState.Status` 的 `StatusSerializer` 实现，**不在某一个 Json 配置上**，
+  所以 DataStore 与导入的备份文件走的是同一条道理。代价是多一次探测。
 - `preferredVariants`（asset 文件名）保留读兼容，写路径改为签名；读到时惰性转一次签名。
 - 备份导出/导入已移除；状态直接存在 `library.preferences_pb` 的 `variant_state` 键下：`Map<String, ModuleVariantState>`；
   导入接受 `1..2`，v1 忽略该字段；导出写 v2。
@@ -280,10 +286,10 @@ data class ModuleVariantState(
 | `ModuleDetailViewModel.installLatest()` L202 | `resolve()`；`Pick` 直接下；`Choose` 弹 picker（`VariantPicker` 改持 `List<ScoredAsset>`）；`NotApplicable` 提示+禁装 |
 | `ModuleDetailViewModel.performInstall()` L366 | 先 `ApkGate`；`Reject` → 记失败/置状态并提示；`Ok` → 原流程；成功后 `recordInstallResult(ok=true)` |
 | `ModuleDetailScreen` L641 / L379 / L915 | 删除本地 `defaultAsset()`；picker 用 `ScoredAsset`，显示徽章/理由/灰区；未确认时按钮写“选择并安装” |
-| `InstalledViewModel.performInstall()` L201 | 用 `variantStates[pkg]`：`TRUSTED` → 签名映射，不探测；否则 `resolve()`；`NotApplicable` → 跳过并在批量结束时汇总 |
+| `InstalledViewModel.performInstall()` L201 | 用 `variantStates[pkg]`：`TRUSTED` → 签名映射，不探测；否则 `resolve()`；无可用 → 这一次跳过（不算失败、不打扰） |
 | `InstalledViewModel` L573 | `setPreferredVariant` 改为存签名 + `TRUSTED` |
-| `UpdateChecker.findUpdates()` | 新参数 `variantStates`：过滤 `NOT_APPLICABLE`；同 versionCode 且 versionName 仅命名差异 → 不算更新 |
-| `UpdateCheckWorker` L58 | 用 resolver `Pick`；`Choose/NotApplicable` 不计入“有更新”、不通知 |
+| `UpdateChecker.findUpdates()` | **不看变体状态、不做可装性过滤**：更新只由仓库信息 + 用户偏好决定（版本/通道/发布时间/跳过/忽略/链接）；同 versionCode 且 versionName 仅命名差异 → 不算更新 |
+| `UpdateCheckWorker` L58 | 用 resolver `Pick`；`Choose` 不计入“有更新” |
 | `AppContainer` | 组装 `deviceProfile` / `rangeProbe` / `variantResolver` / `apkGate` |
 
 探测调用点（只有 4 处，见 `variant-selection.md` 7.1）：首次安装（`UNKNOWN`）、名字层 `Choose`、
@@ -293,7 +299,7 @@ data class ModuleVariantState(
 
 - picker 行：`[推荐]` + 大小/下载量/ABI/(minSdk/API 若已探测)；推荐行下一行小字理由。
 - 低置信顶部提示；配套 App 折叠区 `同版本附带的其他应用（N）` 灰显。
-- `NOT_APPLICABLE`：安装按钮禁用 + 原因一行；仍可手动切版本（现有版本选择器）。
+- 本次不可装：安装按钮禁用 + 原因一行；仍可手动切版本（现有版本选择器）。不是长期状态。
 - debug：详情页小徽章。
 - 新字符串（英文写在 `values/strings.xml`，Android Studio Translations Editor 机翻；lint 报漏翻）：
 
@@ -310,9 +316,10 @@ variant_remembered / variant_debug_badge
 - `VariantResolverTest`：加载 `variant-corpus.json`，`DeviceProfile(36, [arm64-v8a, armeabi-v7a])`，
   断言：① 同 release 有非 debug 时绝不 `Pick(debug)`；② `Choose` 集合与快照一致（防回归成静默 first）；
   ③ 关键模块断言（HyperCeiler → `Choose`（无画像时）/`Pick(OS3)`（有画像时）；mi5g/micts/knoxpatch → `Choose`；
-  systemednotificationblocker → 选 `minsdk35`（设备 36））；④ 真实 ABI 限制时（probes 注入）→ `NotApplicable`。
-- `VariantStateMachineTest`：成功→TRUSTED；失败→SUSPECT；3 次→NOT_APPLICABLE；`TRUSTED` 更新路径
-  探测调用计数 = 0；`SUSPECT` 后恢复成功 → TRUSTED 且计数归零。
+  systemednotificationblocker → 选 `minsdk35`（设备 36））；④ 真实 minSdk 高于设备时（probes 注入）→ `NotApplicable`。
+- `VariantStateMachineTest`：成功→TRUSTED；失败→SUSPECT（封顶 3 次也不改结论）；用户选择→TRUSTED；
+  `TRUSTED` 更新路径探测调用计数 = 0；**旧版本写下的 `NOT_APPLICABLE` 解码成 `UNKNOWN` 且保留签名**
+  （同时覆盖不带任何特殊配置的普通 `Json`，以及 `LibraryBackup.decode` 旧备份导入）。
 - `ApkGateTest`：把规则抽成 `GatePolicy.evaluate(facts: ApkFacts, device)` 纯函数，覆盖
   minSdk/ABI/包名+声明/API（只 `Warn`，legacy 入口与 `targetApiVersion` 优先）四组用例；Android 侧只做薄封装。
 
