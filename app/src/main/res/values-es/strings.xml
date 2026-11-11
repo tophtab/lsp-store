@@ -89,7 +89,6 @@
     <string name="detail_update_to">Actualizar a %1$s</string>
     <string name="detail_reinstall">Reinstalar %1$s</string>
     <string name="detail_install">Instalar %1$s</string>
-    <string name="detail_working">Laboral…</string>
     <string name="detail_no_releases">Sin lanzamientos</string>
     <string name="detail_downloads">%1$s - descargas: %2$d</string>
     <string name="detail_no_apk">Sin recursos APK</string>

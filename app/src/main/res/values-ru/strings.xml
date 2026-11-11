@@ -89,7 +89,6 @@
     <string name="detail_update_to">Обновить до %1$s</string>
     <string name="detail_reinstall">Переустановить %1$s</string>
     <string name="detail_install">Установить %1$s</string>
-    <string name="detail_working">Работающий…</string>
     <string name="detail_no_releases">Нет релизов</string>
     <string name="detail_downloads">%1$s - скачиваний: %2$d</string>
     <string name="detail_no_apk">Нет APK-ресурсов</string>

@@ -36,9 +36,7 @@ import io.github.tophtab.lspstore.domain.model.tracksPreReleases
 import io.github.tophtab.lspstore.domain.variant.ApkMeta
 import io.github.tophtab.lspstore.domain.variant.InstalledVariantHint
 import io.github.tophtab.lspstore.domain.variant.ModuleVariantState
-import io.github.tophtab.lspstore.domain.variant.VariantDecision
 import io.github.tophtab.lspstore.domain.variant.VariantSignature
-import io.github.tophtab.lspstore.domain.variant.onEvaluatedNoCandidate
 import io.github.tophtab.lspstore.domain.variant.onUserPicked
 import io.github.tophtab.lspstore.domain.variant.parseTraits
 import kotlin.coroutines.cancellation.CancellationException
@@ -49,19 +47,15 @@ data class ModuleDetailUiState(
     val error: String? = null,
     val detail: ModuleDetail? = null,
     val installed: InstalledModule? = null,
-    /** Whether this module's update checks also follow pre-releases. */
-    val preRelease: Boolean = false,
     /**
      * Stream shown on this page. The three buttons above the resource picker pick
-     * it; a channel choice also updates [preRelease] for the streams that have an
-     * update-check meaning.
+     * it; a channel choice also updates the persisted pre-release opt-in for the
+     * streams that have an update-check meaning.
      */
     val channel: ReleaseChannel = ReleaseChannel.STABLE,
     val isFavourite: Boolean = false,
     /** Whether the user hid this module from the repository's browsing lists. */
     val isModuleIgnored: Boolean = false,
-    /** Resolving the variant: no download has started yet. */
-    val isBusy: Boolean = false,
     /** Download/install started from this page, still running. */
     val activeInstall: ModuleInstallRun? = null,
     val message: String? = null,
@@ -193,7 +187,6 @@ class ModuleDetailViewModel(
                 _state.update {
                     val tracked = isPreReleaseTracked(it.installed)
                     it.copy(
-                        preRelease = tracked,
                         // Until the user touches the channel buttons, the page
                         // follows the persisted preference, so a module tracked
                         // for pre-releases opens on that stream.
@@ -250,7 +243,6 @@ class ModuleDetailViewModel(
                     val tracked = isPreReleaseTracked(installed)
                     it.copy(
                         installed = installed,
-                        preRelease = tracked,
                         channel = if (channelChosen) it.channel else defaultChannel(it.detail, tracked),
                         message = container.appContext.getString(R.string.detail_install_finished),
                     )
@@ -290,7 +282,6 @@ class ModuleDetailViewModel(
                         detail = detail,
                         installed = installed,
                         variantState = stateForModule(variantStates, installed),
-                        preRelease = tracked,
                         // The persisted opt-in may point at a stream this module
                         // no longer publishes; fall back to stable in that case.
                         channel = if (channelChosen) it.channel else defaultChannel(detail, tracked),
@@ -389,49 +380,6 @@ class ModuleDetailViewModel(
                         else R.string.detail_module_unignored,
                     ),
                 )
-            }
-        }
-    }
-
-    fun installLatest() {
-        val detail = _state.value.detail ?: return
-        val release = detail.latestReleaseFor(_state.value.channel) ?: return
-        if (_state.value.isBusy || _state.value.activeInstall != null) return
-        viewModelScope.launch {
-            _state.update { it.copy(isBusy = true, message = null) }
-            val state = stateForModule(variantStates, _state.value.installed) ?: ModuleVariantState()
-            // Lazy validation: TRUSTED never probes; UNKNOWN / ambiguous do.
-            val resolution = container.resolveVariantUseCase.resolve(
-                release = release,
-                state = state,
-                device = container.deviceProfile,
-                expectedPackage = expectedPackage(
-                    installedPackage = _state.value.installed?.packageName,
-                    repoPackage = packageName,
-                ),
-                installed = _state.value.installed?.let(InstalledVariantHint::of),
-            )
-            _state.update {
-                it.copy(
-                    isBusy = false,
-                    probes = resolution.probes,
-                    probedTag = release.tagName,
-                )
-            }
-            when (val decision = resolution.decision) {
-                // The resolver always picks one asset, including the ambiguous
-                // releases that used to open a confirmation dialog: the resource
-                // picker above the button is where the choice is changed.
-                is VariantDecision.Pick -> startInstall(decision.asset, announceRemembered = false)
-
-                is VariantDecision.NotApplicable -> {
-                    val message = container.appContext.variantReasonText(decision.reason)
-                    libraryRepository.setVariantState(
-                        packageName,
-                        state.onEvaluatedNoCandidate(decision.reason),
-                    )
-                    _state.update { it.copy(message = message) }
-                }
             }
         }
     }
@@ -694,7 +642,7 @@ class ModuleDetailViewModel(
      */
     private fun startInstall(asset: ReleaseAsset, announceRemembered: Boolean) {
         val current = _state.value
-        if (current.isBusy || current.activeInstall != null) return
+        if (current.activeInstall != null) return
         val version = versionFor(asset)
         _state.update { it.copy(message = null) }
         coordinator.start(
@@ -731,7 +679,6 @@ class ModuleDetailViewModel(
                 it.copy(
                     installed = installed,
                     variantState = stateForModule(variantStates, installed),
-                    preRelease = tracked,
                     channel = if (channelChosen) it.channel else defaultChannel(it.detail, tracked),
                 )
             }
@@ -746,7 +693,6 @@ class ModuleDetailViewModel(
             it.copy(
                 installed = installed,
                 variantState = stateForModule(variantStates, installed),
-                preRelease = tracked,
                 channel = if (channelChosen) it.channel else defaultChannel(it.detail, tracked),
             )
         }

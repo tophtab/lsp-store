@@ -99,7 +99,6 @@
     <string name="detail_update_to">更新到 %1$s</string>
     <string name="detail_reinstall">重新安裝 %1$s</string>
     <string name="detail_install">安裝 %1$s</string>
-    <string name="detail_working">處理中…</string>
     <string name="detail_no_releases">沒有版本</string>
     <string name="detail_downloads">%1$s - 下載：%2$d</string>
     <string name="detail_no_apk">沒有 APK 檔案</string>

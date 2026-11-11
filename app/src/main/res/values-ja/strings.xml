@@ -89,7 +89,6 @@
     <string name="detail_update_to">%1$sに更新します</string>
     <string name="detail_reinstall">再インストール %1$s</string>
     <string name="detail_install">%1$s をインストールします</string>
-    <string name="detail_working">働く…</string>
     <string name="detail_no_releases">リリースはありません</string>
     <string name="detail_downloads">%1$s - ダウンロード: %2$d</string>
     <string name="detail_no_apk">APK アセットなし</string>

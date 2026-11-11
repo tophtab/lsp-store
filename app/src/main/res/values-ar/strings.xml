@@ -89,7 +89,6 @@
     <string name="detail_update_to">التحديث إلى %1$s</string>
     <string name="detail_reinstall">إعادة التثبيت %1$s</string>
     <string name="detail_install">تثبيت %1$s</string>
-    <string name="detail_working">عمل…</string>
     <string name="detail_no_releases">لا توجد إصدارات</string>
     <string name="detail_downloads">%1$s - التنزيلات: %2$d</string>
     <string name="detail_no_apk">لا توجد أصول APK</string>

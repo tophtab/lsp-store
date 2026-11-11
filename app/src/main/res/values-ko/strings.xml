@@ -89,7 +89,6 @@
     <string name="detail_update_to">%1$s으로 업데이트</string>
     <string name="detail_reinstall">재설치 %1$s</string>
     <string name="detail_install">설치 %1$s</string>
-    <string name="detail_working">일하고 있는…</string>
     <string name="detail_no_releases">릴리스 없음</string>
     <string name="detail_downloads">%1$s - 다운로드: %2$d</string>
     <string name="detail_no_apk">APK 자산 없음</string>

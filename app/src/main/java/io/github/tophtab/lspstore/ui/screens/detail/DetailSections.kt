@@ -421,7 +421,6 @@ internal fun InstallControls(
             queued != null -> stringResource(R.string.detail_queued)
             downloading != null -> stringResource(R.string.detail_downloading)
             installing -> stringResource(R.string.detail_installing)
-            state.isBusy -> stringResource(R.string.detail_working)
             targetVersion == null -> stringResource(R.string.detail_no_release)
             showUpdateHint -> stringResource(R.string.detail_update_to, targetVersion.versionName)
             state.installed != null -> stringResource(R.string.detail_reinstall, targetVersion.versionName)
@@ -446,7 +445,7 @@ internal fun InstallControls(
             progress = downloading?.progress,
             active = active,
             enabled = queued != null || downloading != null ||
-                (!active && !state.isBusy && targetVersion != null && installEnabled),
+                (!active && targetVersion != null && installEnabled),
             leadingIcon = if (active) null else Icons.Filled.Download,
             onClick = if (queued != null || downloading != null) onCancel else onInstall,
         )

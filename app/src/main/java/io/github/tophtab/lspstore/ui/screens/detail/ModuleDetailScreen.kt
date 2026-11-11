@@ -288,7 +288,6 @@ fun ModuleDetailScreen(packageName: String, onBack: () -> Unit, onOpenAuthor: (S
                     state = state,
                     detail = detail,
                     listState = listState,
-                    onInstallLatest = viewModel::installLatest,
                     onInstallAsset = viewModel::installAsset,
                     onProbeAssets = viewModel::probeRelease,
                     onTranslateNotes = viewModel::translateNotes,
@@ -453,7 +452,6 @@ private fun DetailContent(
     state: ModuleDetailUiState,
     detail: ModuleDetail,
     listState: LazyListState,
-    onInstallLatest: () -> Unit,
     onInstallAsset: (ReleaseAsset) -> Unit,
     onProbeAssets: (Release) -> Unit,
     onTranslateNotes: (String, String, Boolean) -> Unit,
@@ -617,10 +615,10 @@ private fun DetailContent(
                 notApplicableReason = notApplicableReason,
                 debugBuild = selectedDebug,
                 onInstall = {
-                    // The resource row above already shows the chosen APK, so the
-                    // button installs it directly; changing it is one tap away.
-                    val asset = selectedAsset
-                    if (asset != null) onInstallAsset(asset) else onInstallLatest()
+                    // The button is only enabled with a selected asset, and the
+                    // resource row above already shows which one it installs;
+                    // changing it is one tap away.
+                    selectedAsset?.let(onInstallAsset)
                 },
                 onCancel = onCancel,
             )
