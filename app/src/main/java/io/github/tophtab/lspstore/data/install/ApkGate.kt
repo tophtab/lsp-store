@@ -40,9 +40,12 @@ sealed interface GateResult {
     data class Warn(val reason: Reason) : GateResult
 
     /**
-     * The APK was not handed to the installer. This is deliberately not a
-     * verdict about the module: the caller records one failed attempt, nothing
-     * is persisted, and the module stays in the update list.
+     * The APK was not handed to the installer because the device or the archive
+     * itself says it cannot work: a manifest minSdk above this device, a foreign
+     * package without any Xposed declaration, or a broken download. This is not a
+     * verdict about the module - the caller records one failed attempt, which
+     * makes the module re-probe its variants and keeps it in the update list
+     * (see [io.github.tophtab.lspstore.domain.variant.onInstallFailed]).
      */
     data class Reject(val reason: Reason) : GateResult
 }
@@ -64,8 +67,34 @@ object ApkGate {
                 )
             }
         }
-        if (info.libAbis.isNotEmpty() && info.libAbis.none { it in device.abis }) {
+        val packageMismatch = info.packageName != null && info.packageName != expectedPackage
+        // A renamed module is legitimate; a renamed app without any Xposed
+        // declaration is a companion app shipped in the same release. This is a
+        // rejection, not a warning, so it is decided before any advisory line
+        // can mask it.
+        if (packageMismatch && !info.hasXposedDeclaration) {
             return GateResult.Reject(
+                Reason(
+                    Reason.Kind.PACKAGE_MISMATCH,
+                    listOf(info.packageName.orEmpty(), expectedPackage),
+                ),
+            )
+        }
+        if (packageMismatch) {
+            // The caller installs a renamed module under its own package and
+            // remembers the link, so this warning must stay first.
+            return GateResult.Warn(
+                Reason(
+                    Reason.Kind.PACKAGE_MISMATCH,
+                    listOf(info.packageName.orEmpty(), expectedPackage),
+                ),
+            )
+        }
+        if (info.libAbis.isNotEmpty() && info.libAbis.none { it in device.abis }) {
+            // Installing an APK never fails on a foreign `lib/<abi>/` directory,
+            // the module may not load its native part at all, and an ARM
+            // translation layer can still run it - advisory like the API number (#47).
+            return GateResult.Warn(
                 Reason(Reason.Kind.ABI_INCOMPATIBLE, listOf(info.libAbis.joinToString(", "))),
             )
         }
@@ -80,20 +109,6 @@ object ApkGate {
             // anyway, so this is a warning, never a refusal (#47). Another
             // variant may still fit better, but the user decides.
             return GateResult.Warn(Reason(Reason.Kind.API_TOO_NEW, listOf(requiredApi.toString())))
-        }
-        val packageMismatch = info.packageName != null && info.packageName != expectedPackage
-        if (packageMismatch) {
-            val reason = Reason(
-                Reason.Kind.PACKAGE_MISMATCH,
-                listOf(info.packageName.orEmpty(), expectedPackage),
-            )
-            // A renamed module is legitimate; a renamed app without any Xposed
-            // declaration is a companion app shipped in the same release.
-            return if (info.hasXposedDeclaration) {
-                GateResult.Warn(reason)
-            } else {
-                GateResult.Reject(reason)
-            }
         }
         return GateResult.Ok
     }

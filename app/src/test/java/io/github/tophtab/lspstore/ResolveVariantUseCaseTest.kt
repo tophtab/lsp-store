@@ -14,6 +14,7 @@ import io.github.tophtab.lspstore.domain.variant.DeviceProfile
 import io.github.tophtab.lspstore.domain.variant.ModuleVariantState
 import io.github.tophtab.lspstore.domain.variant.Reason
 import io.github.tophtab.lspstore.domain.variant.VariantDecision
+import io.github.tophtab.lspstore.domain.variant.VariantResolver
 import io.github.tophtab.lspstore.domain.variant.VariantSignature
 
 class ResolveVariantUseCaseTest {
@@ -38,7 +39,7 @@ class ResolveVariantUseCaseTest {
     }
 
     @Test
-    fun firstInstallProbesAndRejectsIncompatibleRealAbi() = runBlocking {
+    fun firstInstallProbesAndOnlyWarnsAboutAForeignRealAbi() = runBlocking {
         val release = releaseOf("app.apk")
         val probe = FakeProbe(
             mapOf(
@@ -52,11 +53,12 @@ class ResolveVariantUseCaseTest {
         val resolution = ResolveVariantUseCase(probe)
             .resolve(release, ModuleVariantState(), device, expectedPackage = "com.example.module")
 
-        assertTrue(resolution.decision is VariantDecision.NotApplicable)
-        assertEquals(
-            Reason.Kind.ABI_INCOMPATIBLE,
-            (resolution.decision as VariantDecision.NotApplicable).reason.kind,
-        )
+        // The native library directory is advisory; the installer decides.
+        assertTrue(resolution.decision is VariantDecision.Pick)
+        val candidate = VariantResolver(device)
+            .candidates(release, probes = resolution.probes)
+            .single()
+        assertEquals(Reason.Kind.ABI_INCOMPATIBLE, candidate.warning?.kind)
         assertEquals(1, probe.calls)
         assertEquals(1, resolution.probes.size)
     }
@@ -161,6 +163,57 @@ class ResolveVariantUseCaseTest {
         assertEquals("app.apk", (resolution.decision as VariantDecision.Pick).asset.name)
         assertEquals(1, probe.calls)
         assertTrue(resolution.probes.isEmpty())
+    }
+
+    @Test
+    fun aNameThatLooksLikeACompanionAppIsProbedInsteadOfHidden() = runBlocking {
+        val release = releaseOf("Module_Client.apk", "Module_Provider.apk")
+        val probe = FakeProbe(
+            mapOf(
+                "Module_Client.apk" to ApkMeta(
+                    packageName = "com.example.module",
+                    hasXposedDeclaration = true,
+                ),
+                "Module_Provider.apk" to ApkMeta(
+                    packageName = "com.example.module",
+                    hasXposedDeclaration = true,
+                ),
+            ),
+        )
+        // Every name looks like a companion app, so the name layer alone would
+        // write a permanent "not applicable" verdict. One probe settles it.
+        val resolution = ResolveVariantUseCase(probe)
+            .resolve(release, ModuleVariantState(), device, expectedPackage = "com.example.module")
+
+        assertTrue(resolution.decision is VariantDecision.Choose)
+        assertEquals(
+            setOf("Module_Client.apk", "Module_Provider.apk"),
+            (resolution.decision as VariantDecision.Choose).candidates.map { it.asset.name }.toSet(),
+        )
+        assertEquals(2, probe.calls)
+    }
+
+    @Test
+    fun aMissingApkIsAVerdictWithoutProbing() = runBlocking {
+        val release = Release(
+            tagName = "1-1.0",
+            name = null,
+            url = null,
+            isPrerelease = false,
+            publishedAt = null,
+            descriptionHtml = null,
+            version = ModuleVersion.parse("1-1.0"),
+            assets = emptyList(),
+        )
+        val probe = FakeProbe(emptyMap())
+        val resolution = ResolveVariantUseCase(probe)
+            .resolve(release, ModuleVariantState(), device, expectedPackage = "com.example.module")
+
+        assertEquals(
+            Reason.Kind.NO_APK,
+            (resolution.decision as VariantDecision.NotApplicable).reason.kind,
+        )
+        assertEquals(0, probe.calls)
     }
 
     private class FakeProbe(private val metas: Map<String, ApkMeta>) : ApkProbe {

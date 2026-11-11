@@ -15,7 +15,7 @@
 | 1 | `domain/variant/*` | traits 解析、签名、打分、决策、状态机（纯 Kotlin） |
 | 2 | `DeviceProfile` | SDK、ABI、厂商 OS（HyperOS/MIUI/OneUI/ColorOS）、LSPosed API |
 | 3 | `RangeProbe` | CD + manifest + `module.prop` + `scope.list`，带缓存与降级 |
-| 4 | `ApkGate` | 下载后本地门禁：包名/声明/minSdk/ABI/API（API 只警告） |
+| 4 | `ApkGate` | 下载后本地门禁：minSdk/包名+声明（ABI 与 API 只警告） |
 | 5 | 状态与存储 | `UNKNOWN/TRUSTED/SUSPECT/NOT_APPLICABLE` + 冷启动种子 + DataStore 持久化 |
 | 6 | 集成 | 详情页、Installed、批量更新、后台检查、通知 |
 | 7 | UI 与文案 | 推荐徽章/理由、配套包折叠、不可用说明、debug 徽章；8 个新字符串 ×13 语言 |
@@ -147,12 +147,16 @@ sealed interface VariantDecision {
 硬过滤（顺序）：
 
 1. 非 APK。
-2. ABI：有具体 ABI token 且与 `device.abis` 无交集且非 universal → 剔除；`probes` 里有 `libs` 时以 `libs` 为准。
-3. `minSdk`：`probes` 里的 `minSdk > device.sdkInt` → 剔除。
-4. `package`：`probes` 里包名不符 **且** 无 Xposed 声明 → 剔除。
-5. API **不剔除**：`module.prop` 的 API 号只做降权 + 行内警告（见 5 与 `libXposedApiRequirement`；
+2. `minSdk`：**只有 `probes` 里读到的** `minSdk > device.sdkInt` → 剔除（安装器同样会拒绝，`INSTALL_FAILED_OLDER_SDK`）。
+   文件名里的 `minsdkNN` token 只排序 + 行内警告，谎报的名字不能替设备做决定（#65、#69）。
+3. `package`：`probes` 里包名不符 **且** 无 Xposed 声明 → 剔除。
+4. 配套包：多 APK release 里文件名像配套包（`client/provider/bridge/trigger/demo/wear…`）
+   且**没有探测证据** → 剔除；`probes` 显示它就是本模块（包名一致或有声明）时不剔除。
+5. ABI **不剔除**：`lib/` 里的 ABI 与设备无交集只降权 + 警告（安装本身不会因此失败，模块也可能
+   根本不加载 native 部分，或走 ARM 转译层）。
+6. API **不剔除**：`module.prop` 的 API 号只做降权 + 行内警告（见 5 与 `libXposedApiRequirement`；
    LSPosed/Vector 的加载器根本不会因为 `minApiVersion` 拒绝模块，`#47`）。
-6. debug **不剔除**，只降权（`-50`）。
+7. debug **不剔除**，只降权（`-50`）。
 
 全部被剔除 → `NotApplicable`；剩 1 个 → `Pick(HIGH)`。否则打分：
 
@@ -238,9 +242,9 @@ class ApkGate(private val context: Context, private val device: DeviceProfile) {
   `assets/xposed_init` 是否存在（legacy 加载入口）。
 - 规则（严格执行，见 `docs/variant-selection.md` 3.4 / 7.2）：
   - `minSdk > sdkInt` → `Reject(fatal=true)`。
-  - `libs` 非空且与设备无交集且无 universal → `Reject(fatal=true)`。
-  - 包名一致 → 其余检查通过即 `Ok`（`debuggable` → `Warn`）。
-  - 包名不一致 + 有声明 → `Warn`；包名不一致 + 无声明 → `Reject(fatal=true)`。
+  - 包名不一致 + 无声明 → `Reject(fatal=true)`（先判，避免被下面的警告掩盖）。
+  - 包名不一致 + 有声明 → `Warn`；包名一致 → 继续看警告。
+  - `libs` 非空且与设备无交集且无 universal → `Warn`（安装不会因此失败，`#47` 同款处理）。
   - API 号（按加载器策略取 `targetApiVersion`，legacy 入口则无要求）高于设备 API → `Warn`，
     不拒绝（`#47`）。
 
@@ -259,7 +263,8 @@ data class ModuleVariantState(
 
 - `LibraryRepositoryImpl`：新 key `variant_state`（JSON map）；`variantStates: Flow<Map<String, ModuleVariantState>>`；
   `recordInstallResult(pkg, ok, signature, reasonKey)`：成功 → `TRUSTED` + `failures=0`；
-  失败 → `SUSPECT` + `failures+1`，`>=3` 或 `fatal` → `NOT_APPLICABLE`。
+  失败 → `SUSPECT` + `failures+1`（计数上限 3，**不改变结论**）。安装失败不是设备结论，
+  所以模块始终留在更新列表里（`#69` 之后）；只有探测确认无可用候选才写 `NOT_APPLICABLE`。
 - `preferredVariants`（asset 文件名）保留读兼容，写路径改为签名；读到时惰性转一次签名。
 - 备份导出/导入已移除；状态直接存在 `library.preferences_pb` 的 `variant_state` 键下：`Map<String, ModuleVariantState>`；
   导入接受 `1..2`，v1 忽略该字段；导出写 v2。

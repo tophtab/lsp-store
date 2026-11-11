@@ -489,7 +489,14 @@ private fun DetailContent(
         if (state.probedTag == selectedRelease?.tagName) state.probes else emptyMap()
     }
     val decision = remember(selectedRelease, variantState, probes) {
-        selectedRelease?.let { resolver.resolveForUpdate(variantState, it, probes) }
+        selectedRelease?.let {
+            resolver.resolveForUpdate(
+                variantState,
+                it,
+                probes,
+                expectedPackage = detail.module.packageName,
+            )
+        }
     }
     // Lazy validation still probes on the detail page (variant-selection.md 7.1):
     // one ranged read per candidate, cached per asset. TRUSTED modules never probe.
@@ -497,7 +504,15 @@ private fun DetailContent(
         selectedRelease?.let { onProbeAssets(it) }
     }
     val candidates = remember(selectedRelease, decision, probes) {
-        val base = selectedRelease?.let { resolver.candidates(it, probes = probes) } ?: emptyList()
+        val base = selectedRelease?.let {
+            // Same expected package as the decision above, so a candidate row and
+            // the install button never disagree about what is blocked.
+            resolver.candidates(
+                it,
+                probes = probes,
+                expectedPackage = detail.module.packageName,
+            )
+        } ?: emptyList()
         val recommendedName = when (decision) {
             is VariantDecision.Pick -> decision.asset.name
             is VariantDecision.Choose ->

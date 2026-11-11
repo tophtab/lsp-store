@@ -64,15 +64,16 @@ object UpdateChecker {
     }
 
     /**
-     * Whether a NOT_APPLICABLE verdict still describes the latest release. The
-     * publish time is unknown for some cache entries; keeping the verdict is the
-     * conservative answer there, exactly as before.
+     * Whether a NOT_APPLICABLE verdict still describes the latest release. When
+     * the publish time is unknown the verdict is not trusted any more: re-checking
+     * a module costs one row, while hiding it forever is exactly the failure mode
+     * #65 and #69 reported.
      */
     private fun verdictCoversRelease(state: ModuleVariantState, publishedRaw: String?): Boolean {
         val published = publishedRaw
             ?.let { runCatching { Instant.parse(it) }.getOrNull() }
             ?.toEpochMilli()
-            ?: return true
+            ?: return false
         return state.updatedAt >= published
     }
 

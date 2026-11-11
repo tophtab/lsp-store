@@ -379,6 +379,28 @@ class VersionLogicTest {
     }
 
     @Test
+    fun verdictWithoutAPublishTimeDoesNotHideAgain() {
+        val installed = InstalledModule("a.b", 10, "1.0", "T", true, null)
+        val verdict = ModuleVariantState(
+            status = ModuleVariantState.Status.NOT_APPLICABLE,
+            reason = Reason(Reason.Kind.MIN_SDK_TOO_HIGH, listOf("35", "33")).storageKey(),
+            updatedAt = Instant.parse("2026-11-10T09:50:31Z").toEpochMilli(),
+        )
+        // Without a publish time the verdict cannot be dated; re-checking is
+        // cheaper than hiding the module for good (#65, #69).
+        val module = notApplicableModule().copy(latestReleaseTime = null)
+
+        assertEquals(
+            1,
+            UpdateChecker.findUpdates(
+                listOf(installed),
+                listOf(module),
+                variantStates = mapOf("a.b" to verdict),
+            ).size,
+        )
+    }
+
+    @Test
     fun freshNotApplicableVerdictStillHidesItsOwnRelease() {
         val installed = InstalledModule("a.b", 10, "1.0", "T", true, null)
         // The verdict is newer than the release it was computed for, so it still
