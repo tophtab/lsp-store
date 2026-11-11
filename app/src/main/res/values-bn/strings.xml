@@ -89,7 +89,6 @@
     <string name="detail_update_to">%1$s এ আপডেট করুন</string>
     <string name="detail_reinstall">পুনরায় ইনস্টল করুন %1$s</string>
     <string name="detail_install">ইনস্টল করুন %1$s</string>
-    <string name="detail_working">কাজ করছে…</string>
     <string name="detail_no_releases">কোন রিলিজ</string>
     <string name="detail_downloads">%1$s - ডাউনলোড: %2$d</string>
     <string name="detail_no_apk">কোনো APK সম্পদ নেই</string>

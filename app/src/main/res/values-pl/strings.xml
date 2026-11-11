@@ -89,7 +89,6 @@
     <string name="detail_update_to">Aktualizuj do %1$s</string>
     <string name="detail_reinstall">Zainstaluj ponownie %1$s</string>
     <string name="detail_install">Zainstaluj %1$s</string>
-    <string name="detail_working">Pracujący…</string>
     <string name="detail_no_releases">Brak wydań</string>
     <string name="detail_downloads">%1$s - pliki do pobrania: %2$d</string>
     <string name="detail_no_apk">Brak zasobów APK</string>

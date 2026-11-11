@@ -89,7 +89,6 @@
     <string name="detail_update_to">%1$s\'a güncelle</string>
     <string name="detail_reinstall">%1$s\'ı yeniden yükleyin</string>
     <string name="detail_install">%1$s yükleyin</string>
-    <string name="detail_working">Çalışma…</string>
     <string name="detail_no_releases">Sürüm yok</string>
     <string name="detail_downloads">%1$s - indirmeler: %2$d</string>
     <string name="detail_no_apk">APK öğesi yok</string>
