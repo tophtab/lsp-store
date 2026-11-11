@@ -239,7 +239,6 @@
     <string name="variant_picker_subtitle">このリリースには複数の APK が同梱されています。</string>
     <string name="variant_recommended">推奨</string>
     <string name="variant_reason_matches_device">お使いのデバイスと一致します (%1$s)</string>
-    <string name="variant_needs_confirm">このリリースにはいくつかのバージョンが同梱されています - 1 つを選択してください</string>
     <string name="variant_bundled_apps">このリリースの他のアプリ (%1$d)</string>
     <string name="variant_bundled_app">同じリリースでモジュールと一緒に出荷される</string>
     <string name="variant_incompatible_min_sdk">Android %1$d+ が必要です (%2$d を持っています)</string>
@@ -247,7 +246,6 @@
     <string name="variant_incompatible_api">LSPosed API %1$d が必要です</string>
     <string name="variant_remembered">今後のアップデートのために選択を記憶しました</string>
     <string name="variant_debug_badge">デバッグビルド</string>
-    <string name="variant_not_applicable">このデバイスでは利用できません</string>
     <string name="variant_not_module">この APK は Xowned モジュールではありません</string>
     <string name="installed_finished_skipped">%1$d モジュールにはバリアントの選択が必要です - モジュールを開いて更新します</string>
     <string name="installed_finished_cancelled">キャンセル: %1$d</string>

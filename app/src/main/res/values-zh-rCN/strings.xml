@@ -252,7 +252,6 @@
 
     <string name="variant_recommended">推荐</string>
     <string name="variant_reason_matches_device">与你的设备匹配（%1$s）</string>
-    <string name="variant_needs_confirm">此版本包含多个变体，请选择一个</string>
     <string name="variant_bundled_apps">此版本附带的其他应用（%1$d）</string>
     <string name="variant_bundled_app">与模块一起发布在同一版本中</string>
     <string name="variant_incompatible_min_sdk">需要 Android %1$d+（你的是 %2$d）</string>
@@ -260,7 +259,6 @@
     <string name="variant_incompatible_api">需要 LSPosed API %1$d</string>
     <string name="variant_remembered">已记住你的选择，后续更新将自动使用</string>
     <string name="variant_debug_badge">debug 构建</string>
-    <string name="variant_not_applicable">此设备不可用</string>
     <string name="variant_not_module">此 APK 不是 Xposed 模块</string>
     <string name="installed_finished_skipped">%1$d 个模块需要选择变体，请打开它们进行更新</string>
     <string name="installed_finished_cancelled">已取消: %1$d</string>

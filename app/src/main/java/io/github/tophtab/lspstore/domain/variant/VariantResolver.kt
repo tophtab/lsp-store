@@ -1,14 +1,25 @@
 package io.github.tophtab.lspstore.domain.variant
 
-import kotlin.math.log10
-import kotlin.math.roundToInt
 import io.github.tophtab.lspstore.domain.model.Release
 import io.github.tophtab.lspstore.domain.model.ReleaseAsset
 
 /**
  * One name-layer resolver for every install path (detail page, installed page,
  * batch update, background worker). Pure Kotlin so the scoring and the
- * "never silently pick the first asset" guarantees are unit tested.
+ * "always return a defensible default" guarantees are unit tested.
+ *
+ * A release with several APKs is split by nine different axes in practice; the
+ * resolver handles them in this order:
+ *  1. identity — companion apps shipped in the same release are folded;
+ *  2. device fit — debug split, ABI, libxposed API generation, vendor OS /
+ *     Android version, minSdk (name layer), then the same from probes;
+ *  3. author preference — edition/flavour builds that no device signal can
+ *     decide: the plain build, then the most installed one, then the name.
+ *
+ * Only steps 1 and 2 may make a candidate unusable; everything else ranks.
+ * A release always resolves to one [VariantDecision.Pick] unless every APK is a
+ * companion app (or the release has no APK at all), so "update all" never has to
+ * stop on a module.
  *
  * Inputs, in increasing order of cost:
  *  - file-name traits ([VariantTraits]) — always available;
@@ -32,9 +43,9 @@ class VariantResolver(private val device: DeviceProfile) {
         probes: Map<String, ApkMeta> = emptyMap(),
         allowProbes: Boolean = true,
         expectedPackage: String? = null,
+        installed: InstalledVariantHint? = null,
     ): List<ScoredAsset> {
         val assets = release.apkAssets
-        val maxDownloads = assets.maxOfOrNull { it.downloadCount } ?: 0
         val multiVariant = assets.size > 1
         return assets.map { asset ->
             val traits = parseTraits(asset.name)
@@ -44,14 +55,27 @@ class VariantResolver(private val device: DeviceProfile) {
             ScoredAsset(
                 asset = asset,
                 traits = traits,
-                score = if (blocked != null) 0 else score(asset, traits, meta, maxDownloads),
+                score = if (blocked != null) 0 else score(traits, meta),
                 recommended = false,
                 blocked = blocked,
                 warning = warning(traits, meta),
                 debug = debug,
                 meta = meta,
+                installedFit = installedFit(traits, meta, installed),
             )
         }
+    }
+
+    /**
+     * The same ordering [resolve] uses: installable candidates first, best fit
+     * ahead of the rest, then the folded ones. UI lists and probe targets share
+     * it so a row never disagrees with the default above it.
+     */
+    fun ranked(candidates: List<ScoredAsset>): List<ScoredAsset> {
+        val eligible = candidates.filter { it.blocked == null }.sortedWith(ranking())
+        val blocked = candidates.filter { it.blocked != null }
+            .sortedWith(compareBy<ScoredAsset> { it.blocked?.kind?.ordinal ?: 0 }.thenBy { it.asset.name })
+        return eligible + blocked
     }
 
     /**
@@ -68,11 +92,12 @@ class VariantResolver(private val device: DeviceProfile) {
         probes: Map<String, ApkMeta> = emptyMap(),
         allowProbes: Boolean = signature == null,
         expectedPackage: String? = null,
+        installed: InstalledVariantHint? = null,
     ): VariantDecision {
         if (release.apkAssets.isEmpty()) {
             return VariantDecision.NotApplicable(Reason(Reason.Kind.NO_APK))
         }
-        val scored = candidates(release, probes, allowProbes, expectedPackage)
+        val scored = candidates(release, probes, allowProbes, expectedPackage, installed)
         val eligible = scored.filter { it.blocked == null }
 
         if (signature != null) {
@@ -85,11 +110,14 @@ class VariantResolver(private val device: DeviceProfile) {
                 )
             }
             if (matched.size > 1) {
-                val ranked = matched.sortedWith(ranking())
-                return choose(
-                    scored = scored,
-                    preferredNames = ranked.map { it.asset.name }.toSet(),
-                    recommendedName = ranked.first().asset.name,
+                // The remembered signature still fits several assets (a seeded
+                // signature may only know the ABI). Rank them as usual and keep
+                // the best one as the default instead of stopping to ask.
+                val top = matched.sortedWith(ranking()).first()
+                return VariantDecision.Pick(
+                    asset = top.asset,
+                    reasons = listOf(Reason(Reason.Kind.REMEMBERED)) + matchReasons(top),
+                    confidence = VariantDecision.Confidence.DEFAULT,
                 )
             }
             // No match: fall through to the name layer. Still no probes.
@@ -103,6 +131,19 @@ class VariantResolver(private val device: DeviceProfile) {
             return VariantDecision.NotApplicable(reason)
         }
 
+        // A probe that names the installed package identifies the update
+        // unambiguously, whatever the file names say (releases that ship several
+        // different modules/apps at once). Two candidates can share the package
+        // (same module, different build), so only a unique match decides here.
+        val installedCopy = eligible.filter { it.installedFit >= INSTALLED_PACKAGE_MATCH }
+        if (installedCopy.size == 1) {
+            return VariantDecision.Pick(
+                asset = installedCopy.single().asset,
+                reasons = matchReasons(installedCopy.single()),
+                confidence = VariantDecision.Confidence.HIGH,
+            )
+        }
+
         // Debug builds are only a penalty. A release whose only non-debug
         // candidate is unique does not need to ask the user.
         val nonDebug = eligible.filter { !it.debug }
@@ -114,8 +155,17 @@ class VariantResolver(private val device: DeviceProfile) {
         val second = ranked[1]
         if (isDecisive(top, second)) return pick(top)
 
-        val recommended = if (top.score > second.score) top.asset.name else null
-        return choose(scored, preferredNames = emptySet(), recommendedName = recommended)
+        // Nothing about the device tells the remaining candidates apart (edition,
+        // flavour, or names that only differ in the author's build scheme). Asking
+        // used to be the only option, which made "update all" skip those modules;
+        // the ranking now ends in a stable preference ladder (base build, then
+        // most installed, then name) and the result is a real default that the
+        // resource picker can still override.
+        return VariantDecision.Pick(
+            asset = top.asset,
+            reasons = matchReasons(top),
+            confidence = VariantDecision.Confidence.DEFAULT,
+        )
     }
 
     /**
@@ -128,10 +178,17 @@ class VariantResolver(private val device: DeviceProfile) {
         release: Release,
         probes: Map<String, ApkMeta> = emptyMap(),
         expectedPackage: String? = null,
+        installed: InstalledVariantHint? = null,
     ): VariantDecision = if (state.isTrusted) {
-        resolve(release, state.signature, allowProbes = false, expectedPackage = expectedPackage)
+        resolve(
+            release,
+            state.signature,
+            allowProbes = false,
+            expectedPackage = expectedPackage,
+            installed = installed,
+        )
     } else {
-        resolve(release, probes = probes, expectedPackage = expectedPackage)
+        resolve(release, probes = probes, expectedPackage = expectedPackage, installed = installed)
     }
 
     /** Human-readable match labels, e.g. `["arm64-v8a", "libxposed API 102"]`. */
@@ -178,25 +235,6 @@ class VariantResolver(private val device: DeviceProfile) {
         }
     }
 
-    private fun choose(
-        scored: List<ScoredAsset>,
-        preferredNames: Set<String>,
-        recommendedName: String?,
-    ): VariantDecision.Choose {
-        val eligible = scored.filter { it.blocked == null }
-            .sortedWith(
-                compareByDescending<ScoredAsset> { it.asset.name in preferredNames }
-                    .then(ranking()),
-            )
-        val blocked = scored.filter { it.blocked != null }
-            .sortedWith(compareBy<ScoredAsset> { it.blocked?.kind?.ordinal ?: 0 }.thenBy { it.asset.name })
-        return VariantDecision.Choose(
-            candidates = (eligible + blocked).map {
-                it.copy(recommended = it.asset.name == recommendedName)
-            },
-        )
-    }
-
     /**
      * Only what the APK proves about itself (a foreign package without any Xposed
      * declaration) may block a candidate, plus a companion-app looking name that
@@ -237,12 +275,7 @@ class VariantResolver(private val device: DeviceProfile) {
             (expectedPackage != null && meta.packageName == expectedPackage)
     }
 
-    private fun score(
-        asset: ReleaseAsset,
-        traits: VariantTraits,
-        meta: ApkMeta?,
-        maxDownloads: Int,
-    ): Int {
+    private fun score(traits: VariantTraits, meta: ApkMeta?): Int {
         var score = 0
         val abis = meta?.abis?.takeIf { it.isNotEmpty() } ?: traits.abis
         val abiMatch = abis.firstOrNull { it in device.abis }
@@ -269,11 +302,9 @@ class VariantResolver(private val device: DeviceProfile) {
         }
         val debug = meta?.debuggable ?: traits.debugName
         if (debug) score -= 20
-        if (maxDownloads > 1) {
-            // Weak prior only: enough to order a tie, never to decide alone.
-            val ratio = log10(asset.downloadCount + 1.0) / log10(maxDownloads + 1.0)
-            score += (ratio * 5.0).roundToInt()
-        }
+        // Downloads are deliberately not part of this score: they are a
+        // preference tie-break in [ranking], so they can never outrank the
+        // author's plain build or a device signal.
         return score.coerceAtLeast(0)
     }
 
@@ -348,13 +379,87 @@ class VariantResolver(private val device: DeviceProfile) {
     /**
      * Device ABI fit comes first: the download prior is a tie-break, never a
      * reason to hand an arm64 build to an x86_64-first device (or vice versa).
-     * Then the score, the largest compatible minSdk variant, and a stable order.
+     * Then the score, the largest compatible minSdk variant, the author's plain
+     * build, and finally "what most users of this module actually installed".
+     *
+     * The last two only ever order candidates that the device cannot tell apart
+     * (edition/flavour splits such as `full`/`lite`, `panel`/`tile`, or names
+     * that differ only in the author's build scheme), so the result is the
+     * community's default rather than an alphabetical accident. The file name is
+     * the last resort, which keeps the order deterministic for brand-new releases
+     * whose assets all have zero downloads.
      */
     private fun ranking(): Comparator<ScoredAsset> =
         compareByDescending<ScoredAsset> { fitTier(it) }
             .thenByDescending { it.score }
+            .thenByDescending { it.installedFit }
             .thenByDescending { minSdkTier(it) }
+            .thenByDescending { osTier(it) }
+            .thenByDescending { apiTier(it) }
+            .thenByDescending { plainBuildTier(it) }
+            .thenByDescending { it.asset.downloadCount }
             .thenBy { it.asset.name }
+
+    /**
+     * 1 for the author's undecorated build (`app-release.apk`, `KnoxPatch.apk`),
+     * 0 once the name carries an edition or flavour token (`-lite`, `-full`,
+     * `-log`, `-noui`, ...). A `KnoxPatch-sep-lite.apk` next to `KnoxPatch.apk`
+     * must never win just because `s` sorts behind `K`.
+     */
+    private fun plainBuildTier(candidate: ScoredAsset): Int =
+        if (candidate.traits.edition.isEmpty() && candidate.traits.flavors.isEmpty()) 1 else 0
+
+    /**
+     * Observable overlap with the installed copy. Weights only order candidates
+     * that the device cannot tell apart, except for the package identity, which
+     * is proof that the archive is the app the user already runs.
+     */
+    private fun installedFit(
+        traits: VariantTraits,
+        meta: ApkMeta?,
+        installed: InstalledVariantHint?,
+    ): Int {
+        if (installed == null) return 0
+        var fit = 0
+        if (meta?.packageName != null && meta.packageName == installed.packageName) {
+            fit += INSTALLED_PACKAGE_MATCH
+        }
+        val abis = meta?.abis?.takeIf { it.isNotEmpty() } ?: traits.abis
+        if (installed.abi != null && installed.abi in abis) fit += 4
+        if (meta != null && candidatesGenerationsDiffer(meta, traits, installed)) {
+            // Only a probed archive knows its declaration, so an unprobed name
+            // never wins or loses points for it.
+            fit += 4
+        }
+        if (installed.minSdk != null && installed.minSdk == meta?.minSdk) fit += 2
+        if (installed.targetSdk != null && installed.targetSdk == meta?.targetSdk) fit += 1
+        val debug = meta?.debuggable ?: traits.debugName
+        if (debug == installed.debuggable) fit += 2
+        return fit
+    }
+
+    private fun candidatesGenerationsDiffer(
+        meta: ApkMeta,
+        traits: VariantTraits,
+        installed: InstalledVariantHint,
+    ): Boolean {
+        val modern = meta.targetApiVersion != null || meta.minApiVersion != null ||
+            traits.libxposedApi != null || traits.modernWord
+        return modern == installed.libXposed
+    }
+
+    /**
+     * The newest OS / Android version a candidate advertises. With a vendor
+     * profile this is a real device match and already scored; without one it is
+     * the better guess than the alphabetically first name (`OS2_...` used to win
+     * over `OS3_...` purely because `2` sorts before `3`).
+     */
+    private fun osTier(candidate: ScoredAsset): Int =
+        candidate.traits.vendor?.second ?: candidate.traits.android ?: 0
+
+    /** The newest libxposed API number, mirroring the "modern wins" decision. */
+    private fun apiTier(candidate: ScoredAsset): Int =
+        apiRequirement(candidate.meta, candidate.traits) ?: 0
 
     private fun minSdkTier(candidate: ScoredAsset): Int =
         candidate.meta?.minSdk ?: candidate.traits.minSdkToken ?: -1
@@ -437,6 +542,9 @@ class VariantResolver(private val device: DeviceProfile) {
     }
 
     private companion object {
+        /** [installedFit] weight of a probe that names the installed package. */
+        const val INSTALLED_PACKAGE_MATCH = 16
+
         const val MINSDK = "minsdk:"
         val BUNDLED_SUBSTRINGS = listOf(
             "wearos",

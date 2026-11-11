@@ -11,6 +11,7 @@ import io.github.tophtab.lspstore.domain.usecase.ResolveVariantUseCase
 import io.github.tophtab.lspstore.domain.variant.ApkMeta
 import io.github.tophtab.lspstore.domain.variant.ApkProbe
 import io.github.tophtab.lspstore.domain.variant.DeviceProfile
+import io.github.tophtab.lspstore.domain.variant.InstalledVariantHint
 import io.github.tophtab.lspstore.domain.variant.ModuleVariantState
 import io.github.tophtab.lspstore.domain.variant.Reason
 import io.github.tophtab.lspstore.domain.variant.VariantDecision
@@ -101,7 +102,12 @@ class ResolveVariantUseCaseTest {
         val resolution = ResolveVariantUseCase(probe)
             .resolve(release, state, device, expectedPackage = "com.example.module")
 
-        assertTrue(resolution.decision is VariantDecision.Choose)
+        // A stored NOT_APPLICABLE no longer blocks the install: the name layer
+        // still produces a default, and only the user's explicit picker action
+        // may spend a probe on it.
+        val decision = resolution.decision as VariantDecision.Pick
+        assertEquals("OS3_Module.apk", decision.asset.name)
+        assertEquals(VariantDecision.Confidence.DEFAULT, decision.confidence)
         assertEquals(0, probe.calls)
     }
 
@@ -153,6 +159,41 @@ class ResolveVariantUseCaseTest {
     }
 
     @Test
+    fun theInstalledCopyDecidesAnAmbiguousUpdate() = runBlocking {
+        val release = releaseOf("app-release.apk", "module.apk")
+        val probe = FakeProbe(
+            mapOf(
+                "app-release.apk" to ApkMeta(
+                    packageName = "com.other.module",
+                    hasXposedDeclaration = true,
+                ),
+                "module.apk" to ApkMeta(
+                    packageName = "com.example.module",
+                    hasXposedDeclaration = true,
+                ),
+            ),
+        )
+        val installed = InstalledVariantHint(
+            packageName = "com.example.module",
+            abi = "arm64-v8a",
+            minSdk = 29,
+            targetSdk = 34,
+        )
+        val resolution = ResolveVariantUseCase(probe).resolve(
+            release = release,
+            state = ModuleVariantState(),
+            device = device,
+            expectedPackage = "com.example.module",
+            installed = installed,
+        )
+
+        val decision = resolution.decision as VariantDecision.Pick
+        assertEquals("module.apk", decision.asset.name)
+        assertEquals(VariantDecision.Confidence.HIGH, decision.confidence)
+        assertEquals(2, probe.calls)
+    }
+
+    @Test
     fun probeFailureKeepsTheNameLayerDecision() = runBlocking {
         val release = releaseOf("app.apk")
         val probe = FakeProbe(emptyMap())
@@ -181,14 +222,20 @@ class ResolveVariantUseCaseTest {
             ),
         )
         // Every name looks like a companion app, so the name layer alone would
-        // write a permanent "not applicable" verdict. One probe settles it.
+        // write a permanent "not applicable" verdict. One probe settles it and
+        // the release still resolves to a default.
         val resolution = ResolveVariantUseCase(probe)
             .resolve(release, ModuleVariantState(), device, expectedPackage = "com.example.module")
 
-        assertTrue(resolution.decision is VariantDecision.Choose)
+        val decision = resolution.decision as VariantDecision.Pick
+        assertEquals("Module_Client.apk", decision.asset.name)
         assertEquals(
             setOf("Module_Client.apk", "Module_Provider.apk"),
-            (resolution.decision as VariantDecision.Choose).candidates.map { it.asset.name }.toSet(),
+            VariantResolver(device)
+                .candidates(release, probes = resolution.probes, expectedPackage = "com.example.module")
+                .filter { it.blocked == null }
+                .map { it.asset.name }
+                .toSet(),
         )
         assertEquals(2, probe.calls)
     }

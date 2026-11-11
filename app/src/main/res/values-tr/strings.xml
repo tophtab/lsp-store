@@ -239,7 +239,6 @@
     <string name="variant_picker_subtitle">Bu sürüm birden fazla APK göndermektedir.</string>
     <string name="variant_recommended">Tavsiye edilen</string>
     <string name="variant_reason_matches_device">Cihazınızla eşleşir (%1$s)</string>
-    <string name="variant_needs_confirm">Bu sürümde çeşitli modeller sunulmaktadır; birini seçin</string>
     <string name="variant_bundled_apps">Bu sürümdeki diğer uygulamalar (%1$d)</string>
     <string name="variant_bundled_app">Aynı sürümde modülle birlikte gönderilir</string>
     <string name="variant_incompatible_min_sdk">Android %1$d+ gerektirir (%2$d\'iniz var)</string>
@@ -247,7 +246,6 @@
     <string name="variant_incompatible_api">LSPosed API\'si gerektirir %1$d</string>
     <string name="variant_remembered">Gelecekteki güncellemeler için seçiminizi hatırladım</string>
     <string name="variant_debug_badge">hata ayıklama derlemesi</string>
-    <string name="variant_not_applicable">Bu cihazda mevcut değil</string>
     <string name="variant_not_module">Bu APK bir Xposed modülü değil</string>
     <string name="installed_finished_skipped">%1$d modülün farklı bir seçeneğe ihtiyacı var - güncellemek için bunları açın</string>
     <string name="installed_finished_cancelled">İptal edildi: %1$d</string>

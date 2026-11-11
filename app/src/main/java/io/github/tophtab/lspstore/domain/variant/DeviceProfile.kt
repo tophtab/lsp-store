@@ -3,9 +3,11 @@ package io.github.tophtab.lspstore.domain.variant
 /**
  * Everything the resolver may know about the current device.
  *
- * P0 only fills [sdkInt] and [abis]; [vendorOs] and [lsposedApi] are populated by
- * the P1 device-profile work and stay null until then. Keeping the fields here
- * means callers and the scoring table do not have to change later.
+ * [sdkInt] and [abis] come straight from `Build`. [vendorOs] is parsed from
+ * `getprop` (with `Build.VERSION.INCREMENTAL` as fallback) and [lsposedApi] from
+ * the installed manager's version (`org.lsposed.manager` or Vector's
+ * `org.matrix.vector.manager`) - see `DeviceProfileProvider`. Every field except
+ * the first two may stay null: an unknown value only disables that scoring axis.
  */
 data class DeviceProfile(
     val sdkInt: Int,

@@ -449,17 +449,6 @@ internal fun AssetSheetContent(
                 modifier = Modifier.fillMaxWidth().heightIn(max = 420.dp),
                 contentPadding = PaddingValues(vertical = 8.dp),
             ) {
-                if (eligible.size > 1 && eligible.none { it.recommended }) {
-                    item(key = "confirm") {
-                        KomiText(
-                            text = stringResource(R.string.variant_needs_confirm),
-                            role = KomiTextRole.Label,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontSize = 12.sp,
-                            modifier = Modifier.padding(bottom = 6.dp),
-                        )
-                    }
-                }
                 items(eligible, key = { it.asset.name }) { candidate ->
                     AssetRow(
                         candidate = candidate,

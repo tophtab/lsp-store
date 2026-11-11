@@ -155,7 +155,10 @@ curl -sS "https://backup.modules.lsposed.org/modules.json"
   - ABI：`arm64-v8a`、`armeabi-v7a`、`universal`、`x86_64`（SmsCode、QAuxv、bbzq）。
   - 构建类型：`debug` / `release`（WaEnhancer、Impad、Lyric Getter）。
   - 平台/flavor：`OS2` / `OS3`（HyperCeiler）、`api102` / `legacy`（飞书回退）、`sign` / 伴生 App（CoolapkReviver）。
-- 结论：ABI 启发式能解决一部分，但 **flavor/debug 对无法可靠自动选择**；当前“后台遇到 Choose 就跳过”是对的，问题是跳过后**没有通知**（P0-4）。
+- 结论：ABI 启发式能解决一部分，但 **flavor/debug 对无法可靠自动选择**；当时“后台遇到 Choose 就跳过”是权宜，
+  问题是跳过后**没有通知**（P0-4）。
+  **（2026-11 更新：`Choose` 已删除，见 `variant-selection.md` 第 12 节——已装模块跟已装副本、未装模块跟
+  设备画像，设备也分不出来时按“原版构建 → 下载量 → 文件名”给出默认包；后台更新不再跳过模块。）**
 
 ### 2.6 仓库端点、镜像与新鲜度
 
@@ -477,7 +480,7 @@ fun targetFor(channel: UpdateChannel): ChannelTarget? = when (channel) {
 - Beta 通道：stable `60-3.5.0`、beta `37-2.7.0`、已安装 `40-3.0` → 应提示 stable（P0-1）。
 - Skip：code=1 的模块跳 `1-1.0` 后发布 `1-1.1` → 仍提示（P0-2）。
 - 详情/索引不一致：index `42-2.0.5`、detail `14-1.1.1` → prepare 失败且不下载（P0-3）。
-- 多 APK 且 resolver 返回 Choose → worker 仍发通知，`updates` 计数包含 ambiguous（P0-4）。
+- 多 APK 且 resolver 分不出变体 → 仍返回可安装的默认包并完成更新（1.5.5 起不再跳过；旧行为是发通知后跳过）。
 - 通知去重：同一 set 第二次检查不发新通知；tag 变化后发（P0-5）。
 - 增量刷新：水位线命中只请求 1 页；水位线之后有新 release 时请求下一页；新模块只能靠全量发现（P1-1）。
 - 端点：origin 403 → 回退分页；备份索引不参与“最新版本”判定（P1-2）。

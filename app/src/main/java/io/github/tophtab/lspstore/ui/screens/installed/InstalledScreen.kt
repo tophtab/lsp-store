@@ -981,13 +981,7 @@ private fun VariantPickerDialog(
             )
             Spacer(Modifier.height(4.dp))
             KomiText(
-                text = stringResource(
-                    if (picker.needsConfirm) {
-                        R.string.variant_needs_confirm
-                    } else {
-                        R.string.variant_picker_subtitle
-                    },
-                ),
+                text = stringResource(R.string.variant_picker_subtitle),
                 role = KomiTextRole.Label,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize = 12.sp,

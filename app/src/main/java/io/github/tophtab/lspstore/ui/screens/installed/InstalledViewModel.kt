@@ -31,6 +31,7 @@ import io.github.tophtab.lspstore.domain.usecase.BatchInstallControl
 import io.github.tophtab.lspstore.domain.usecase.BatchInstallPhase
 import io.github.tophtab.lspstore.domain.usecase.BatchInstallState
 import io.github.tophtab.lspstore.domain.usecase.UpdateChecker
+import io.github.tophtab.lspstore.domain.variant.InstalledVariantHint
 import io.github.tophtab.lspstore.domain.variant.ModuleVariantState
 import io.github.tophtab.lspstore.domain.variant.ScoredAsset
 import io.github.tophtab.lspstore.domain.variant.VariantDecision
@@ -70,7 +71,6 @@ data class InstalledVariantPicker(
     val title: String,
     val selectedAssetName: String?,
     val candidates: List<ScoredAsset> = emptyList(),
-    val needsConfirm: Boolean = false,
     val isLoading: Boolean = true,
     val error: String? = null,
     /** Set when the picker was opened by an update tap; picking continues that update. */
@@ -381,8 +381,11 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
                             state = state,
                             device = container.deviceProfile,
                             expectedPackage = info.installed.packageName,
+                            installed = InstalledVariantHint.of(info.installed),
                         )
                         when (val decision = resolution.decision) {
+                            // The resolver always picks one asset; the row's own
+                            // "choose variant" action is the override.
                             is VariantDecision.Pick -> {
                                 val version = release.version
                                 coordinator.start(
@@ -398,8 +401,6 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
                                     ),
                                 )
                             }
-
-                            is VariantDecision.Choose -> openVariantPicker(repoPackage, info)
 
                             is VariantDecision.NotApplicable -> {
                                 libraryRepository.setVariantState(
@@ -674,24 +675,27 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
                     val state = variantStates[repoPackageName] ?: ModuleVariantState()
                     // The user explicitly opened the picker: probing is allowed
                     // even when the module is currently NOT_APPLICABLE.
+                    val installedHint = (
+                        caller?.installed
+                            ?: installed.firstOrNull { it.packageName == repoPackageName }
+                        )?.let(InstalledVariantHint::of)
                     val resolution = container.resolveVariantUseCase.resolve(
                         release = release,
                         state = state,
                         device = container.deviceProfile,
                         expectedPackage = repoPackageName,
                         forceProbe = true,
+                        installed = installedHint,
                     )
-                    val recommendedName = when (val decision = resolution.decision) {
-                        is VariantDecision.Pick -> decision.asset.name
-                        is VariantDecision.Choose ->
-                            decision.candidates.firstOrNull { it.recommended }?.asset?.name
-
-                        else -> null
-                    }
-                    val candidates = resolver.candidates(
-                        release,
-                        probes = resolution.probes,
-                        expectedPackage = repoPackageName,
+                    val recommendedName =
+                        (resolution.decision as? VariantDecision.Pick)?.asset?.name
+                    val candidates = resolver.ranked(
+                        resolver.candidates(
+                            release,
+                            probes = resolution.probes,
+                            expectedPackage = repoPackageName,
+                            installed = installedHint,
+                        ),
                     ).map { it.copy(recommended = it.asset.name == recommendedName) }
                     val selectedName = state.signature?.let { signature ->
                         candidates.firstOrNull { signature.matches(it.traits) }?.asset?.name
@@ -703,7 +707,6 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
                             variantPicker = picker.copy(
                                 candidates = candidates,
                                 selectedAssetName = selectedName,
-                                needsConfirm = resolution.decision is VariantDecision.Choose,
                                 isLoading = false,
                                 error = if (candidates.isEmpty()) {
                                     container.appContext.getString(R.string.installed_variant_empty)
