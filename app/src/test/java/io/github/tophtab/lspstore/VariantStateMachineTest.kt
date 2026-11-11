@@ -18,6 +18,7 @@ import io.github.tophtab.lspstore.domain.variant.onEvaluatedNoCandidate
 import io.github.tophtab.lspstore.domain.variant.onInstallFailed
 import io.github.tophtab.lspstore.domain.variant.onInstallSucceeded
 import io.github.tophtab.lspstore.domain.variant.onUserPicked
+import io.github.tophtab.lspstore.domain.variant.withoutAdvisoryApiVerdicts
 
 class VariantStateMachineTest {
 
@@ -70,6 +71,32 @@ class VariantStateMachineTest {
         assertEquals(ModuleVariantState.Status.TRUSTED, state.status)
         assertEquals(picked, state.signature)
         assertEquals(0, state.failures)
+    }
+
+    @Test
+    fun advisoryApiVerdictsAreForgottenButOtherVerdictsStay() {
+        val apiVerdict = ModuleVariantState().onEvaluatedNoCandidate(
+            Reason(Reason.Kind.API_TOO_NEW, listOf("102")),
+            now = 5L,
+        )
+        val sdkVerdict = ModuleVariantState().onEvaluatedNoCandidate(
+            Reason(Reason.Kind.MIN_SDK_TOO_HIGH, listOf("35", "33")),
+            now = 6L,
+        )
+        val trusted = ModuleVariantState(
+            status = ModuleVariantState.Status.TRUSTED,
+            signature = signature,
+        )
+
+        val cleaned = mapOf(
+            "api" to apiVerdict,
+            "sdk" to sdkVerdict,
+            "trusted" to trusted,
+        ).withoutAdvisoryApiVerdicts()
+
+        assertEquals(setOf("sdk", "trusted"), cleaned.keys)
+        assertEquals(sdkVerdict, cleaned["sdk"])
+        assertEquals(trusted, cleaned["trusted"])
     }
 
     @Test

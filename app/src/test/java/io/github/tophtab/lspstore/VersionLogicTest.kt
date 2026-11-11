@@ -5,12 +5,15 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.time.Instant
 import io.github.tophtab.lspstore.domain.model.InstalledModule
 import io.github.tophtab.lspstore.domain.model.Module
 import io.github.tophtab.lspstore.domain.model.ModuleVersion
 import io.github.tophtab.lspstore.domain.model.Release
 import io.github.tophtab.lspstore.domain.model.SkippedVersion
 import io.github.tophtab.lspstore.domain.usecase.UpdateChecker
+import io.github.tophtab.lspstore.domain.variant.ModuleVariantState
+import io.github.tophtab.lspstore.domain.variant.Reason
 
 class VersionLogicTest {
 
@@ -353,6 +356,65 @@ class VersionLogicTest {
             ).size,
         )
     }
+
+    @Test
+    fun staleNotApplicableVerdictDoesNotHideANewerRelease() {
+        val installed = InstalledModule("a.b", 10, "1.0", "T", true, null)
+        // Verdict written by the pre-1.2.0 API-number block, before this release
+        // existed: the module is re-checked instead of hidden forever (#65, #69).
+        val verdict = ModuleVariantState(
+            status = ModuleVariantState.Status.NOT_APPLICABLE,
+            reason = Reason(Reason.Kind.API_TOO_NEW, listOf("102")).storageKey(),
+            updatedAt = Instant.parse("2026-11-04T09:50:31Z").toEpochMilli(),
+        )
+
+        assertEquals(
+            1,
+            UpdateChecker.findUpdates(
+                listOf(installed),
+                listOf(notApplicableModule()),
+                variantStates = mapOf("a.b" to verdict),
+            ).size,
+        )
+    }
+
+    @Test
+    fun freshNotApplicableVerdictStillHidesItsOwnRelease() {
+        val installed = InstalledModule("a.b", 10, "1.0", "T", true, null)
+        // The verdict is newer than the release it was computed for, so it still
+        // keeps the module out of the update list.
+        val verdict = ModuleVariantState(
+            status = ModuleVariantState.Status.NOT_APPLICABLE,
+            reason = Reason(Reason.Kind.MIN_SDK_TOO_HIGH, listOf("35", "33")).storageKey(),
+            updatedAt = Instant.parse("2026-11-10T09:50:31Z").toEpochMilli(),
+        )
+
+        assertTrue(
+            UpdateChecker.findUpdates(
+                listOf(installed),
+                listOf(notApplicableModule()),
+                variantStates = mapOf("a.b" to verdict),
+            ).isEmpty(),
+        )
+    }
+
+    /** Installed 1.0, published 1.1 - the release the verdicts above are compared to. */
+    private fun notApplicableModule() = Module(
+        packageName = "a.b",
+        title = "T",
+        summary = null,
+        url = null,
+        homepageUrl = null,
+        sourceUrl = null,
+        updatedAt = null,
+        stars = 0,
+        contributor = null,
+        contributorAvatarUrl = null,
+        latestRelease = ModuleVersion.parse("11-1.1"),
+        latestBetaRelease = null,
+        latestSnapshotRelease = null,
+        latestReleaseTime = "2026-11-08T06:52:49Z",
+    )
 
     @Test
     fun releaseMatchesTheVersionTheIndexPromised() {

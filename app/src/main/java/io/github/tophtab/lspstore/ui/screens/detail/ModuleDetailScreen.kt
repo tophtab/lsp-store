@@ -144,7 +144,6 @@ import io.github.tophtab.lspstore.ui.design.compactCount
 import io.github.tophtab.lspstore.ui.theme.KomiTextRole
 import io.github.tophtab.lspstore.ui.theme.LocalKomiType
 import io.github.tophtab.lspstore.ui.variant.variantReasonText
-import io.github.tophtab.lspstore.ui.variant.variantStateReasonText
 import io.github.tophtab.lspstore.ui.variant.variantTags
 
 @Composable
@@ -513,11 +512,12 @@ private fun DetailContent(
     }
     val selectedAsset = candidates.firstOrNull { it.asset.name == selectedAssetName }?.asset
     var userPickedAsset by rememberSaveable(selectedRelease?.tagName, variantState) { mutableStateOf(false) }
-    val storedNotApplicable = variantState.isNotApplicable &&
-        selectedRelease?.tagName == latestRelease?.tagName
+    // The stored verdict is only a cache of a past decision: the resolver just
+    // re-checked it against the release on screen. A stale NOT_APPLICABLE - a
+    // framework upgrade, or the pre-1.2.0 API-number block - must not disable the
+    // install button (#65, #69).
     val notApplicableReason = (decision as? VariantDecision.NotApplicable)
         ?.let { context.variantReasonText(it.reason) }
-        ?: if (storedNotApplicable) context.variantStateReasonText(variantState) else null
     val selectedDebug = selectedAsset?.let { asset ->
         candidates.firstOrNull { it.asset.name == asset.name }?.debug
             ?: parseTraits(asset.name).debugName
@@ -598,8 +598,7 @@ private fun DetailContent(
                 targetVersion = selectedRelease?.version,
                 showUpdateHint = state.updateAvailable && selectedRelease == latestRelease,
                 installEnabled = (selectedAsset != null || decision is VariantDecision.Choose) &&
-                    decision !is VariantDecision.NotApplicable &&
-                    !storedNotApplicable,
+                    decision !is VariantDecision.NotApplicable,
                 notApplicableReason = notApplicableReason,
                 debugBuild = selectedDebug,
                 onInstall = {

@@ -21,6 +21,7 @@ import io.github.tophtab.lspstore.domain.variant.VariantSignature
 import io.github.tophtab.lspstore.domain.variant.onInstallFailed
 import io.github.tophtab.lspstore.domain.variant.onInstallSucceeded
 import io.github.tophtab.lspstore.domain.variant.parseTraits
+import io.github.tophtab.lspstore.domain.variant.withoutAdvisoryApiVerdicts
 
 private val Context.libraryDataStore by preferencesDataStore(name = "library")
 
@@ -69,6 +70,13 @@ interface LibraryRepository {
 
     /** Idempotent one-off migration of the legacy asset-name preferences. */
     suspend fun migratePreferredVariants()
+
+    /**
+     * Idempotent one-off migration: forget NOT_APPLICABLE verdicts that the
+     * pre-1.2.0 API-number block wrote (#65, #69). Since #47 the libxposed API
+     * number only warns, so such a verdict must not disable updates for good.
+     */
+    suspend fun dropAdvisoryApiVerdicts()
 
     /** Whole library as one payload for an export file. */
     suspend fun snapshot(): LibraryBackup
@@ -308,6 +316,16 @@ class LibraryRepositoryImpl(private val context: Context) : LibraryRepository {
             }
             prefs[Keys.VARIANT_STATE] = encodeVariantStates(states)
             prefs[Keys.PREFERRED_VARIANTS] = ""
+        }
+    }
+
+    override suspend fun dropAdvisoryApiVerdicts() {
+        context.libraryDataStore.edit { prefs ->
+            val current = decodeVariantStates(prefs[Keys.VARIANT_STATE])
+            val cleaned = current.withoutAdvisoryApiVerdicts()
+            if (cleaned.size != current.size) {
+                prefs[Keys.VARIANT_STATE] = encodeVariantStates(cleaned)
+            }
         }
     }
 

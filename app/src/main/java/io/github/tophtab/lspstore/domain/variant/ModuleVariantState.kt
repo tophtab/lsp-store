@@ -83,3 +83,17 @@ fun ModuleVariantState.onEvaluatedNoCandidate(
     reason = reason.storageKey(),
     updatedAt = now,
 )
+
+/**
+ * Drops the NOT_APPLICABLE verdicts that the pre-1.2.0 API-number block wrote.
+ *
+ * A stored [ModuleVariantState.reason] of [Reason.Kind.API_TOO_NEW] can only come
+ * from a build that refused installs over `minApiVersion`. Since #47 that number
+ * is advisory, so the verdict must not keep the module out of updates or disable
+ * its install button any more (#65, #69). Current builds never store it.
+ */
+fun Map<String, ModuleVariantState>.withoutAdvisoryApiVerdicts(): Map<String, ModuleVariantState> =
+    filterValues { state ->
+        !state.isNotApplicable ||
+            Reason.fromStorage(state.reason)?.kind != Reason.Kind.API_TOO_NEW
+    }
