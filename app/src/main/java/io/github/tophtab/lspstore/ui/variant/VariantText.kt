@@ -3,7 +3,6 @@ package io.github.tophtab.lspstore.ui.variant
 import android.content.Context
 import io.github.tophtab.lspstore.R
 import io.github.tophtab.lspstore.domain.variant.ApkMeta
-import io.github.tophtab.lspstore.domain.variant.ModuleVariantState
 import io.github.tophtab.lspstore.domain.variant.Reason
 import io.github.tophtab.lspstore.domain.variant.VariantTraits
 import io.github.tophtab.lspstore.domain.variant.VendorOs
@@ -48,10 +47,6 @@ fun Context.variantReasonText(reason: Reason): String = when (reason.kind) {
     Reason.Kind.NOT_A_MODULE -> getString(R.string.variant_not_module)
     Reason.Kind.NO_APK -> getString(R.string.detail_no_apk)
 }
-
-/** Explanation stored on a NOT_APPLICABLE state, if there is one. */
-fun Context.variantStateReasonText(state: ModuleVariantState): String? =
-    Reason.fromStorage(state.reason)?.let(::variantReasonText)
 
 /**
  * Compact labels for a picker row: real probe values win over file-name tokens.

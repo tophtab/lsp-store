@@ -33,15 +33,24 @@ object UpdateChecker {
                 }
                 val variantState = variantStates[module.packageName]
                     ?: variantStates[installedModule.packageName]
-                // No installable variant on this device: stay out of updates,
-                // notifications, batch installs and downloads.
-                if (variantState?.isNotApplicable == true) return@mapNotNull null
-
                 // Pre-release tracking is per module and keyed by either the
                 // installed or the linked repository package.
                 val includePreReleases = module.packageName in preReleases ||
                     installedModule.packageName in preReleases
                 val latest = module.latestFor(includePreReleases) ?: return@mapNotNull null
+                // A verdict only covers the release it was computed for; a newer upload
+                // is re-checked instead of staying hidden (variant-selection.md 7.1).
+                // Without this, one stale verdict - the API-number block removed in
+                // 1.2.0, say - hides the module from updates, notifications and batch
+                // installs for good (#65, #69).
+                if (variantState?.isNotApplicable == true &&
+                    verdictCoversRelease(
+                        variantState,
+                        module.latestTimeFor(includePreReleases),
+                    )
+                ) {
+                    return@mapNotNull null
+                }
                 val skippedVersion = skipped[installedModule.packageName] ?: skipped[module.packageName]
                 if (skippedVersion?.matches(latest) == true) return@mapNotNull null
                 if (isUpdateAvailable(latest, installedModule, module.latestTimeFor(includePreReleases))) {
@@ -52,6 +61,19 @@ object UpdateChecker {
             }
             .sortedByDescending { it.latest.versionCode }
             .toList()
+    }
+
+    /**
+     * Whether a NOT_APPLICABLE verdict still describes the latest release. The
+     * publish time is unknown for some cache entries; keeping the verdict is the
+     * conservative answer there, exactly as before.
+     */
+    private fun verdictCoversRelease(state: ModuleVariantState, publishedRaw: String?): Boolean {
+        val published = publishedRaw
+            ?.let { runCatching { Instant.parse(it) }.getOrNull() }
+            ?.toEpochMilli()
+            ?: return true
+        return state.updatedAt >= published
     }
 
     /**
