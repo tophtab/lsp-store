@@ -137,7 +137,20 @@ data class Module(
      * [chosenStream]: a higher versionCode wins, and equal codes fall back to the
      * stream that was published last.
      */
-    fun latestFor(channel: ReleaseChannel): ModuleVersion? = newestOf(
+    fun latestFor(channel: ReleaseChannel): ModuleVersion? = newestOf(channel)?.first
+
+    /** Publication time of the tag that [latestFor] returns for [channel]. */
+    fun latestTimeFor(channel: ReleaseChannel): String? = newestOf(channel)?.second
+
+    private fun newestOf(channel: ReleaseChannel): Pair<ModuleVersion?, String?>? =
+        streamsFor(channel)
+            .filter { it.first != null }
+            .maxWithOrNull(
+                compareBy<Pair<ModuleVersion?, String?>> { it.first!!.versionCode }
+                    .thenBy { it.second.orEmpty() },
+            )
+
+    private fun streamsFor(channel: ReleaseChannel): List<Pair<ModuleVersion?, String?>> =
         when (channel) {
             ReleaseChannel.STABLE -> listOf(latestRelease to latestReleaseTime)
             ReleaseChannel.PRE_RELEASE -> listOf(
@@ -150,17 +163,7 @@ data class Module(
                 latestBetaRelease to latestBetaReleaseTime,
                 latestSnapshotRelease to latestSnapshotReleaseTime,
             )
-        },
-    )
-
-    private fun newestOf(streams: List<Pair<ModuleVersion?, String?>>): ModuleVersion? =
-        streams
-            .filter { it.first != null }
-            .maxWithOrNull(
-                compareBy<Pair<ModuleVersion?, String?>> { it.first!!.versionCode }
-                    .thenBy { it.second.orEmpty() },
-            )
-            ?.first
+        }
 
     /**
      * The version and publication time to compare against the installed copy.

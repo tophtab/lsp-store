@@ -21,6 +21,7 @@ import io.github.tophtab.lspstore.data.repository.PendingInstallRepository
 import io.github.tophtab.lspstore.data.translation.ContentLanguage
 import io.github.tophtab.lspstore.data.translation.translationLanguage
 import io.github.tophtab.lspstore.di.AppContainer
+import io.github.tophtab.lspstore.domain.usecase.UpdateChecker
 import io.github.tophtab.lspstore.ui.toUserMessage
 import io.github.tophtab.lspstore.ui.variant.variantReasonText
 import io.github.tophtab.lspstore.domain.model.InstalledModule
@@ -38,6 +39,7 @@ import io.github.tophtab.lspstore.domain.variant.VariantSignature
 import io.github.tophtab.lspstore.domain.variant.onEvaluatedNoCandidate
 import io.github.tophtab.lspstore.domain.variant.onUserPicked
 import io.github.tophtab.lspstore.domain.variant.parseTraits
+import kotlin.coroutines.cancellation.CancellationException
 
 data class VariantPicker(
     val release: Release,
@@ -99,10 +101,17 @@ data class ModuleDetailUiState(
     val updateAvailable: Boolean
         get() {
             val installed = installed ?: return false
-            val latest = detail?.module?.latestFor(channel) ?: return false
-            // Same rule as UpdateChecker: a versionName-only difference caused by
-            // author naming is not an update.
-            return latest.versionCode > installed.versionCode
+            val module = detail?.module ?: return false
+            val latest = module.latestFor(channel) ?: return false
+            // Same rule as the Installed tab (UpdateChecker), including the
+            // same-code re-upload case: a versionName-only difference caused by
+            // author naming is not an update, a re-upload after the installed
+            // copy landed is.
+            return UpdateChecker.isUpdateAvailable(
+                latest = latest,
+                installed = installed,
+                publishedRaw = module.latestTimeFor(channel),
+            )
         }
 }
 
@@ -131,6 +140,7 @@ class ModuleDetailViewModel(
 
     private var summaryTranslationJob: Job? = null
     private var readmeTranslationJob: Job? = null
+    private var loadJob: Job? = null
     private val notesTranslationJobs = mutableMapOf<String, Job>()
 
     /**
@@ -252,7 +262,10 @@ class ModuleDetailViewModel(
 
     fun load() {
         cancelTranslations()
-        viewModelScope.launch {
+        // A second refresh replaces the first one: two loads writing `detail`
+        // and the translation state would otherwise race each other.
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             _state.update {
                 it.copy(
                     isLoading = it.detail == null,
@@ -288,6 +301,9 @@ class ModuleDetailViewModel(
                     maybeAutoTranslate()
                 }
             }.onFailure { error ->
+                // A cancelled load was replaced by the one that cancelled it;
+                // writing its error would flash a failure over fresher data.
+                if (error is CancellationException) return@onFailure
                 _state.update {
                     it.copy(
                         isLoading = false,

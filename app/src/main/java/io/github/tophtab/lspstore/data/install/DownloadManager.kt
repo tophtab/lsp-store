@@ -8,7 +8,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -20,6 +20,15 @@ import java.security.MessageDigest
 import java.util.concurrent.ConcurrentHashMap
 
 enum class DownloadStatus { RUNNING, PAUSED, COMPLETED, FAILED, CANCELLED }
+
+/**
+ * True once the transfer reached an outcome. Waiting code must treat these as the
+ * only statuses it can finish on; every other status means "not there yet".
+ */
+internal val DownloadStatus.isTerminal: Boolean
+    get() = this == DownloadStatus.COMPLETED ||
+        this == DownloadStatus.FAILED ||
+        this == DownloadStatus.CANCELLED
 
 data class DownloadTask(
     val key: String,
@@ -138,13 +147,14 @@ class DownloadManager(
             }
         }
         try {
-            val task = _tasks
-                .mapNotNull { it[key] }
-                .first {
-                    it.status == DownloadStatus.COMPLETED ||
-                        it.status == DownloadStatus.FAILED ||
-                        it.status == DownloadStatus.CANCELLED
-                }
+            // Waiting for a terminal status is not enough: a cleared task
+            // (Settings > clear downloaded APKs calls clearAll) disappears from
+            // the map for good, and waiting for an outcome that can never arrive
+            // would park the install chain forever. A missing task therefore ends
+            // the wait as a cancellation.
+            val task = _tasks.map { it[key] }
+                .first { it == null || it.status.isTerminal }
+            if (task == null) throw IOException("Download cancelled")
             return when (task.status) {
                 DownloadStatus.COMPLETED -> task.file ?: throw IOException("missing file")
                 DownloadStatus.CANCELLED -> throw IOException("Download cancelled")

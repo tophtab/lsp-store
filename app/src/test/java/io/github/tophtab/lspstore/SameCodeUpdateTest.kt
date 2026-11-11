@@ -5,7 +5,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import io.github.tophtab.lspstore.domain.model.InstalledModule
 import io.github.tophtab.lspstore.domain.model.Module
+import io.github.tophtab.lspstore.domain.model.ModuleDetail
 import io.github.tophtab.lspstore.domain.usecase.UpdateChecker
+import io.github.tophtab.lspstore.ui.screens.detail.ModuleDetailUiState
 
 /**
  * LSPosed treats "same versionCode, different versionName" as an update, which
@@ -102,5 +104,39 @@ class SameCodeUpdateTest {
         )
         assertEquals(1, updates.size)
         assertEquals("1.0b", updates.first().latest.versionName)
+    }
+
+    /** The module page asks the same question for its "update available" hint. */
+    private fun detail(module: Module) = ModuleDetail(
+        module = module,
+        readmeHtml = null,
+        collaborators = emptyList(),
+        scope = emptyList(),
+        releases = emptyList(),
+        betaReleases = emptyList(),
+        snapshotReleases = emptyList(),
+        sourceUrl = null,
+        homepageUrl = null,
+    )
+
+    private fun detailSaysUpdate(installed: InstalledModule, module: Module): Boolean =
+        ModuleDetailUiState(detail = detail(module), installed = installed).updateAvailable
+
+    @Test
+    fun detailPageAgreesOnSameCodeReUploads() {
+        val published = "2023-11-15T00:00:00Z"
+        val reupload = module(10, "1.0b", published)
+
+        assertTrue(hasUpdate(installed(10, "1.0"), reupload))
+        assertTrue(detailSaysUpdate(installed(10, "1.0"), reupload))
+    }
+
+    @Test
+    fun detailPageAgreesOnNamingDrift() {
+        val published = "2023-11-14T00:00:00Z"
+        val drift = module(10, "4.7_AraafRoyall", published)
+
+        assertEquals(false, hasUpdate(installed(10, "4.8"), drift))
+        assertEquals(false, detailSaysUpdate(installed(10, "4.8"), drift))
     }
 }

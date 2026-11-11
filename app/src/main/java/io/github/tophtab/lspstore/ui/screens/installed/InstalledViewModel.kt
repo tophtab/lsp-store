@@ -23,6 +23,7 @@ import io.github.tophtab.lspstore.domain.model.PendingInstall
 import io.github.tophtab.lspstore.domain.model.ReleaseAsset
 import io.github.tophtab.lspstore.domain.model.SkippedVersion
 import io.github.tophtab.lspstore.domain.model.UpdateInfo
+import io.github.tophtab.lspstore.domain.model.repoModuleFor
 import io.github.tophtab.lspstore.domain.model.sortedByLabel
 import io.github.tophtab.lspstore.domain.usecase.BatchFailure
 import io.github.tophtab.lspstore.domain.usecase.BatchFailureKind
@@ -870,8 +871,8 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
         val xposed = installed.filter { it.isXposedModule }
         val pendingPackages = pending.keys
         val repoPackageByInstalled = xposed.mapNotNull { module ->
-            val repo = byPackage[module.packageName] ?: links[module.packageName]?.let(byPackage::get)
-            repo?.let { module.packageName to it.packageName }
+            repoModuleFor(module.packageName, byPackage, links)
+                ?.let { module.packageName to it.packageName }
         }.toMap()
         // Pending installs move out of updates/idle, as in komi-store's apps list.
         val updates = UpdateChecker

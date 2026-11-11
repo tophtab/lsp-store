@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -12,6 +13,7 @@ import io.github.tophtab.lspstore.R
 import io.github.tophtab.lspstore.di.AppContainer
 import io.github.tophtab.lspstore.ui.toUserMessage
 import io.github.tophtab.lspstore.domain.model.Module
+import kotlin.coroutines.cancellation.CancellationException
 
 /** One row in the "Ignored repository modules" screen. */
 data class IgnoredModuleItem(
@@ -35,6 +37,7 @@ class IgnoredModulesViewModel(private val container: AppContainer) : ViewModel()
 
     private var index: List<Module> = emptyList()
     private var ignored: Set<String> = emptySet()
+    private var loadJob: Job? = null
 
     init {
         viewModelScope.launch {
@@ -57,7 +60,8 @@ class IgnoredModulesViewModel(private val container: AppContainer) : ViewModel()
     fun refresh() = load()
 
     private fun load() {
-        viewModelScope.launch {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             _state.update { it.copy(isLoading = index.isEmpty(), error = null) }
             runCatching { moduleRepository.getIndex(force = false) }
                 .onSuccess { modules ->
@@ -66,6 +70,8 @@ class IgnoredModulesViewModel(private val container: AppContainer) : ViewModel()
                     rebuild()
                 }
                 .onFailure { error ->
+                    // A cancelled load was replaced by the one that cancelled it.
+                    if (error is CancellationException) return@onFailure
                     _state.update {
                         it.copy(
                             isLoading = false,
