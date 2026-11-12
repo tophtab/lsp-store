@@ -70,6 +70,31 @@ class RangeProbeTest {
     }
 
     @Test
+    fun cancelledProbeCanRetryTheSameAssetWithoutANegativeCacheEntry() = kotlinx.coroutines.test.runTest {
+        val bytes = apkBytes(ManifestFixture().bytes())
+        val reference = FakeRangeSource(bytes)
+        val entered = kotlinx.coroutines.CompletableDeferred<Unit>()
+        var stall = true
+        val source = ByteRangeSource { url, start, end ->
+            if (stall) {
+                entered.complete(Unit)
+                kotlinx.coroutines.awaitCancellation()
+            }
+            reference.read(url, start, end)
+        }
+        val directory = Files.createTempDirectory("cancelled-probe").toFile()
+        try {
+            val probe = RangeProbe(source, File(directory, "cache.json"), json)
+            val first = async { probe.fetch(asset(bytes)) }
+            entered.await()
+            first.cancel()
+            first.join()
+            stall = false
+            assertNotNull(probe.fetch(asset(bytes)))
+        } finally { directory.deleteRecursively() }
+    }
+
+    @Test
     fun readsManifestAbisAndModulePropOverRanges() = runBlocking {
         val apk = apkBytes(ManifestFixture(provider = true).bytes())
         val source = FakeRangeSource(apk)
