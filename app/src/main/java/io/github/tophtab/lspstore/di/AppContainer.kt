@@ -282,6 +282,7 @@ class AppContainer(context: Context) {
             completePendingInstall(packageName)
         } else {
             if (
+                installer.foregroundState.isResumed &&
                 pending.createdAt > 0L &&
                 System.currentTimeMillis() - pending.createdAt > ABANDONED_PENDING_MS
             ) {
@@ -321,6 +322,10 @@ class AppContainer(context: Context) {
      * repository directly so a completed install is never dropped unrecorded.
      */
     suspend fun prunePendingInstalls(installed: List<InstalledModule>): List<PendingInstall> {
+        // An external installer may still be waiting for its user. Background
+        // scans must not expire its APK or hand-off; package events still record
+        // completed installs, and returning to the store settles cancellations.
+        if (!installer.foregroundState.isResumed) return emptyList()
         val reached = runCatching { pendingInstallRepository.prune(installed) }
             .getOrDefault(emptyList())
         reached.forEach {
@@ -360,10 +365,15 @@ class AppContainer(context: Context) {
                         installed = match,
                         now = System.currentTimeMillis(),
                         abandonAfterMs = abandonAfterMs,
+                        allowAbandonment = installer.foregroundState.isResumed,
                     )
                 ) {
                     PendingSettlement.LANDED -> completePendingInstall(pending.packageName)
-                    PendingSettlement.ABANDONED -> cancelPendingInstall(pending.packageName)
+                    PendingSettlement.ABANDONED -> {
+                        if (installer.foregroundState.isResumed) {
+                            cancelPendingInstall(pending.packageName)
+                        }
+                    }
                     PendingSettlement.PENDING -> stillOpen += pending
                 }
             }
@@ -381,7 +391,9 @@ class AppContainer(context: Context) {
         unresolved.forEach { pending ->
             val expired = abandonUnresolved ||
                 (pending.createdAt > 0L && now - pending.createdAt > abandonAfterMs)
-            if (expired) cancelPendingInstall(pending.packageName)
+            if (expired && installer.foregroundState.isResumed) {
+                cancelPendingInstall(pending.packageName)
+            }
         }
     }
 
@@ -391,11 +403,15 @@ class AppContainer(context: Context) {
      * this is where its slot and pending entry are released.
      */
     suspend fun reconcileAfterInstallerReturn() {
+        if (!installer.foregroundState.isResumed) return
         val pendingKeys = runCatching { pendingInstallRepository.pending.first().keys }
             .getOrDefault(emptySet())
         // Release the gate before reconciling: a cancelled dialog would otherwise
         // make the next install wait for its full timeout.
-        pendingKeys.forEach { systemInstallSerializer.markCompleted(it) }
+        pendingKeys.forEach {
+            if (!installer.foregroundState.isResumed) return
+            systemInstallSerializer.markCompleted(it)
+        }
         reconcilePendingInstalls(
             retries = 4,
             retryDelayMs = 800L,

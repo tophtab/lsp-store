@@ -110,6 +110,34 @@ class PendingInstallSettlementTest {
     }
 
     @Test
+    fun waitingInExternalInstallerDoesNotExpireOrLoseItsApk() {
+        assertEquals(
+            PendingSettlement.PENDING,
+            settlePendingInstall(
+                pending = pending(versionCode = 11L, createdAt = 1_000L),
+                installed = installed(versionCode = 10L),
+                now = 121_000L,
+                abandonAfterMs = 60_000L,
+                allowAbandonment = false,
+            ),
+        )
+    }
+
+    @Test
+    fun successfulBackgroundInstallStillLandsAfterTheTimeout() {
+        assertEquals(
+            PendingSettlement.LANDED,
+            settlePendingInstall(
+                pending = pending(versionCode = 11L, createdAt = 1_000L),
+                installed = installed(versionCode = 11L, lastUpdateTime = 120_000L),
+                now = 121_000L,
+                abandonAfterMs = 60_000L,
+                allowAbandonment = false,
+            ),
+        )
+    }
+
+    @Test
     fun landedBeatsTheAbandonWindow() {
         assertEquals(
             PendingSettlement.LANDED,
