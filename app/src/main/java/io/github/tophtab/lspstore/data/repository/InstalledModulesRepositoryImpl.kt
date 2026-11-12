@@ -11,6 +11,7 @@ import io.github.tophtab.lspstore.data.device.AndroidInstalledPackageSource
 import io.github.tophtab.lspstore.data.device.InstalledPackageScanner
 import io.github.tophtab.lspstore.data.device.InstalledPackageSource
 import io.github.tophtab.lspstore.domain.model.InstalledModule
+import io.github.tophtab.lspstore.data.cache.writeCacheAtomically
 import java.io.File
 
 interface InstalledModulesRepository {
@@ -110,7 +111,8 @@ class InstalledModulesRepositoryImpl internal constructor(
 
     private suspend fun writeCache(modules: List<InstalledModule>) = withContext(Dispatchers.IO) {
         runCatching {
-            cacheFile.writeText(
+            writeCacheAtomically(
+                cacheFile,
                 json.encodeToString(InstalledCache.serializer(), InstalledCache(modules)),
             )
         }
