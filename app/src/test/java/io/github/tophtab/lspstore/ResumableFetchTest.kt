@@ -5,8 +5,17 @@ import java.io.IOException
 import java.net.InetAddress
 import java.net.ServerSocket
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import okhttp3.OkHttpClient
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
@@ -44,6 +53,8 @@ class ResumableFetchTest {
         val headers: Map<String, String> = emptyMap(),
         /** Advertise the full body but write only this many bytes, then close. */
         val truncateAt: Int? = null,
+        /** Hold the body after flushing headers, simulating a stalled transfer. */
+        val beforeBody: (() -> Unit)? = null,
     )
 
     /**
@@ -68,7 +79,11 @@ class ResumableFetchTest {
                 } catch (_: IOException) {
                     return
                 }
-                client.use { serve(it) }
+                try {
+                    client.use { serve(it) }
+                } catch (_: IOException) {
+                    // Cancellation may close the client before the body is sent.
+                }
             }
         }
 
@@ -101,6 +116,8 @@ class ResumableFetchTest {
             }
             val output = client.getOutputStream()
             output.write(headers.toByteArray())
+            output.flush()
+            response.beforeBody?.invoke()
             response.body?.let { body ->
                 output.write(body, 0, response.truncateAt?.coerceAtMost(body.size) ?: body.size)
             }
@@ -285,6 +302,88 @@ class ResumableFetchTest {
             assertTrue(progress.contains(100L to 250L))
             assertEquals(250L to 250L, progress.last())
             assertEquals(250L, serverSize)
+        }
+    }
+
+    @Test
+    fun droppedConnectionUsesServerSizeWhenIndexSizeIsStale() = runBlocking {
+        TestServer { range ->
+            if (range == "bytes=100-") {
+                Response(
+                    206,
+                    payload.copyOfRange(100, payload.size),
+                    mapOf("Content-Range" to "bytes 100-249/250"),
+                )
+            } else {
+                Response(200, payload, truncateAt = 100)
+            }
+        }.use { server ->
+            val target = tempFile("stale-size.apk")
+            val (serverSize, _) = download(server, target, expectedSize = 50L)
+
+            assertArrayEquals(payload, target.readBytes())
+            assertEquals(listOf(null, "bytes=100-"), server.ranges)
+            assertEquals(250L, serverSize)
+        }
+    }
+
+    @Test
+    fun cancellationStopsWritingAndDoesNotReportCompletion() = runBlocking {
+        TestServer { Response(200, payload) }.use { server ->
+            val target = tempFile("cancelled.apk")
+            var completed = false
+            val transfer = launch(Dispatchers.IO) {
+                val transferContext = currentCoroutineContext()
+                fetchResumable(
+                    client = client,
+                    url = server.url,
+                    target = target,
+                    resumeFrom = 0L,
+                    expectedSize = payload.size.toLong(),
+                    onProgress = { _, _ -> transferContext.cancel() },
+                    retry = fastRetry,
+                )
+                completed = true
+            }
+            transfer.join()
+
+            assertTrue(transfer.isCancelled)
+            assertEquals(false, completed)
+            assertEquals(0L, target.length())
+            assertEquals(1, server.ranges.size)
+        }
+    }
+
+    @Test
+    fun cancellationInterruptsAStalledResponseBody() = runBlocking {
+        val releaseBody = CountDownLatch(1)
+        val startedReading = CompletableDeferred<Unit>()
+        TestServer {
+            Response(200, payload, beforeBody = { releaseBody.await(5, TimeUnit.SECONDS) })
+        }.use { server ->
+            val target = tempFile("stalled.apk")
+            val transfer = launch(Dispatchers.IO) {
+                fetchResumable(
+                    client = client,
+                    url = server.url,
+                    target = target,
+                    resumeFrom = 0L,
+                    expectedSize = payload.size.toLong(),
+                    onProgress = { _, _ -> startedReading.complete(Unit) },
+                    retry = fastRetry,
+                )
+            }
+            try {
+                withTimeout(2_000L) {
+                    startedReading.await()
+                    transfer.cancelAndJoin()
+                }
+                assertEquals(0L, target.length())
+                assertEquals(1, server.ranges.size)
+            } finally {
+                transfer.cancel()
+                releaseBody.countDown()
+            }
         }
     }
 

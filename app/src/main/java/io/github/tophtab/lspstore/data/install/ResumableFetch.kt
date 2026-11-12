@@ -3,10 +3,20 @@ package io.github.tophtab.lspstore.data.install
 import java.io.File
 import java.io.IOException
 import java.io.RandomAccessFile
+import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.cancellation.CancellationException
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.Response
 
 /**
  * Downloads [url] into [target], continuing from [resumeFrom] when the server
@@ -34,7 +44,9 @@ internal suspend fun fetchResumable(
     onProgress: (Long, Long) -> Unit,
     retry: DownloadRetry = DownloadRetry(),
 ): Long {
+    currentCoroutineContext().ensureActive()
     var offset = resumeOffset(resumeFrom, expectedSize)
+    var resumeSize = expectedSize
     if (offset == 0L) runCatching { target.delete() }
 
     var attempt = 1
@@ -42,7 +54,12 @@ internal suspend fun fetchResumable(
         try {
             var from = offset
             while (true) {
-                val total = fetchOnce(client, url, target, from, onProgress)
+                val total = fetchOnce(client, url, target, from) { downloaded, total ->
+                    // Once a response arrives, its size is authoritative. A stale
+                    // index must not discard bytes on every mid-stream retry.
+                    resumeSize = total.coerceAtLeast(0L)
+                    onProgress(downloaded, total)
+                }
                 if (total != null) {
                     // A body that ends quietly before the advertised size (a
                     // proxy or a server that closes exactly on a packet
@@ -61,8 +78,9 @@ internal suspend fun fetchResumable(
         } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (error: IOException) {
+            currentCoroutineContext().ensureActive()
             // Keep whatever landed: the next attempt asks for the missing tail.
-            offset = resumeOffset(target.length(), expectedSize)
+            offset = resumeOffset(target.length(), resumeSize)
             if (offset == 0L) runCatching { target.delete() }
             if (!retry.canRetry(attempt, error)) throw error
             attempt++
@@ -134,19 +152,47 @@ internal fun isTransientDownloadError(error: Throwable): Boolean = when (error) 
  * Returns the asset size the server reported (0 when unknown), or null when the
  * server refused or misplaced the requested range.
  */
-private fun fetchOnce(
+private suspend fun fetchOnce(
     client: OkHttpClient,
     url: String,
     target: File,
     resumeFrom: Long,
     onProgress: (Long, Long) -> Unit,
-): Long? {
+): Long? = coroutineScope {
     val request = Request.Builder()
         .url(url)
         .apply { if (resumeFrom > 0) header("Range", "bytes=$resumeFrom-") }
         .build()
 
-    client.newCall(request).execute().use { response ->
+    val call = client.newCall(request)
+    // Cancelling a coroutine does not interrupt OkHttp's blocking socket reads.
+    // Keep a child listening for cancellation until the response is fully closed.
+    val cancelCall = launch(start = CoroutineStart.UNDISPATCHED) {
+        try {
+            awaitCancellation()
+        } finally {
+            call.cancel()
+        }
+    }
+    try {
+        withContext(Dispatchers.IO) {
+            currentCoroutineContext().ensureActive()
+            writeResponse(call.execute(), target, resumeFrom, onProgress, currentCoroutineContext())
+        }
+    } finally {
+        cancelCall.cancel()
+    }
+}
+
+private fun writeResponse(
+    response: Response,
+    target: File,
+    resumeFrom: Long,
+    onProgress: (Long, Long) -> Unit,
+    transferContext: CoroutineContext,
+): Long? {
+    response.use {
+        transferContext.ensureActive()
         if (response.code == 416 && resumeFrom > 0) return null
         if (!response.isSuccessful) throw HttpStatusException(response.code)
 
@@ -170,15 +216,19 @@ private fun fetchOnce(
             file.seek(if (appending) resumeFrom else 0L)
             var downloaded = if (appending) resumeFrom else 0L
             onProgress(downloaded, total)
+            transferContext.ensureActive()
 
             body.byteStream().use { input ->
                 val buffer = ByteArray(64 * 1024)
                 while (true) {
+                    transferContext.ensureActive()
                     val read = input.read(buffer)
                     if (read <= 0) break
+                    transferContext.ensureActive()
                     file.write(buffer, 0, read)
                     downloaded += read
                     onProgress(downloaded, total)
+                    transferContext.ensureActive()
                 }
             }
         }

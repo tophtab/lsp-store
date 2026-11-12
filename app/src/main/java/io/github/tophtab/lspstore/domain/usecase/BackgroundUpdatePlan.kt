@@ -10,7 +10,9 @@ object BackgroundUpdatePlan {
 
     /** Stable identity of an update set, for notification dedup. Order-independent. */
     fun notificationSignature(updates: List<UpdateInfo>): String =
-        updates.map { "${it.module.packageName}:${it.latest.versionCode}" }
+        // Many modules reuse their versionCode; the release tag distinguishes
+        // those updates just as it does for skipped versions.
+        updates.map { "${it.module.packageName}:${it.latest.raw}" }
             .sorted()
             .joinToString("\n")
 

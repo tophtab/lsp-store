@@ -2,6 +2,7 @@ package io.github.tophtab.lspstore.data.install
 
 import android.content.Context
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
@@ -98,11 +99,13 @@ class DownloadManager(
         return key
     }
 
+    @Synchronized
     fun pause(key: String) {
         updateTask(key) { it.copy(status = DownloadStatus.PAUSED) }
-        jobs.remove(key)?.cancel()
+        jobs[key]?.cancel()
     }
 
+    @Synchronized
     fun resume(asset: ReleaseAsset) {
         val key = keyOf(asset)
         if (_tasks.value[key]?.status == DownloadStatus.PAUSED) {
@@ -110,12 +113,13 @@ class DownloadManager(
         }
     }
 
+    @Synchronized
     fun cancel(key: String) {
         val task = _tasks.value[key] ?: return
         // A finished transfer is shared by whoever asked for it; cancelling one
         // consumer must not delete an APK another install chain is about to use.
         if (task.status == DownloadStatus.COMPLETED) return
-        jobs.remove(key)?.cancel()
+        jobs[key]?.cancel()
         updateTask(key) { it.copy(status = DownloadStatus.CANCELLED) }
         // The working copy is ours; a cancelled transfer should not leave it
         // behind. A later attempt simply starts from zero.
@@ -166,6 +170,9 @@ class DownloadManager(
     }
 
     private fun launchDownload(key: String, asset: ReleaseAsset) {
+        // Keep the cancelled writer reachable until it has closed the file. A
+        // quick pause/resume must not open a second writer on the same partial.
+        val previousJob = jobs[key]
         val target = targetFile(key, asset)
         val existingBytes = if (target.exists()) target.length() else 0L
         // A file that already covers the asset is a finished transfer whose
@@ -191,8 +198,11 @@ class DownloadManager(
 
         DownloadService.start(context)
 
-        jobs[key] = scope.launch {
+        // Register before starting so a fast completion cannot leave a finished
+        // job in the map, and pause/cancel can always find the new transfer.
+        val job = scope.launch(start = CoroutineStart.LAZY) {
             try {
+                previousJob?.join()
                 val urls = listOfNotNull(asset.downloadUrl.takeIf { it.isNotBlank() }, asset.fallbackUrl)
                     .distinct()
                 var lastError: Throwable? = null
@@ -257,6 +267,8 @@ class DownloadManager(
                 if (self != null) jobs.remove(key, self) else jobs.remove(key)
             }
         }
+        jobs[key] = job
+        job.start()
     }
 
     private fun targetFile(key: String, asset: ReleaseAsset): File {
@@ -311,11 +323,12 @@ class DownloadManager(
     }
 
     /** Cancels every running/paused download, keeping the tasks list for history. */
+    @Synchronized
     fun cancelAllActive() {
         _tasks.value.keys.toList().forEach { key ->
             val task = _tasks.value[key] ?: return@forEach
             if (task.status == DownloadStatus.RUNNING || task.status == DownloadStatus.PAUSED) {
-                jobs.remove(key)?.cancel()
+                jobs[key]?.cancel()
                 updateTask(key) { it.copy(status = DownloadStatus.CANCELLED) }
             }
         }
@@ -327,7 +340,11 @@ class DownloadManager(
      * so none of them can publish a file after the cleanup query ran.
      */
     suspend fun clearAll() = withContext(Dispatchers.IO) {
-        jobs.values.forEach { it.cancel() }
+        val runningDownloads = jobs.values.toList()
+        runningDownloads.forEach { it.cancel() }
+        // Socket cancellation wakes blocked reads; joining also waits for their
+        // file handles to close before files and exported copies are removed.
+        runningDownloads.forEach { it.join() }
         jobs.clear()
         val runningExports = exports.values.toList()
         runningExports.forEach { it.cancel() }

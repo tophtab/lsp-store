@@ -60,6 +60,22 @@ class BackgroundUpdatePlanTest {
     }
 
     @Test
+    fun signatureChangesWhenVersionNameChangesWithTheSameCode() {
+        val first = update("a.one", "a.one", 1)
+        val nextVersion = ModuleVersion(1, "2.0", "1-2.0")
+        val second = first.copy(
+            module = first.module.copy(latestRelease = nextVersion),
+            latest = nextVersion,
+        )
+
+        assertEquals(
+            false,
+            BackgroundUpdatePlan.notificationSignature(listOf(first)) ==
+                BackgroundUpdatePlan.notificationSignature(listOf(second)),
+        )
+    }
+
+    @Test
     fun autoUpdateTargetsDropOwnedPackagesAndKeepOrder() {
         val pendingInstalled = update("repo.pending", "installed.pending", 10)
         val runningRepo = update("running.repo", "installed.repo", 20)
