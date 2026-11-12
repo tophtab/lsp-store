@@ -554,7 +554,12 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
         _state.update { current ->
             if (!isCurrentBatch(generation)) return@update current
             val item = current.rowStates[packageName] ?: return@update current
-            current.copy(rowStates = current.rowStates + (packageName to transform(item)))
+            val next = transform(item)
+            val duplicate = next.phase == BatchInstallPhase.ALREADY_RUNNING && item.phase != BatchInstallPhase.ALREADY_RUNNING
+            current.copy(
+                batchTotal = (current.batchTotal - if (duplicate) 1 else 0).coerceAtLeast(0),
+                rowStates = current.rowStates + (packageName to next),
+            )
         }
         val after = _state.value.rowStates[packageName]?.phase
         if (after == null || after == before) return

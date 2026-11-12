@@ -396,7 +396,7 @@ class ModuleDetailViewModel(
     /** Explicit user action: fill the picker/sheet with probed metadata when allowed. */
     fun probeRelease(release: Release, forceProbe: Boolean = false) {
         val request = probeRequests.begin(release)
-        val state = stateForModule(variantStates, _state.value.installed) ?: ModuleVariantState()
+        val state = stateForModule(variantStates, _state.value.installed)
         viewModelScope.launch {
             _state.update { it.copy(isProbing = true, probes = emptyMap(), probedTag = release.tagName, probedRelease = release, variantResolution = null) }
             val resolution = container.resolveVariantUseCase.resolve(
@@ -716,8 +716,9 @@ class ModuleDetailViewModel(
     private fun stateForModule(
         states: Map<String, ModuleVariantState>,
         installed: InstalledModule?,
-    ): ModuleVariantState? = (states[packageName]
-        ?: installed?.packageName?.let { states[it] })?.forInstalled(installed)
+    ): ModuleVariantState = (states[packageName]
+        ?: installed?.packageName?.let { states[it] }
+        ?: ModuleVariantState()).forInstalled(installed)
 
     /** Direct install, or an imported module linked to this repository entry. */
     private suspend fun findInstalled(): InstalledModule? {
