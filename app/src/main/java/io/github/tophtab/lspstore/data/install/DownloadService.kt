@@ -36,6 +36,7 @@ class DownloadService : Service() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private lateinit var manager: DownloadManager
     private var observing = false
+    private val notificationThrottle = DownloadNotificationThrottle()
 
     override fun onCreate() {
         super.onCreate()
@@ -57,7 +58,7 @@ class DownloadService : Service() {
             return START_NOT_STICKY
         }
 
-        startForegroundCompat(buildNotification(initial))
+        if (notificationThrottle.shouldPublish(initial)) startForegroundCompat(buildNotification(initial))
 
         if (!observing) {
             observing = true
@@ -71,8 +72,10 @@ class DownloadService : Service() {
                         stopSelf()
                         return@collect
                     }
-                    NotificationManagerCompat.from(this@DownloadService)
-                        .notify(NOTIFICATION_ID, buildNotification(active))
+                    if (notificationThrottle.shouldPublish(active)) {
+                        NotificationManagerCompat.from(this@DownloadService)
+                            .notify(NOTIFICATION_ID, buildNotification(active))
+                    }
                 }
             }
         }
