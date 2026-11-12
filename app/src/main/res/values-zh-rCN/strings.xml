@@ -347,6 +347,8 @@
     <string name="updates_auto_title">自动更新完成</string>
     <string name="updates_auto_text">已更新 %1$d 个，失败 %2$d 个</string>
     <string name="updates_auto_text_ok">已更新 %1$d 个模块</string>
+    <string name="updates_auto_channel_name">自动更新结果</string>
+    <string name="updates_auto_channel_desc">Root 自动更新的静默汇总</string>
     <string name="settings_updates_section">更新</string>
     <string name="settings_background_check">后台检查</string>
     <string name="settings_background_check_desc">按计划获取模块仓库并提示新版本。</string>

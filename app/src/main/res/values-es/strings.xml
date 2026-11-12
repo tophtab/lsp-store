@@ -310,6 +310,8 @@
     <string name="updates_auto_title">Actualización automática finalizada</string>
     <string name="updates_auto_text">%1$d actualizados, %2$d fallidos</string>
     <string name="updates_auto_text_ok">%1$d módulos actualizados</string>
+    <string name="updates_auto_channel_name">Resultados de actualización automática</string>
+    <string name="updates_auto_channel_desc">Resúmenes silenciosos de las actualizaciones automáticas con root</string>
     <string name="settings_updates_section">Actualizaciones</string>
     <string name="settings_background_check">Comprobar en segundo plano</string>
     <string name="settings_background_check_desc">Obtén el repositorio de módulos y avisa de nuevas versiones de forma periódica.</string>

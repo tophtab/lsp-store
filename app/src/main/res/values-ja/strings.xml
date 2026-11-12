@@ -310,6 +310,8 @@
     <string name="updates_auto_title">自動更新が完了しました</string>
     <string name="updates_auto_text">%1$d 件更新、%2$d 件失敗</string>
     <string name="updates_auto_text_ok">%1$d 件のモジュールを更新しました</string>
+    <string name="updates_auto_channel_name">自動更新の結果</string>
+    <string name="updates_auto_channel_desc">root 自動更新のサイレント概要</string>
     <string name="settings_updates_section">更新</string>
     <string name="settings_background_check">バックグラウンドで確認</string>
     <string name="settings_background_check_desc">定期的にモジュールリポジトリを取得し、新しいバージョンを通知します。</string>
