@@ -22,11 +22,23 @@ object UpdateScheduler {
     const val WORK_NAME = "lspstore_update_check"
     const val DEFAULT_INTERVAL_HOURS = 24
 
+    /** Bounds of a custom interval; the repository clamps stored values to them. */
+    const val MIN_INTERVAL_HOURS = 1
+    const val MAX_INTERVAL_HOURS = 168
+
     /**
-     * Intervals the settings picker offers, in hours (1, 2, 3, 5 and 7 days);
-     * the stored value is one of these.
+     * Presets the settings picker offers, in hours (1, 2, 3, 5 and 7 days).
+     * A stored interval may also be any other hour inside
+     * [MIN_INTERVAL_HOURS]..[MAX_INTERVAL_HOURS].
      */
     val INTERVAL_OPTIONS: List<Int> = listOf(24, 48, 72, 120, 168)
+
+    /**
+     * A custom interval typed in settings: a whole number of hours inside
+     * [MIN_INTERVAL_HOURS]..[MAX_INTERVAL_HOURS], or null for anything else.
+     */
+    fun parseIntervalHours(raw: String): Int? =
+        raw.trim().toIntOrNull()?.takeIf { it in MIN_INTERVAL_HOURS..MAX_INTERVAL_HOURS }
 
     /**
      * Enables, retunes or cancels the periodic check. [reset] false keeps the
@@ -45,7 +57,7 @@ object UpdateScheduler {
             return
         }
         val request = PeriodicWorkRequestBuilder<UpdateCheckWorker>(
-            intervalHours.coerceAtLeast(1).toLong(),
+            intervalHours.coerceIn(MIN_INTERVAL_HOURS, MAX_INTERVAL_HOURS).toLong(),
             TimeUnit.HOURS,
         )
             .setConstraints(

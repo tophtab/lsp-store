@@ -7,6 +7,7 @@
     <string name="action_sort">ترتيب</string>
     <string name="action_share">مشاركة</string>
     <string name="action_cancel">إلغاء</string>
+    <string name="action_save">حفظ</string>
     <string name="action_download">تنزيل</string>
     <string name="action_update">تحديث</string>
     <string name="action_unskip">إلغاء التجاهل</string>
@@ -315,6 +316,12 @@
     <string name="settings_background_check_desc">اجلب مستودع الوحدات وأبلغ عن الإصدارات الجديدة وفق جدول.</string>
     <string name="settings_check_interval">فاصل الفحص</string>
     <string name="settings_interval_days">%1$d ي</string>
+    <string name="settings_check_interval_desc">اضغط مطولاً على الفاصل لتعيين ساعات مخصصة.</string>
+    <string name="settings_check_interval_custom_current">فاصل مخصص: %1$d س. اضغط مطولاً للتغيير.</string>
+    <string name="settings_check_interval_custom_title">فاصل فحص مخصص</string>
+    <string name="settings_check_interval_custom_desc">أدخل عددًا صحيحًا من الساعات بين 1 و168.</string>
+    <string name="settings_check_interval_custom_invalid">أدخل رقمًا بين 1 و168.</string>
+    <string name="settings_check_interval_hours_label">ساعات</string>
     <string name="settings_wifi_only">Wi-Fi فقط</string>
     <string name="settings_wifi_only_desc">شغّل الفحص في الخلفية على الشبكات غير المقننة فقط.</string>
     <string name="settings_auto_update">تثبيت التحديثات تلقائيًا</string>

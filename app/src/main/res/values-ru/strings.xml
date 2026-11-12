@@ -7,6 +7,7 @@
     <string name="action_sort">Сортировка</string>
     <string name="action_share">Поделиться</string>
     <string name="action_cancel">Отмена</string>
+    <string name="action_save">Сохранить</string>
     <string name="action_download">Скачать</string>
     <string name="action_update">Обновить</string>
     <string name="action_unskip">Не игнорировать</string>
@@ -315,6 +316,12 @@
     <string name="settings_background_check_desc">Загружает репозиторий модулей и сообщает о новых версиях по расписанию.</string>
     <string name="settings_check_interval">Интервал проверки</string>
     <string name="settings_interval_days">%1$d д</string>
+    <string name="settings_check_interval_desc">Удерживайте интервал, чтобы задать часы вручную.</string>
+    <string name="settings_check_interval_custom_current">Свой интервал: %1$d ч. Удерживайте, чтобы изменить.</string>
+    <string name="settings_check_interval_custom_title">Свой интервал проверки</string>
+    <string name="settings_check_interval_custom_desc">Введите целое число часов от 1 до 168.</string>
+    <string name="settings_check_interval_custom_invalid">Введите число от 1 до 168.</string>
+    <string name="settings_check_interval_hours_label">Часы</string>
     <string name="settings_wifi_only">Только Wi-Fi</string>
     <string name="settings_wifi_only_desc">Запускать фоновую проверку только в сетях без лимита трафика.</string>
     <string name="settings_auto_update">Устанавливать обновления автоматически</string>

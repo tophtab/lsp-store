@@ -7,6 +7,7 @@
     <string name="action_sort">Ordina</string>
     <string name="action_share">Condividi</string>
     <string name="action_cancel">Annulla</string>
+    <string name="action_save">Salva</string>
     <string name="action_download">Scarica</string>
     <string name="action_update">Aggiorna</string>
     <string name="action_unskip">Non ignorare più</string>
@@ -315,6 +316,12 @@
     <string name="settings_background_check_desc">Scarica il repository dei moduli e segnala le nuove versioni a intervalli regolari.</string>
     <string name="settings_check_interval">Intervallo di controllo</string>
     <string name="settings_interval_days">%1$d g</string>
+    <string name="settings_check_interval_desc">Tieni premuto l\'intervallo per impostare ore personalizzate.</string>
+    <string name="settings_check_interval_custom_current">Intervallo personalizzato: %1$d h. Tieni premuto per modificarlo.</string>
+    <string name="settings_check_interval_custom_title">Intervallo di controllo personalizzato</string>
+    <string name="settings_check_interval_custom_desc">Inserisci un numero intero di ore da 1 a 168.</string>
+    <string name="settings_check_interval_custom_invalid">Inserisci un numero da 1 a 168.</string>
+    <string name="settings_check_interval_hours_label">Ore</string>
     <string name="settings_wifi_only">Solo Wi-Fi</string>
     <string name="settings_wifi_only_desc">Esegui il controllo in background solo su reti non a consumo.</string>
     <string name="settings_auto_update">Installa gli aggiornamenti automaticamente</string>

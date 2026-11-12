@@ -7,6 +7,7 @@
     <string name="action_sort">क्रमबद्ध करें</string>
     <string name="action_share">साझा करें</string>
     <string name="action_cancel">रद्द करें</string>
+    <string name="action_save">सहेजें</string>
     <string name="action_download">डाउनलोड करें</string>
     <string name="action_update">अपडेट करें</string>
     <string name="action_unskip">अनदेखा करना बंद करें</string>
@@ -315,6 +316,12 @@
     <string name="settings_background_check_desc">निर्धारित समय पर मॉड्यूल रिपॉज़िटरी लाएँ और नए संस्करणों की सूचना दें।</string>
     <string name="settings_check_interval">जाँच अंतराल</string>
     <string name="settings_interval_days">%1$d दिन</string>
+    <string name="settings_check_interval_desc">कस्टम घंटे सेट करने के लिए अंतराल को देर तक दबाएँ.</string>
+    <string name="settings_check_interval_custom_current">कस्टम अंतराल: %1$d घं. बदलने के लिए देर तक दबाएँ.</string>
+    <string name="settings_check_interval_custom_title">कस्टम जाँच अंतराल</string>
+    <string name="settings_check_interval_custom_desc">1 से 168 के बीच घंटों की पूर्ण संख्या दर्ज करें.</string>
+    <string name="settings_check_interval_custom_invalid">1 से 168 के बीच कोई संख्या दर्ज करें.</string>
+    <string name="settings_check_interval_hours_label">घंटे</string>
     <string name="settings_wifi_only">केवल Wi-Fi</string>
     <string name="settings_wifi_only_desc">बैकग्राउंड जाँच केवल अनमीटर्ड नेटवर्क पर चलाएँ।</string>
     <string name="settings_auto_update">अपडेट स्वचालित रूप से इंस्टॉल करें</string>

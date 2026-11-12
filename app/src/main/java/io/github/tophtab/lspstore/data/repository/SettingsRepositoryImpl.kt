@@ -10,6 +10,7 @@ import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import io.github.tophtab.lspstore.data.install.DownloadSlots
+import io.github.tophtab.lspstore.data.update.UpdateScheduler
 import io.github.tophtab.lspstore.domain.model.SortOrder
 import io.github.tophtab.lspstore.domain.model.ThemeMode
 import io.github.tophtab.lspstore.domain.model.TranslationProvider
@@ -33,7 +34,10 @@ interface SettingsRepository {
     /** Periodic background check; off until the user turns it on. */
     val backgroundCheck: Flow<Boolean>
 
-    /** Hours between background checks; one of UpdateScheduler.INTERVAL_OPTIONS. */
+    /**
+     * Hours between background checks: one of UpdateScheduler.INTERVAL_OPTIONS
+     * or a custom value inside UpdateScheduler.MIN_INTERVAL_HOURS..MAX_INTERVAL_HOURS.
+     */
     val checkIntervalHours: Flow<Int>
 
     /** Require an unmetered network for the background check. */
@@ -130,7 +134,10 @@ class SettingsRepositoryImpl(private val context: Context) : SettingsRepository 
         .map { it[Keys.BACKGROUND_CHECK] ?: false }
 
     override val checkIntervalHours: Flow<Int> = context.settingsDataStore.data
-        .map { (it[Keys.CHECK_INTERVAL_HOURS] ?: 24).coerceIn(1, 168) }
+        .map {
+            (it[Keys.CHECK_INTERVAL_HOURS] ?: UpdateScheduler.DEFAULT_INTERVAL_HOURS)
+                .coerceIn(UpdateScheduler.MIN_INTERVAL_HOURS, UpdateScheduler.MAX_INTERVAL_HOURS)
+        }
 
     override val wifiOnly: Flow<Boolean> = context.settingsDataStore.data
         .map { it[Keys.WIFI_ONLY] ?: false }
@@ -212,7 +219,10 @@ class SettingsRepositoryImpl(private val context: Context) : SettingsRepository 
     }
 
     override suspend fun setCheckIntervalHours(hours: Int) {
-        context.settingsDataStore.edit { it[Keys.CHECK_INTERVAL_HOURS] = hours.coerceIn(1, 168) }
+        context.settingsDataStore.edit {
+            it[Keys.CHECK_INTERVAL_HOURS] =
+                hours.coerceIn(UpdateScheduler.MIN_INTERVAL_HOURS, UpdateScheduler.MAX_INTERVAL_HOURS)
+        }
     }
 
     override suspend fun setWifiOnly(enabled: Boolean) {

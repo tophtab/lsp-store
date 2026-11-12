@@ -7,6 +7,7 @@
     <string name="action_sort">Sırala</string>
     <string name="action_share">Paylaş</string>
     <string name="action_cancel">İptal</string>
+    <string name="action_save">Kaydet</string>
     <string name="action_download">İndir</string>
     <string name="action_update">Güncelle</string>
     <string name="action_unskip">Yoksaymayı bırak</string>
@@ -315,6 +316,12 @@
     <string name="settings_background_check_desc">Modül deposunu çeker ve zamanlanmış olarak yeni sürümleri bildirir.</string>
     <string name="settings_check_interval">Denetim aralığı</string>
     <string name="settings_interval_days">%1$d g</string>
+    <string name="settings_check_interval_desc">Özel saat ayarlamak için aralığa uzun basın.</string>
+    <string name="settings_check_interval_custom_current">Özel aralık: %1$d sa. Değiştirmek için uzun basın.</string>
+    <string name="settings_check_interval_custom_title">Özel denetim aralığı</string>
+    <string name="settings_check_interval_custom_desc">1 ile 168 arasında tam saat sayısı girin.</string>
+    <string name="settings_check_interval_custom_invalid">1 ile 168 arasında bir sayı girin.</string>
+    <string name="settings_check_interval_hours_label">Saat</string>
     <string name="settings_wifi_only">Yalnızca Wi-Fi</string>
     <string name="settings_wifi_only_desc">Arka plan denetimini yalnızca ölçümlenmeyen ağlarda çalıştır.</string>
     <string name="settings_auto_update">Güncellemeleri otomatik yükle</string>
