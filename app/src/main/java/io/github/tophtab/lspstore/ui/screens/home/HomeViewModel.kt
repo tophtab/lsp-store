@@ -17,7 +17,6 @@ import io.github.tophtab.lspstore.domain.model.HiddenModules
 import io.github.tophtab.lspstore.domain.model.InstalledModule
 import io.github.tophtab.lspstore.domain.model.Module
 import io.github.tophtab.lspstore.domain.model.repoPackagesOf
-import java.time.Instant
 import kotlin.coroutines.cancellation.CancellationException
 
 data class HomeUiState(
@@ -58,6 +57,8 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
     val state = _state.asStateFlow()
 
     private var index: List<Module> = emptyList()
+    private var byPackage: Map<String, Module> = emptyMap()
+    private var shelves = HomeShelves()
     private var installed: List<InstalledModule> = emptyList()
     private var links: Map<String, String> = emptyMap()
     private var hidden: HiddenModules = HiddenModules()
@@ -67,13 +68,13 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
 
     init {
         viewModelScope.launch {
-            libraryRepository.links.collect { links = it; rebuild() }
+            libraryRepository.links.collect { links = it; rebuildInstalledBadges() }
         }
         viewModelScope.launch {
             // Ignoring a module, by package or by keyword, hides it from every
             // shelf and from search, but not from the installed tab: the package
             // is still installed and still needs managing.
-            libraryRepository.hiddenModules.collect { hidden = it; rebuild() }
+            libraryRepository.hiddenModules.collect { hidden = it; rebuildShelves() }
         }
         load(force = false)
     }
@@ -112,7 +113,7 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
                 searchTick = if (query.isNotBlank()) it.searchTick + 1 else it.searchTick,
             )
         }
-        rebuild()
+        _state.update { it.copy(searchResults = shelves.search(query)) }
     }
 
     fun clearSearch() {
@@ -141,7 +142,7 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
             if (index.isEmpty()) {
                 val cachedIndex = moduleRepository.getCachedIndex()
                 if (cachedIndex != null) {
-                    index = cachedIndex
+                    updateIndex(cachedIndex)
                     installedRepository.getCachedInstalledModules()?.let { installed = it }
                     paintedFromCache = true
                     _state.update {
@@ -151,7 +152,7 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
                             error = null,
                         )
                     }
-                    rebuild()
+                    rebuildInstalledBadges()
                 }
             }
 
@@ -172,7 +173,7 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
                 runCatching { installedRepository.getInstalledModules() }
                     .onSuccess { installedModules ->
                         installed = installedModules
-                        rebuild()
+                        rebuildInstalledBadges()
                     }
             }
 
@@ -181,7 +182,7 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
             // reuse the refreshed in-memory index. Pull-to-refresh forces it.
             runCatching { moduleRepository.refreshIndexIfNeeded(force) }
                 .onSuccess { modules ->
-                    index = modules
+                    updateIndex(modules)
                     _state.update {
                         it.copy(
                             isLoading = false,
@@ -192,7 +193,6 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
                             refreshTick = it.refreshTick + 1,
                         )
                     }
-                    rebuild()
                 }
                 .onFailure { error ->
                     // A cancelled load was replaced by the one that cancelled
@@ -215,38 +215,27 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
         }
     }
 
-    private fun rebuild() {
-        if (index.isEmpty()) return
-        val byPackage = index.associateBy { it.packageName }
-        val installedPackages = repoPackagesOf(installed, byPackage, links)
+    private fun updateIndex(modules: List<Module>) {
+        index = modules
+        byPackage = modules.associateBy { it.packageName }
+        rebuildShelves()
+        rebuildInstalledBadges()
+    }
 
-        // Both shelves list the whole index, not a top-N cut: the repository is
-        // the only place to browse modules, so a fixed limit hid the rest.
-        // Zero-star modules stay at the end of the "Most starred" list instead
-        // of being dropped.
-        val visible = hidden.filter(index)
-        val recentlyUpdated = visible
-            .sortedByDescending { it.lastPublishedAt ?: Instant.EPOCH }
-        val mostStarred = visible
-            .sortedWith(compareByDescending<Module> { it.stars }.thenBy { it.title })
-
-        val query = _state.value.searchQuery.trim()
-        val searchResults = if (query.isBlank()) {
-            emptyList()
-        } else {
-            visible
-                .filter { module -> module.matchesText(query) }
-                .sortedByDescending { it.lastPublishedAt ?: Instant.EPOCH }
-        }
-
+    private fun rebuildShelves() {
+        shelves = HomeShelves.build(index, hidden)
         _state.update {
             it.copy(
-                recentlyUpdated = recentlyUpdated,
-                mostStarred = mostStarred,
-                installedPackages = installedPackages,
-                searchResults = searchResults,
+                recentlyUpdated = shelves.recentlyUpdated,
+                mostStarred = shelves.mostStarred,
+                searchResults = shelves.search(it.searchQuery),
             )
         }
+    }
+
+    private fun rebuildInstalledBadges() {
+        val installedPackages = repoPackagesOf(installed, byPackage, links)
+        _state.update { it.copy(installedPackages = installedPackages) }
     }
 
     companion object {
