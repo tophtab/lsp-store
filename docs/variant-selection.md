@@ -1,5 +1,8 @@
 # 多 APK 变体选择：数据评估与设计
 
+> 当前安装规则见 [install-behavior.md](install-behavior.md)。本文保留历史调研，
+> 下文的硬过滤、警告和确认提案不再作为安装限制。
+
 本文是对 `modules.lsposed.org` 全量数据的实测分析，以及“一个 release 里有多个 APK 时该装哪个”的设计提案。
 是对当前实现（`Release.defaultAsset()` → `List<ReleaseAsset>.bestForAbis()`）的替换方案讨论，尚未实现。
 

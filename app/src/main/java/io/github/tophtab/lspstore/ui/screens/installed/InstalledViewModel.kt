@@ -25,6 +25,7 @@ import io.github.tophtab.lspstore.domain.model.SkippedVersion
 import io.github.tophtab.lspstore.domain.model.UpdateInfo
 import io.github.tophtab.lspstore.domain.model.expectedPackage
 import io.github.tophtab.lspstore.domain.model.repoModuleFor
+import io.github.tophtab.lspstore.domain.model.installedCopyForRepo
 import io.github.tophtab.lspstore.domain.model.sortedByLabel
 import io.github.tophtab.lspstore.domain.model.tracksPreReleases
 import io.github.tophtab.lspstore.domain.usecase.BatchFailure
@@ -41,7 +42,6 @@ import io.github.tophtab.lspstore.domain.variant.VariantResolver
 import io.github.tophtab.lspstore.domain.variant.VariantSignature
 import io.github.tophtab.lspstore.domain.variant.onEvaluatedNoCandidate
 import io.github.tophtab.lspstore.domain.variant.onUserPicked
-import io.github.tophtab.lspstore.domain.variant.parseTraits
 import io.github.tophtab.lspstore.ui.RefreshScrollGate
 import io.github.tophtab.lspstore.ui.toUserMessage
 import io.github.tophtab.lspstore.ui.variant.variantReasonText
@@ -593,7 +593,7 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
     )
 
     private fun signatureOf(asset: ReleaseAsset): VariantSignature =
-        VariantSignature.of(parseTraits(asset.name))
+        VariantSignature.ofAsset(asset.name)
 
     private suspend fun reloadInstalled() {
         // A package broadcast, an installer hand-off or a root uninstall can
@@ -661,8 +661,10 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
             runCatching { moduleRepository.getDetail(repoPackageName) }
                 .onSuccess { detail ->
                     val installedModule = caller?.installed
-                        ?: installed.firstOrNull { it.packageName == repoPackageName }
-                        ?: installed.firstOrNull { links[it.packageName] == repoPackageName }
+                        ?: installedCopyForRepo(
+                            repoPackageName, installed, links,
+                            variantStates[repoPackageName]?.signature?.packageName,
+                        )
                     val includePreReleases = preReleases.tracksPreReleases(
                         installedPackage = installedModule?.packageName,
                         repoPackage = repoPackageName,
@@ -711,7 +713,7 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
                     ).map { it.copy(recommended = it.asset.name == recommendedName) }
                     val selectedName = state.signature?.let { signature ->
                         candidates.firstOrNull {
-                            it.blocked == null && signature.matches(it.traits)
+                            signature.matches(it.asset.name, it.traits)
                         }?.asset?.name
                     } ?: recommendedName
                     _state.update { current ->
@@ -752,7 +754,7 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
         val picker = _state.value.variantPicker ?: return
         if (picker.isLoading || picker.error != null) return
         val normalized = assetName?.takeIf { name ->
-            picker.candidates.any { it.asset.name == name && it.blocked == null }
+            picker.candidates.any { it.asset.name == name }
         }
         viewModelScope.launch {
             val asset = normalized?.let { name ->
@@ -893,7 +895,15 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
     private fun recompute() {
         if (index.isEmpty() && installed.isEmpty() && pending.isEmpty()) return
         val byPackage = index.associateBy { it.packageName }
-        val xposed = installed.filter { it.isXposedModule }
+        val chosenPackages = variantStates.values.mapNotNull { it.signature?.packageName }.toSet()
+        val xposed = installed.filter {
+            it.isXposedModule || it.packageName in links || it.packageName in chosenPackages
+        }.filter { module ->
+            val repo = repoModuleFor(module.packageName, byPackage, links)
+            repo == null || installedCopyForRepo(
+                repo.packageName, installed, links, variantStates[repo.packageName]?.signature?.packageName,
+            )?.packageName == module.packageName
+        }
         val pendingPackages = pending.keys
         val repoPackageByInstalled = xposed.mapNotNull { module ->
             repoModuleFor(module.packageName, byPackage, links)

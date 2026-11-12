@@ -18,7 +18,8 @@ fun Context.variantReasonText(reason: Reason): String = when (reason.kind) {
 
     Reason.Kind.REMEMBERED -> getString(R.string.variant_remembered)
     Reason.Kind.BUNDLED_APP -> getString(R.string.variant_bundled_app)
-    Reason.Kind.DEBUG_BUILD -> getString(R.string.variant_debug_badge)
+    // Retained for old persisted reasons; debug builds need no reminder.
+    Reason.Kind.DEBUG_BUILD -> ""
 
     Reason.Kind.MIN_SDK_TOO_HIGH -> {
         val requiredSdk = reason.args.getOrNull(0)?.toIntOrNull() ?: 0

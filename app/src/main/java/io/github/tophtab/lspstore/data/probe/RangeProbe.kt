@@ -20,6 +20,7 @@ import kotlinx.serialization.json.Json
 import io.github.tophtab.lspstore.domain.model.ReleaseAsset
 import io.github.tophtab.lspstore.domain.variant.ApkMeta
 import io.github.tophtab.lspstore.domain.variant.ApkProbe
+import io.github.tophtab.lspstore.data.device.ModuleMarker
 
 /** A transport that can return an exact byte range, or the whole file from 0. */
 fun interface ByteRangeSource {
@@ -117,6 +118,7 @@ class RangeProbe(
         if (entries.isEmpty()) return fullProbe(url, size)
 
         return buildMeta(entries) { entry ->
+            if (entry.uncompressedSize == 0L) return@buildMeta byteArrayOf()
             if (entry.compressedSize <= 0L || entry.compressedSize > MAX_ENTRY_BYTES) {
                 return@buildMeta null
             }
@@ -163,7 +165,8 @@ class RangeProbe(
             propEntry.uncompressedSize <= MAX_PROP_BYTES &&
             propEntry.compressedSize <= MAX_PROP_BYTES
         ) {
-            readEntry(propEntry)?.let(::parseProperties).orEmpty()
+            val bytes = readEntry(propEntry) ?: return null
+            parseProperties(bytes)
         } else {
             emptyMap()
         }
@@ -195,7 +198,7 @@ class RangeProbe(
             abis = ZipDirectory.abisOf(entries),
             universal = false,
             hasXposedDeclaration = legacyDeclaration || facts.hasLibXposedProvider ||
-                moduleProp.isNotEmpty(),
+                entries.any { it.name in ModuleMarker.MODERN_MARKERS || it.name == LEGACY_INIT },
             minApiVersion = moduleProp["minApiVersion"]?.toIntOrNull(),
             targetApiVersion = moduleProp["targetApiVersion"]?.toIntOrNull(),
             hasLegacyInit = entries.any { it.name == LEGACY_INIT },
@@ -214,7 +217,8 @@ class RangeProbe(
     }
 
     private fun decompress(entry: ZipEntry, data: ByteArray): ByteArray? {
-        if (entry.uncompressedSize <= 0L || entry.uncompressedSize > MAX_ENTRY_BYTES) return null
+        if (entry.uncompressedSize == 0L) return byteArrayOf()
+        if (entry.uncompressedSize < 0L || entry.uncompressedSize > MAX_ENTRY_BYTES) return null
         return when (entry.method) {
             0 -> data
             8 -> runCatching {

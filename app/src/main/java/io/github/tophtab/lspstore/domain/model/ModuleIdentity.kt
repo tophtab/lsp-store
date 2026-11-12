@@ -2,12 +2,27 @@ package io.github.tophtab.lspstore.domain.model
 
 /**
  * The package an APK is expected to replace: the installed copy when there is
- * one, otherwise the repository listing. Candidate selection and the local
- * install gate must use the same value, or a linked/renamed module can look
- * usable on one screen and unusable on the next.
+ * one, otherwise the repository listing. Used only to rank automatic choices.
  */
 fun expectedPackage(installedPackage: String?, repoPackage: String): String =
     installedPackage?.takeIf { it.isNotBlank() } ?: repoPackage
+
+/** Follow the user's confirmed package, or the newest known copy for legacy data. */
+fun installedCopyForRepo(
+    repoPackage: String,
+    installed: List<InstalledModule>,
+    links: Map<String, String>,
+    preferredPackage: String? = null,
+): InstalledModule? {
+    val candidates = installed.filter {
+        it.packageName == repoPackage || links[it.packageName] == repoPackage
+    }
+    return candidates.firstOrNull { it.packageName == preferredPackage }
+        ?: candidates.maxWithOrNull(
+            compareBy<InstalledModule> { it.versionCode }
+                .thenBy { it.lastUpdateTime }.thenBy { it.packageName },
+        )
+}
 
 /**
  * Whether a repository module tracks pre-releases.

@@ -22,7 +22,7 @@ data class VariantResolution(
  * Applies the lazy-validation rules (variant-selection.md §7.1) around the pure
  * [VariantResolver]:
  *
- *  - TRUSTED: map the signature only, zero probes;
+ *  - remembered choice: follow its stable asset identity; probe only if ambiguous or requested;
  *  - UNKNOWN / SUSPECT: probe the chosen candidate before installing;
  *  - ambiguous name layer: probe the top candidates, then re-resolve;
  *  - legacy NOT_APPLICABLE: retry like UNKNOWN, including probes.
@@ -47,20 +47,10 @@ class ResolveVariantUseCase(
         installed: InstalledVariantHint? = null,
     ): VariantResolution {
         val resolver = VariantResolver(device)
-        if (state.isTrusted) {
-            return VariantResolution(
-                decision = resolver.resolve(
-                    release = release,
-                    signature = state.signature,
-                    allowProbes = false,
-                    expectedPackage = expectedPackage,
-                    installed = installed,
-                ),
-            )
-        }
-
         val nameDecision = resolver.resolve(
             release,
+            signature = state.signature,
+            allowProbes = false,
             expectedPackage = expectedPackage,
             installed = installed,
         )
@@ -79,6 +69,9 @@ class ResolveVariantUseCase(
         if (!shouldProbe) return VariantResolution(nameDecision)
 
         val targets: List<ReleaseAsset> = when {
+            forceProbe -> resolver.ranked(
+                resolver.candidates(release, expectedPackage = expectedPackage, installed = installed),
+            ).map { it.asset }
             // A default that only a preference ladder decided: probe the ranked
             // candidates so the archive can overrule the name layer.
             ambiguous -> resolver.ranked(
@@ -87,7 +80,7 @@ class ResolveVariantUseCase(
                     expectedPackage = expectedPackage,
                     installed = installed,
                 ),
-            ).filter { it.blocked == null }.map { it.asset }
+            ).map { it.asset }
 
             nameDecision is VariantDecision.Pick -> listOf(nameDecision.asset)
             else -> emptyList()
@@ -104,7 +97,9 @@ class ResolveVariantUseCase(
         return VariantResolution(
             decision = resolver.resolve(
                 release = release,
+                signature = state.signature,
                 probes = probes,
+                allowProbes = true,
                 expectedPackage = expectedPackage,
                 installed = installed,
             ),

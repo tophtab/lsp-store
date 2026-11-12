@@ -21,11 +21,7 @@ import io.github.tophtab.lspstore.data.repository.PendingInstallRepository
 import io.github.tophtab.lspstore.data.repository.SettingsRepository
 import io.github.tophtab.lspstore.domain.model.PendingInstall
 import io.github.tophtab.lspstore.domain.model.ReleaseAsset
-import io.github.tophtab.lspstore.domain.variant.DeviceProfile
-import io.github.tophtab.lspstore.domain.variant.Reason
 import io.github.tophtab.lspstore.domain.variant.VariantSignature
-import io.github.tophtab.lspstore.domain.variant.parseTraits
-import io.github.tophtab.lspstore.ui.variant.variantReasonText
 
 /** Which part of a module install is currently running. */
 enum class InstallStage { QUEUED, DOWNLOADING, INSTALLING }
@@ -61,7 +57,7 @@ data class ModuleInstallRequest(
 )
 
 /**
- * Download → gate → installer for one module page, run on an application scope.
+ * Download → installer for one module page, run on an application scope.
  *
  * komi keeps an install alive when its page is swiped away, and this app should
  * too: the old flow lived in the detail ViewModel, so pressing back mid-download
@@ -81,7 +77,6 @@ class ModuleInstallCoordinator(
     private val libraryRepository: LibraryRepository,
     private val pendingRepository: PendingInstallRepository,
     private val systemInstallSerializer: SystemInstallSerializer,
-    private val deviceProfile: () -> DeviceProfile,
 ) {
     private val _runs = MutableStateFlow<Map<String, ModuleInstallRun>>(emptyMap())
 
@@ -230,51 +225,15 @@ class ModuleInstallCoordinator(
     private suspend fun install(request: ModuleInstallRequest, file: File) {
         val repo = request.repoPackageName
         val useRoot = settingsRepository.rootInstall.first()
-        var installTarget = request.installedPackage ?: repo
-        var linkAfterInstall: Pair<String, String>? = null
-
-        // Local gate: zero network, runs before the APK reaches the installer.
-        when (val gate = ApkGate.check(context, file, installTarget, deviceProfile())) {
-            is GateResult.Reject -> {
-                // One failed attempt, nothing persisted: the module keeps its
-                // place in the update list and can be retried after a re-upload.
-                val message = context.variantReasonText(gate.reason)
-                log(repo, message)
-                libraryRepository.recordInstallResult(repo, ok = false)
-                finish(repo, message)
-                return
-            }
-
-            is GateResult.Warn -> {
-                log(repo, context.variantReasonText(gate.reason))
-                // A repository listing may publish an APK whose package was
-                // renamed (`dev.wtonec` -> `dev.wtonec.final`). The gate allows it
-                // when the APK still declares itself as an Xposed module; install
-                // it under its own package and remember the link so updates keep
-                // matching afterwards.
-                val archivePackage = gate.reason.args.firstOrNull()
-                if (gate.reason.kind == Reason.Kind.PACKAGE_MISMATCH &&
-                    !archivePackage.isNullOrBlank() &&
-                    archivePackage != installTarget
-                ) {
-                    installTarget = archivePackage
-                    linkAfterInstall = archivePackage to repo
-                }
-            }
-
-            GateResult.Ok -> Unit
-        }
+        val identity = readInstallIdentity(file)
+        val installTarget = identity?.packageName ?: request.installedPackage ?: repo
+        val linkAfterInstall = installTarget.takeIf { it != repo }?.let { it to repo }
 
         log(repo, "Installing ${request.asset.name}")
         val serializer = systemInstallSerializer
-        var acquired = false
         val outcome = try {
-            // komi's orchestrator order: take the slot right before handing over.
-            serializer.awaitFreeAndMarkPending(installTarget)
-            acquired = true
-            installer.install(file, useRoot)
+            installWithSlot(installer, serializer, file, installTarget, useRoot = useRoot, allowUi = true)
         } catch (cancellation: CancellationException) {
-            if (acquired) serializer.markCompleted(installTarget)
             throw cancellation
         } catch (error: Throwable) {
             InstallOutcome.Failure(error.message ?: "install failed")
@@ -290,7 +249,7 @@ class ModuleInstallCoordinator(
                 libraryRepository.recordInstallResult(
                     repo,
                     ok = true,
-                    signature = signatureOf(request.asset),
+                    signature = VariantSignature.ofAsset(request.asset.name, installTarget),
                 )
                 log(repo, "Installed")
                 finish(
@@ -312,30 +271,27 @@ class ModuleInstallCoordinator(
                         packageName = installTarget,
                         repoPackageName = repo,
                         title = request.title,
-                        versionCode = request.versionCode,
-                        versionName = request.versionName.ifBlank { request.asset.name },
+                        versionCode = identity?.versionCode ?: request.versionCode,
+                        versionName = identity?.versionName ?: request.versionName.ifBlank { request.asset.name },
                         assetName = request.asset.name,
                         createdAt = System.currentTimeMillis(),
+                        downloadKey = downloadManager.keyOf(request.asset),
                     ),
                 )
-                linkAfterInstall?.let { (installedPackage, repoPackage) ->
-                    libraryRepository.linkModule(installedPackage, repoPackage)
-                }
                 log(repo, "Handed off to the system installer")
                 finish(repo, null)
             }
 
             is InstallOutcome.Failure -> {
                 serializer.markCompleted(installTarget)
+                pendingRepository.clear(installTarget)
+                downloadManager.invalidate(downloadManager.keyOf(request.asset))
                 libraryRepository.recordInstallResult(repo, ok = false)
                 log(repo, outcome.message)
                 finish(repo, outcome.message)
             }
         }
     }
-
-    private fun signatureOf(asset: ReleaseAsset): VariantSignature =
-        VariantSignature.of(parseTraits(asset.name))
 
     private fun log(repoPackageName: String, line: String) {
         update(repoPackageName) { it.copy(logs = it.logs + line) }

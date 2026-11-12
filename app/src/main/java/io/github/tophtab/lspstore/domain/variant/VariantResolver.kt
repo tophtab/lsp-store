@@ -10,33 +10,29 @@ import io.github.tophtab.lspstore.domain.model.ReleaseAsset
  *
  * A release with several APKs is split by nine different axes in practice; the
  * resolver handles them in this order:
- *  1. identity — companion apps shipped in the same release are folded;
+ *  1. identity — prefer the installed package and ordinary module names;
  *  2. device fit — debug split, ABI, libxposed API generation, vendor OS /
  *     Android version, minSdk (name layer), then the same from probes;
  *  3. author preference — edition/flavour builds that no device signal can
  *     decide: the plain build, then the most installed one, then the name.
  *
- * Only steps 1 and 2 may make a candidate unusable; everything else ranks.
- * A release always resolves to one [VariantDecision.Pick] unless every APK is a
- * companion app (or the release has no APK at all), so "update all" never has to
- * stop on a module.
+ * All evidence ranks automatic choices; it never makes an APK unusable.
+ * A release resolves to [VariantDecision.Pick] whenever it contains an APK.
  *
  * Inputs, in increasing order of cost:
  *  - file-name traits ([VariantTraits]) — always available;
  *  - P2 probe results ([ApkMeta]) — only for UNKNOWN / ambiguous / SUSPECT;
  *  - device profile ([DeviceProfile]) — vendor OS and LSPosed API from P1.
  *
- * A non-null [VariantSignature] means the module is TRUSTED: only the remembered
- * semantic variant is mapped, the name layer is never re-scored and probes are
- * never read.
+ * A remembered [VariantSignature] takes priority over ranking. Probe results
+ * can clarify defaults but cannot prevent a user's selection.
  */
 class VariantResolver(private val device: DeviceProfile) {
 
     private val deviceAndroid: Int? = androidVersionFromSdk(device.sdkInt)
 
     /**
-     * Scores every APK of [release] and marks the ones that must not be offered
-     * for direct installation (companion apps shipped in the same release).
+     * Scores every APK for automatic selection. Every APK remains selectable.
      */
     fun candidates(
         release: Release,
@@ -50,17 +46,22 @@ class VariantResolver(private val device: DeviceProfile) {
         return assets.map { asset ->
             val traits = parseTraits(asset.name)
             val meta = if (allowProbes) probes[asset.name] else null
-            val blocked = blockReason(meta, expectedPackage)
             val bundledName = multiVariant && isBundledName(asset.name) &&
                 !identifiesAsModule(meta, expectedPackage)
+            val foreignPackage = meta?.packageName != null && expectedPackage != null &&
+                meta.packageName != expectedPackage && !meta.hasXposedDeclaration && !meta.hasLegacyInit
             val debug = meta?.debuggable ?: traits.debugName
             ScoredAsset(
                 asset = asset,
                 traits = traits,
-                score = if (blocked != null) 0 else score(traits, meta),
+                score = score(traits, meta),
                 recommended = false,
-                blocked = blocked,
-                warning = if (bundledName) Reason(Reason.Kind.BUNDLED_APP) else warning(traits, meta),
+                blocked = null,
+                warning = when {
+                    foreignPackage -> Reason(Reason.Kind.PACKAGE_MISMATCH)
+                    bundledName -> Reason(Reason.Kind.BUNDLED_APP)
+                    else -> warning(traits, meta)
+                },
                 debug = debug,
                 meta = meta,
                 installedFit = installedFit(traits, meta, installed),
@@ -69,21 +70,17 @@ class VariantResolver(private val device: DeviceProfile) {
     }
 
     /**
-     * The same ordering [resolve] uses: installable candidates first, best fit
-     * ahead of the rest, then the folded ones. UI lists and probe targets share
-     * it so a row never disagrees with the default above it.
+     * The same ordering [resolve] uses: best fit ahead of alternatives.
+     * UI lists and probe targets share it so a row never disagrees with the
+     * default above it. Every candidate remains selectable.
      */
     fun ranked(candidates: List<ScoredAsset>): List<ScoredAsset> {
-        val eligible = candidates.filter { it.blocked == null }.sortedWith(ranking())
-        val blocked = candidates.filter { it.blocked != null }
-            .sortedWith(compareBy<ScoredAsset> { it.blocked?.kind?.ordinal ?: 0 }.thenBy { it.asset.name })
-        return eligible + blocked
+        return candidates.sortedWith(ranking())
     }
 
     /**
-     * @param signature non-null means TRUSTED: map the remembered signature only;
-     *   do not re-score and never consult [probes]. No match falls back to the
-     *   name layer (the author may have renamed the variant).
+     * @param signature remembered choices take priority over automatic ranking.
+     *   No match falls back to ranking (the author may have renamed the variant).
      * @param probes optional P2 probe results, keyed by asset name.
      * @param expectedPackage repository package name, used to spot companion
      *   apps shipped in the same release.
@@ -100,10 +97,10 @@ class VariantResolver(private val device: DeviceProfile) {
             return VariantDecision.NotApplicable(Reason(Reason.Kind.NO_APK))
         }
         val scored = candidates(release, probes, allowProbes, expectedPackage, installed)
-        val eligible = scored.filter { it.blocked == null }
+        val eligible = scored
 
         if (signature != null) {
-            val matched = eligible.filter { signature.matches(it.traits) }
+            val matched = eligible.filter { signature.matches(it.asset.name, it.traits) }
             if (matched.size == 1) {
                 return VariantDecision.Pick(
                     asset = matched[0].asset,
@@ -122,15 +119,7 @@ class VariantResolver(private val device: DeviceProfile) {
                     confidence = VariantDecision.Confidence.DEFAULT,
                 )
             }
-            // No match: fall through to the name layer. Still no probes.
-        }
-
-        if (eligible.isEmpty()) {
-            // Only hard reasons get here (see [blockReason]): every APK of the
-            // release is a companion app, not the module.
-            val reason = scored.mapNotNull { it.blocked }.firstOrNull()
-                ?: Reason(Reason.Kind.NO_APK)
-            return VariantDecision.NotApplicable(reason)
+            // No match: fall through to automatic ranking.
         }
 
         // A probe that names the installed package identifies the update
@@ -149,7 +138,7 @@ class VariantResolver(private val device: DeviceProfile) {
         // Names can affect the default without removing the user's choices.
         // Prefer an ordinary module name over a suspected companion even when
         // that companion is the only non-debug build.
-        val defaults = eligible.filter { it.warning?.kind != Reason.Kind.BUNDLED_APP }
+        val defaults = eligible.filter { !isOtherApp(it) }
             .ifEmpty { eligible }
         // Debug builds are only a penalty. A release whose only non-debug
         // candidate is unique does not need to ask the user.
@@ -176,9 +165,8 @@ class VariantResolver(private val device: DeviceProfile) {
     }
 
     /**
-     * TRUSTED modules skip probing and re-ranking; everything else goes through
-     * the normal name/probe path. NOT_APPLICABLE is re-checked on the name layer
-     * when a new release arrives.
+     * Remembered choices take priority, including when cached probes arrive.
+     * Probe metadata may rank alternatives but never disables a selection.
      */
     fun resolveForUpdate(
         state: ModuleVariantState,
@@ -186,17 +174,10 @@ class VariantResolver(private val device: DeviceProfile) {
         probes: Map<String, ApkMeta> = emptyMap(),
         expectedPackage: String? = null,
         installed: InstalledVariantHint? = null,
-    ): VariantDecision = if (state.isTrusted) {
-        resolve(
-            release,
-            state.signature,
-            allowProbes = false,
-            expectedPackage = expectedPackage,
-            installed = installed,
-        )
-    } else {
-        resolve(release, probes = probes, expectedPackage = expectedPackage, installed = installed)
-    }
+    ): VariantDecision = resolve(
+        release, signature = state.signature, probes = probes, allowProbes = true,
+        expectedPackage = expectedPackage, installed = installed,
+    )
 
     /** Human-readable match labels, e.g. `["arm64-v8a", "libxposed API 102"]`. */
     fun matchLabels(traits: VariantTraits, meta: ApkMeta? = null): List<String> {
@@ -226,10 +207,7 @@ class VariantResolver(private val device: DeviceProfile) {
 
     private fun pick(candidate: ScoredAsset): VariantDecision.Pick = VariantDecision.Pick(
         asset = candidate.asset,
-        reasons = buildList {
-            addAll(matchReasons(candidate))
-            if (candidate.debug) add(Reason(Reason.Kind.DEBUG_BUILD))
-        },
+        reasons = matchReasons(candidate),
         confidence = VariantDecision.Confidence.HIGH,
     )
 
@@ -240,27 +218,6 @@ class VariantResolver(private val device: DeviceProfile) {
         } else {
             listOf(Reason(Reason.Kind.MATCHES_DEVICE, listOf(labels.joinToString(", "))))
         }
-    }
-
-    /**
-     * Only an archive with a foreign package and no module declaration can
-     * block a candidate. File names are guesses: a failed remote probe must not
-     * disable an APK called Client or Provider. The local gate verifies it after
-     * download, before the installer receives it.
-     */
-    private fun blockReason(
-        meta: ApkMeta?,
-        expectedPackage: String?,
-    ): Reason? {
-        if (meta?.packageName != null && expectedPackage != null &&
-            meta.packageName != expectedPackage && !meta.hasXposedDeclaration && !meta.hasLegacyInit
-        ) {
-            return Reason(
-                Reason.Kind.PACKAGE_MISMATCH,
-                listOf(meta.packageName, expectedPackage),
-            )
-        }
-        return null
     }
 
     /** The archive says it is the module, so a companion-app looking name is moot. */
@@ -385,7 +342,7 @@ class VariantResolver(private val device: DeviceProfile) {
      * whose assets all have zero downloads.
      */
     private fun ranking(): Comparator<ScoredAsset> =
-        compareBy<ScoredAsset> { it.warning?.kind == Reason.Kind.BUNDLED_APP }
+        compareBy<ScoredAsset> { isOtherApp(it) }
             .thenByDescending { fitTier(it) }
             .thenByDescending { it.score }
             .thenByDescending { it.installedFit }
@@ -536,6 +493,10 @@ class VariantResolver(private val device: DeviceProfile) {
         return BUNDLED_SUBSTRINGS.any { name.contains(it) } ||
             BUNDLED_SPECIAL.any { name.contains(it) }
     }
+
+    private fun isOtherApp(candidate: ScoredAsset): Boolean =
+        candidate.warning?.kind == Reason.Kind.BUNDLED_APP ||
+            candidate.warning?.kind == Reason.Kind.PACKAGE_MISMATCH
 
     private companion object {
         /** [installedFit] weight of a probe that names the installed package. */

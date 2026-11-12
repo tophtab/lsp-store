@@ -33,7 +33,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -54,7 +53,6 @@ import io.github.tophtab.lspstore.ui.design.KomiDivider
 import io.github.tophtab.lspstore.ui.design.KomiFilterChip
 import io.github.tophtab.lspstore.ui.design.KomiText
 import io.github.tophtab.lspstore.ui.theme.KomiTextRole
-import io.github.tophtab.lspstore.ui.variant.variantReasonText
 import io.github.tophtab.lspstore.ui.variant.variantTags
 
 /**
@@ -422,10 +420,6 @@ internal fun AssetSheetContent(
     val container = LocalAppContainer.current
     val device by container.deviceProfileFlow.collectAsStateWithLifecycle()
     val resolver = remember(device) { VariantResolver(device) }
-    val eligible = candidates.filter { it.blocked == null }
-    val blocked = candidates.filter { it.blocked != null }
-    val bundled = blocked.filter { it.blocked?.kind in BUNDLED_REASON_KINDS }
-    val incompatible = blocked.filter { it.blocked?.kind !in BUNDLED_REASON_KINDS }
     Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
         KomiText(
             text = stringResource(R.string.variant_picker_title),
@@ -449,7 +443,7 @@ internal fun AssetSheetContent(
                 modifier = Modifier.fillMaxWidth().heightIn(max = 420.dp),
                 contentPadding = PaddingValues(vertical = 8.dp),
             ) {
-                items(eligible, key = { it.asset.name }) { candidate ->
+                items(candidates, key = { it.asset.name }) { candidate ->
                     AssetRow(
                         candidate = candidate,
                         resolver = resolver,
@@ -461,52 +455,8 @@ internal fun AssetSheetContent(
                         thickness = 0.5.dp,
                     )
                 }
-                if (incompatible.isNotEmpty()) {
-                    item(key = "incompatible_header") {
-                        KomiText(
-                            text = stringResource(R.string.variant_incompatible_group, incompatible.size),
-                            role = KomiTextRole.Label,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontSize = 12.sp,
-                            modifier = Modifier.padding(top = 10.dp, bottom = 4.dp),
-                        )
-                    }
-                    items(incompatible, key = { "incompatible:${it.asset.name}" }) { candidate ->
-                        AssetRow(
-                            candidate = candidate,
-                            resolver = resolver,
-                            isSelected = false,
-                            onClick = null,
-                        )
-                        KomiDivider(
-                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-                            thickness = 0.5.dp,
-                        )
-                    }
-                }
-                if (bundled.isNotEmpty()) {
-                    item(key = "bundled_header") {
-                        KomiText(
-                            text = stringResource(R.string.variant_bundled_apps, bundled.size),
-                            role = KomiTextRole.Label,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontSize = 12.sp,
-                            modifier = Modifier.padding(top = 10.dp, bottom = 4.dp),
-                        )
-                    }
-                    items(bundled, key = { "blocked:${it.asset.name}" }) { candidate ->
-                        AssetRow(
-                            candidate = candidate,
-                            resolver = resolver,
-                            isSelected = false,
-                            onClick = null,
-                        )
-                        KomiDivider(
-                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-                            thickness = 0.5.dp,
-                        )
-                    }
-                }
+
+
             }
         }
         Spacer(Modifier.height(16.dp))
@@ -520,9 +470,8 @@ internal fun AssetRow(
     isSelected: Boolean,
     onClick: (() -> Unit)?,
 ) {
-    val context = LocalContext.current
     val asset = candidate.asset
-    val enabled = onClick != null && candidate.blocked == null
+    val enabled = onClick != null
     val labels = if (candidate.recommended) {
         resolver.matchLabels(candidate.traits, candidate.meta)
     } else {
@@ -534,11 +483,7 @@ internal fun AssetRow(
     } else {
         stringResource(R.string.variant_reason_matches_device, labels.joinToString(", "))
     }
-    val caption = when {
-        candidate.blocked != null -> context.variantReasonText(candidate.blocked)
-        candidate.warning != null -> context.variantReasonText(candidate.warning)
-        else -> matchCaption
-    }
+    val caption = matchCaption
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -554,9 +499,6 @@ internal fun AssetRow(
             ) {
                 if (candidate.recommended) {
                     VersionBadge(stringResource(R.string.variant_recommended))
-                }
-                if (candidate.traits.debugName) {
-                    VersionBadge(stringResource(R.string.variant_debug_badge))
                 }
             }
             KomiText(

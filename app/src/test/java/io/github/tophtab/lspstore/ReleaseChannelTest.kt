@@ -90,6 +90,22 @@ class ReleaseChannelTest {
     }
 
     @Test
+    fun aNewerDetailCanSatisfyAnUpdateWhenTheRequestedReleaseIsMissing() {
+        val requested = ModuleVersion.parse("60-3.5.0")!!
+        val newer = release("61-3.6.0", "2026-01-02T00:00:00Z")
+        val detail = detail(newer.version, null, stable = listOf(newer))
+        assertEquals(newer, detail.releaseForUpdate(requested, false))
+    }
+
+    @Test
+    fun aNewerApkCanSatisfyAnUpdateWhenTheRequestedApkWasRemoved() {
+        val requested = release("60-3.5.0", "2026-01-01T00:00:00Z").copy(assets = emptyList())
+        val newer = release("61-3.6.0", "2026-01-02T00:00:00Z")
+        val detail = detail(newer.version, null, stable = listOf(newer, requested))
+        assertEquals(newer, detail.releaseForUpdate(requested.version!!, false))
+    }
+
+    @Test
     fun aStaleDetailMustNotSubstituteAnOlderRelease() {
         val old = release("59-3.4.0", "2026-01-01T00:00:00Z")
         val requested = ModuleVersion.parse("60-3.5.0")!!

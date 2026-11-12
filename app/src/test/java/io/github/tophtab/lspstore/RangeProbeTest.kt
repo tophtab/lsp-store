@@ -13,6 +13,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import io.github.tophtab.lspstore.data.probe.ByteRangeSource
 import io.github.tophtab.lspstore.data.probe.RangeProbe
+import io.github.tophtab.lspstore.data.probe.ZipDirectory
 import io.github.tophtab.lspstore.domain.model.ReleaseAsset
 
 class RangeProbeTest {
@@ -112,6 +113,40 @@ class RangeProbeTest {
         assertNull(probe(FakeRangeSource(garbage)).fetch(asset(garbage)))
     }
 
+    @Test
+    fun modernInitWithoutModulePropOrManifestDeclarationIsRecognized() = runBlocking {
+        val apk = apkBytes(
+            ManifestFixture(meta = emptyMap(), provider = false).bytes(),
+            moduleProp = false, modernInit = true,
+        )
+        assertTrue(probe(FakeRangeSource(apk)).fetch(asset(apk))!!.hasXposedDeclaration)
+    }
+
+    @Test
+    fun failedModulePropReadDoesNotPersistPartialMetadata() = runBlocking {
+        val apk = apkBytes(ManifestFixture(meta = emptyMap(), provider = false).bytes())
+        val end = ZipDirectory.findEndRecord(apk)!!
+        val entries = ZipDirectory.parseDirectory(
+            apk.copyOfRange(end.directoryOffset.toInt(), (end.directoryOffset + end.directorySize).toInt()),
+            end.entryCount,
+        )
+        val prop = entries.single { it.name == "META-INF/xposed/module.prop" }
+        var unavailable = true
+        val source = ByteRangeSource { _, start, finish ->
+            if (unavailable && start == prop.localHeaderOffset && finish == start + 29) null
+            else apk.copyOfRange(start.toInt(), finish.toInt() + 1)
+        }
+        val directory = java.nio.file.Files.createTempDirectory("probe-partial").toFile()
+        val cache = File(directory, "cache.json")
+        try {
+            assertNull(RangeProbe(source, cache, json).fetch(asset(apk)))
+            unavailable = false
+            val meta = RangeProbe(source, cache, json).fetch(asset(apk))!!
+            assertTrue(meta.hasXposedDeclaration)
+            assertEquals(102, meta.targetApiVersion)
+        } finally { directory.deleteRecursively() }
+    }
+
     private class FakeRangeSource(
         private val bytes: ByteArray,
         private val supportsRanges: Boolean = true,
@@ -128,7 +163,10 @@ class RangeProbeTest {
         }
     }
 
-    private fun apkBytes(manifest: ByteArray, padding: Int = 0, legacyInit: Boolean = false): ByteArray {
+    private fun apkBytes(
+        manifest: ByteArray, padding: Int = 0, legacyInit: Boolean = false,
+        moduleProp: Boolean = true, modernInit: Boolean = false,
+    ): ByteArray {
         val out = ByteArrayOutputStream()
         ZipOutputStream(out).use { zip ->
             fun put(name: String, data: ByteArray) {
@@ -137,20 +175,21 @@ class RangeProbeTest {
                 zip.closeEntry()
             }
             put("AndroidManifest.xml", manifest)
-            put(
+            if (moduleProp) put(
                 "META-INF/xposed/module.prop",
                 "minApiVersion=102\ntargetApiVersion=102\n".toByteArray(),
             )
             put("META-INF/xposed/scope.list", "com.android.systemui\n".toByteArray())
             put("lib/arm64-v8a/libhook.so", ByteArray(32))
             if (legacyInit) put("assets/xposed_init", "com.example.Hook\n".toByteArray())
+            if (modernInit) put("META-INF/xposed/java_init.list", "com.example.Hook\n".toByteArray())
             if (padding > 0) put("assets/padding.bin", ByteArray(padding) { 0x5A })
         }
         return out.toByteArray()
     }
 
     /** Minimal AXML encoder for a manifest with the attributes the probe reads. */
-    private class ManifestFixture(
+    internal class ManifestFixture(
         private val packageName: String = "com.example.module",
         private val versionCode: Int = 7,
         private val versionName: String = "1.2",

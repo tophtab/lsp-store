@@ -136,7 +136,7 @@ class VariantStateMachineTest {
     }
 
     @Test
-    fun trustedStateDoesNotReadProbes() {
+    fun rememberedVariantSurvivesMissingCachedProbes() {
         val release = Release(
             tagName = "1-1.0",
             name = null,
@@ -159,12 +159,12 @@ class VariantStateMachineTest {
         }
         val trusted = ModuleVariantState(
             status = ModuleVariantState.Status.TRUSTED,
-            signature = VariantSignature(os = "hyperos3"),
+            signature = VariantSignature.ofAsset("OS2_module.apk"),
         )
         val decision = VariantResolver(DeviceProfile(36, listOf("arm64-v8a")))
             .resolveForUpdate(trusted, release, probes)
         assertTrue(decision is VariantDecision.Pick)
-        assertEquals(0, probes.reads)
+        assertEquals("OS2_module.apk", (decision as VariantDecision.Pick).asset.name)
 
         // UNKNOWN does consult probes (the P2 hook is live).
         VariantResolver(DeviceProfile(36, listOf("arm64-v8a")))

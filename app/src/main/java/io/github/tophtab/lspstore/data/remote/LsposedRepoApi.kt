@@ -19,9 +19,6 @@ class LsposedRepoApi(
     private val client: HttpClient,
     private val mirrorState: MirrorState = MirrorState(),
 ) {
-    @Volatile
-    private var hostIndex = 0
-
     private suspend fun <T> fetch(
         endpoint: RepoEndpoint,
         path: String,
@@ -31,12 +28,9 @@ class LsposedRepoApi(
         val hosts = mirrorState.orderedHosts(endpoint)
         val attempts = minOf(maxAttempts, hosts.size)
         var last: Throwable? = null
-        for (offset in 0 until attempts) {
-            val index = (hostIndex + offset) % hosts.size
+        for (host in hosts.take(attempts)) {
             try {
-                val result = request(hosts[index] + path)
-                hostIndex = index
-                return result
+                return request(host + path)
             } catch (cancellation: CancellationException) {
                 throw cancellation
             } catch (t: Throwable) {

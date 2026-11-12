@@ -67,12 +67,21 @@ class ApkExportStore(
 
     /** Deletes every APK this app exported; other files in the folder stay. */
     suspend fun deleteAll() {
+        deleteMatching { OWN_NAME.containsMatchIn(it) }
+    }
+
+    suspend fun delete(key: String) {
+        if (!key.matches(Regex("[0-9a-f]{16}"))) return
+        deleteMatching { OWN_NAME.containsMatchIn(it) && it.substringBeforeLast('.').endsWith("-$key") }
+    }
+
+    private suspend fun deleteMatching(matches: (String) -> Boolean) {
         withContext(Dispatchers.IO) {
             val tree = treeUri()
             runCatching {
                 if (tree != null) {
                     treeEntries(tree)
-                        .filter { OWN_NAME.containsMatchIn(it.name) }
+                        .filter { matches(it.name) }
                         .forEach { entry ->
                             runCatching {
                                 DocumentsContract.deleteDocument(
@@ -83,7 +92,7 @@ class ApkExportStore(
                         }
                 } else {
                     mediaStoreEntries()
-                        .filter { OWN_NAME.containsMatchIn(it.name) }
+                        .filter { matches(it.name) }
                         .forEach { entry ->
                             resolver.delete(
                                 ContentUris.withAppendedId(

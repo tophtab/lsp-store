@@ -55,7 +55,6 @@ import io.github.tophtab.lspstore.data.install.InstallStage
 import io.github.tophtab.lspstore.domain.model.ModuleDetail
 import io.github.tophtab.lspstore.domain.model.ModuleVersion
 import io.github.tophtab.lspstore.domain.model.Release
-import io.github.tophtab.lspstore.domain.variant.Reason
 import io.github.tophtab.lspstore.ui.components.formatRelativeTime
 import io.github.tophtab.lspstore.ui.design.KomiInfoChip
 import io.github.tophtab.lspstore.ui.design.KomiSurface
@@ -389,7 +388,6 @@ internal fun InstallControls(
     showUpdateHint: Boolean,
     installEnabled: Boolean,
     notApplicableReason: String?,
-    debugBuild: Boolean,
     onInstall: () -> Unit,
     onCancel: () -> Unit,
 ) {
@@ -435,17 +433,14 @@ internal fun InstallControls(
                 formatSize(it.total),
             ) + " · " + stringResource(R.string.download_tap_to_cancel)
         }
-        if (debugBuild) {
-            VersionBadge(stringResource(R.string.variant_debug_badge))
-            Spacer(Modifier.height(6.dp))
-        }
+
         InstallActionButton(
             label = buttonLabel,
             subtitle = buttonSubtitle,
             progress = downloading?.progress,
             active = active,
             enabled = queued != null || downloading != null ||
-                (!active && targetVersion != null && installEnabled),
+                (!active && installEnabled),
             leadingIcon = if (active) null else Icons.Filled.Download,
             onClick = if (queued != null || downloading != null) onCancel else onInstall,
         )
@@ -662,13 +657,3 @@ internal fun formatSize(bytes: Long): String {
     val mb = bytes / (1024.0 * 1024.0)
     return if (mb >= 1) String.format(java.util.Locale.getDefault(), "%.1f MB", mb) else String.format(java.util.Locale.getDefault(), "%.0f KB", bytes / 1024.0)
 }
-
-/**
- * Blocked reasons that mean "this APK is not the module" (a companion app), as
- * opposed to "this build cannot run on this device".
- */
-internal val BUNDLED_REASON_KINDS = setOf(
-    Reason.Kind.NOT_A_MODULE,
-    Reason.Kind.PACKAGE_MISMATCH,
-    Reason.Kind.BUNDLED_APP,
-)

@@ -3,7 +3,6 @@ package io.github.tophtab.lspstore.data.install
 import android.content.Context
 import android.content.Intent
 import android.os.Process
-import android.provider.Settings
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import kotlinx.coroutines.Dispatchers
@@ -55,11 +54,20 @@ sealed interface UninstallOutcome {
     data class Failure(val message: String) : UninstallOutcome
 }
 
+interface ApkInstallDriver {
+    val canLaunchUi: Boolean get() = true
+    suspend fun install(file: File, useRoot: Boolean, allowUi: Boolean = true): InstallOutcome
+    suspend fun invalidateDownload(asset: ReleaseAsset)
+    suspend fun awaitForeground() {}
+}
+
 class ApkInstaller(
     context: Context,
     private val downloadManager: DownloadManager,
-) {
+) : ApkInstallDriver {
     private val context: Context = context.applicationContext
+    val foregroundState = InstallForegroundState()
+    override val canLaunchUi: Boolean get() = foregroundState.isResumed
 
     /**
      * Packages the system reported as installed/removed, forwarded by
@@ -100,24 +108,16 @@ class ApkInstaller(
      * Whether the APK may replace what is installed (signature, downgrade, ABI,
      * ...) is the installer's and PackageManager's call, not ours: rooted users
      * may run a patched installer that accepts a different signing key, and
-     * blocking it here would take that choice away. See
-     * [io.github.tophtab.lspstore.data.install.ApkGate] for the checks that stay
-     * (an APK that cannot run on this device at all).
+     * blocking it here would take that choice away.
      *
      * The caller records the hand-off itself (bounding package and version in a
      * `PendingInstall`), because a delegated install returns no result here.
      */
-    suspend fun install(
+    override suspend fun install(
         file: File,
         useRoot: Boolean,
-        allowUi: Boolean = true,
+        allowUi: Boolean,
     ): InstallOutcome {
-        if (!file.exists()) {
-            return InstallOutcome.Failure(
-                context.getString(R.string.installer_apk_missing, file.name),
-            )
-        }
-
         // Privileged path (komi's InstallerType.ROOT): su installs the APK without
         // any system confirmation UI.
         if (useRoot && installSilently(file)) {
@@ -131,9 +131,10 @@ class ApkInstaller(
         // installer of choice. InstallerX/Dhizuku/AppManager all sit on this intent,
         // so no PackageInstaller session is created from this process.
         return runCatching {
-            ensurePermissionsOrThrow()
+            foregroundState.awaitResumed()
             delegateToInstaller(file)
         }.getOrElse {
+            if (it is kotlin.coroutines.cancellation.CancellationException) throw it
             InstallOutcome.Failure(it.message ?: context.getString(R.string.installer_launch_failed))
         }
     }
@@ -158,21 +159,6 @@ class ApkInstaller(
                 it.message ?: context.getString(R.string.installer_uninstall_launch_failed),
             )
         }
-    }
-
-    /**
-     * komi's `AndroidInstaller.ensurePermissionsOrThrow`: send the user to the
-     * "Install unknown apps" toggle and abort instead of letting the installer
-     * silently cancel the request.
-     */
-    fun ensurePermissionsOrThrow() {
-        if (context.packageManager.canRequestPackageInstalls()) return
-        val intent = Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES).apply {
-            data = "package:${context.packageName}".toUri()
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        }
-        runCatching { context.startActivity(intent) }
-        throw IllegalStateException(context.getString(R.string.installer_unknown_sources))
     }
 
     /**
@@ -209,7 +195,7 @@ class ApkInstaller(
     }
 
     private suspend fun installSilently(file: File): Boolean = installerCommandSucceeded(
-        command = listOf("su", "-c", "pm install -r ${shellQuote(file.absolutePath)}"),
+        command = listOf("su", "-c", "pm install -r -d ${shellQuote(file.absolutePath)}"),
         logDirectory = context.cacheDir,
     )
 
@@ -228,6 +214,12 @@ class ApkInstaller(
     suspend fun clearDownloads() {
         downloadManager.clearAll()
     }
+
+    override suspend fun invalidateDownload(asset: ReleaseAsset) {
+        downloadManager.invalidate(downloadManager.keyOf(asset))
+    }
+
+    override suspend fun awaitForeground() { foregroundState.awaitResumed() }
 
     suspend fun downloadsSizeBytes(): Long = downloadManager.downloadedBytes()
 }

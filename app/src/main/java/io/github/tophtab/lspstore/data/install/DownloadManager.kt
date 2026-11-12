@@ -77,6 +77,25 @@ class DownloadManager(
 
     fun taskFor(asset: ReleaseAsset): DownloadTask? = _tasks.value[keyOf(asset)]
 
+    /** An unsuccessful installer attempt must be able to fetch a fresh copy. */
+    suspend fun invalidate(key: String) = withContext(Dispatchers.IO) {
+        if (!key.matches(Regex("[0-9a-f]{16}"))) return@withContext
+        val exporting = exports[key]
+        exporting?.cancel()
+        exporting?.join()
+        val removed = synchronized(this@DownloadManager) {
+            val status = _tasks.value[key]?.status
+            if (status == DownloadStatus.RUNNING || status == DownloadStatus.PAUSED) {
+                false
+            } else {
+                invalidateCachedDownload(File(context.cacheDir, "apk"), key)
+                _tasks.update { it - key }
+                true
+            }
+        }
+        if (removed) exporter.delete(key)
+    }
+
     /**
      * Atomic with respect to other callers: the RUNNING check and the job
      * creation are one step, so two install chains cannot both open a writer for
@@ -375,4 +394,11 @@ internal fun assetCacheKey(asset: ReleaseAsset): String {
         .digest(identity.toByteArray(Charsets.UTF_8))
         .take(8)
         .joinToString("") { "%02x".format(it.toInt() and 0xff) }
+}
+
+/** Also works after process death, when there is no in-memory task. */
+internal fun invalidateCachedDownload(directory: File, key: String) {
+    if (!key.matches(Regex("[0-9a-f]{16}"))) return
+    directory.listFiles()?.filter { it.isFile && it.name.startsWith("$key-") }
+        ?.forEach { it.delete() }
 }

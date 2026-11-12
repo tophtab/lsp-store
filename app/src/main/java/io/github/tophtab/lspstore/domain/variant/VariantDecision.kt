@@ -43,7 +43,7 @@ data class ScoredAsset(
     val traits: VariantTraits,
     val score: Int,
     val recommended: Boolean,
-    /** Non-null when the candidate must not be installed directly (folded in the UI). */
+    /** Legacy field. Current resolution and pickers never block an APK. */
     val blocked: Reason?,
     /**
      * Non-null when the APK asks for a newer libxposed API than the detected
@@ -103,8 +103,8 @@ sealed interface VariantDecision {
  * The APK a detail page should show and install.
  *
  * A manual pick survives later evidence (probes, the installed copy being
- * detected) while it remains installable. As soon as it disappears or becomes
- * blocked, the current default takes over. The default itself is always
+ * detected) while it remains in the release. As soon as it disappears,
+ * the current default takes over. The default itself is always
  * re-read, so a probe that changes the best candidate changes what the button
  * installs instead of leaving the first-seen asset behind.
  */
@@ -115,9 +115,9 @@ fun selectInstallAsset(
 ): ReleaseAsset? {
     val picked = userPickedName
         ?.takeIf { it.isNotBlank() }
-        ?.let { name -> candidates.firstOrNull { it.asset.name == name && it.blocked == null } }
+        ?.let { name -> candidates.firstOrNull { it.asset.name == name } }
     if (picked != null) return picked.asset
     return default?.let { asset ->
-        candidates.firstOrNull { it.asset.name == asset.name && it.blocked == null }?.asset
+        candidates.firstOrNull { it.asset.name == asset.name }?.asset
     }
 }

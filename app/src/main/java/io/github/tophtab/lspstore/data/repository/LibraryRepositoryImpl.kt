@@ -20,7 +20,6 @@ import io.github.tophtab.lspstore.domain.variant.ModuleVariantState
 import io.github.tophtab.lspstore.domain.variant.VariantSignature
 import io.github.tophtab.lspstore.domain.variant.onInstallFailed
 import io.github.tophtab.lspstore.domain.variant.onInstallSucceeded
-import io.github.tophtab.lspstore.domain.variant.parseTraits
 import io.github.tophtab.lspstore.domain.variant.withoutNotApplicableVerdicts
 
 private val Context.libraryDataStore by preferencesDataStore(name = "library")
@@ -267,15 +266,19 @@ class LibraryRepositoryImpl(private val context: Context) : LibraryRepository {
     override suspend fun clearVariantState(packageName: String) {
         context.libraryDataStore.edit { prefs ->
             val current = decodeVariantStates(prefs[Keys.VARIANT_STATE]).toMutableMap()
-            current.remove(packageName)
+            val activePackage = current[packageName]?.signature?.packageName
+            if (activePackage == null) {
+                current.remove(packageName)
+            } else {
+                current[packageName] = ModuleVariantState(signature = VariantSignature(packageName = activePackage))
+            }
             prefs[Keys.VARIANT_STATE] = encodeVariantStates(current)
         }
     }
 
     /**
      * Records one install attempt. Success remembers the semantic signature and
-     * resets the failure count; three consecutive failures give up and mark the
-     * module as not applicable on this device.
+     * resets the failure count; unsuccessful attempts remain retryable.
      */
     override suspend fun recordInstallResult(
         packageName: String,
@@ -308,7 +311,7 @@ class LibraryRepositoryImpl(private val context: Context) : LibraryRepository {
                 if (packageName !in states) {
                     states[packageName] = ModuleVariantState(
                         status = ModuleVariantState.Status.TRUSTED,
-                        signature = VariantSignature.of(parseTraits(assetName)),
+                        signature = VariantSignature.ofAsset(assetName),
                         updatedAt = now,
                     )
                 }

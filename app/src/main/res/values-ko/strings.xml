@@ -238,13 +238,11 @@
     <string name="variant_picker_subtitle">이 릴리스에는 두 개 이상의 APK가 제공됩니다.</string>
     <string name="variant_recommended">추천</string>
     <string name="variant_reason_matches_device">귀하의 장치와 일치합니다 (%1$s)</string>
-    <string name="variant_bundled_apps">이 릴리스의 다른 앱(%1$d)</string>
     <string name="variant_bundled_app">동일한 릴리스의 모듈과 함께 제공됨</string>
     <string name="variant_incompatible_min_sdk">Android %1$d+ 필요(%2$d 있음)</string>
     <string name="variant_incompatible_abi">%1$s 빌드만 - 이 장치와 호환되지 않습니다.</string>
     <string name="variant_incompatible_api">LSPosed API가 필요합니다 %1$d</string>
     <string name="variant_remembered">향후 업데이트를 위해 귀하의 선택을 기억했습니다.</string>
-    <string name="variant_debug_badge">디버그 빌드</string>
     <string name="variant_not_module">이 APK는 Xposed 모듈이 아닙니다.</string>
     <string name="installed_finished_skipped">%1$d 모듈에는 변형 선택이 필요합니다. 업데이트하려면 열어야 합니다.</string>
     <string name="installed_finished_cancelled">취소됨: %1$d</string>
@@ -282,8 +280,6 @@
     <string name="installer_launch_failed">설치 프로그램을 시작할 수 없습니다</string>
     <string name="installer_uninstall_launch_failed">제거 프로그램을 열 수 없습니다</string>
     <string name="installer_no_handler">이 기기에는 APK를 설치할 수 있는 앱이 없습니다.</string>
-    <string name="installer_unknown_sources">LSP Store에 대해 \\"알 수 없는 앱 설치\\"를 허용하고 다시 시도하세요.</string>
-    <string name="installer_apk_missing">APK 파일이 없습니다: %1$s</string>
     <string name="verifier_package_mismatch">APK 패키지 %1$s이 예상된 %2$s과 일치하지 않습니다.</string>
     <string name="download_channel_name">다운로드</string>
     <string name="download_channel_desc">APK 다운로드 진행</string>
@@ -301,7 +297,6 @@
     <string name="detail_all">모두</string>
     <string name="detail_logs">설치 로그</string>
     <string name="variant_field_choose">APK 선택(%1$d)</string>
-    <string name="variant_incompatible_group">이 장치와 호환되지 않습니다(%1$d)</string>
     <string name="installed_update_skipped">%1$s의 이 버전을 무시했습니다</string>
     <string name="installed_uninstalled">%1$s 제거됨</string>
     <string name="installed_uninstall_confirm_message">%1$s을(를) 제거할까요? 이 작업은 되돌릴 수 없습니다.</string>

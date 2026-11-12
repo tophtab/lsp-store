@@ -238,13 +238,11 @@
     <string name="variant_picker_subtitle">يأتي هذا الإصدار بأكثر من ملف APK واحد.</string>
     <string name="variant_recommended">مُستَحسَن</string>
     <string name="variant_reason_matches_device">يطابق جهازك (%1$s)</string>
-    <string name="variant_bundled_apps">تطبيقات أخرى في هذا الإصدار (%1$d)</string>
     <string name="variant_bundled_app">يتم شحنها جنبًا إلى جنب مع الوحدة في نفس الإصدار</string>
     <string name="variant_incompatible_min_sdk">يتطلب Android %1$d+ (لديك %2$d)</string>
     <string name="variant_incompatible_abi">الإصدار %1$s فقط - غير متوافق مع هذا الجهاز</string>
     <string name="variant_incompatible_api">يتطلب LSPosed API %1$d</string>
     <string name="variant_remembered">تذكرت اختيارك للتحديثات المستقبلية</string>
-    <string name="variant_debug_badge">بناء التصحيح</string>
     <string name="variant_not_module">ملف APK هذا ليس وحدة Xpose</string>
     <string name="installed_finished_skipped">%1$d تحتاج الوحدات إلى خيار مختلف - افتحها للتحديث</string>
     <string name="installed_finished_cancelled">تم الإلغاء: %1$d</string>
@@ -282,8 +280,6 @@
     <string name="installer_launch_failed">غير قادر على تشغيل المثبت</string>
     <string name="installer_uninstall_launch_failed">تعذّر فتح أداة إلغاء التثبيت</string>
     <string name="installer_no_handler">لا يمكن لأي تطبيق على هذا الجهاز تثبيت ملفات APK</string>
-    <string name="installer_unknown_sources">اسمح بـ \\"تثبيت تطبيقات غير معروفة\\" لـ LSP Store وحاول مرة أخرى</string>
-    <string name="installer_apk_missing">ملف APK مفقود: %1$s</string>
     <string name="verifier_package_mismatch">حزمة APK %1$s لا تتطابق مع المتوقع %2$s</string>
     <string name="download_channel_name">التنزيلات</string>
     <string name="download_channel_desc">تقدم تنزيل APK</string>
@@ -301,7 +297,6 @@
     <string name="detail_all">الجميع</string>
     <string name="detail_logs">سجل التثبيت</string>
     <string name="variant_field_choose">اختر ملف APK (%1$d)</string>
-    <string name="variant_incompatible_group">غير متوافق مع هذا الجهاز (%1$d)</string>
     <string name="installed_update_skipped">تم تجاهل هذا الإصدار من %1$s</string>
     <string name="installed_uninstalled">تم إلغاء تثبيت %1$s</string>
     <string name="installed_uninstall_confirm_message">هل تريد إلغاء تثبيت %1$s؟ لا يمكن التراجع عن هذا الإجراء.</string>

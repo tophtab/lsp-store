@@ -31,7 +31,7 @@ sealed interface BackgroundUpdateOutcome {
  * updates, then either install them silently (root + auto-update enabled) or
  * announce them.
  *
- * Reuses the batch pipeline unchanged, so variant selection, the install gate,
+ * Reuses the batch pipeline unchanged, so variant selection, installer hand-off,
  * pending-install bookkeeping and install serialization behave exactly as they
  * do for "update all" from the Installed tab.
  */

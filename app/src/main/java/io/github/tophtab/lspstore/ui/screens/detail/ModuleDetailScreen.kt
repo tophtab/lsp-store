@@ -47,7 +47,7 @@ import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.OpenInBrowser
-import androidx.compose.material.icons.filled.OpenInNew
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Smartphone
@@ -126,7 +126,6 @@ import io.github.tophtab.lspstore.domain.variant.ScoredAsset
 import io.github.tophtab.lspstore.domain.variant.InstalledVariantHint
 import io.github.tophtab.lspstore.domain.variant.VariantDecision
 import io.github.tophtab.lspstore.domain.variant.VariantResolver
-import io.github.tophtab.lspstore.domain.variant.parseTraits
 import io.github.tophtab.lspstore.domain.variant.selectInstallAsset
 import io.github.tophtab.lspstore.ui.LocalAppContainer
 import io.github.tophtab.lspstore.ui.components.ErrorBox
@@ -349,7 +348,7 @@ fun ModuleDetailScreen(packageName: String, onBack: () -> Unit, onOpenAuthor: (S
                 )
                 state.installed?.let {
                     ActionSheetRow(
-                        icon = Icons.Filled.OpenInNew,
+                        icon = Icons.AutoMirrored.Filled.OpenInNew,
                         label = stringResource(R.string.detail_open_app),
                         onClick = {
                             menuOpen = false
@@ -497,7 +496,7 @@ private fun DetailContent(
         }
     }
     // Lazy validation still probes on the detail page (variant-selection.md 7.1):
-    // one ranged read per candidate, cached per asset. TRUSTED modules never probe.
+    // one ranged read per candidate, cached per asset. Remembered choices stay preferred.
     LaunchedEffect(selectedRelease?.tagName) {
         selectedRelease?.let { onProbeAssets(it) }
     }
@@ -508,7 +507,7 @@ private fun DetailContent(
             resolver.candidates(
                 it,
                 probes = probes,
-                allowProbes = !variantState.isTrusted,
+                allowProbes = true,
                 expectedPackage = expectedPackageName,
                 installed = installedHint,
             )
@@ -532,10 +531,6 @@ private fun DetailContent(
     // install button (#65, #69).
     val notApplicableReason = (decision as? VariantDecision.NotApplicable)
         ?.let { context.variantReasonText(it.reason) }
-    val selectedDebug = selectedAsset?.let { asset ->
-        candidates.firstOrNull { it.asset.name == asset.name }?.debug
-            ?: parseTraits(asset.name).debugName
-    } == true
     var versionSheetVisible by rememberSaveable { mutableStateOf(false) }
     var assetSheetVisible by rememberSaveable { mutableStateOf(false) }
     val currentRelease = selectedRelease
@@ -612,9 +607,8 @@ private fun DetailContent(
                 targetVersion = selectedRelease?.version,
                 showUpdateHint = state.updateAvailable && selectedRelease == latestRelease,
                 installEnabled = selectedAsset != null &&
-                    decision !is VariantDecision.NotApplicable,
+                    selectedRelease?.apkAssets?.isNotEmpty() == true,
                 notApplicableReason = notApplicableReason,
-                debugBuild = selectedDebug,
                 onInstall = {
                     // The button is only enabled with a selected asset, and the
                     // resource row above already shows which one it installs;

@@ -238,13 +238,11 @@
     <string name="variant_picker_subtitle">यह रिलीज़ एक से अधिक एपीके शिप करता है।</string>
     <string name="variant_recommended">अनुशंसित</string>
     <string name="variant_reason_matches_device">आपके डिवाइस से मेल खाता है (%1$s)</string>
-    <string name="variant_bundled_apps">इस रिलीज़ में अन्य ऐप्स (%1$d)</string>
     <string name="variant_bundled_app">उसी रिलीज़ में मॉड्यूल के साथ भेजा गया</string>
     <string name="variant_incompatible_min_sdk">Android की आवश्यकता है %1$d+ (आपके पास %2$d है)</string>
     <string name="variant_incompatible_abi">केवल %1$s बिल्ड - इस डिवाइस के साथ संगत नहीं है</string>
     <string name="variant_incompatible_api">एलएसपोज़्ड एपीआई की आवश्यकता है %1$d</string>
     <string name="variant_remembered">भविष्य के अपडेट के लिए आपकी पसंद को याद रखा</string>
-    <string name="variant_debug_badge">डिबग बिल्ड</string>
     <string name="variant_not_module">यह एपीके एक एक्सपोज़ड मॉड्यूल नहीं है</string>
     <string name="installed_finished_skipped">%1$d मॉड्यूल को एक भिन्न विकल्प की आवश्यकता होती है - उन्हें अपडेट करने के लिए खोलें</string>
     <string name="installed_finished_cancelled">रद्द किए गए: %1$d</string>
@@ -282,8 +280,6 @@
     <string name="installer_launch_failed">इंस्टॉलर लॉन्च करने में असमर्थ</string>
     <string name="installer_uninstall_launch_failed">अनइंस्टॉलर खोलने में असमर्थ</string>
     <string name="installer_no_handler">इस डिवाइस पर कोई भी ऐप APK इंस्टॉल नहीं कर सकता</string>
-    <string name="installer_unknown_sources">LSP Store के लिए \\"अज्ञात ऐप्स इंस्टॉल करें\\" की अनुमति दें और पुनः प्रयास करें</string>
-    <string name="installer_apk_missing">एपीके फ़ाइल गायब है: %1$s</string>
     <string name="verifier_package_mismatch">एपीके पैकेज %1$s अपेक्षित से मेल नहीं खाता %2$s</string>
     <string name="download_channel_name">डाउनलोड</string>
     <string name="download_channel_desc">एपीके डाउनलोड प्रगति</string>
@@ -301,7 +297,6 @@
     <string name="detail_all">सभी</string>
     <string name="detail_logs">लॉग स्थापित करें</string>
     <string name="variant_field_choose">एक एपीके चुनें (%1$d)</string>
-    <string name="variant_incompatible_group">इस डिवाइस के साथ संगत नहीं है (%1$d)</string>
     <string name="installed_update_skipped">%1$s का यह संस्करण अनदेखा किया गया</string>
     <string name="installed_uninstalled">%1$s अनइंस्टॉल किया गया</string>
     <string name="installed_uninstall_confirm_message">%1$s अनइंस्टॉल करें? इसे पूर्ववत नहीं किया जा सकता।</string>

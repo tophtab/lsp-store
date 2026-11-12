@@ -238,13 +238,11 @@
     <string name="variant_picker_subtitle">Bu sürüm birden fazla APK göndermektedir.</string>
     <string name="variant_recommended">Tavsiye edilen</string>
     <string name="variant_reason_matches_device">Cihazınızla eşleşir (%1$s)</string>
-    <string name="variant_bundled_apps">Bu sürümdeki diğer uygulamalar (%1$d)</string>
     <string name="variant_bundled_app">Aynı sürümde modülle birlikte gönderilir</string>
     <string name="variant_incompatible_min_sdk">Android %1$d+ gerektirir (%2$d\'iniz var)</string>
     <string name="variant_incompatible_abi">Yalnızca %1$s yapı - bu cihazla uyumlu değil</string>
     <string name="variant_incompatible_api">LSPosed API\'si gerektirir %1$d</string>
     <string name="variant_remembered">Gelecekteki güncellemeler için seçiminizi hatırladım</string>
-    <string name="variant_debug_badge">hata ayıklama derlemesi</string>
     <string name="variant_not_module">Bu APK bir Xposed modülü değil</string>
     <string name="installed_finished_skipped">%1$d modülün farklı bir seçeneğe ihtiyacı var - güncellemek için bunları açın</string>
     <string name="installed_finished_cancelled">İptal edildi: %1$d</string>
@@ -282,8 +280,6 @@
     <string name="installer_launch_failed">Yükleyici başlatılamıyor</string>
     <string name="installer_uninstall_launch_failed">Kaldırıcı açılamadı</string>
     <string name="installer_no_handler">Bu cihazdaki hiçbir uygulama APK yükleyemez</string>
-    <string name="installer_unknown_sources">LSP Store için \\"Bilinmeyen uygulamaları yükle\\" seçeneğine izin verin ve tekrar deneyin</string>
-    <string name="installer_apk_missing">APK dosyası eksik: %1$s</string>
     <string name="verifier_package_mismatch">APK paketi %1$s beklenen %2$s ile eşleşmiyor</string>
     <string name="download_channel_name">İndirilenler</string>
     <string name="download_channel_desc">APK indirme ilerlemesi</string>
@@ -301,7 +297,6 @@
     <string name="detail_all">Tüm</string>
     <string name="detail_logs">Günlüğü yükle</string>
     <string name="variant_field_choose">Bir APK seçin (%1$d)</string>
-    <string name="variant_incompatible_group">Bu cihazla uyumlu değil (%1$d)</string>
     <string name="installed_update_skipped">%1$s uygulamasının bu sürümü yoksayıldı</string>
     <string name="installed_uninstalled">%1$s kaldırıldı</string>
     <string name="installed_uninstall_confirm_message">%1$s kaldırılsın mı? Bu işlem geri alınamaz.</string>

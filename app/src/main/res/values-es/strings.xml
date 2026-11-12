@@ -238,13 +238,11 @@
     <string name="variant_picker_subtitle">Esta versión incluye más de un APK.</string>
     <string name="variant_recommended">Recomendado</string>
     <string name="variant_reason_matches_device">Coincide con su dispositivo (%1$s)</string>
-    <string name="variant_bundled_apps">Otras aplicaciones en esta versión (%1$d)</string>
     <string name="variant_bundled_app">Se envía junto con el módulo en la misma versión.</string>
     <string name="variant_incompatible_min_sdk">Requiere Android %1$d+ (tienes %2$d)</string>
     <string name="variant_incompatible_abi">Solo compilación %1$s - no compatible con este dispositivo</string>
     <string name="variant_incompatible_api">Requiere API LSPosed %1$d</string>
     <string name="variant_remembered">Recordó su elección para futuras actualizaciones.</string>
-    <string name="variant_debug_badge">compilación de depuración</string>
     <string name="variant_not_module">Este APK no es un módulo Xposed</string>
     <string name="installed_finished_skipped">%1$d los módulos necesitan una opción de variante: ábralos para actualizar</string>
     <string name="installed_finished_cancelled">Canceladas: %1$d</string>
@@ -282,8 +280,6 @@
     <string name="installer_launch_failed">No se puede iniciar el instalador</string>
     <string name="installer_uninstall_launch_failed">No se pudo abrir el desinstalador</string>
     <string name="installer_no_handler">Ninguna aplicación en este dispositivo puede instalar APK</string>
-    <string name="installer_unknown_sources">Permita \\"Instalar aplicaciones desconocidas\\" para LSP Store e inténtelo de nuevo</string>
-    <string name="installer_apk_missing">Falta el archivo APK: %1$s</string>
     <string name="verifier_package_mismatch">El paquete APK %1$s no coincide con el esperado %2$s</string>
     <string name="download_channel_name">Descargas</string>
     <string name="download_channel_desc">Progreso de descarga de APK</string>
@@ -301,7 +297,6 @@
     <string name="detail_all">Todo</string>
     <string name="detail_logs">Registro de instalación</string>
     <string name="variant_field_choose">Elija un APK (%1$d)</string>
-    <string name="variant_incompatible_group">No compatible con este dispositivo (%1$d)</string>
     <string name="installed_update_skipped">Se ha ignorado esta versión de %1$s</string>
     <string name="installed_uninstalled">%1$s desinstalado</string>
     <string name="installed_uninstall_confirm_message">¿Desinstalar %1$s? Esta acción no se puede deshacer.</string>

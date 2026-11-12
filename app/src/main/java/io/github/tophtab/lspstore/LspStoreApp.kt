@@ -1,6 +1,9 @@
 package io.github.tophtab.lspstore
 
 import android.app.Application
+import android.content.Intent
+import android.content.IntentFilter
+import androidx.core.content.ContextCompat
 import coil.ImageLoader
 import coil.ImageLoaderFactory
 import coil.decode.SvgDecoder
@@ -11,6 +14,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 import io.github.tophtab.lspstore.data.device.LauncherIcon
+import io.github.tophtab.lspstore.data.install.PackageEventReceiver
 import io.github.tophtab.lspstore.data.update.UpdateScheduler
 import io.github.tophtab.lspstore.di.AppContainer
 import io.github.tophtab.lspstore.domain.variant.ModuleVariantState
@@ -27,6 +31,17 @@ class LspStoreApp : Application(), ImageLoaderFactory {
     override fun onCreate() {
         super.onCreate()
         container = AppContainer(this)
+        ContextCompat.registerReceiver(
+            this,
+            PackageEventReceiver(),
+            IntentFilter().apply {
+                addAction(Intent.ACTION_PACKAGE_ADDED)
+                addAction(Intent.ACTION_PACKAGE_REPLACED)
+                addAction(Intent.ACTION_PACKAGE_FULLY_REMOVED)
+                addDataScheme("package")
+            },
+            ContextCompat.RECEIVER_EXPORTED,
+        )
         applyMirror()
         applyLauncherIcon()
         syncUpdateSchedule()
