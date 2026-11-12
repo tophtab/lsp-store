@@ -609,7 +609,13 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
         VariantSignature.of(parseTraits(asset.name))
 
     private suspend fun reloadInstalled() {
-        val modules = installedRepository.getInstalledModules(force = true)
+        // A package broadcast, an installer hand-off or a root uninstall can
+        // land here while PackageManager is still settling, so a failed scan
+        // must not escape into viewModelScope: that would crash the app over a
+        // refresh the list performs on its own. Keep the current list instead.
+        val modules = runCatching {
+            installedRepository.getInstalledModules(force = true)
+        }.getOrNull() ?: return
         container.prunePendingInstalls(modules)
         installed = modules
         recompute()

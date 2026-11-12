@@ -20,6 +20,7 @@ import io.github.tophtab.lspstore.domain.model.UpdateInfo
 import io.github.tophtab.lspstore.domain.variant.DeviceProfile
 import io.github.tophtab.lspstore.domain.variant.InstalledVariantHint
 import io.github.tophtab.lspstore.domain.variant.ModuleVariantState
+import io.github.tophtab.lspstore.domain.variant.Reason
 import io.github.tophtab.lspstore.domain.variant.VariantDecision
 import io.github.tophtab.lspstore.domain.variant.VariantSignature
 import io.github.tophtab.lspstore.domain.variant.onEvaluatedNoCandidate
@@ -140,8 +141,10 @@ class InstallPreparedApkUseCase(
     override suspend fun install(prepared: PreparedInstall.Ready): InstallOutcome {
         val info = prepared.info
         val packageName = info.installed.packageName
+        var installTarget = packageName
+        var linkAfterInstall: Pair<String, String>? = null
         // Local gate: zero network, before the APK reaches the installer.
-        when (val gate = ApkGate.check(context, prepared.file, packageName, deviceProfile())) {
+        when (val gate = ApkGate.check(context, prepared.file, installTarget, deviceProfile())) {
             is GateResult.Reject -> {
                 // One failed attempt, nothing persisted: a gate hit does not make
                 // the module unfit, and it must stay in the update list.
@@ -149,14 +152,23 @@ class InstallPreparedApkUseCase(
                 return InstallOutcome.Failure(context.variantReasonText(gate.reason))
             }
 
-            is GateResult.Warn -> Unit
+            is GateResult.Warn -> {
+                val archivePackage = gate.reason.args.firstOrNull()
+                if (gate.reason.kind == Reason.Kind.PACKAGE_MISMATCH &&
+                    !archivePackage.isNullOrBlank() &&
+                    archivePackage != installTarget
+                ) {
+                    installTarget = archivePackage
+                    linkAfterInstall = archivePackage to info.module.packageName
+                }
+            }
             GateResult.Ok -> Unit
         }
         val outcome = try {
             val useRoot = settingsRepository.rootInstall.first()
             // komi's orchestrator order: everything is ready before the single
             // install slot is taken, then the APK is handed over.
-            systemInstallSerializer.awaitFreeAndMarkPending(packageName)
+            systemInstallSerializer.awaitFreeAndMarkPending(installTarget)
             // Verify and update the installed package, which may differ from
             // the repository listing for imported/linked modules.
             installer.install(prepared.file, useRoot, allowUi)
@@ -169,8 +181,11 @@ class InstallPreparedApkUseCase(
         }
         when (outcome) {
             InstallOutcome.Completed -> {
-                systemInstallSerializer.markCompleted(packageName)
-                pendingRepository.clear(packageName)
+                systemInstallSerializer.markCompleted(installTarget)
+                pendingRepository.clear(installTarget)
+                linkAfterInstall?.let { (installedPackage, repoPackage) ->
+                    libraryRepository.linkModule(installedPackage, repoPackage)
+                }
                 libraryRepository.recordInstallResult(
                     info.module.packageName,
                     ok = true,
@@ -179,19 +194,24 @@ class InstallPreparedApkUseCase(
             }
             // Delegated installs keep the slot until the package broadcast or the
             // serializer timeout releases it.
-            InstallOutcome.DelegatedToSystem -> pendingRepository.markPending(
-                PendingInstall(
-                    packageName = packageName,
-                    repoPackageName = info.module.packageName,
-                    title = info.module.title,
-                    versionCode = info.latest.versionCode,
-                    versionName = info.latest.versionName,
-                    assetName = prepared.asset.name,
-                    createdAt = System.currentTimeMillis(),
-                ),
-            )
+            InstallOutcome.DelegatedToSystem -> {
+                pendingRepository.markPending(
+                    PendingInstall(
+                        packageName = installTarget,
+                        repoPackageName = info.module.packageName,
+                        title = info.module.title,
+                        versionCode = info.latest.versionCode,
+                        versionName = info.latest.versionName,
+                        assetName = prepared.asset.name,
+                        createdAt = System.currentTimeMillis(),
+                    ),
+                )
+                linkAfterInstall?.let { (installedPackage, repoPackage) ->
+                    libraryRepository.linkModule(installedPackage, repoPackage)
+                }
+            }
             is InstallOutcome.Failure -> {
-                systemInstallSerializer.markCompleted(packageName)
+                systemInstallSerializer.markCompleted(installTarget)
                 libraryRepository.recordInstallResult(info.module.packageName, ok = false)
             }
         }

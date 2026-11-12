@@ -245,6 +245,23 @@ class ResumableFetchTest {
     }
 
     @Test
+    fun partialContentWithoutRangeStartIsDiscarded() = runBlocking {
+        TestServer { range ->
+            if (range != null) {
+                Response(206, payload)
+            } else {
+                Response(200, payload)
+            }
+        }.use { server ->
+            val target = tempFile("missing-range.apk", payload.copyOfRange(0, 100))
+            download(server, target)
+
+            assertArrayEquals(payload, target.readBytes())
+            assertEquals(listOf("bytes=100-", null), server.ranges)
+        }
+    }
+
+    @Test
     fun droppedConnectionResumesFromTheBytesAlreadyWritten() = runBlocking {
         TestServer { range ->
             if (range == "bytes=100-") {

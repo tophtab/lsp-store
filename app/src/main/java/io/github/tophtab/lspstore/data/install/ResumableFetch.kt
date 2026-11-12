@@ -156,7 +156,7 @@ private fun fetchOnce(
         // splice unrelated bytes into the file.
         val contentRange = response.header("Content-Range")
         val partStart = contentRangeStart(contentRange)
-        if (appending && partStart != null && partStart != resumeFrom) return null
+        if (appending && partStart != resumeFrom) return null
 
         val contentLength = body.contentLength()
         val total = when {
