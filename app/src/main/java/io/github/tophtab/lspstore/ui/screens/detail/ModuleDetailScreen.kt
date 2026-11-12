@@ -543,8 +543,8 @@ private fun DetailContent(
     }
     val recommendationReady = state.probedRelease == selectedRelease && state.variantResolution != null && !state.isProbing
     val decision = if (recommendationReady) state.variantResolution.decision else fallbackDecision
-    // Lazy validation still probes on the detail page (variant-selection.md 7.1):
-    // one ranged read per candidate, cached per asset. Remembered choices stay preferred.
+    // Multi-APK recommendations can use background metadata. A single APK
+    // returns immediately; changing releases also cancels an obsolete request.
     LaunchedEffect(selectedRelease, device, variantState, installedHint, state.probeGeneration) {
         selectedRelease?.let { onProbeAssets(it, false) }
     }
@@ -563,7 +563,9 @@ private fun DetailContent(
         val recommendedName = (decision as? VariantDecision.Pick)?.asset?.name
         // Best fit first, so the default the install button uses is the first row
         // of the resource sheet too.
-        resolver.ranked(base).map { it.copy(recommended = it.asset.name == recommendedName) }.sortedByDescending { it.recommended }
+        resolver.ranked(base).map {
+            it.copy(recommended = base.size > 1 && it.asset.name == recommendedName)
+        }.sortedByDescending { it.recommended }
     }
     var userPickedAssetName by rememberSaveable(selectedRelease?.tagName) {
         mutableStateOf("")
@@ -664,10 +666,8 @@ private fun DetailContent(
                 state = state,
                 targetVersion = selectedRelease?.version,
                 target = selectedTarget,
-                resolvingSelection = !recommendationReady && userPickedAssetName.isBlank() && selectedRelease?.apkAssets?.isNotEmpty() == true,
                 showUpdateHint = state.updateAvailable && selectedRelease == latestRelease,
-                installEnabled = selectedAsset != null && (recommendationReady || userPickedAssetName.isNotBlank()) &&
-                    selectedRelease?.apkAssets?.isNotEmpty() == true,
+                installEnabled = selectedTarget != null,
                 notApplicableReason = when {
                     selectedRelease == null && selectedReleaseTag.isNotBlank() -> stringResource(R.string.detail_resources_unavailable)
                     selectedRelease == null || selectedRelease.apkAssets.isEmpty() -> stringResource(R.string.detail_latest_unavailable)

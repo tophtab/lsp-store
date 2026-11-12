@@ -10,6 +10,7 @@ import io.github.tophtab.lspstore.domain.variant.ApkProbe
 import io.github.tophtab.lspstore.domain.variant.DeviceProfile
 import io.github.tophtab.lspstore.domain.variant.InstalledVariantHint
 import io.github.tophtab.lspstore.domain.variant.ModuleVariantState
+import io.github.tophtab.lspstore.domain.variant.Reason
 import io.github.tophtab.lspstore.domain.variant.VariantDecision
 import io.github.tophtab.lspstore.domain.variant.VariantResolver
 
@@ -19,13 +20,13 @@ data class VariantResolution(
 )
 
 /**
- * Applies the lazy-validation rules (variant-selection.md §7.1) around the pure
- * [VariantResolver]:
+ * Supplements [VariantResolver] when several APKs need comparing:
  *
- *  - remembered choice: follow its stable asset identity; probe only if ambiguous or requested;
- *  - UNKNOWN / SUSPECT: probe the chosen candidate before installing;
- *  - ambiguous name layer: probe the top candidates, then re-resolve;
- *  - legacy NOT_APPLICABLE: retry like UNKNOWN, including probes.
+ *  - a single APK is used directly, without reading the probe cache;
+ *  - a uniquely remembered asset family is reused directly;
+ *  - cached metadata, file names and installation history resolve known choices;
+ *  - unresolved defaults and installed-package identity may need remote metadata;
+ *  - opening a multi-APK picker can request metadata for reference.
  *
  * A probe failure is silent: the name-layer decision stands.
  */
@@ -47,6 +48,21 @@ class ResolveVariantUseCase(
         installed: InstalledVariantHint? = null,
     ): VariantResolution {
         val resolver = VariantResolver(device)
+        val initialDecision = resolver.resolveForUpdate(
+            state, release, expectedPackage = expectedPackage, installed = installed,
+        )
+        // There is no choice to refine. This also applies to an explicit picker
+        // request and avoids any probe-cache I/O on the single-APK path.
+        if (release.apkAssets.size <= 1) return VariantResolution(initialDecision)
+
+        // A recorded asset family identifies the user's choice or a confirmed
+        // installation across release versions, even after a failed attempt.
+        if (!forceProbe && state.recommendationSignature?.assetFamily != null &&
+            initialDecision.isRememberedChoice()
+        ) {
+            return VariantResolution(initialDecision)
+        }
+
         val cached = release.apkAssets.mapNotNull { asset -> probe.cached(asset)?.let { asset.name to it } }.toMap()
         val nameDecision = resolver.resolve(
             release,
@@ -60,33 +76,27 @@ class ResolveVariantUseCase(
             return VariantResolution(nameDecision, cached)
         }
 
-        // A DEFAULT pick is a real default, but the archive is the only thing that
-        // can still tell the candidates apart (legacy vs libxposed, a renamed
-        // package, a real ABI), so that path probes once before installing.
         val ambiguous = nameDecision is VariantDecision.Pick &&
             nameDecision.confidence == VariantDecision.Confidence.DEFAULT
-        // Legacy NOT_APPLICABLE records are retryable, just like UNKNOWN. They
-        // must not suppress the probes that could disprove the old verdict.
-        val shouldProbe = forceProbe || !state.isTrusted || ambiguous
+        // A device-only recommendation may still be a different application.
+        // Updates follow the installed copy when no unique remembered choice or
+        // cached package identity already establishes that link.
+        val needsInstalledIdentity = installed != null &&
+            !nameDecision.isRememberedChoice() &&
+            (nameDecision as? VariantDecision.Pick)?.asset?.let {
+                cached[it.name]?.packageName != installed.packageName
+            } == true
+        val shouldProbe = forceProbe || ambiguous || needsInstalledIdentity
         if (!shouldProbe) return VariantResolution(nameDecision, cached)
 
-        val targets: List<ReleaseAsset> = when {
-            forceProbe -> resolver.ranked(
-                resolver.candidates(release, expectedPackage = expectedPackage, installed = installed),
-            ).map { it.asset }
-            // A default that only a preference ladder decided: probe the ranked
-            // candidates so the archive can overrule the name layer.
-            ambiguous -> resolver.ranked(
-                resolver.candidates(
-                    release,
-                    expectedPackage = expectedPackage,
-                    installed = installed,
-                ),
-            ).map { it.asset }
-
-            nameDecision is VariantDecision.Pick -> listOf(nameDecision.asset)
-            else -> emptyList()
-        }.take(maxProbes)
+        val targets: List<ReleaseAsset> = resolver.ranked(
+            resolver.candidates(
+                release,
+                probes = cached,
+                expectedPackage = expectedPackage,
+                installed = installed,
+            ),
+        ).take(maxProbes).map { it.asset }
         if (targets.isEmpty()) return VariantResolution(nameDecision, cached)
 
         val probes = cached + coroutineScope {
@@ -109,3 +119,7 @@ class ResolveVariantUseCase(
         )
     }
 }
+
+private fun VariantDecision.isRememberedChoice(): Boolean =
+    this is VariantDecision.Pick && confidence == VariantDecision.Confidence.HIGH &&
+        reasons.any { it.kind == Reason.Kind.REMEMBERED }

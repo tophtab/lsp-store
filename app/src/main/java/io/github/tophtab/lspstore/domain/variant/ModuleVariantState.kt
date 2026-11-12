@@ -5,8 +5,8 @@ import io.github.tophtab.lspstore.domain.model.ConfirmedInstallRecord
 import kotlinx.serialization.Serializable
 
 /**
- * Lazy validation state for one repository module: which asset finally worked on
- * this device and whether it should be re-probed.
+ * Installation history and explicit variant preferences for one repository
+ * module. Probe selection uses this evidence rather than the status alone.
  */
 @Serializable
 data class ModuleVariantState(
@@ -58,7 +58,7 @@ data class ModuleVariantState(
     }
 }
 
-/** Install finished: remember the semantic signature and stop probing. */
+/** Install finished: retain the semantic signature and clear the failure counter. */
 fun ModuleVariantState.onInstallSucceeded(
     signature: VariantSignature?,
     now: Long = System.currentTimeMillis(),
@@ -71,7 +71,7 @@ fun ModuleVariantState.onInstallSucceeded(
 )
 
 /**
- * Install failed: probe again next time and re-rank the candidates.
+ * Install failed: retain the preferred type and count the failure for diagnostics.
  *
  * This is deliberately not a verdict about the module. The installer, root, a
  * stale mirror or a variant that did not fit can all fail once, and a stored
