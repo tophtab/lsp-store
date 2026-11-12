@@ -4,11 +4,9 @@
     <string name="action_more">المزيد</string>
     <string name="action_clear">مسح</string>
     <string name="action_refresh">إعادة التحميل</string>
-    <string name="action_sort">ترتيب</string>
     <string name="action_share">مشاركة</string>
     <string name="action_cancel">إلغاء</string>
     <string name="action_save">حفظ</string>
-    <string name="action_download">تنزيل</string>
     <string name="action_update">تحديث</string>
     <string name="action_unskip">إلغاء التجاهل</string>
     <string name="action_restore_update">استعادة التحديثات</string>
@@ -20,9 +18,7 @@
     <string name="sort_updated">تم تحديثها مؤخرا</string>
     <string name="sort_stars">الأكثر تألقًا</string>
     <string name="sort_name">الاسم</string>
-    <string name="nav_home">الرئيسية</string>
     <string name="nav_repository">مستودع</string>
-    <string name="nav_search">بحث</string>
     <string name="nav_installed">المثبتة</string>
     <string name="nav_settings">الإعدادات</string>
     <string name="module_updated_relative">تم التحديث %1$s</string>
@@ -30,20 +26,21 @@
     <string name="home_no_modules">لا توجد وحدات متاحة</string>
     <string name="home_section_recently_updated">تم تحديثها مؤخرا</string>
     <string name="home_section_most_starred">الأكثر تألقًا</string>
-    <string name="home_browse_all">تصفح كافة الوحدات</string>
     <string name="home_load_failed">فشل تحميل الوحدات</string>
-    <string name="search_placeholder">وحدات البحث: %1$d</string>
-    <string name="search_favourites">المفضلة</string>
-    <string name="search_recent">عمليات البحث الأخيرة</string>
     <string name="search_empty">لا توجد وحدات تطابق بحثك</string>
-    <string name="search_count">الوحدات التي تم العثور عليها: %1$d</string>
+    <plurals name="search_count">
+        <item quantity="zero">تم العثور على %1$d وحدات</item>
+        <item quantity="one">تم العثور على %1$d وحدة</item>
+        <item quantity="two">تم العثور على %1$d وحدتين</item>
+        <item quantity="few">تم العثور على %1$d وحدات</item>
+        <item quantity="many">تم العثور على %1$d وحدة</item>
+        <item quantity="other">تم العثور على %1$d وحدة</item>
+    </plurals>
     <string name="installed_empty">لم يتم اكتشاف وحدات LSPosed على هذا الجهاز</string>
     <string name="installed_search_hint">البحث في الوحدات المثبتة</string>
-    <string name="installed_section_updates">التحديثات (%1$d)</string>
     <string name="installed_section_up_to_date">في المستودع (%1$d)</string>
     <string name="installed_section_unknown">غير موجود في المستودع (%1$d)</string>
     <string name="pending_install">في انتظار التثبيت</string>
-    <string name="installed_update_all">تحديث الكل</string>
     <string name="installed_update_all_count">تحديث الكل (%1$d)</string>
     <string name="installed_version_arrow">%1$s -&gt; %2$s</string>
     <string name="installed_batch_cancelled">تم إلغاء التحديث الدفعي</string>
@@ -57,9 +54,14 @@
     <string name="installed_cancel_download">إلغاء التنزيل</string>
     <string name="installed_retry_update">إعادة محاولة التحديث</string>
     <string name="installed_all_updated">تم تحديث كافة الوحدات بنجاح</string>
-    <string name="installed_finished_failures">الفشل: %1$d</string>
-    <string name="installed_batch_installer_busy">لا يزال برنامج التثبيت مفتوحًا، وتم تخطي %1$d التحديث (التحديثات).</string>
-    <string name="installed_updated_one">تم التحديث من %1$s إلى %2$s</string>
+    <plurals name="installed_finished_failures">
+        <item quantity="zero">%1$d إخفاقات</item>
+        <item quantity="one">%1$d إخفاق</item>
+        <item quantity="two">%1$d إخفاقان</item>
+        <item quantity="few">%1$d إخفاقات</item>
+        <item quantity="many">%1$d إخفاق</item>
+        <item quantity="other">%1$d إخفاق</item>
+    </plurals>
     <string name="installed_batch_failure_download">فشل تنزيل ملف APK</string>
     <string name="installed_check_failed">فشل في التحقق من التحديثات</string>
     <string name="installed_choose_variant">اختر البديل</string>
@@ -81,7 +83,6 @@
     <string name="installed_variant_auto_saved">باستخدام اختيار البديل التلقائي</string>
     <string name="installed_update_ignored">تم تجاهل التحديث لـ %1$s</string>
     <string name="installed_update_unignored">تمت استعادة التحديث لـ %1$s</string>
-    <string name="detail_readme">الملف التمهيدي</string>
     <string name="detail_whats_new">ما هو الجديد</string>
     <string name="detail_about">حول هذا التطبيق</string>
     <string name="detail_releases">الإصدارات</string>
@@ -91,7 +92,14 @@
     <string name="detail_reinstall">إعادة التثبيت %1$s</string>
     <string name="detail_install">تثبيت %1$s</string>
     <string name="detail_no_releases">لا توجد إصدارات</string>
-    <string name="detail_downloads">%1$s - التنزيلات: %2$d</string>
+    <plurals name="detail_downloads">
+        <item quantity="zero">%1$s - %2$d تنزيلات</item>
+        <item quantity="one">%1$s - %2$d تنزيل</item>
+        <item quantity="two">%1$s - %2$d تنزيلان</item>
+        <item quantity="few">%1$s - %2$d تنزيلات</item>
+        <item quantity="many">%1$s - %2$d تنزيل</item>
+        <item quantity="other">%1$s - %2$d تنزيل</item>
+    </plurals>
     <string name="detail_no_apk">لا توجد أصول APK</string>
     <string name="detail_readme_details">تفاصيل</string>
     <string name="detail_no_readme">لا التمهيدي</string>
@@ -106,7 +114,6 @@
     <string name="detail_uninstall">إلغاء التثبيت</string>
     <string name="detail_open_source">مفتوح المصدر</string>
     <string name="detail_install_finished">انتهى التثبيت</string>
-    <string name="detail_install_failed">فشل التثبيت: %1$s</string>
     <string name="detail_scope">نِطَاق</string>
     <string name="detail_contributors">المساهمين</string>
     <string name="detail_installed_apk">تم التثبيت %1$s</string>
@@ -176,7 +183,7 @@
     <string name="backup_export_done">تم تصدير المكتبة</string>
     <string name="backup_export_failed">تعذّر تصدير المكتبة</string>
     <string name="backup_import_title">استيراد المكتبة؟</string>
-    <string name="backup_import_summary">تحتوي النسخة الاحتياطية على %1$d من المفضلة، و%2$d من الوحدات المتجاهلة، و%3$d من الإصدارات المتجاهَلة.</string>
+    <string name="backup_import_summary">تحتوي النسخة الاحتياطية على %1$s و%2$s و%3$s.</string>
     <string name="backup_import_note">يضيف الدمج العناصر المفقودة ويحتفظ بالخيارات الحالية. يحذف الاستبدال المكتبة الحالية أولاً.</string>
     <string name="backup_import_merge">دمج (مُوصى به)</string>
     <string name="backup_import_replace">استبدال البيانات الحالية</string>
@@ -245,8 +252,22 @@
     <string name="variant_incompatible_api">يتطلب LSPosed API %1$d</string>
     <string name="variant_remembered">تذكرت اختيارك للتحديثات المستقبلية</string>
     <string name="variant_not_module">ملف APK هذا ليس وحدة Xpose</string>
-    <string name="installed_finished_skipped">%1$d تحتاج الوحدات إلى خيار مختلف - افتحها للتحديث</string>
-    <string name="installed_finished_cancelled">تم الإلغاء: %1$d</string>
+    <plurals name="installed_finished_skipped">
+        <item quantity="zero">%1$d وحدات تحتاج إلى اختيار إصدار APK - افتحها للتحديث</item>
+        <item quantity="one">%1$d وحدة تحتاج إلى اختيار إصدار APK - افتحها للتحديث</item>
+        <item quantity="two">%1$d وحدتان تحتاجان إلى اختيار إصدار APK - افتحهما للتحديث</item>
+        <item quantity="few">%1$d وحدات تحتاج إلى اختيار إصدار APK - افتحها للتحديث</item>
+        <item quantity="many">%1$d وحدة تحتاج إلى اختيار إصدار APK - افتحها للتحديث</item>
+        <item quantity="other">%1$d وحدة تحتاج إلى اختيار إصدار APK - افتحها للتحديث</item>
+    </plurals>
+    <plurals name="installed_finished_cancelled">
+        <item quantity="zero">تم الإلغاء: %1$d</item>
+        <item quantity="one">تم الإلغاء: %1$d</item>
+        <item quantity="two">تم الإلغاء: %1$d</item>
+        <item quantity="few">تم الإلغاء: %1$d</item>
+        <item quantity="many">تم الإلغاء: %1$d</item>
+        <item quantity="other">تم الإلغاء: %1$d</item>
+    </plurals>
     <string name="settings_root_unavailable_msg">الجذر (su) غير متوفر على هذا الجهاز</string>
     <string name="onboarding_welcome_title">مرحبًا بك في LSP Store</string>
     <string name="onboarding_welcome_body">أداة لتحديث واستعراض وحدات LSPosed</string>
@@ -270,12 +291,18 @@
     <string name="about_source_title">الشيفرة المصدرية على GitHub</string>
     <string name="about_source_body">إن كان هذا المشروع مفيدًا لك، فضلًا أضف نجمة على GitHub. فهذا يعني لي الكثير.</string>
     <string name="author_no_modules">لا توجد وحدات من هذا المؤلف</string>
-    <string name="author_module_count">الوحدات: %1$d</string>
+    <plurals name="author_module_count">
+        <item quantity="zero">%1$d وحدات</item>
+        <item quantity="one">%1$d وحدة</item>
+        <item quantity="two">%1$d وحدتان</item>
+        <item quantity="few">%1$d وحدات</item>
+        <item quantity="many">%1$d وحدة</item>
+        <item quantity="other">%1$d وحدة</item>
+    </plurals>
     <string name="author_load_failed">فشل تحميل الوحدات</string>
     <string name="error_network">الشبكة غير متاحة، تحقق من اتصالك</string>
     <string name="error_timeout">انتهت مهلة الطلب</string>
     <string name="error_http">خطأ في الخادم (%1$d)</string>
-    <string name="error_no_apk_asset">لم يتم العثور على أصول APK</string>
     <string name="error_install_failed">فشل التثبيت</string>
     <string name="installer_silent_failed">فشل التثبيت الصامت (su)</string>
     <string name="installer_launch_failed">غير قادر على تشغيل المثبت</string>
@@ -284,11 +311,17 @@
     <string name="verifier_package_mismatch">حزمة APK %1$s لا تتطابق مع المتوقع %2$s</string>
     <string name="download_channel_name">التنزيلات</string>
     <string name="download_channel_desc">تقدم تنزيل APK</string>
-    <string name="download_notification_title">التنزيلات النشطة: %1$d</string>
+    <plurals name="download_notification_title">
+        <item quantity="zero">%1$d تنزيلات نشطة</item>
+        <item quantity="one">%1$d تنزيل نشط</item>
+        <item quantity="two">%1$d تنزيلان نشطان</item>
+        <item quantity="few">%1$d تنزيلات نشطة</item>
+        <item quantity="many">%1$d تنزيل نشط</item>
+        <item quantity="other">%1$d تنزيل نشط</item>
+    </plurals>
     <string name="download_notification_text">%1$s / %2$s</string>
     <string name="download_notification_unknown">جارٍ التحضير للتنزيل…</string>
     <string name="action_cancel_all">إلغاء الكل</string>
-    <string name="action_close">إغلاق</string>
     <string name="detail_stats">احصائيات</string>
     <string name="detail_stat_stars">النجوم</string>
     <string name="detail_stat_releases">الإصدارات</string>
@@ -307,10 +340,24 @@
     <string name="updates_channel_name">تحديثات الوحدات</string>
     <string name="updates_channel_desc">تنبيهات التحديث من الفحص في الخلفية</string>
     <string name="updates_notification_title_one">يتوفر تحديث لـ %1$s</string>
-    <string name="updates_notification_title_many">تتوفر %1$d تحديثات للوحدات</string>
+    <plurals name="updates_notification_title_many">
+        <item quantity="zero">تتوفر تحديثات لـ %1$d وحدات</item>
+        <item quantity="one">تتوفر تحديثات لـ %1$d وحدة</item>
+        <item quantity="two">تتوفر تحديثات لـ %1$d وحدتين</item>
+        <item quantity="few">تتوفر تحديثات لـ %1$d وحدات</item>
+        <item quantity="many">تتوفر تحديثات لـ %1$d وحدة</item>
+        <item quantity="other">تتوفر تحديثات لـ %1$d وحدة</item>
+    </plurals>
     <string name="updates_auto_title">اكتمل التحديث التلقائي</string>
-    <string name="updates_auto_text">تم تحديث %1$d وفشل %2$d</string>
-    <string name="updates_auto_text_ok">تم تحديث %1$d من الوحدات</string>
+    <string name="updates_auto_text">%1$s، %2$s</string>
+    <plurals name="updates_auto_text_ok">
+        <item quantity="zero">تم تحديث %1$d وحدات</item>
+        <item quantity="one">تم تحديث %1$d وحدة</item>
+        <item quantity="two">تم تحديث %1$d وحدتين</item>
+        <item quantity="few">تم تحديث %1$d وحدات</item>
+        <item quantity="many">تم تحديث %1$d وحدة</item>
+        <item quantity="other">تم تحديث %1$d وحدة</item>
+    </plurals>
     <string name="updates_auto_channel_name">نتائج التحديث التلقائي</string>
     <string name="updates_auto_channel_desc">ملخصات صامتة للتحديثات التلقائية عبر root</string>
     <string name="settings_updates_section">التحديثات</string>
@@ -334,19 +381,99 @@
     <string name="detail_downgrade">تثبيت الإصدار الأقدم %1$s</string>
     <string name="detail_latest_unavailable">ملفات أحدث إصدار غير متاحة مؤقتًا</string>
     <string name="detail_resources_unavailable">ملفات الإصدار المحدد غير متاحة</string>
+
+    <!-- Counts composed independently in backup and update summaries. -->
+    <plurals name="updates_auto_text_failed">
+        <item quantity="zero">فشل تحديث %1$d وحدات</item>
+        <item quantity="one">فشل تحديث %1$d وحدة</item>
+        <item quantity="two">فشل تحديث %1$d وحدتين</item>
+        <item quantity="few">فشل تحديث %1$d وحدات</item>
+        <item quantity="many">فشل تحديث %1$d وحدة</item>
+        <item quantity="other">فشل تحديث %1$d وحدة</item>
+    </plurals>
+
+    <plurals name="backup_favourites_count">
+        <item quantity="zero">%1$d عناصر مفضّلة</item>
+        <item quantity="one">%1$d عنصر مفضّل</item>
+        <item quantity="two">%1$d عنصرين مفضّلين</item>
+        <item quantity="few">%1$d عناصر مفضّلة</item>
+        <item quantity="many">%1$d عنصر مفضّل</item>
+        <item quantity="other">%1$d عنصر مفضّل</item>
+    </plurals>
+
+    <plurals name="backup_ignored_modules_count">
+        <item quantity="zero">%1$d وحدات متجاهلة</item>
+        <item quantity="one">%1$d وحدة متجاهلة</item>
+        <item quantity="two">%1$d وحدتين متجاهلتين</item>
+        <item quantity="few">%1$d وحدات متجاهلة</item>
+        <item quantity="many">%1$d وحدة متجاهلة</item>
+        <item quantity="other">%1$d وحدة متجاهلة</item>
+    </plurals>
+
+    <plurals name="backup_skipped_versions_count">
+        <item quantity="zero">%1$d إصدارات متجاهلة</item>
+        <item quantity="one">%1$d إصدار متجاهل</item>
+        <item quantity="two">%1$d إصدارين متجاهلين</item>
+        <item quantity="few">%1$d إصدارات متجاهلة</item>
+        <item quantity="many">%1$d إصدار متجاهل</item>
+        <item quantity="other">%1$d إصدار متجاهل</item>
+    </plurals>
+
     <!-- Ignore keywords -->
     <string name="action_add">إضافة</string>
     <string name="detail_hidden_by_keyword">مخفي بواسطة الكلمة المفتاحية: %1$s</string>
-    <string name="library_keywords_section">الكلمات المفتاحية · %1$d</string>
-    <string name="library_modules_section">الوحدات · %1$d</string>
+    <plurals name="library_keywords_section">
+        <item quantity="zero">الكلمات المفتاحية · %1$d</item>
+        <item quantity="one">الكلمة المفتاحية · %1$d</item>
+        <item quantity="two">الكلمتان المفتاحيتان · %1$d</item>
+        <item quantity="few">الكلمات المفتاحية · %1$d</item>
+        <item quantity="many">الكلمات المفتاحية · %1$d</item>
+        <item quantity="other">الكلمات المفتاحية · %1$d</item>
+    </plurals>
+    <plurals name="library_modules_section">
+        <item quantity="zero">الوحدات · %1$d</item>
+        <item quantity="one">الوحدة · %1$d</item>
+        <item quantity="two">الوحدتان · %1$d</item>
+        <item quantity="few">الوحدات · %1$d</item>
+        <item quantity="many">الوحدات · %1$d</item>
+        <item quantity="other">الوحدات · %1$d</item>
+    </plurals>
     <string name="library_add_ignore_keyword">إضافة كلمة مفتاحية للتجاهل</string>
     <string name="library_remove_ignore_keyword">إزالة الكلمة المفتاحية</string>
     <string name="library_ignore_keyword_placeholder">مثال: Douyin</string>
     <string name="library_ignore_keyword_hint">يطابق اسم الوحدة واسم الحزمة والوصف؛ دون تمييز بين الحروف الكبيرة والصغيرة.</string>
-    <string name="library_ignore_keyword_preview">سيخفي %1$d من الوحدات</string>
-    <string name="library_ignore_keyword_matches">%1$d من الوحدات</string>
+    <plurals name="library_ignore_keyword_preview">
+        <item quantity="zero">سيخفي %1$d وحدات</item>
+        <item quantity="one">سيخفي %1$d وحدة</item>
+        <item quantity="two">سيخفي %1$d وحدتين</item>
+        <item quantity="few">سيخفي %1$d وحدات</item>
+        <item quantity="many">سيخفي %1$d وحدة</item>
+        <item quantity="other">سيخفي %1$d وحدة</item>
+    </plurals>
+    <plurals name="library_ignore_keyword_matches">
+        <item quantity="zero">%1$d وحدات</item>
+        <item quantity="one">%1$d وحدة</item>
+        <item quantity="two">%1$d وحدتان</item>
+        <item quantity="few">%1$d وحدات</item>
+        <item quantity="many">%1$d وحدة</item>
+        <item quantity="other">%1$d وحدة</item>
+    </plurals>
     <string name="library_ignore_keyword_blank">أدخل كلمة مفتاحية</string>
     <string name="library_ignore_keyword_duplicate">الكلمة المفتاحية مضافة بالفعل</string>
-    <string name="library_ignore_keyword_too_long">%1$d حرفًا كحد أقصى</string>
-    <string name="library_ignore_keyword_limit">%1$d كلمات مفتاحية كحد أقصى</string>
+    <plurals name="library_ignore_keyword_too_long">
+        <item quantity="zero">%1$d أحرف كحد أقصى</item>
+        <item quantity="one">%1$d حرف كحد أقصى</item>
+        <item quantity="two">%1$d حرفان كحد أقصى</item>
+        <item quantity="few">%1$d أحرف كحد أقصى</item>
+        <item quantity="many">%1$d حرفًا كحد أقصى</item>
+        <item quantity="other">%1$d حرف كحد أقصى</item>
+    </plurals>
+    <plurals name="library_ignore_keyword_limit">
+        <item quantity="zero">%1$d كلمات مفتاحية كحد أقصى</item>
+        <item quantity="one">%1$d كلمة مفتاحية كحد أقصى</item>
+        <item quantity="two">%1$d كلمتان مفتاحيتان كحد أقصى</item>
+        <item quantity="few">%1$d كلمات مفتاحية كحد أقصى</item>
+        <item quantity="many">%1$d كلمة مفتاحية كحد أقصى</item>
+        <item quantity="other">%1$d كلمة مفتاحية كحد أقصى</item>
+    </plurals>
 </resources>

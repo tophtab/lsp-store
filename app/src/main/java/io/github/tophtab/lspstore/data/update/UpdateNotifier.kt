@@ -34,7 +34,7 @@ class UpdateNotifier(private val context: Context) {
             val only = updates.first()
             context.getString(R.string.updates_notification_title_one, only.module.title)
         } else {
-            context.getString(R.string.updates_notification_title_many, updates.size)
+            context.resources.getQuantityString(R.plurals.updates_notification_title_many, updates.size, updates.size)
         }
         val text = if (updates.size == 1) {
             val only = updates.first()
@@ -57,10 +57,12 @@ class UpdateNotifier(private val context: Context) {
         if (succeeded == 0 && failed == 0) return true
         if (!canPost()) return false
         ensureChannels()
+        val succeededText = context.resources.getQuantityString(R.plurals.updates_auto_text_ok, succeeded, succeeded)
         val text = if (failed > 0) {
-            context.getString(R.string.updates_auto_text, succeeded, failed)
+            val failedText = context.resources.getQuantityString(R.plurals.updates_auto_text_failed, failed, failed)
+            context.getString(R.string.updates_auto_text, succeededText, failedText)
         } else {
-            context.getString(R.string.updates_auto_text_ok, succeeded)
+            succeededText
         }
         return post(
             build(

@@ -1,5 +1,9 @@
 # LSPosed 模块版本更新规律与已安装模块更新机制评估
 
+> 历史适用版本：1.0.0 准备发布阶段，调研数据来自 2026-10-20。本文保留当时的评估和决策。
+> 当前安装与更新规则见 [install-behavior.md](install-behavior.md)，索引同步、扫描与缓存规则见
+> [performance-behavior.md](performance-behavior.md)。下文的增量索引等方案属于历史提案。
+
 数据快照：**2026-10-20 10:00 UTC**（单次快照，仓库仍在变化）
 评估对象：本仓库 `:app` 的已安装模块检查/通知/下载/安装链路
 外部对照：LSPosed `RepoLoader`（`app/src/main/java/org/lsposed/manager/repo/RepoLoader.java`，master）

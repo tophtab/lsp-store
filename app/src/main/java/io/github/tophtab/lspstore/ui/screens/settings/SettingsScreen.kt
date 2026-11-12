@@ -37,6 +37,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -611,9 +612,9 @@ fun SettingsScreen(
                 KomiText(
                     text = stringResource(
                         R.string.backup_import_summary,
-                        backup.favourites.size,
-                        backup.ignoredModules.size,
-                        backup.skippedUpdates.size,
+                        pluralStringResource(R.plurals.backup_favourites_count, backup.favourites.size, backup.favourites.size),
+                        pluralStringResource(R.plurals.backup_ignored_modules_count, backup.ignoredModules.size, backup.ignoredModules.size),
+                        pluralStringResource(R.plurals.backup_skipped_versions_count, backup.skippedUpdates.size, backup.skippedUpdates.size),
                     ),
                     role = KomiTextRole.Body,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,

@@ -121,7 +121,7 @@ class DownloadService : Service() {
         )
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle(getString(R.string.download_notification_title, tasks.size))
+            .setContentTitle(resources.getQuantityString(R.plurals.download_notification_title, tasks.size, tasks.size))
             .setContentText(text)
             .setProgress(
                 if (total > 0) total.coerceAtMost(Int.MAX_VALUE.toLong()).toInt() else 0,

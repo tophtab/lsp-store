@@ -4,11 +4,9 @@
     <string name="action_more">더보기</string>
     <string name="action_clear">지우기</string>
     <string name="action_refresh">새로 고침</string>
-    <string name="action_sort">정렬</string>
     <string name="action_share">공유</string>
     <string name="action_cancel">취소</string>
     <string name="action_save">저장</string>
-    <string name="action_download">다운로드</string>
     <string name="action_update">업데이트</string>
     <string name="action_unskip">무시 해제</string>
     <string name="action_restore_update">업데이트 복원</string>
@@ -20,9 +18,7 @@
     <string name="sort_updated">최근 업데이트됨</string>
     <string name="sort_stars">가장 많이 출연한</string>
     <string name="sort_name">이름</string>
-    <string name="nav_home">홈</string>
     <string name="nav_repository">저장소</string>
-    <string name="nav_search">검색</string>
     <string name="nav_installed">설치된 항목</string>
     <string name="nav_settings">설정</string>
     <string name="module_updated_relative">업데이트됨 %1$s</string>
@@ -30,20 +26,16 @@
     <string name="home_no_modules">사용 가능한 모듈이 없습니다.</string>
     <string name="home_section_recently_updated">최근 업데이트됨</string>
     <string name="home_section_most_starred">가장 많이 출연한</string>
-    <string name="home_browse_all">모든 모듈 찾아보기</string>
     <string name="home_load_failed">모듈을 로드하지 못했습니다.</string>
-    <string name="search_placeholder">모듈 검색: %1$d</string>
-    <string name="search_favourites">즐겨찾기</string>
-    <string name="search_recent">최근 검색어</string>
     <string name="search_empty">검색어와 일치하는 모듈이 없습니다.</string>
-    <string name="search_count">발견된 모듈: %1$d</string>
+    <plurals name="search_count">
+        <item quantity="other">발견된 모듈: %1$d</item>
+    </plurals>
     <string name="installed_empty">이 장치에서는 LSPosed 모듈이 감지되지 않습니다.</string>
     <string name="installed_search_hint">설치된 모듈 검색</string>
-    <string name="installed_section_updates">업데이트 (%1$d)</string>
     <string name="installed_section_up_to_date">저장소(%1$d)</string>
     <string name="installed_section_unknown">저장소(%1$d)에서 찾을 수 없습니다.</string>
     <string name="pending_install">설치 대기 중</string>
-    <string name="installed_update_all">모두 업데이트</string>
     <string name="installed_update_all_count">모두 업데이트 (%1$d)</string>
     <string name="installed_version_arrow">%1$s -&gt; %2$s</string>
     <string name="installed_batch_cancelled">일괄 업데이트가 취소되었습니다.</string>
@@ -57,9 +49,9 @@
     <string name="installed_cancel_download">다운로드 취소</string>
     <string name="installed_retry_update">업데이트 다시 시도</string>
     <string name="installed_all_updated">모든 모듈이 성공적으로 업데이트되었습니다.</string>
-    <string name="installed_finished_failures">실패: %1$d</string>
-    <string name="installed_batch_installer_busy">설치 프로그램이 아직 열려 있고 %1$d 업데이트를 건너뛰었습니다.</string>
-    <string name="installed_updated_one">%1$s에서 %2$s로 업데이트됨</string>
+    <plurals name="installed_finished_failures">
+        <item quantity="other">실패: %1$d</item>
+    </plurals>
     <string name="installed_batch_failure_download">APK 다운로드에 실패했습니다</string>
     <string name="installed_check_failed">업데이트를 확인하지 못했습니다.</string>
     <string name="installed_choose_variant">변형 선택</string>
@@ -81,7 +73,6 @@
     <string name="installed_variant_auto_saved">자동 변형 선택 사용</string>
     <string name="installed_update_ignored">%1$s에 대한 업데이트가 무시되었습니다.</string>
     <string name="installed_update_unignored">%1$s에 대한 업데이트가 복원되었습니다.</string>
-    <string name="detail_readme">읽어보기</string>
     <string name="detail_whats_new">새로운 소식</string>
     <string name="detail_about">이 앱 정보</string>
     <string name="detail_releases">릴리스</string>
@@ -91,7 +82,9 @@
     <string name="detail_reinstall">재설치 %1$s</string>
     <string name="detail_install">설치 %1$s</string>
     <string name="detail_no_releases">릴리스 없음</string>
-    <string name="detail_downloads">%1$s - 다운로드: %2$d</string>
+    <plurals name="detail_downloads">
+        <item quantity="other">%1$s - 다운로드: %2$d</item>
+    </plurals>
     <string name="detail_no_apk">APK 자산 없음</string>
     <string name="detail_readme_details">세부</string>
     <string name="detail_no_readme">읽어보기 없음</string>
@@ -106,7 +99,6 @@
     <string name="detail_uninstall">제거</string>
     <string name="detail_open_source">오픈 소스</string>
     <string name="detail_install_finished">설치 완료</string>
-    <string name="detail_install_failed">설치 실패: %1$s</string>
     <string name="detail_scope">범위</string>
     <string name="detail_contributors">기여자</string>
     <string name="detail_installed_apk">설치됨 %1$s</string>
@@ -176,7 +168,7 @@
     <string name="backup_export_done">라이브러리를 내보냈습니다</string>
     <string name="backup_export_failed">라이브러리를 내보낼 수 없습니다</string>
     <string name="backup_import_title">라이브러리를 가져올까요?</string>
-    <string name="backup_import_summary">백업에 즐겨찾기 %1$d개, 무시한 모듈 %2$d개, 건너뛴 버전 %3$d개가 있습니다.</string>
+    <string name="backup_import_summary">백업에 %1$s, %2$s, %3$s가 있습니다.</string>
     <string name="backup_import_note">병합은 빠진 항목을 추가하고 현재 선택을 유지합니다. 바꾸기는 먼저 현재 라이브러리를 삭제합니다.</string>
     <string name="backup_import_merge">병합(권장)</string>
     <string name="backup_import_replace">현재 데이터 바꾸기</string>
@@ -245,8 +237,12 @@
     <string name="variant_incompatible_api">LSPosed API가 필요합니다 %1$d</string>
     <string name="variant_remembered">향후 업데이트를 위해 귀하의 선택을 기억했습니다.</string>
     <string name="variant_not_module">이 APK는 Xposed 모듈이 아닙니다.</string>
-    <string name="installed_finished_skipped">%1$d 모듈에는 변형 선택이 필요합니다. 업데이트하려면 열어야 합니다.</string>
-    <string name="installed_finished_cancelled">취소됨: %1$d</string>
+    <plurals name="installed_finished_skipped">
+        <item quantity="other">%1$d개 모듈의 변형을 선택해야 합니다. 업데이트하려면 열어 주세요.</item>
+    </plurals>
+    <plurals name="installed_finished_cancelled">
+        <item quantity="other">취소됨: %1$d</item>
+    </plurals>
     <string name="settings_root_unavailable_msg">이 장치에서는 루트(su)를 사용할 수 없습니다.</string>
     <string name="onboarding_welcome_title">LSP Store에 오신 것을 환영합니다.</string>
     <string name="onboarding_welcome_body">LSPosed 모듈 업데이트 및 탐색 도구</string>
@@ -270,12 +266,13 @@
     <string name="about_source_title">GitHub 소스 코드</string>
     <string name="about_source_body">이 프로젝트가 도움이 되었다면 GitHub에서 별을 눌러 주세요. 큰 힘이 됩니다.</string>
     <string name="author_no_modules">이 작성자의 모듈이 없습니다.</string>
-    <string name="author_module_count">모듈: %1$d</string>
+    <plurals name="author_module_count">
+        <item quantity="other">모듈: %1$d</item>
+    </plurals>
     <string name="author_load_failed">모듈을 로드하지 못했습니다.</string>
     <string name="error_network">네트워크를 사용할 수 없습니다. 연결을 확인하세요.</string>
     <string name="error_timeout">요청 시간이 초과되었습니다.</string>
     <string name="error_http">서버 오류(%1$d)</string>
-    <string name="error_no_apk_asset">APK 자산을 찾을 수 없습니다.</string>
     <string name="error_install_failed">설치 실패</string>
     <string name="installer_silent_failed">자동 설치 실패(su)</string>
     <string name="installer_launch_failed">설치 프로그램을 시작할 수 없습니다</string>
@@ -284,11 +281,12 @@
     <string name="verifier_package_mismatch">APK 패키지 %1$s이 예상된 %2$s과 일치하지 않습니다.</string>
     <string name="download_channel_name">다운로드</string>
     <string name="download_channel_desc">APK 다운로드 진행</string>
-    <string name="download_notification_title">활성 다운로드: %1$d</string>
+    <plurals name="download_notification_title">
+        <item quantity="other">활성 다운로드: %1$d</item>
+    </plurals>
     <string name="download_notification_text">%1$s / %2$s</string>
     <string name="download_notification_unknown">다운로드 준비 중…</string>
     <string name="action_cancel_all">모두 취소</string>
-    <string name="action_close">닫기</string>
     <string name="detail_stats">통계</string>
     <string name="detail_stat_stars">별</string>
     <string name="detail_stat_releases">릴리스</string>
@@ -307,10 +305,14 @@
     <string name="updates_channel_name">모듈 업데이트</string>
     <string name="updates_channel_desc">백그라운드 확인의 업데이트 알림</string>
     <string name="updates_notification_title_one">%1$s 업데이트가 있습니다</string>
-    <string name="updates_notification_title_many">모듈 업데이트 %1$d개가 있습니다</string>
+    <plurals name="updates_notification_title_many">
+        <item quantity="other">모듈 업데이트 %1$d개가 있습니다</item>
+    </plurals>
     <string name="updates_auto_title">자동 업데이트 완료</string>
-    <string name="updates_auto_text">%1$d개 업데이트됨, %2$d개 실패</string>
-    <string name="updates_auto_text_ok">모듈 %1$d개 업데이트됨</string>
+    <string name="updates_auto_text">%1$s, %2$s</string>
+    <plurals name="updates_auto_text_ok">
+        <item quantity="other">모듈 %1$d개 업데이트됨</item>
+    </plurals>
     <string name="updates_auto_channel_name">자동 업데이트 결과</string>
     <string name="updates_auto_channel_desc">루트 자동 업데이트의 무음 요약</string>
     <string name="settings_updates_section">업데이트</string>
@@ -334,19 +336,49 @@
     <string name="detail_downgrade">%1$s 버전으로 다운그레이드</string>
     <string name="detail_latest_unavailable">최신 버전의 파일을 일시적으로 사용할 수 없습니다</string>
     <string name="detail_resources_unavailable">선택한 버전의 파일을 사용할 수 없습니다</string>
+
+    <!-- Counts composed independently in backup and update summaries. -->
+    <plurals name="updates_auto_text_failed">
+        <item quantity="other">모듈 %1$d개 업데이트 실패</item>
+    </plurals>
+
+    <plurals name="backup_favourites_count">
+        <item quantity="other">즐겨찾기 %1$d개</item>
+    </plurals>
+
+    <plurals name="backup_ignored_modules_count">
+        <item quantity="other">무시한 모듈 %1$d개</item>
+    </plurals>
+
+    <plurals name="backup_skipped_versions_count">
+        <item quantity="other">건너뛴 버전 %1$d개</item>
+    </plurals>
+
     <!-- Ignore keywords -->
     <string name="action_add">추가</string>
     <string name="detail_hidden_by_keyword">키워드로 숨김: %1$s</string>
-    <string name="library_keywords_section">키워드 · %1$d</string>
-    <string name="library_modules_section">모듈 · %1$d</string>
+    <plurals name="library_keywords_section">
+        <item quantity="other">키워드 · %1$d</item>
+    </plurals>
+    <plurals name="library_modules_section">
+        <item quantity="other">모듈 · %1$d</item>
+    </plurals>
     <string name="library_add_ignore_keyword">무시 키워드 추가</string>
     <string name="library_remove_ignore_keyword">키워드 삭제</string>
     <string name="library_ignore_keyword_placeholder">예: Douyin</string>
     <string name="library_ignore_keyword_hint">모듈 이름, 패키지, 설명과 일치합니다. 대소문자를 구분하지 않습니다.</string>
-    <string name="library_ignore_keyword_preview">모듈 %1$d개를 숨깁니다</string>
-    <string name="library_ignore_keyword_matches">모듈 %1$d개</string>
+    <plurals name="library_ignore_keyword_preview">
+        <item quantity="other">모듈 %1$d개를 숨깁니다</item>
+    </plurals>
+    <plurals name="library_ignore_keyword_matches">
+        <item quantity="other">모듈 %1$d개</item>
+    </plurals>
     <string name="library_ignore_keyword_blank">키워드 입력</string>
     <string name="library_ignore_keyword_duplicate">이미 추가된 키워드입니다</string>
-    <string name="library_ignore_keyword_too_long">최대 %1$d자</string>
-    <string name="library_ignore_keyword_limit">최대 키워드 %1$d개</string>
+    <plurals name="library_ignore_keyword_too_long">
+        <item quantity="other">최대 %1$d자</item>
+    </plurals>
+    <plurals name="library_ignore_keyword_limit">
+        <item quantity="other">최대 키워드 %1$d개</item>
+    </plurals>
 </resources>

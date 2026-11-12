@@ -288,7 +288,7 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
      * first line always states the real total.
      */
     private fun failureMessage(failures: List<BatchFailure>, failedCount: Int): String {
-        val header = container.appContext.getString(R.string.installed_finished_failures, failedCount)
+        val header = container.appContext.resources.getQuantityString(R.plurals.installed_finished_failures, failedCount, failedCount)
         if (failures.isEmpty()) return header
         return buildString {
             append(header)
@@ -486,15 +486,17 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
             val message = when (batchCompletion(result, items)) {
                 BatchCompletion.FAILURES -> failureMessage(result.failures, failed)
 
-                BatchCompletion.SKIPPED -> container.appContext.getString(
-                    R.string.installed_finished_skipped,
+                BatchCompletion.SKIPPED -> container.appContext.resources.getQuantityString(
+                    R.plurals.installed_finished_skipped,
+                    skipped,
                     skipped,
                 )
 
                 // Per-row cancels are not failures, but "all modules
                 // updated" would be a lie when some were stopped.
-                BatchCompletion.CANCELLED -> container.appContext.getString(
-                    R.string.installed_finished_cancelled,
+                BatchCompletion.CANCELLED -> container.appContext.resources.getQuantityString(
+                    R.plurals.installed_finished_cancelled,
+                    cancelled,
                     cancelled,
                 )
 

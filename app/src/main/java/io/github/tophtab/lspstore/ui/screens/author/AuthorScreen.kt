@@ -17,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -63,7 +64,7 @@ fun AuthorScreen(author: String, onBack: () -> Unit, onOpenModule: (String) -> U
             ) {
                 item(span = StaggeredGridItemSpan.FullLine) {
                     KomiSectionHeader(
-                        title = stringResource(R.string.author_module_count, state.modules.size),
+                        title = pluralStringResource(R.plurals.author_module_count, state.modules.size, state.modules.size),
                     )
                 }
                 items(state.modules, key = { it.packageName }) { module ->
