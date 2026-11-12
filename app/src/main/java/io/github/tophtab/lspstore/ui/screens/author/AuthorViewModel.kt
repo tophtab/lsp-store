@@ -11,6 +11,7 @@ import kotlinx.coroutines.launch
 import io.github.tophtab.lspstore.R
 import io.github.tophtab.lspstore.di.AppContainer
 import io.github.tophtab.lspstore.ui.toUserMessage
+import io.github.tophtab.lspstore.domain.model.HiddenModules
 import io.github.tophtab.lspstore.domain.model.Module
 import java.time.Instant
 
@@ -36,12 +37,12 @@ class AuthorViewModel(
 
     private var index: List<Module> = emptyList()
     private var installedPackages: Set<String> = emptySet()
-    private var ignoredModules: Set<String> = emptySet()
+    private var hidden: HiddenModules = HiddenModules()
 
     init {
         viewModelScope.launch {
-            libraryRepository.ignoredModules.collect { value ->
-                ignoredModules = value
+            libraryRepository.hiddenModules.collect { value ->
+                hidden = value
                 applyIndex()
             }
         }
@@ -89,7 +90,7 @@ class AuthorViewModel(
     private fun applyIndex() {
         val mine = index
             .filter { it.contributor.equals(author, ignoreCase = true) }
-            .filterNot { it.packageName in ignoredModules }
+            .filterNot(hidden::hides)
             .sortedByDescending { it.lastPublishedAt ?: Instant.EPOCH }
         _state.update {
             it.copy(modules = mine, installedPackages = installedPackages)

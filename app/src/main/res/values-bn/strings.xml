@@ -7,6 +7,7 @@
     <string name="action_sort">সাজান</string>
     <string name="action_share">শেয়ার করুন</string>
     <string name="action_cancel">বাতিল</string>
+    <string name="action_save">সংরক্ষণ</string>
     <string name="action_download">ডাউনলোড</string>
     <string name="action_update">আপডেট</string>
     <string name="action_unskip">উপেক্ষা বন্ধ করুন</string>
@@ -310,11 +311,19 @@
     <string name="updates_auto_title">স্বয়ংক্রিয় আপডেট সম্পন্ন</string>
     <string name="updates_auto_text">%1$d আপডেট হয়েছে, %2$d ব্যর্থ</string>
     <string name="updates_auto_text_ok">%1$d টি মডিউল আপডেট হয়েছে</string>
+    <string name="updates_auto_channel_name">স্বয়ংক্রিয় আপডেটের ফলাফল</string>
+    <string name="updates_auto_channel_desc">রুট স্বয়ংক্রিয় আপডেটের নীরব সারাংশ</string>
     <string name="settings_updates_section">আপডেট</string>
     <string name="settings_background_check">ব্যাকগ্রাউন্ডে চেক করুন</string>
     <string name="settings_background_check_desc">নির্দিষ্ট সময়সূচিতে মডিউল রিপোজিটরি আনুন এবং নতুন সংস্করণ জানান।</string>
     <string name="settings_check_interval">চেকের বিরতি</string>
     <string name="settings_interval_days">%1$d দিন</string>
+    <string name="settings_check_interval_desc">কাস্টম ঘণ্টা সেট করতে ব্যবধানে দীর্ঘক্ষণ চাপুন।</string>
+    <string name="settings_check_interval_custom_current">কাস্টম ব্যবধান: %1$d ঘণ্টা। পরিবর্তন করতে দীর্ঘক্ষণ চাপুন।</string>
+    <string name="settings_check_interval_custom_title">কাস্টম চেকের ব্যবধান</string>
+    <string name="settings_check_interval_custom_desc">1 থেকে 168-এর মধ্যে পূর্ণ ঘণ্টার সংখ্যা লিখুন।</string>
+    <string name="settings_check_interval_custom_invalid">1 থেকে 168-এর মধ্যে একটি সংখ্যা লিখুন।</string>
+    <string name="settings_check_interval_hours_label">ঘণ্টা</string>
     <string name="settings_wifi_only">শুধু Wi-Fi</string>
     <string name="settings_wifi_only_desc">শুধুমাত্র আনমিটারড নেটওয়ার্কে ব্যাকগ্রাউন্ড চেক চালান।</string>
     <string name="settings_auto_update">আপডেট স্বয়ংক্রিয়ভাবে ইনস্টল করুন</string>
@@ -325,4 +334,19 @@
     <string name="detail_downgrade">পুরোনো সংস্করণ %1$s ইনস্টল করুন</string>
     <string name="detail_latest_unavailable">সর্বশেষ সংস্করণের ফাইল সাময়িকভাবে অনুপলব্ধ</string>
     <string name="detail_resources_unavailable">নির্বাচিত সংস্করণের ফাইল অনুপলব্ধ</string>
+    <!-- Ignore keywords -->
+    <string name="action_add">যোগ করুন</string>
+    <string name="detail_hidden_by_keyword">কীওয়ার্ড দ্বারা লুকানো: %1$s</string>
+    <string name="library_keywords_section">কীওয়ার্ড · %1$d</string>
+    <string name="library_modules_section">মডিউল · %1$d</string>
+    <string name="library_add_ignore_keyword">উপেক্ষার কীওয়ার্ড যোগ করুন</string>
+    <string name="library_remove_ignore_keyword">কীওয়ার্ড সরান</string>
+    <string name="library_ignore_keyword_placeholder">যেমন: Douyin</string>
+    <string name="library_ignore_keyword_hint">মডিউলের নাম, প্যাকেজ ও বিবরণের সাথে মেলে; ছোট-বড় হাতের অক্ষর আলাদা নয়।</string>
+    <string name="library_ignore_keyword_preview">%1$dটি মডিউল লুকাবে</string>
+    <string name="library_ignore_keyword_matches">%1$dটি মডিউল</string>
+    <string name="library_ignore_keyword_blank">একটি কীওয়ার্ড লিখুন</string>
+    <string name="library_ignore_keyword_duplicate">কীওয়ার্ডটি ইতিমধ্যে যোগ করা হয়েছে</string>
+    <string name="library_ignore_keyword_too_long">সর্বোচ্চ %1$d অক্ষর</string>
+    <string name="library_ignore_keyword_limit">সর্বোচ্চ %1$dটি কীওয়ার্ড</string>
 </resources>

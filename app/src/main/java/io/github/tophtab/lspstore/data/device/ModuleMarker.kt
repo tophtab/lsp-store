@@ -22,23 +22,37 @@ object ModuleMarker {
 
     /**
      * True when the installed base APK or one of its splits contains a libxposed
-     * marker. A missing or unreadable APK is simply not a module; the caller
-     * must not fail a whole scan over one package.
+     * marker. A missing or unreadable APK must not fail the whole scan.
      */
-    fun isModernModule(sourceDir: String?, splitSourceDirs: Array<String>?): Boolean {
+    fun isModernModule(sourceDir: String?, splitSourceDirs: Array<String>?): Boolean =
+        readModernModule(sourceDir, splitSourceDirs) == true
+
+    /** null means an unreadable archive, so a scan must allow another attempt. */
+    internal fun readModernModule(sourceDir: String?, splitSourceDirs: Array<String>?): Boolean? {
         val apks = buildList {
             if (!sourceDir.isNullOrBlank()) add(sourceDir)
             splitSourceDirs?.forEach { if (it.isNotBlank()) add(it) }
         }
-        return apks.any(::hasAnyMarker)
+        if (apks.isEmpty()) return null
+        var unreadable = false
+        for (path in apks) {
+            when (readMarker(path)) {
+                true -> return true
+                null -> unreadable = true
+                false -> Unit
+            }
+        }
+        return if (unreadable) null else false
     }
 
-    fun hasAnyMarker(apkPath: String): Boolean {
-        if (!File(apkPath).isFile) return false
+    fun hasAnyMarker(apkPath: String): Boolean = readMarker(apkPath) == true
+
+    private fun readMarker(apkPath: String): Boolean? {
+        if (!File(apkPath).isFile) return null
         return runCatching {
             ZipFile(apkPath).use { zip ->
                 (MODERN_MARKERS + "assets/xposed_init").any { zip.getEntry(it) != null }
             }
-        }.getOrDefault(false)
+        }.getOrNull()
     }
 }

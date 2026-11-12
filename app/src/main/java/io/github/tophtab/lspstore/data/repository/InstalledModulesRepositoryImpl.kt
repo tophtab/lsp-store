@@ -1,16 +1,15 @@
 package io.github.tophtab.lspstore.data.repository
 
 import android.content.Context
-import android.content.pm.PackageManager
-import android.os.Build
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import io.github.tophtab.lspstore.data.device.ModuleMarker
-import io.github.tophtab.lspstore.data.device.ScannedPackage
+import io.github.tophtab.lspstore.data.device.AndroidInstalledPackageSource
+import io.github.tophtab.lspstore.data.device.InstalledPackageScanner
+import io.github.tophtab.lspstore.data.device.InstalledPackageSource
 import io.github.tophtab.lspstore.domain.model.InstalledModule
 import io.github.tophtab.lspstore.data.cache.writeCacheAtomically
 import java.io.File
@@ -19,17 +18,24 @@ interface InstalledModulesRepository {
     /** Last scan from this or a previous app session, if any. */
     suspend fun getCachedInstalledModules(): List<InstalledModule>?
 
-    /** Full PackageManager scan; [force] is kept for API symmetry. */
+    /** Enumerates packages; unchanged packages reuse their module fields. */
     suspend fun getInstalledModules(force: Boolean = false): List<InstalledModule>
 
+    /** Live single-package lookup; never enumerates the installed list. */
     suspend fun getInstalledModule(packageName: String): InstalledModule?
 }
 
-class InstalledModulesRepositoryImpl(
-    private val context: Context,
+class InstalledModulesRepositoryImpl internal constructor(
+    private val cacheFile: File,
     private val json: Json,
+    private val source: InstalledPackageSource,
+    private val clock: () -> Long = { System.nanoTime() / 1_000_000 },
 ) : InstalledModulesRepository {
-    private val cacheFile = File(context.filesDir, "installed_modules.json")
+    constructor(context: Context, json: Json) : this(
+        File(context.filesDir, "installed_modules.json"), json, AndroidInstalledPackageSource(context),
+    )
+
+    private val scanner = InstalledPackageScanner(source)
 
     /** Serializes PackageManager scans, not cache reads. */
     private val scanMutex = Mutex()
@@ -40,9 +46,10 @@ class InstalledModulesRepositoryImpl(
     @Volatile
     private var cached: List<InstalledModule>? = null
 
-    /** When [cached] came from a PackageManager scan; 0 for a disk-cache read. */
+    /** Monotonic scan time; null for a disk-cache read. */
     @Volatile
-    private var scannedAt: Long = 0
+    private var scannedAt: Long? = null
+    private var scannedEnvironment: String? = null
 
     /**
      * Last scan from this or a previous app session. Screens paint this first and
@@ -60,88 +67,40 @@ class InstalledModulesRepositoryImpl(
         }
     }
 
-    @Suppress("DEPRECATION")
     override suspend fun getInstalledModules(force: Boolean): List<InstalledModule> = scanMutex.withLock {
-        val now = System.currentTimeMillis()
+        val now = clock()
         // Screens, diagnostics and the worker all ask for the same scan; a short
         // window avoids walking PackageManager again for every caller. Anything
         // triggered by a package broadcast or pull-to-refresh passes force=true.
-        cached?.let { if (!force && now - scannedAt < SCAN_TTL_MILLIS) return@withLock it }
-        val modules = withContext(Dispatchers.IO) {
-            val pm = context.packageManager
-            val apiLevel = Build.VERSION.SDK_INT
-            // Enumerate with no metadata flags. Asking PackageManager for
-            // GET_META_DATA or GET_PROVIDERS here makes it build one Binder
-            // reply for every installed app; on devices with hundreds of
-            // packages that reply can exceed the transaction buffer, and a
-            // single unreadable package fails the whole list. The extra fields
-            // are fetched per package below, where each reply stays small and a
-            // failure only loses that package's module fields.
-            val packages = pm.getInstalledPackages(0)
-            val seen = HashSet<String>(packages.size)
-            packages.mapNotNull { pkg ->
-                if (!seen.add(pkg.packageName)) return@mapNotNull null
-                val app = pkg.applicationInfo ?: return@mapNotNull null
-                // A failed lookup only loses this package's module metadata; the
-                // package itself stays in the list so pending-install settlement
-                // and version comparisons still see it.
-                val extras = runCatching {
-                    pm.getPackageInfo(
-                        pkg.packageName,
-                        PackageManager.GET_META_DATA or PackageManager.GET_PROVIDERS,
-                    )
-                }.getOrNull()
-                val meta = extras?.applicationInfo?.metaData
-                val hasLegacyXposedMeta = meta != null &&
-                    (meta.containsKey("xposedmodule") || meta.containsKey("xposedminversion"))
-                val hasLibXposedProvider = extras?.providers?.any {
-                    it.name == "io.github.libxposed.service.XposedProvider"
-                } == true
-                // The framework half of the scan; the module/ABI rules live in
-                // ScannedPackage so they can be tested on the JVM.
-                ScannedPackage(
-                    packageName = pkg.packageName,
-                    label = runCatching { pm.getApplicationLabel(app).toString() }
-                        .getOrDefault(pkg.packageName),
-                    apiLevel = apiLevel,
-                    longVersionCode = pkg.longVersionCode,
-                    legacyVersionCode = pkg.versionCode,
-                    versionName = pkg.versionName,
-                    hasLegacyXposedMeta = hasLegacyXposedMeta,
-                    // Modern libxposed modules expose a provider instead of the
-                    // legacy xposedmodule meta-data.
-                    hasLibXposedProvider = hasLibXposedProvider,
-                    // Modern modules declare nothing in the manifest, so the
-                    // APK archive (base and splits) has to be checked. Only for
-                    // packages that did not already identify themselves: opening
-                    // an archive per installed app is the expensive part of a scan.
-                    hasModernMarker = !hasLegacyXposedMeta && !hasLibXposedProvider &&
-                        ModuleMarker.isModernModule(app.sourceDir, app.splitSourceDirs),
-                    description = meta?.getString("xposeddescription"),
-                    minSdk = app.minSdkVersion,
-                    targetSdk = app.targetSdkVersion,
-                    reflectedPrimaryCpuAbi = app.reflectedPrimaryCpuAbi(),
-                    nativeLibraryDir = app.nativeLibraryDir,
-                    debuggable = app.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE != 0,
-                    lastUpdateTime = pkg.lastUpdateTime,
-                ).toInstalledModule()
-            }
+        val environment = source.environmentKey
+        val lastScan = scannedAt
+        cached?.let {
+            if (!force && lastScan != null && now - lastScan in 0 until SCAN_TTL_MILLIS &&
+                scannedEnvironment == environment
+            ) return@withLock it
         }
-        cached = modules
-        scannedAt = System.currentTimeMillis()
-        cacheMutex.withLock { writeCache(modules) }
+        val modules = withContext(Dispatchers.IO) { scanner.scan() }
+        cacheMutex.withLock {
+            cached = modules
+            scannedAt = clock()
+            scannedEnvironment = environment
+            writeCache(modules)
+        }
         modules
     }
 
-    override suspend fun getInstalledModule(packageName: String): InstalledModule? =
-        getInstalledModules().firstOrNull { it.packageName == packageName }
-
-    /**
-     * `ApplicationInfo.primaryCpuAbi` is not part of the public SDK, so read it
-     * reflectively; the ABI name fallback lives in [ScannedPackage].
-     */
-    private fun android.content.pm.ApplicationInfo.reflectedPrimaryCpuAbi(): String? =
-        runCatching { javaClass.getField("primaryCpuAbi").get(this) as? String }.getOrNull()
+    override suspend fun getInstalledModule(packageName: String): InstalledModule? = scanMutex.withLock {
+        val module = withContext(Dispatchers.IO) { scanner.find(packageName) }
+        cacheMutex.withLock {
+            cached?.let { current ->
+                if (current.firstOrNull { it.packageName == packageName } != module) {
+                    cached = current.filterNot { it.packageName == packageName } + listOfNotNull(module)
+                    scannedAt = null
+                }
+            }
+        }
+        module
+    }
 
     private suspend fun readCache(): List<InstalledModule>? = withContext(Dispatchers.IO) {
         runCatching {

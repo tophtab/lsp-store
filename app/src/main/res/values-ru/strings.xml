@@ -7,6 +7,7 @@
     <string name="action_sort">Сортировка</string>
     <string name="action_share">Поделиться</string>
     <string name="action_cancel">Отмена</string>
+    <string name="action_save">Сохранить</string>
     <string name="action_download">Скачать</string>
     <string name="action_update">Обновить</string>
     <string name="action_unskip">Не игнорировать</string>
@@ -310,11 +311,19 @@
     <string name="updates_auto_title">Автообновление завершено</string>
     <string name="updates_auto_text">Обновлено: %1$d, с ошибкой: %2$d</string>
     <string name="updates_auto_text_ok">Обновлено модулей: %1$d</string>
+    <string name="updates_auto_channel_name">Результаты автообновления</string>
+    <string name="updates_auto_channel_desc">Тихие сводки автоматических обновлений через root</string>
     <string name="settings_updates_section">Обновления</string>
     <string name="settings_background_check">Проверять в фоне</string>
     <string name="settings_background_check_desc">Загружает репозиторий модулей и сообщает о новых версиях по расписанию.</string>
     <string name="settings_check_interval">Интервал проверки</string>
     <string name="settings_interval_days">%1$d д</string>
+    <string name="settings_check_interval_desc">Удерживайте интервал, чтобы задать часы вручную.</string>
+    <string name="settings_check_interval_custom_current">Свой интервал: %1$d ч. Удерживайте, чтобы изменить.</string>
+    <string name="settings_check_interval_custom_title">Свой интервал проверки</string>
+    <string name="settings_check_interval_custom_desc">Введите целое число часов от 1 до 168.</string>
+    <string name="settings_check_interval_custom_invalid">Введите число от 1 до 168.</string>
+    <string name="settings_check_interval_hours_label">Часы</string>
     <string name="settings_wifi_only">Только Wi-Fi</string>
     <string name="settings_wifi_only_desc">Запускать фоновую проверку только в сетях без лимита трафика.</string>
     <string name="settings_auto_update">Устанавливать обновления автоматически</string>
@@ -325,4 +334,19 @@
     <string name="detail_downgrade">Установить более старую версию %1$s</string>
     <string name="detail_latest_unavailable">Файлы последней версии временно недоступны</string>
     <string name="detail_resources_unavailable">Файлы выбранной версии недоступны</string>
+    <!-- Ignore keywords -->
+    <string name="action_add">Добавить</string>
+    <string name="detail_hidden_by_keyword">Скрыто по ключевому слову: %1$s</string>
+    <string name="library_keywords_section">Ключевые слова · %1$d</string>
+    <string name="library_modules_section">Модули · %1$d</string>
+    <string name="library_add_ignore_keyword">Добавить ключевое слово для игнорирования</string>
+    <string name="library_remove_ignore_keyword">Удалить ключевое слово</string>
+    <string name="library_ignore_keyword_placeholder">напр. Douyin</string>
+    <string name="library_ignore_keyword_hint">Совпадает с названием, пакетом и описанием модуля; без учёта регистра.</string>
+    <string name="library_ignore_keyword_preview">Скроет модулей: %1$d</string>
+    <string name="library_ignore_keyword_matches">Модулей: %1$d</string>
+    <string name="library_ignore_keyword_blank">Введите ключевое слово</string>
+    <string name="library_ignore_keyword_duplicate">Ключевое слово уже добавлено</string>
+    <string name="library_ignore_keyword_too_long">Не более %1$d символов</string>
+    <string name="library_ignore_keyword_limit">Не более %1$d ключевых слов</string>
 </resources>

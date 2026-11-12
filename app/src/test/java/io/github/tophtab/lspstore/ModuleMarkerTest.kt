@@ -2,6 +2,7 @@ package io.github.tophtab.lspstore
 
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Assert.assertNull
 import org.junit.Test
 import java.io.File
 import java.util.zip.ZipEntry
@@ -58,6 +59,17 @@ class ModuleMarkerTest {
         assertFalse(ModuleMarker.isModernModule(null, null))
         assertFalse(ModuleMarker.isModernModule("  ", emptyArray()))
         assertFalse(ModuleMarker.isModernModule("/does/not/exist.apk", arrayOf("/also/missing.apk")))
+    }
+
+    @Test
+    fun unreadableArchivesAreDistinguishedFromValidNonModules() {
+        val apk = tempApk("META-INF/androidx.core_core.version")
+        try {
+            assertFalse(ModuleMarker.readModernModule(apk.absolutePath, null)!!)
+            assertNull(ModuleMarker.readModernModule(apk.absolutePath, arrayOf("/missing.apk")))
+            apk.writeText("not a zip")
+            assertNull(ModuleMarker.readModernModule(apk.absolutePath, null))
+        } finally { apk.delete() }
     }
 
     private fun assertMarkers(apk: File) {

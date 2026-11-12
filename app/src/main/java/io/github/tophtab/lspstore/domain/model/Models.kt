@@ -99,6 +99,22 @@ data class Module(
         get() = latestBetaRelease != null
 
     /**
+     * Whether user text matches what the repository index exposes: title,
+     * package name and summary. Home search and keyword ignore share this so a
+     * module the search can find is a module a keyword can hide.
+     *
+     * A blank query matches nothing; callers that validate input still need
+     * this to be safe for stored values.
+     */
+    fun matchesText(query: String): Boolean {
+        val trimmed = query.trim()
+        if (trimmed.isEmpty()) return false
+        return title.contains(trimmed, ignoreCase = true) ||
+            packageName.contains(trimmed, ignoreCase = true) ||
+            summary?.contains(trimmed, ignoreCase = true) == true
+    }
+
+    /**
      * When the newest published build came out, or null when the module never
      * published a release.
      *

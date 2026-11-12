@@ -13,6 +13,7 @@ import kotlinx.coroutines.launch
 import io.github.tophtab.lspstore.R
 import io.github.tophtab.lspstore.di.AppContainer
 import io.github.tophtab.lspstore.ui.toUserMessage
+import io.github.tophtab.lspstore.domain.model.HiddenModules
 import io.github.tophtab.lspstore.domain.model.Module
 import io.github.tophtab.lspstore.domain.model.repoModuleFor
 import kotlin.coroutines.cancellation.CancellationException
@@ -45,10 +46,11 @@ class LibraryListViewModel(
     val state = _state.asStateFlow()
 
     private var index: List<Module> = emptyList()
+    private var byPackage: Map<String, Module> = emptyMap()
     private var names: List<String> = emptyList()
     private var installedRaw: Set<String> = emptySet()
     private var links: Map<String, String> = emptyMap()
-    private var ignoredModules: Set<String> = emptySet()
+    private var hidden: HiddenModules = HiddenModules()
     private var loadJob: Job? = null
 
     init {
@@ -68,9 +70,10 @@ class LibraryListViewModel(
         }
         viewModelScope.launch {
             // An ignored module stays in the stored list so ignoring is
-            // reversible, but it is not shown on any browsing screen.
-            libraryRepository.ignoredModules.collect { value ->
-                ignoredModules = value
+            // reversible, but it is not shown on any browsing screen. Keyword
+            // matches hide the same way.
+            libraryRepository.hiddenModules.collect { value ->
+                hidden = value
                 rebuild()
             }
         }
@@ -109,6 +112,7 @@ class LibraryListViewModel(
                 modules to installed
             }.onSuccess { (modules, installed) ->
                 index = modules
+                byPackage = modules.associateBy { it.packageName }
                 installedRaw = installed
                 _state.update { it.copy(isLoading = false) }
                 refreshInstalledBadges()
@@ -122,20 +126,16 @@ class LibraryListViewModel(
     }
 
     private fun rebuild() {
-        if (index.isEmpty()) return
-        val byPackage = index.associateBy { it.packageName }
         _state.update {
             it.copy(
                 modules = names
-                    .filterNot { name -> name in ignoredModules }
-                    .mapNotNull { name -> byPackage[name] },
+                    .mapNotNull { name -> byPackage[name] }
+                    .filterNot(hidden::hides),
             )
         }
     }
 
     private fun refreshInstalledBadges() {
-        if (index.isEmpty()) return
-        val byPackage = index.associateBy { it.packageName }
         val resolved = installedRaw
             .mapNotNull { repoModuleFor(it, byPackage, links)?.packageName }
             .toSet()

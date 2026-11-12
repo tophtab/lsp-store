@@ -38,7 +38,7 @@ import io.github.tophtab.lspstore.domain.variant.ApkMeta
 import io.github.tophtab.lspstore.domain.variant.InstalledVariantHint
 import io.github.tophtab.lspstore.domain.variant.ModuleVariantState
 import io.github.tophtab.lspstore.domain.variant.VariantSignature
-import io.github.tophtab.lspstore.domain.model.installedCopyForRepo
+import io.github.tophtab.lspstore.data.repository.findInstalledCopy
 import kotlin.coroutines.cancellation.CancellationException
 
 data class ModuleDetailUiState(
@@ -56,6 +56,11 @@ data class ModuleDetailUiState(
     val isFavourite: Boolean = false,
     /** Whether the user hid this module from the repository's browsing lists. */
     val isModuleIgnored: Boolean = false,
+    /**
+     * Keyword rules that also hide this module. They are rules, not entries, so
+     * this page cannot remove them; it only explains why the module is hidden.
+     */
+    val hiddenByKeywords: List<String> = emptyList(),
     /** Download/install started from this page, still running. */
     val activeInstall: ModuleInstallRun? = null,
     val message: String? = null,
@@ -150,6 +155,9 @@ class ModuleDetailViewModel(
     /** The user chose the original; auto-translate must not undo that choice. */
     private var autoTranslateSuppressed = false
 
+    /** Keyword rules as last emitted by the library; matched against the loaded module. */
+    private var hiddenKeywords: List<String> = emptyList()
+
     /**
      * The user turned translation on with the top-bar action. A reload keeps
      * translating content even when its language matches the target, because
@@ -176,14 +184,23 @@ class ModuleDetailViewModel(
             }
         }
         viewModelScope.launch {
-            libraryRepository.ignoredModules.collect { ignored ->
-                _state.update { it.copy(isModuleIgnored = packageName in ignored) }
+            libraryRepository.hiddenModules.collect { hidden ->
+                hiddenKeywords = hidden.keywords
+                _state.update {
+                    it.copy(
+                        isModuleIgnored = packageName in hidden.packages,
+                        hiddenByKeywords = it.detail?.let { detail ->
+                            hiddenKeywords.filter(detail.module::matchesText)
+                        }.orEmpty(),
+                    )
+                }
             }
         }
         viewModelScope.launch {
             libraryRepository.links.collect { value ->
+                val previous = links.filterValues { it == packageName }
                 links = value
-                resolveInstalled()
+                if (previous != value.filterValues { it == packageName }) resolveInstalled()
             }
         }
         viewModelScope.launch {
@@ -217,7 +234,13 @@ class ModuleDetailViewModel(
             }
         }
         viewModelScope.launch {
-            container.prunePendingInstalls(installedRepository.getInstalledModules())
+            try {
+                container.prunePendingInstallsForModule(packageName)
+            } catch (cancellation: CancellationException) {
+                throw cancellation
+            } catch (_: Exception) {
+                // A later resume or package event retries unreadable packages.
+            }
         }
         viewModelScope.launch {
             // The install chain lives on the app scope, so this screen can be
@@ -288,6 +311,7 @@ class ModuleDetailViewModel(
                         isLoading = false,
                         isRefreshing = false,
                         detail = detail,
+                        hiddenByKeywords = hiddenKeywords.filter(detail.module::matchesText),
                         probeGeneration = it.probeGeneration + 1,
                         installed = installed,
                         variantState = stateForModule(variantStates, installed),
@@ -723,11 +747,14 @@ class ModuleDetailViewModel(
     /** Direct install, or an imported module linked to this repository entry. */
     private suspend fun findInstalled(): InstalledModule? {
         val activeLinks = links.ifEmpty { libraryRepository.links.first() }
-        // Detail is the screen that reacts to an install finishing, so it must
-        // not read the 30 s scan cache used by browsing screens.
-        val all = installedRepository.getInstalledModules(force = true)
         val activePackage = variantStates[packageName]?.activePackage
-        return installedCopyForRepo(packageName, all, activeLinks, activePackage)
+        return try {
+            installedRepository.findInstalledCopy(packageName, activeLinks, activePackage)
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (_: Exception) {
+            _state.value.installed
+        }
     }
 
     companion object {

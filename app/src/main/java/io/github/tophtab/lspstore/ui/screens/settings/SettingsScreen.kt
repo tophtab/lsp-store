@@ -18,6 +18,8 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -36,6 +38,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
@@ -88,6 +92,9 @@ fun SettingsScreen(
     val scrollState = rememberScrollState()
     var translationExpanded by rememberSaveable { mutableStateOf(false) }
     var hideIconConfirm by rememberSaveable { mutableStateOf(false) }
+    var customIntervalOpen by rememberSaveable { mutableStateOf(false) }
+    var customIntervalInput by rememberSaveable { mutableStateOf("") }
+    var customIntervalInvalid by rememberSaveable { mutableStateOf(false) }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     // Resolved in composition: LocalContext.getString would keep a stale value
@@ -111,6 +118,22 @@ fun SettingsScreen(
         ) {
             notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
+    }
+
+    fun openCustomInterval(initialHours: Int = state.checkIntervalHours) {
+        customIntervalInput = initialHours.toString()
+        customIntervalInvalid = false
+        customIntervalOpen = true
+    }
+
+    fun submitCustomInterval() {
+        val hours = UpdateScheduler.parseIntervalHours(customIntervalInput)
+        if (hours == null) {
+            customIntervalInvalid = true
+            return
+        }
+        customIntervalOpen = false
+        viewModel.setCheckIntervalHours(hours)
     }
 
     // Both directions go through the document picker: the user decides where a
@@ -388,17 +411,36 @@ fun SettingsScreen(
                     if (state.backgroundCheck) {
                         KomiSettingsRow(
                             title = stringResource(R.string.settings_check_interval),
+                            subtitle = state.checkIntervalHours
+                                .takeIf { it !in UpdateScheduler.INTERVAL_OPTIONS }
+                                ?.let {
+                                    stringResource(
+                                        R.string.settings_check_interval_custom_current,
+                                        it,
+                                    )
+                                }
+                                ?: stringResource(R.string.settings_check_interval_desc),
                             trailing = {
                                 KomiCompactSegmented(
                                     segments = UpdateScheduler.INTERVAL_OPTIONS.map {
                                         KomiSegment(stringResource(R.string.settings_interval_days, it / 24))
                                     },
                                     selectedIndex = UpdateScheduler.INTERVAL_OPTIONS
-                                        .indexOf(state.checkIntervalHours).coerceAtLeast(0),
-                                    onSelect = {
-                                        viewModel.setCheckIntervalHours(
-                                            UpdateScheduler.INTERVAL_OPTIONS[it],
-                                        )
+                                        .indexOf(state.checkIntervalHours),
+                                    onSelect = { index ->
+                                        UpdateScheduler.INTERVAL_OPTIONS.getOrNull(index)
+                                            ?.let(viewModel::setCheckIntervalHours)
+                                            ?: openCustomInterval()
+                                    },
+                                    onLongSelect = { index ->
+                                        // Editing an existing custom value keeps
+                                        // it; a long-press on a preset starts
+                                        // from that preset's hours.
+                                        val initial =
+                                            state.checkIntervalHours.takeIf {
+                                                it !in UpdateScheduler.INTERVAL_OPTIONS
+                                            } ?: UpdateScheduler.INTERVAL_OPTIONS[index]
+                                        openCustomInterval(initial)
                                     },
                                 )
                             },
@@ -511,6 +553,47 @@ fun SettingsScreen(
                         title = stringResource(R.string.settings_about),
                         onClick = onOpenAbout,
                         last = true,
+                    )
+                }
+            }
+        }
+    }
+
+    if (customIntervalOpen) {
+        KomiDialog(
+            onDismissRequest = { customIntervalOpen = false },
+            title = stringResource(R.string.settings_check_interval_custom_title),
+            confirmLabel = stringResource(R.string.action_save),
+            onConfirm = { submitCustomInterval() },
+            dismissLabel = stringResource(R.string.action_cancel),
+            onDismiss = { customIntervalOpen = false },
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                KomiText(
+                    text = stringResource(R.string.settings_check_interval_custom_desc),
+                    role = KomiTextRole.Body,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 13.sp,
+                )
+                KomiTextField(
+                    value = customIntervalInput,
+                    onValueChange = { value ->
+                        customIntervalInput = value.filter(Char::isDigit).take(3)
+                        customIntervalInvalid = false
+                    },
+                    label = stringResource(R.string.settings_check_interval_hours_label),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number,
+                        imeAction = ImeAction.Done,
+                    ),
+                    keyboardActions = KeyboardActions(onDone = { submitCustomInterval() }),
+                )
+                if (customIntervalInvalid) {
+                    KomiText(
+                        text = stringResource(R.string.settings_check_interval_custom_invalid),
+                        role = KomiTextRole.Body,
+                        color = MaterialTheme.colorScheme.error,
+                        fontSize = 13.sp,
                     )
                 }
             }

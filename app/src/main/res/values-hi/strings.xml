@@ -7,6 +7,7 @@
     <string name="action_sort">क्रमबद्ध करें</string>
     <string name="action_share">साझा करें</string>
     <string name="action_cancel">रद्द करें</string>
+    <string name="action_save">सहेजें</string>
     <string name="action_download">डाउनलोड करें</string>
     <string name="action_update">अपडेट करें</string>
     <string name="action_unskip">अनदेखा करना बंद करें</string>
@@ -310,11 +311,19 @@
     <string name="updates_auto_title">स्वचालित अपडेट पूरा हुआ</string>
     <string name="updates_auto_text">%1$d अपडेट हुए, %2$d विफल</string>
     <string name="updates_auto_text_ok">%1$d मॉड्यूल अपडेट हुए</string>
+    <string name="updates_auto_channel_name">स्वचालित अपडेट परिणाम</string>
+    <string name="updates_auto_channel_desc">Root स्वचालित अपडेट के मौन सारांश</string>
     <string name="settings_updates_section">अपडेट</string>
     <string name="settings_background_check">बैकग्राउंड में जाँचें</string>
     <string name="settings_background_check_desc">निर्धारित समय पर मॉड्यूल रिपॉज़िटरी लाएँ और नए संस्करणों की सूचना दें।</string>
     <string name="settings_check_interval">जाँच अंतराल</string>
     <string name="settings_interval_days">%1$d दिन</string>
+    <string name="settings_check_interval_desc">कस्टम घंटे सेट करने के लिए अंतराल को देर तक दबाएँ.</string>
+    <string name="settings_check_interval_custom_current">कस्टम अंतराल: %1$d घं. बदलने के लिए देर तक दबाएँ.</string>
+    <string name="settings_check_interval_custom_title">कस्टम जाँच अंतराल</string>
+    <string name="settings_check_interval_custom_desc">1 से 168 के बीच घंटों की पूर्ण संख्या दर्ज करें.</string>
+    <string name="settings_check_interval_custom_invalid">1 से 168 के बीच कोई संख्या दर्ज करें.</string>
+    <string name="settings_check_interval_hours_label">घंटे</string>
     <string name="settings_wifi_only">केवल Wi-Fi</string>
     <string name="settings_wifi_only_desc">बैकग्राउंड जाँच केवल अनमीटर्ड नेटवर्क पर चलाएँ।</string>
     <string name="settings_auto_update">अपडेट स्वचालित रूप से इंस्टॉल करें</string>
@@ -325,4 +334,19 @@
     <string name="detail_downgrade">पुराना संस्करण %1$s इंस्टॉल करें</string>
     <string name="detail_latest_unavailable">नवीनतम संस्करण की फ़ाइलें अस्थायी रूप से उपलब्ध नहीं हैं</string>
     <string name="detail_resources_unavailable">चुने गए संस्करण की फ़ाइलें उपलब्ध नहीं हैं</string>
+    <!-- Ignore keywords -->
+    <string name="action_add">जोड़ें</string>
+    <string name="detail_hidden_by_keyword">कीवर्ड से छिपा: %1$s</string>
+    <string name="library_keywords_section">कीवर्ड · %1$d</string>
+    <string name="library_modules_section">मॉड्यूल · %1$d</string>
+    <string name="library_add_ignore_keyword">अनदेखा करने का कीवर्ड जोड़ें</string>
+    <string name="library_remove_ignore_keyword">कीवर्ड हटाएँ</string>
+    <string name="library_ignore_keyword_placeholder">उदा. Douyin</string>
+    <string name="library_ignore_keyword_hint">मॉड्यूल का नाम, पैकेज और विवरण से मिलाता है; केस-असंवेदनशील।</string>
+    <string name="library_ignore_keyword_preview">%1$d मॉड्यूल छिपाएगा</string>
+    <string name="library_ignore_keyword_matches">%1$d मॉड्यूल</string>
+    <string name="library_ignore_keyword_blank">कीवर्ड दर्ज करें</string>
+    <string name="library_ignore_keyword_duplicate">कीवर्ड पहले से जोड़ा गया है</string>
+    <string name="library_ignore_keyword_too_long">अधिकतम %1$d अक्षर</string>
+    <string name="library_ignore_keyword_limit">अधिकतम %1$d कीवर्ड</string>
 </resources>

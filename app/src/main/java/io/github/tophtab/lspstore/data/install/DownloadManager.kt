@@ -6,11 +6,9 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
@@ -70,12 +68,12 @@ class DownloadManager(
 
     /** Copies into the download folder, tracked so [clearAll] can wait for them. */
     private val exports = ConcurrentHashMap<String, Job>()
-    private val _tasks = MutableStateFlow<Map<String, DownloadTask>>(emptyMap())
-    val tasks = _tasks.asStateFlow()
+    private val taskStore = DownloadTaskStore()
+    val tasks = taskStore.tasks
 
     fun keyOf(asset: ReleaseAsset): String = assetCacheKey(asset)
 
-    fun taskFor(asset: ReleaseAsset): DownloadTask? = _tasks.value[keyOf(asset)]
+    fun taskFor(asset: ReleaseAsset): DownloadTask? = tasks.value[keyOf(asset)]
 
     /** An unsuccessful installer attempt must be able to fetch a fresh copy. */
     suspend fun invalidate(key: String) = withContext(Dispatchers.IO) {
@@ -84,12 +82,12 @@ class DownloadManager(
         exporting?.cancel()
         exporting?.join()
         val removed = synchronized(this@DownloadManager) {
-            val status = _tasks.value[key]?.status
+            val status = tasks.value[key]?.status
             if (status == DownloadStatus.RUNNING || status == DownloadStatus.PAUSED) {
                 false
             } else {
                 invalidateCachedDownload(File(context.cacheDir, "apk"), key)
-                _tasks.update { it - key }
+                taskStore.remove(key)
                 true
             }
         }
@@ -104,7 +102,7 @@ class DownloadManager(
     @Synchronized
     fun start(asset: ReleaseAsset): String {
         val key = keyOf(asset)
-        val existing = _tasks.value[key]
+        val existing = tasks.value[key]
         if (existing?.status == DownloadStatus.RUNNING) return key
         if (existing?.status == DownloadStatus.COMPLETED && existing.file?.exists() == true) {
             // The export may not have run yet (process death right after the
@@ -120,40 +118,32 @@ class DownloadManager(
 
     @Synchronized
     fun pause(key: String) {
-        updateTask(key) { it.copy(status = DownloadStatus.PAUSED) }
+        if (taskStore.pause(key) == null) return
         jobs[key]?.cancel()
     }
 
     @Synchronized
     fun resume(asset: ReleaseAsset) {
         val key = keyOf(asset)
-        if (_tasks.value[key]?.status == DownloadStatus.PAUSED) {
+        if (tasks.value[key]?.status == DownloadStatus.PAUSED) {
             launchDownload(key, asset)
         }
     }
 
     @Synchronized
     fun cancel(key: String) {
-        val task = _tasks.value[key] ?: return
+        val task = tasks.value[key] ?: return
         // A finished transfer is shared by whoever asked for it; cancelling one
         // consumer must not delete an APK another install chain is about to use.
         if (task.status == DownloadStatus.COMPLETED) return
         jobs[key]?.cancel()
-        updateTask(key) { it.copy(status = DownloadStatus.CANCELLED) }
+        taskStore.cancel(key)
         // The working copy is ours; a cancelled transfer should not leave it
         // behind. A later attempt simply starts from zero.
         runCatching { task.file?.delete() }
     }
 
-    fun clearFinished() {
-        _tasks.update { current ->
-            current.filterValues {
-                it.status == DownloadStatus.COMPLETED ||
-                    it.status == DownloadStatus.FAILED ||
-                    it.status == DownloadStatus.CANCELLED
-            }.let { finished -> current - finished.keys }
-        }
-    }
+    fun clearFinished() = taskStore.clearFinished()
 
     suspend fun downloadBlocking(
         asset: ReleaseAsset,
@@ -165,8 +155,8 @@ class DownloadManager(
 
     private suspend fun await(key: String, onProgress: (Long, Long) -> Unit): File {
         val progressJob = scope.launch {
-            _tasks.collect { map ->
-                map[key]?.let { onProgress(it.downloaded, it.total) }
+            tasks.map { it[key] }.distinctUntilChanged().collect { task ->
+                task?.let { onProgress(it.downloaded, it.total) }
             }
         }
         try {
@@ -175,9 +165,10 @@ class DownloadManager(
             // the map for good, and waiting for an outcome that can never arrive
             // would park the install chain forever. A missing task therefore ends
             // the wait as a cancellation.
-            val task = _tasks.map { it[key] }
+            val task = tasks.map { it[key] }
                 .first { it == null || it.status.isTerminal }
             if (task == null) throw IOException("Download cancelled")
+            onProgress(task.downloaded, task.total)
             return when (task.status) {
                 DownloadStatus.COMPLETED -> task.file ?: throw IOException("missing file")
                 DownloadStatus.CANCELLED -> throw IOException("Download cancelled")
@@ -199,8 +190,8 @@ class DownloadManager(
         // write). There is nothing left to ask the network for.
         val complete = asset.size > 0L && existingBytes == asset.size
 
-        updateTask(key, create = true) {
-            it.copy(
+        val attempt = taskStore.begin(
+            DownloadTask(
                 key = key,
                 assetName = asset.name,
                 downloaded = existingBytes,
@@ -208,8 +199,8 @@ class DownloadManager(
                 status = if (complete) DownloadStatus.COMPLETED else DownloadStatus.RUNNING,
                 file = target,
                 error = null,
-            )
-        }
+            ),
+        )
         if (complete) {
             exportCompleted(key, asset, target)
             return
@@ -238,12 +229,7 @@ class DownloadManager(
                             resumeFrom = offset,
                             expectedSize = asset.size,
                             onProgress = { downloaded, total ->
-                                updateTask(key) {
-                                    it.copy(
-                                        downloaded = downloaded,
-                                        total = if (total > 0) total else asset.size,
-                                    )
-                                }
+                                taskStore.progress(attempt, downloaded, if (total > 0) total else asset.size)
                             },
                             retry = retry,
                         )
@@ -255,14 +241,7 @@ class DownloadManager(
                                 "Downloaded size ${target.length()} does not match $expectedSize",
                             )
                         }
-                        updateTask(key) {
-                            it.copy(
-                                status = DownloadStatus.COMPLETED,
-                                file = target,
-                                downloaded = target.length(),
-                                total = target.length(),
-                            )
-                        }
+                        if (!taskStore.complete(attempt, target)) return@launch
                         // Best effort and off the critical path: the install uses
                         // the private file, so a failed export never blocks it.
                         exportCompleted(key, asset, target)
@@ -278,9 +257,7 @@ class DownloadManager(
                     // Paused or cancelled: keep the partial file for resume.
                     return@launch
                 }
-                updateTask(key) {
-                    it.copy(status = DownloadStatus.FAILED, error = t.message ?: "Download failed")
-                }
+                taskStore.fail(attempt, t.message ?: "Download failed")
             } finally {
                 val self = coroutineContext[Job]
                 if (self != null) jobs.remove(key, self) else jobs.remove(key)
@@ -320,13 +297,6 @@ class DownloadManager(
         }
     }
 
-    private fun updateTask(key: String, create: Boolean = false, transform: (DownloadTask) -> DownloadTask) {
-        _tasks.update { current ->
-            val task = current[key] ?: if (create) DownloadTask(key = key, assetName = "") else return@update current
-            current + (key to transform(task))
-        }
-    }
-
     /**
      * Space used by both copies: the private working files and the exported
      * APKs in the download folder. The Settings entry clears both.
@@ -344,11 +314,11 @@ class DownloadManager(
     /** Cancels every running/paused download, keeping the tasks list for history. */
     @Synchronized
     fun cancelAllActive() {
-        _tasks.value.keys.toList().forEach { key ->
-            val task = _tasks.value[key] ?: return@forEach
+        tasks.value.keys.toList().forEach { key ->
+            val task = tasks.value[key] ?: return@forEach
             if (task.status == DownloadStatus.RUNNING || task.status == DownloadStatus.PAUSED) {
                 jobs[key]?.cancel()
-                updateTask(key) { it.copy(status = DownloadStatus.CANCELLED) }
+                taskStore.cancel(key)
             }
         }
     }
@@ -369,7 +339,7 @@ class DownloadManager(
         runningExports.forEach { it.cancel() }
         runningExports.forEach { it.join() }
         exports.clear()
-        _tasks.value = emptyMap()
+        taskStore.clear()
         runCatching { File(context.cacheDir, "apk").deleteRecursively() }
         exporter.deleteAll()
     }

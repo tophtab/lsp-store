@@ -7,6 +7,7 @@
     <string name="action_sort">정렬</string>
     <string name="action_share">공유</string>
     <string name="action_cancel">취소</string>
+    <string name="action_save">저장</string>
     <string name="action_download">다운로드</string>
     <string name="action_update">업데이트</string>
     <string name="action_unskip">무시 해제</string>
@@ -310,11 +311,19 @@
     <string name="updates_auto_title">자동 업데이트 완료</string>
     <string name="updates_auto_text">%1$d개 업데이트됨, %2$d개 실패</string>
     <string name="updates_auto_text_ok">모듈 %1$d개 업데이트됨</string>
+    <string name="updates_auto_channel_name">자동 업데이트 결과</string>
+    <string name="updates_auto_channel_desc">루트 자동 업데이트의 무음 요약</string>
     <string name="settings_updates_section">업데이트</string>
     <string name="settings_background_check">백그라운드에서 확인</string>
     <string name="settings_background_check_desc">일정에 따라 모듈 저장소를 가져와 새 버전을 알립니다.</string>
     <string name="settings_check_interval">확인 간격</string>
     <string name="settings_interval_days">%1$d 일</string>
+    <string name="settings_check_interval_desc">간격을 길게 눌러 사용자 지정 시간을 설정합니다.</string>
+    <string name="settings_check_interval_custom_current">사용자 지정 간격: %1$d시간(길게 눌러 변경)</string>
+    <string name="settings_check_interval_custom_title">사용자 지정 확인 간격</string>
+    <string name="settings_check_interval_custom_desc">1~168 사이의 정수 시간을 입력하세요.</string>
+    <string name="settings_check_interval_custom_invalid">1~168 사이의 숫자를 입력하세요.</string>
+    <string name="settings_check_interval_hours_label">시간</string>
     <string name="settings_wifi_only">Wi-Fi 전용</string>
     <string name="settings_wifi_only_desc">종량제가 아닌 네트워크에서만 백그라운드 확인을 실행합니다.</string>
     <string name="settings_auto_update">업데이트 자동 설치</string>
@@ -325,4 +334,19 @@
     <string name="detail_downgrade">%1$s 버전으로 다운그레이드</string>
     <string name="detail_latest_unavailable">최신 버전의 파일을 일시적으로 사용할 수 없습니다</string>
     <string name="detail_resources_unavailable">선택한 버전의 파일을 사용할 수 없습니다</string>
+    <!-- Ignore keywords -->
+    <string name="action_add">추가</string>
+    <string name="detail_hidden_by_keyword">키워드로 숨김: %1$s</string>
+    <string name="library_keywords_section">키워드 · %1$d</string>
+    <string name="library_modules_section">모듈 · %1$d</string>
+    <string name="library_add_ignore_keyword">무시 키워드 추가</string>
+    <string name="library_remove_ignore_keyword">키워드 삭제</string>
+    <string name="library_ignore_keyword_placeholder">예: Douyin</string>
+    <string name="library_ignore_keyword_hint">모듈 이름, 패키지, 설명과 일치합니다. 대소문자를 구분하지 않습니다.</string>
+    <string name="library_ignore_keyword_preview">모듈 %1$d개를 숨깁니다</string>
+    <string name="library_ignore_keyword_matches">모듈 %1$d개</string>
+    <string name="library_ignore_keyword_blank">키워드 입력</string>
+    <string name="library_ignore_keyword_duplicate">이미 추가된 키워드입니다</string>
+    <string name="library_ignore_keyword_too_long">최대 %1$d자</string>
+    <string name="library_ignore_keyword_limit">최대 키워드 %1$d개</string>
 </resources>
