@@ -35,7 +35,10 @@ class VariantResolverTest {
             if (decision !is VariantDecision.Pick) return@forEach
             if (!parseTraits(decision.asset.name).debugName) return@forEach
             val nonDebugEligible = resolver.candidates(release)
-                .filter { it.blocked == null && !it.traits.debugName }
+                .filter {
+                    it.blocked == null && !it.traits.debugName &&
+                        it.warning?.kind != Reason.Kind.BUNDLED_APP
+                }
             assertTrue(
                 "$pkg/${release.tagName} auto-picked debug ${decision.asset.name} " +
                     "although ${nonDebugEligible.map { it.asset.name }} is available",
@@ -267,13 +270,14 @@ class VariantResolverTest {
     }
 
     @Test
-    fun mictsPicksTheModuleAndFoldsTheCompanionApp() {
+    fun mictsPicksTheModuleAndWarnsAboutTheUnprobedCompanionName() {
         val release = latestRelease("com.parallelc.micts")
         val decision = resolver.resolve(release)
         assertTrue(decision is VariantDecision.Pick)
         assertEquals("MiCTS_2.6.apk", (decision as VariantDecision.Pick).asset.name)
         val folded = resolver.candidates(release).first { it.asset.name == "VISTrigger_2.6.apk" }
-        assertEquals(Reason.Kind.BUNDLED_APP, folded.blocked?.kind)
+        assertNull(folded.blocked)
+        assertEquals(Reason.Kind.BUNDLED_APP, folded.warning?.kind)
     }
 
     @Test
@@ -489,14 +493,24 @@ class VariantResolverTest {
     }
 
     @Test
-    fun aBundledNameIsStillFoldedWithoutProbeEvidence() {
+    fun aBundledNameOnlyWarnsWithoutProbeEvidenceAndIsNotTheDefault() {
         val release = releaseOf("module.apk", "Module_Client.apk")
         val candidates = resolver.candidates(release, expectedPackage = "com.example.module")
 
         assertEquals(
             Reason.Kind.BUNDLED_APP,
-            candidates.first { it.asset.name == "Module_Client.apk" }.blocked?.kind,
+            candidates.first { it.asset.name == "Module_Client.apk" }.warning?.kind,
         )
+        assertTrue(candidates.all { it.blocked == null })
+        assertEquals("module.apk", (resolver.resolve(release) as VariantDecision.Pick).asset.name)
+    }
+
+    @Test
+    fun aSuspectedCompanionDoesNotReplaceTheOnlyDebugModuleAsTheDefault() {
+        val release = releaseOf("module-debug.apk", "Module_Client.apk")
+        val decision = resolver.resolve(release) as VariantDecision.Pick
+        assertEquals("module-debug.apk", decision.asset.name)
+        assertTrue(resolver.candidates(release).all { it.blocked == null })
     }
 
     @Test

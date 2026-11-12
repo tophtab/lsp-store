@@ -21,7 +21,7 @@ import io.github.tophtab.lspstore.domain.variant.VariantSignature
 import io.github.tophtab.lspstore.domain.variant.onInstallFailed
 import io.github.tophtab.lspstore.domain.variant.onInstallSucceeded
 import io.github.tophtab.lspstore.domain.variant.parseTraits
-import io.github.tophtab.lspstore.domain.variant.withoutAdvisoryApiVerdicts
+import io.github.tophtab.lspstore.domain.variant.withoutNotApplicableVerdicts
 
 private val Context.libraryDataStore by preferencesDataStore(name = "library")
 
@@ -72,11 +72,10 @@ interface LibraryRepository {
     suspend fun migratePreferredVariants()
 
     /**
-     * Idempotent one-off migration: forget NOT_APPLICABLE verdicts that the
-     * pre-1.2.0 API-number block wrote (#65, #69). Since #47 the libxposed API
-     * number only warns, so such a verdict must not disable updates for good.
+     * Idempotent migration: forget all legacy NOT_APPLICABLE verdicts. A failed
+     * attempt must not hide a module or prevent it being evaluated again.
      */
-    suspend fun dropAdvisoryApiVerdicts()
+    suspend fun dropNotApplicableVerdicts()
 
     /** Whole library as one payload for an export file. */
     suspend fun snapshot(): LibraryBackup
@@ -143,7 +142,7 @@ class LibraryRepositoryImpl(private val context: Context) : LibraryRepository {
 
     /** repository module package name -> variant status + semantic signature */
     override val variantStates: Flow<Map<String, ModuleVariantState>> = context.libraryDataStore.data
-        .map { decodeVariantStates(it[Keys.VARIANT_STATE]) }
+        .map { decodeVariantStates(it[Keys.VARIANT_STATE]).withoutNotApplicableVerdicts() }
 
     override suspend fun toggleFavourite(packageName: String) {
         context.libraryDataStore.edit { prefs ->
@@ -319,10 +318,10 @@ class LibraryRepositoryImpl(private val context: Context) : LibraryRepository {
         }
     }
 
-    override suspend fun dropAdvisoryApiVerdicts() {
+    override suspend fun dropNotApplicableVerdicts() {
         context.libraryDataStore.edit { prefs ->
             val current = decodeVariantStates(prefs[Keys.VARIANT_STATE])
-            val cleaned = current.withoutAdvisoryApiVerdicts()
+            val cleaned = current.withoutNotApplicableVerdicts()
             if (cleaned.size != current.size) {
                 prefs[Keys.VARIANT_STATE] = encodeVariantStates(cleaned)
             }

@@ -3,6 +3,7 @@ package io.github.tophtab.lspstore.data.install
 import android.content.Context
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -101,8 +102,27 @@ class ModuleInstallCoordinator(
     fun runningPackages(): Set<String> = jobs.keys.toSet()
 
     /** Starts the chain; a second start for the same module is ignored. */
+    @Synchronized
     fun start(request: ModuleInstallRequest) {
-        if (jobs.containsKey(request.repoPackageName)) return
+        // Register before execution: a cached download can finish synchronously
+        // and otherwise remove its entry before this method has inserted it.
+        val job = scope.launch(start = CoroutineStart.LAZY) {
+            try {
+                execute(request)
+            } catch (cancellation: CancellationException) {
+                finish(request.repoPackageName, context.getString(R.string.download_cancelled))
+                throw cancellation
+            } catch (error: Throwable) {
+                finish(
+                    request.repoPackageName,
+                    error.message ?: context.getString(R.string.error_install_failed),
+                )
+            }
+        }
+        if (jobs.putIfAbsent(request.repoPackageName, job) != null) {
+            job.cancel()
+            return
+        }
         // Publish the run before the job starts: every log/progress update below
         // transforms an existing entry instead of creating one.
         _runs.update { current ->
@@ -114,23 +134,15 @@ class ModuleInstallCoordinator(
                 )
             )
         }
-        jobs[request.repoPackageName] = scope.launch {
-            try {
-                execute(request)
-            } catch (cancellation: CancellationException) {
-                // A queued run is cancelled by cancelling its job, so the run
-                // has to be removed here instead of in execute().
-                finish(request.repoPackageName, context.getString(R.string.download_cancelled))
-                throw cancellation
-            } catch (error: Throwable) {
-                // Never leave a run behind: a stuck entry would disable the
-                // install button until the process restarts.
-                finish(
-                    request.repoPackageName,
-                    error.message ?: context.getString(R.string.error_install_failed),
-                )
+        job.invokeOnCompletion {
+            // Cancellation can happen before a lazy job enters its body.
+            synchronized(this) {
+                if (jobs.remove(request.repoPackageName, job)) {
+                    _runs.update { it - request.repoPackageName }
+                }
             }
         }
+        job.start()
     }
 
     /**
@@ -242,7 +254,6 @@ class ModuleInstallCoordinator(
                 // matching afterwards.
                 val archivePackage = gate.reason.args.firstOrNull()
                 if (gate.reason.kind == Reason.Kind.PACKAGE_MISMATCH &&
-                    request.installedPackage == null &&
                     !archivePackage.isNullOrBlank() &&
                     archivePackage != installTarget
                 ) {
@@ -256,11 +267,18 @@ class ModuleInstallCoordinator(
 
         log(repo, "Installing ${request.asset.name}")
         val serializer = systemInstallSerializer
-        val outcome = runCatching {
+        var acquired = false
+        val outcome = try {
             // komi's orchestrator order: take the slot right before handing over.
             serializer.awaitFreeAndMarkPending(installTarget)
+            acquired = true
             installer.install(file, useRoot)
-        }.getOrElse { InstallOutcome.Failure(it.message ?: "install failed") }
+        } catch (cancellation: CancellationException) {
+            if (acquired) serializer.markCompleted(installTarget)
+            throw cancellation
+        } catch (error: Throwable) {
+            InstallOutcome.Failure(error.message ?: "install failed")
+        }
 
         when (outcome) {
             InstallOutcome.Completed -> {
@@ -333,6 +351,7 @@ class ModuleInstallCoordinator(
         }
     }
 
+    @Synchronized
     private fun finish(repoPackageName: String, message: String?) {
         jobs.remove(repoPackageName)
         _runs.update { it - repoPackageName }

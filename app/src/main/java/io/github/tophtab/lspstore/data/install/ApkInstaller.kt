@@ -208,32 +208,19 @@ class ApkInstaller(
         context.startActivity(intent)
     }
 
-    private suspend fun installSilently(file: File): Boolean = withContext(Dispatchers.IO) {
-        runCatching {
-            val command = "pm install -r ${shellQuote(file.absolutePath)}"
-            val process = ProcessBuilder("su", "-c", command)
-                .redirectErrorStream(true)
-                .start()
-            val output = process.inputStream.bufferedReader().use { it.readText() }
-            process.waitFor()
-            process.exitValue() == 0 || output.contains("Success", ignoreCase = true)
-        }.getOrDefault(false)
-    }
+    private suspend fun installSilently(file: File): Boolean = installerCommandSucceeded(
+        command = listOf("su", "-c", "pm install -r ${shellQuote(file.absolutePath)}"),
+        logDirectory = context.cacheDir,
+    )
 
-    private suspend fun uninstallSilently(packageName: String): Boolean = withContext(Dispatchers.IO) {
-        runCatching {
-            // Per-user, like the system's own uninstaller: the installed list is
-            // scanned for the calling user, so touching other users' copies would
-            // be a surprise.
-            val userId = Process.myUid() / PER_USER_RANGE
-            val command = "pm uninstall --user $userId ${shellQuote(packageName)}"
-            val process = ProcessBuilder("su", "-c", command)
-                .redirectErrorStream(true)
-                .start()
-            val output = process.inputStream.bufferedReader().use { it.readText() }
-            process.waitFor()
-            process.exitValue() == 0 || output.contains("Success", ignoreCase = true)
-        }.getOrDefault(false)
+    private suspend fun uninstallSilently(packageName: String): Boolean {
+        // The installed list is scanned for the calling user, so removal is
+        // scoped to that user's copy as well.
+        val userId = Process.myUid() / PER_USER_RANGE
+        return installerCommandSucceeded(
+            command = listOf("su", "-c", "pm uninstall --user $userId ${shellQuote(packageName)}"),
+            logDirectory = context.cacheDir,
+        )
     }
 
     private fun shellQuote(value: String): String = "'" + value.replace("'", "'\\''") + "'"

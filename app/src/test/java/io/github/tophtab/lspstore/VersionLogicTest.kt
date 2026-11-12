@@ -447,22 +447,23 @@ class VersionLogicTest {
     }
 
     @Test
-    fun freshNotApplicableVerdictStillHidesItsOwnRelease() {
+    fun freshNotApplicableVerdictCannotHideItsOwnRelease() {
         val installed = InstalledModule("a.b", 10, "1.0", "T", true, null)
-        // The verdict is newer than the release it was computed for, so it still
-        // keeps the module out of the update list.
+        // Even a verdict newer than this release is diagnostic state, not a
+        // reason to prevent the user retrying an upgrade.
         val verdict = ModuleVariantState(
             status = ModuleVariantState.Status.NOT_APPLICABLE,
             reason = Reason(Reason.Kind.MIN_SDK_TOO_HIGH, listOf("35", "33")).storageKey(),
             updatedAt = Instant.parse("2026-11-10T09:50:31Z").toEpochMilli(),
         )
 
-        assertTrue(
+        assertEquals(
+            1,
             UpdateChecker.findUpdates(
                 listOf(installed),
                 listOf(notApplicableModule()),
                 variantStates = mapOf("a.b" to verdict),
-            ).isEmpty(),
+            ).size,
         )
     }
 

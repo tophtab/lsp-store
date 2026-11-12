@@ -82,6 +82,32 @@ class ReleaseChannelTest {
     private fun tags(releases: List<Release>) = releases.map { it.tagName }
 
     @Test
+    fun aReleasePublishedAfterTheUpdateCheckDoesNotInvalidateTheRequestedBuild() {
+        val requested = release("60-3.5.0", "2026-01-01T00:00:00Z")
+        val newer = release("61-3.6.0", "2026-01-02T00:00:00Z")
+        val detail = detail(newer.version, null, stable = listOf(newer, requested))
+        assertEquals(requested, detail.releaseForUpdate(requested.version!!, false))
+    }
+
+    @Test
+    fun aStaleDetailMustNotSubstituteAnOlderRelease() {
+        val old = release("59-3.4.0", "2026-01-01T00:00:00Z")
+        val requested = ModuleVersion.parse("60-3.5.0")!!
+        val detail = detail(old.version, null, stable = listOf(old))
+        assertNull(detail.releaseForUpdate(requested, false))
+    }
+
+    @Test
+    fun requestedSameCodeVersionAndReleaseChannelAreHonoured() {
+        val stable = release("1-1.0", "2026-01-01T00:00:00Z")
+        val beta = release("1-1.1-beta", "2026-01-02T00:00:00Z", isPrerelease = true)
+        val detail = detail(stable.version, beta.version, stable = listOf(stable), beta = listOf(beta))
+        assertEquals(stable, detail.releaseForUpdate(stable.version!!, true))
+        assertEquals(beta, detail.releaseForUpdate(beta.version!!, true))
+        assertNull(detail.releaseForUpdate(beta.version, false))
+    }
+
+    @Test
     fun stableChannelListsOnlyStableReleases() {
         val stable = release("60-3.5.0", "2026-01-01T00:00:00Z")
         val beta = release("37-2.7.0-beta", "2026-01-02T00:00:00Z", isPrerelease = true)

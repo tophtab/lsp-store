@@ -90,7 +90,7 @@ class ResolveVariantUseCaseTest {
     }
 
     @Test
-    fun notApplicableIsOnlyRecheckedOnTheNameLayer() = runBlocking {
+    fun legacyNotApplicableIsProbedAgain() = runBlocking {
         val release = releaseOf("OS2_Module.apk", "OS3_Module.apk")
         val probe = FakeProbe(
             mapOf(
@@ -102,13 +102,10 @@ class ResolveVariantUseCaseTest {
         val resolution = ResolveVariantUseCase(probe)
             .resolve(release, state, device, expectedPackage = "com.example.module")
 
-        // A stored NOT_APPLICABLE no longer blocks the install: the name layer
-        // still produces a default, and only the user's explicit picker action
-        // may spend a probe on it.
+        // An old verdict must not suppress the probes needed to recover it.
         val decision = resolution.decision as VariantDecision.Pick
         assertEquals("OS3_Module.apk", decision.asset.name)
-        assertEquals(VariantDecision.Confidence.DEFAULT, decision.confidence)
-        assertEquals(0, probe.calls)
+        assertEquals(2, probe.calls)
     }
 
     @Test
@@ -261,6 +258,37 @@ class ResolveVariantUseCaseTest {
             (resolution.decision as VariantDecision.NotApplicable).reason.kind,
         )
         assertEquals(0, probe.calls)
+    }
+
+    @Test
+    fun failedProbesCannotDisableEveryCompanionLookingName() = runBlocking {
+        val release = releaseOf("Module_Client.apk", "Module_Provider.apk")
+        val resolution = ResolveVariantUseCase(FakeProbe(emptyMap())).resolve(
+            release, ModuleVariantState(), device, expectedPackage = "com.example.module",
+        )
+        assertTrue(resolution.decision is VariantDecision.Pick)
+        assertTrue(
+            VariantResolver(device).candidates(release, expectedPackage = "com.example.module")
+                .all { it.blocked == null },
+        )
+    }
+
+    @Test
+    fun aRenamedLegacyModuleWithOnlyAnInitEntryIsNotACompanion() = runBlocking {
+        val release = releaseOf("Module_Client.apk", "Module_Provider.apk")
+        val resolution = ResolveVariantUseCase(
+            FakeProbe(
+                release.apkAssets.associate { asset ->
+                    asset.name to ApkMeta(packageName = "com.example.renamed", hasLegacyInit = true)
+                },
+            ),
+        ).resolve(release, ModuleVariantState(), device, expectedPackage = "com.example.module")
+        assertTrue(resolution.decision is VariantDecision.Pick)
+        assertTrue(
+            VariantResolver(device).candidates(
+                release, probes = resolution.probes, expectedPackage = "com.example.module",
+            ).all { it.blocked == null && it.warning == null },
+        )
     }
 
     private class FakeProbe(private val metas: Map<String, ApkMeta>) : ApkProbe {

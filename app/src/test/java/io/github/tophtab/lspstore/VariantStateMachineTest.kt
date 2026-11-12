@@ -19,7 +19,7 @@ import io.github.tophtab.lspstore.domain.variant.onEvaluatedNoCandidate
 import io.github.tophtab.lspstore.domain.variant.onInstallFailed
 import io.github.tophtab.lspstore.domain.variant.onInstallSucceeded
 import io.github.tophtab.lspstore.domain.variant.onUserPicked
-import io.github.tophtab.lspstore.domain.variant.withoutAdvisoryApiVerdicts
+import io.github.tophtab.lspstore.domain.variant.withoutNotApplicableVerdicts
 
 class VariantStateMachineTest {
 
@@ -67,10 +67,11 @@ class VariantStateMachineTest {
     }
 
     @Test
-    fun aFailureAfterAVerdictClearsItButKeepsTheDeviceVerdictsRecoverable() {
-        val verdict = ModuleVariantState().onEvaluatedNoCandidate(
-            Reason(Reason.Kind.MIN_SDK_TOO_HIGH, listOf("35", "33")),
-            now = 5L,
+    fun aFailureAfterALegacyVerdictClearsIt() {
+        val verdict = ModuleVariantState(
+            status = ModuleVariantState.Status.NOT_APPLICABLE,
+            reason = Reason(Reason.Kind.MIN_SDK_TOO_HIGH, listOf("35", "33")).storageKey(),
+            updatedAt = 5L,
         )
         val retried = verdict.onInstallFailed(now = 10L)
 
@@ -91,41 +92,35 @@ class VariantStateMachineTest {
     }
 
     @Test
-    fun advisoryApiVerdictsAreForgottenButOtherVerdictsStay() {
-        val apiVerdict = ModuleVariantState().onEvaluatedNoCandidate(
-            Reason(Reason.Kind.API_TOO_NEW, listOf("102")),
-            now = 5L,
-        )
-        val sdkVerdict = ModuleVariantState().onEvaluatedNoCandidate(
-            Reason(Reason.Kind.MIN_SDK_TOO_HIGH, listOf("35", "33")),
-            now = 6L,
-        )
+    fun everyLegacyVerdictIsForgottenButTrustedChoicesStay() {
         val trusted = ModuleVariantState(
             status = ModuleVariantState.Status.TRUSTED,
             signature = signature,
         )
 
-        val cleaned = mapOf(
-            "api" to apiVerdict,
-            "sdk" to sdkVerdict,
-            "trusted" to trusted,
-        ).withoutAdvisoryApiVerdicts()
+        val legacy = Reason.Kind.entries.associate { kind ->
+            kind.name to ModuleVariantState(
+                status = ModuleVariantState.Status.NOT_APPLICABLE,
+                reason = Reason(kind).storageKey(),
+                updatedAt = 6L,
+            )
+        }
+        val cleaned = (legacy + ("trusted" to trusted)).withoutNotApplicableVerdicts()
 
-        assertEquals(setOf("sdk", "trusted"), cleaned.keys)
-        assertEquals(sdkVerdict, cleaned["sdk"])
+        assertEquals(setOf("trusted"), cleaned.keys)
         assertEquals(trusted, cleaned["trusted"])
     }
 
     @Test
-    fun noCandidateStoresAStorageKeyNotText() {
+    fun noCandidateKeepsTheModuleRetryableWithoutAVerdict() {
         val reason = Reason(
             Reason.Kind.MIN_SDK_TOO_HIGH,
             listOf("35", "33"),
         )
         val state = ModuleVariantState().onEvaluatedNoCandidate(reason)
-        assertEquals(ModuleVariantState.Status.NOT_APPLICABLE, state.status)
-        assertEquals(reason, Reason.fromStorage(state.reason))
-        assertEquals("MIN_SDK_TOO_HIGH\u001f35\u001f33", state.reason)
+        assertEquals(ModuleVariantState.Status.SUSPECT, state.status)
+        assertNull(state.reason)
+        assertEquals(1, state.failures)
     }
 
     @Test

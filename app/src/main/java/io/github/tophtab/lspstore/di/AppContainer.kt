@@ -321,7 +321,10 @@ class AppContainer(context: Context) {
     suspend fun prunePendingInstalls(installed: List<InstalledModule>): List<PendingInstall> {
         val reached = runCatching { pendingInstallRepository.prune(installed) }
             .getOrDefault(emptyList())
-        reached.forEach { recordPendingInstallResult(it) }
+        reached.forEach {
+            recordPendingInstallResult(it)
+            systemInstallSerializer.markCompleted(it.packageName)
+        }
         return reached
     }
 

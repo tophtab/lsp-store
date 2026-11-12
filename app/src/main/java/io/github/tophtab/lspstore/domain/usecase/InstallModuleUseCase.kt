@@ -71,14 +71,8 @@ class PrepareModuleInstallUseCase(
         onProgress: (downloaded: Long, total: Long) -> Unit,
     ): PreparedInstall = try {
         val detail = moduleRepository.getDetail(info.module.packageName)
-        val release = detail.latestReleaseFor(includePreReleases)
+        val release = detail.releaseForUpdate(info.latest, includePreReleases)
         if (release == null) {
-            PreparedInstall.Failed(info, context.getString(R.string.error_no_apk_asset))
-        } else if (!release.matchesVersion(info.latest)) {
-            // The index said one version and the detail endpoint returned another
-            // (stale mirror or a release that changed between the two requests).
-            // Downloading this asset would install an older build and leave the
-            // update prompt in place.
             PreparedInstall.Failed(info, context.getString(R.string.error_repository_stale))
         } else {
             // Lazy validation: TRUSTED skips probing; UNKNOWN/SUSPECT/ambiguous probe.
@@ -164,15 +158,18 @@ class InstallPreparedApkUseCase(
             }
             GateResult.Ok -> Unit
         }
+        var acquired = false
         val outcome = try {
             val useRoot = settingsRepository.rootInstall.first()
             // komi's orchestrator order: everything is ready before the single
             // install slot is taken, then the APK is handed over.
             systemInstallSerializer.awaitFreeAndMarkPending(installTarget)
+            acquired = true
             // Verify and update the installed package, which may differ from
             // the repository listing for imported/linked modules.
             installer.install(prepared.file, useRoot, allowUi)
         } catch (cancellation: CancellationException) {
+            if (acquired) systemInstallSerializer.markCompleted(installTarget)
             throw cancellation
         } catch (error: Throwable) {
             InstallOutcome.Failure(

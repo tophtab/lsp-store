@@ -229,6 +229,15 @@ data class ModuleDetail(
         return candidates.firstOrNull { it.tagName == target?.raw }
             ?: candidates.firstOrNull { it.apkAssets.isNotEmpty() }
     }
+
+    /**
+     * The exact version the user chose to update to. A newer release may appear
+     * between the index check and this detail request; the requested build is
+     * still valid when it is in the release list. A stale mirror missing that
+     * build must never substitute an older APK.
+     */
+    fun releaseForUpdate(version: ModuleVersion, includePreReleases: Boolean): Release? =
+        releasesFor(includePreReleases).firstOrNull { it.matchesVersion(version) }
 }
 
 data class Release(

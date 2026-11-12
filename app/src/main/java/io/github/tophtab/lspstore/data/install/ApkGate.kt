@@ -33,7 +33,7 @@ data class ArchiveInfo(
     val hasLegacyInit: Boolean = false,
 ) {
     val hasXposedDeclaration: Boolean
-        get() = hasLegacyXposedMeta || hasLibXposedProvider || hasModuleProp
+        get() = hasLegacyXposedMeta || hasLibXposedProvider || hasModuleProp || hasLegacyInit
 }
 
 sealed interface GateResult {
@@ -123,11 +123,19 @@ object ApkGate {
         device: DeviceProfile,
     ): GateResult {
         if (!file.exists() || !file.isFile || file.length() == 0L) {
+            if (file.isFile) withContext(Dispatchers.IO) { file.delete() }
             return GateResult.Reject(Reason(Reason.Kind.NO_APK))
         }
         // getPackageArchiveInfo + the zip directory scan are blocking disk IO;
         // every caller is on the main dispatcher (viewModelScope), so move it.
-        val info = withContext(Dispatchers.IO) { readArchiveInfo(context, file) }
+        val info = withContext(Dispatchers.IO) {
+            readArchiveInfo(context, file).also { info ->
+                // A completed transfer may contain a corrupt APK or an HTML
+                // response of the expected length. Leaving it cached makes
+                // every retry reuse the same unreadable file forever.
+                if (info == null) file.delete()
+            }
+        }
             ?: return GateResult.Reject(Reason(Reason.Kind.NOT_A_MODULE))
         return evaluate(info, expectedPackage, device)
     }

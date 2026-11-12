@@ -102,6 +102,7 @@ class ApkGateTest {
             info(packageName = "dev.example.renamed", hasProvider = true),
             info(packageName = "dev.example.renamed", hasModuleProp = true),
             info(packageName = "dev.example.renamed", hasLegacy = true),
+            info(packageName = "dev.example.renamed", hasLegacyInit = true),
         ).forEach { candidate ->
             val result = ApkGate.evaluate(candidate, "com.example.module", device)
             assertTrue(result is GateResult.Warn)

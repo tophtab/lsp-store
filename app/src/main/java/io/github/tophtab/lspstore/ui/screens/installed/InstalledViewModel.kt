@@ -355,21 +355,8 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
                             installedPackage = info.installed.packageName,
                             repoPackage = repoPackage,
                         )
-                        val release = detail.latestReleaseFor(includePreReleases)
+                        val release = detail.releaseForUpdate(info.latest, includePreReleases)
                         if (release == null) {
-                            _state.update {
-                                it.copy(
-                                    message = container.appContext.getString(
-                                        R.string.error_no_apk_asset,
-                                    ),
-                                )
-                            }
-                            return@launch
-                        }
-                        if (!release.matchesVersion(info.latest)) {
-                            // Same guard the batch path has: a stale mirror detail
-                            // would otherwise install an older build and leave the
-                            // update prompt in place.
                             _state.update {
                                 it.copy(
                                     message = container.appContext.getString(
@@ -622,7 +609,7 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
     }
 
     fun dismissPending(packageName: String) {
-        viewModelScope.launch { pendingRepository.clear(packageName) }
+        viewModelScope.launch { container.cancelPendingInstall(packageName) }
     }
 
     /**
