@@ -346,6 +346,8 @@
     <string name="updates_auto_title">自動更新完成</string>
     <string name="updates_auto_text">已更新 %1$d 個，失敗 %2$d 個</string>
     <string name="updates_auto_text_ok">已更新 %1$d 個模組</string>
+    <string name="updates_auto_channel_name">自動更新結果</string>
+    <string name="updates_auto_channel_desc">Root 自動更新的靜默摘要</string>
     <string name="settings_updates_section">更新</string>
     <string name="settings_background_check">背景檢查</string>
     <string name="settings_background_check_desc">依排程取得模組儲存庫並提示新版本。</string>

@@ -311,6 +311,8 @@
     <string name="updates_auto_title">Automatyczna aktualizacja zakończona</string>
     <string name="updates_auto_text">Zaktualizowano: %1$d, niepowodzenia: %2$d</string>
     <string name="updates_auto_text_ok">Zaktualizowano moduły: %1$d</string>
+    <string name="updates_auto_channel_name">Wyniki automatycznych aktualizacji</string>
+    <string name="updates_auto_channel_desc">Ciche podsumowania automatycznych aktualizacji przez root</string>
     <string name="settings_updates_section">Aktualizacje</string>
     <string name="settings_background_check">Sprawdzaj w tle</string>
     <string name="settings_background_check_desc">Pobieraj repozytorium modułów i zgłaszaj nowe wersje według harmonogramu.</string>

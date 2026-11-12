@@ -311,6 +311,8 @@
     <string name="updates_auto_title">Mise à jour automatique terminée</string>
     <string name="updates_auto_text">%1$d mis à jour, %2$d échoués</string>
     <string name="updates_auto_text_ok">%1$d modules mis à jour</string>
+    <string name="updates_auto_channel_name">Résultats des mises à jour automatiques</string>
+    <string name="updates_auto_channel_desc">Résumés silencieux des mises à jour automatiques via root</string>
     <string name="settings_updates_section">Mises à jour</string>
     <string name="settings_background_check">Vérifier en arrière-plan</string>
     <string name="settings_background_check_desc">Récupère le dépôt de modules et signale les nouvelles versions selon un calendrier.</string>

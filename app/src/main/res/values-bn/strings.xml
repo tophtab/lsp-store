@@ -311,6 +311,8 @@
     <string name="updates_auto_title">স্বয়ংক্রিয় আপডেট সম্পন্ন</string>
     <string name="updates_auto_text">%1$d আপডেট হয়েছে, %2$d ব্যর্থ</string>
     <string name="updates_auto_text_ok">%1$d টি মডিউল আপডেট হয়েছে</string>
+    <string name="updates_auto_channel_name">স্বয়ংক্রিয় আপডেটের ফলাফল</string>
+    <string name="updates_auto_channel_desc">রুট স্বয়ংক্রিয় আপডেটের নীরব সারাংশ</string>
     <string name="settings_updates_section">আপডেট</string>
     <string name="settings_background_check">ব্যাকগ্রাউন্ডে চেক করুন</string>
     <string name="settings_background_check_desc">নির্দিষ্ট সময়সূচিতে মডিউল রিপোজিটরি আনুন এবং নতুন সংস্করণ জানান।</string>

@@ -311,6 +311,8 @@
     <string name="updates_auto_title">Aggiornamento automatico completato</string>
     <string name="updates_auto_text">%1$d aggiornati, %2$d non riusciti</string>
     <string name="updates_auto_text_ok">%1$d moduli aggiornati</string>
+    <string name="updates_auto_channel_name">Risultati aggiornamenti automatici</string>
+    <string name="updates_auto_channel_desc">Riepiloghi silenziosi degli aggiornamenti automatici con root</string>
     <string name="settings_updates_section">Aggiornamenti</string>
     <string name="settings_background_check">Controlla in background</string>
     <string name="settings_background_check_desc">Scarica il repository dei moduli e segnala le nuove versioni a intervalli regolari.</string>

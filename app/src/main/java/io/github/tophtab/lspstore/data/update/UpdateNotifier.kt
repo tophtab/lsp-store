@@ -17,7 +17,8 @@ import io.github.tophtab.lspstore.domain.model.UpdateInfo
 
 /**
  * Posts the two notifications the background check produces: "updates
- * available" and the silent auto-update summary.
+ * available" on the alerting channel and the auto-update summary on its own
+ * low-importance silent channel.
  *
  * Every method reports whether the notification was actually posted, so the
  * check only records its dedup signature when the user could see the result: a
@@ -28,7 +29,7 @@ class UpdateNotifier(private val context: Context) {
     /** Posts the "updates available" notification; false when it could not post. */
     fun notifyUpdates(updates: List<UpdateInfo>): Boolean {
         if (updates.isEmpty() || !canPost()) return false
-        ensureChannel()
+        ensureChannels()
         val title = if (updates.size == 1) {
             val only = updates.first()
             context.getString(R.string.updates_notification_title_one, only.module.title)
@@ -48,27 +49,45 @@ class UpdateNotifier(private val context: Context) {
         return post(build(title, text))
     }
 
-    /** Posts the auto-update summary; false when it could not post. */
+    /**
+     * Posts the auto-update summary on the silent channel: the installs already
+     * ran without UI, so the summary must not wake the device either.
+     */
     fun notifyAutoUpdateResult(succeeded: Int, failed: Int): Boolean {
         if (succeeded == 0 && failed == 0) return true
         if (!canPost()) return false
-        ensureChannel()
+        ensureChannels()
         val text = if (failed > 0) {
             context.getString(R.string.updates_auto_text, succeeded, failed)
         } else {
             context.getString(R.string.updates_auto_text_ok, succeeded)
         }
-        return post(build(context.getString(R.string.updates_auto_title), text))
+        return post(
+            build(
+                title = context.getString(R.string.updates_auto_title),
+                text = text,
+                channelId = AUTO_UPDATE_CHANNEL_ID,
+                silent = true,
+            ),
+        )
     }
 
-    private fun build(title: String, text: String) = NotificationCompat.Builder(context, CHANNEL_ID)
+    private fun build(
+        title: String,
+        text: String,
+        channelId: String = CHANNEL_ID,
+        silent: Boolean = false,
+    ) = NotificationCompat.Builder(context, channelId)
         .setSmallIcon(R.drawable.ic_notification)
         .setContentTitle(title)
         .setContentText(text)
         .setStyle(NotificationCompat.BigTextStyle().bigText(text))
-        .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+        .setPriority(
+            if (silent) NotificationCompat.PRIORITY_LOW else NotificationCompat.PRIORITY_DEFAULT,
+        )
         .setContentIntent(openInstalledIntent())
         .setOnlyAlertOnce(true)
+        .setSilent(silent)
         .setAutoCancel(true)
         .build()
 
@@ -98,23 +117,37 @@ class UpdateNotifier(private val context: Context) {
         ) == PackageManager.PERMISSION_GRANTED
     }
 
-    private fun ensureChannel() {
+    private fun ensureChannels() {
         val manager = context.getSystemService(NotificationManager::class.java) ?: return
-        if (manager.getNotificationChannel(CHANNEL_ID) != null) return
-        manager.createNotificationChannel(
-            NotificationChannel(
-                CHANNEL_ID,
-                context.getString(R.string.updates_channel_name),
-                NotificationManager.IMPORTANCE_DEFAULT,
-            ).apply {
-                description = context.getString(R.string.updates_channel_desc)
-                setShowBadge(true)
-            },
-        )
+        if (manager.getNotificationChannel(CHANNEL_ID) == null) {
+            manager.createNotificationChannel(
+                NotificationChannel(
+                    CHANNEL_ID,
+                    context.getString(R.string.updates_channel_name),
+                    NotificationManager.IMPORTANCE_DEFAULT,
+                ).apply {
+                    description = context.getString(R.string.updates_channel_desc)
+                    setShowBadge(true)
+                },
+            )
+        }
+        if (manager.getNotificationChannel(AUTO_UPDATE_CHANNEL_ID) == null) {
+            manager.createNotificationChannel(
+                NotificationChannel(
+                    AUTO_UPDATE_CHANNEL_ID,
+                    context.getString(R.string.updates_auto_channel_name),
+                    NotificationManager.IMPORTANCE_LOW,
+                ).apply {
+                    description = context.getString(R.string.updates_auto_channel_desc)
+                    setShowBadge(false)
+                },
+            )
+        }
     }
 
     companion object {
         const val CHANNEL_ID = "module_updates"
+        const val AUTO_UPDATE_CHANNEL_ID = "module_auto_updates"
         const val EXTRA_OPEN_INSTALLED = "io.github.tophtab.lspstore.extra.OPEN_INSTALLED"
         private const val NOTIFICATION_ID = 2001
     }

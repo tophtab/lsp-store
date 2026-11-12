@@ -311,6 +311,8 @@
     <string name="updates_auto_title">स्वचालित अपडेट पूरा हुआ</string>
     <string name="updates_auto_text">%1$d अपडेट हुए, %2$d विफल</string>
     <string name="updates_auto_text_ok">%1$d मॉड्यूल अपडेट हुए</string>
+    <string name="updates_auto_channel_name">स्वचालित अपडेट परिणाम</string>
+    <string name="updates_auto_channel_desc">Root स्वचालित अपडेट के मौन सारांश</string>
     <string name="settings_updates_section">अपडेट</string>
     <string name="settings_background_check">बैकग्राउंड में जाँचें</string>
     <string name="settings_background_check_desc">निर्धारित समय पर मॉड्यूल रिपॉज़िटरी लाएँ और नए संस्करणों की सूचना दें।</string>

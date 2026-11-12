@@ -311,6 +311,8 @@
     <string name="updates_auto_title">اكتمل التحديث التلقائي</string>
     <string name="updates_auto_text">تم تحديث %1$d وفشل %2$d</string>
     <string name="updates_auto_text_ok">تم تحديث %1$d من الوحدات</string>
+    <string name="updates_auto_channel_name">نتائج التحديث التلقائي</string>
+    <string name="updates_auto_channel_desc">ملخصات صامتة للتحديثات التلقائية عبر root</string>
     <string name="settings_updates_section">التحديثات</string>
     <string name="settings_background_check">الفحص في الخلفية</string>
     <string name="settings_background_check_desc">اجلب مستودع الوحدات وأبلغ عن الإصدارات الجديدة وفق جدول.</string>

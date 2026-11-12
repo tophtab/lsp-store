@@ -311,6 +311,8 @@
     <string name="updates_auto_title">Otomatik güncelleme tamamlandı</string>
     <string name="updates_auto_text">%1$d güncellendi, %2$d başarısız</string>
     <string name="updates_auto_text_ok">%1$d modül güncellendi</string>
+    <string name="updates_auto_channel_name">Otomatik güncelleme sonuçları</string>
+    <string name="updates_auto_channel_desc">Root ile otomatik güncellemelerin sessiz özetleri</string>
     <string name="settings_updates_section">Güncellemeler</string>
     <string name="settings_background_check">Arka planda denetle</string>
     <string name="settings_background_check_desc">Modül deposunu çeker ve zamanlanmış olarak yeni sürümleri bildirir.</string>

@@ -311,6 +311,8 @@
     <string name="updates_auto_title">자동 업데이트 완료</string>
     <string name="updates_auto_text">%1$d개 업데이트됨, %2$d개 실패</string>
     <string name="updates_auto_text_ok">모듈 %1$d개 업데이트됨</string>
+    <string name="updates_auto_channel_name">자동 업데이트 결과</string>
+    <string name="updates_auto_channel_desc">루트 자동 업데이트의 무음 요약</string>
     <string name="settings_updates_section">업데이트</string>
     <string name="settings_background_check">백그라운드에서 확인</string>
     <string name="settings_background_check_desc">일정에 따라 모듈 저장소를 가져와 새 버전을 알립니다.</string>
