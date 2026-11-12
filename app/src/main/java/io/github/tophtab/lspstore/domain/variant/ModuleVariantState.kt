@@ -1,5 +1,7 @@
 package io.github.tophtab.lspstore.domain.variant
 
+import io.github.tophtab.lspstore.domain.model.InstalledModule
+import io.github.tophtab.lspstore.domain.model.ConfirmedInstallRecord
 import kotlinx.serialization.Serializable
 
 /**
@@ -14,8 +16,32 @@ data class ModuleVariantState(
     /** Storage key of a [Reason]; the UI turns it back into a localized string. */
     val reason: String? = null,
     val updatedAt: Long = 0L,
+    val explicitPreference: VariantSignature? = null,
+    val confirmedInstall: ConfirmedInstallRecord? = null,
+    val preferenceMigrated: Boolean = false,
 ) {
     enum class Status { UNKNOWN, TRUSTED, SUSPECT, NOT_APPLICABLE }
+
+    /** Old asset memories remain preferences; PackageManager seeds remain evidence. */
+    fun migrated(): ModuleVariantState = if (preferenceMigrated) this else copy(
+        explicitPreference = explicitPreference ?: signature?.takeIf { it.assetFamily != null },
+        signature = if (signature?.assetFamily != null) signature.packageName?.let { VariantSignature(packageName = it) } else signature,
+        preferenceMigrated = true,
+    )
+
+    fun forInstalled(installed: InstalledModule?): ModuleVariantState {
+        val current = migrated()
+        val validated = if (current.confirmedInstall?.matches(installed) == false) current.copy(confirmedInstall = null, signature = null) else current
+        return if (validated.confirmedInstall == null && validated.signature?.assetFamily == null) {
+            validated.copy(signature = installed?.let(VariantSignature::of))
+        } else validated
+    }
+
+    val recommendationSignature: VariantSignature?
+        get() = migrated().let { it.explicitPreference ?: it.confirmedInstall?.target?.signature ?: it.signature }
+
+    val activePackage: String?
+        get() = confirmedInstall?.packageName ?: signature?.packageName
 
     val isTrusted: Boolean
         get() = status == Status.TRUSTED
@@ -68,7 +94,8 @@ fun ModuleVariantState.onUserPicked(
     now: Long = System.currentTimeMillis(),
 ): ModuleVariantState = copy(
     status = ModuleVariantState.Status.TRUSTED,
-    signature = signature.copy(packageName = signature.packageName ?: this.signature?.packageName),
+    explicitPreference = signature,
+    preferenceMigrated = true,
     failures = 0,
     reason = null,
     updatedAt = now,
@@ -86,4 +113,13 @@ fun ModuleVariantState.onEvaluatedNoCandidate(
  * added to the same tag or a failed probe can invalidate any of them.
  */
 fun Map<String, ModuleVariantState>.withoutNotApplicableVerdicts(): Map<String, ModuleVariantState> =
-    filterValues { !it.isNotApplicable }
+    mapNotNull { (packageName, state) ->
+        when {
+            !state.isNotApplicable -> packageName to state
+            state.migrated().explicitPreference != null -> packageName to state.migrated().copy(
+                status = ModuleVariantState.Status.SUSPECT,
+                reason = null,
+            )
+            else -> null
+        }
+    }.toMap()

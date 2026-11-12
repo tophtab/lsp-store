@@ -356,4 +356,8 @@
     <string name="settings_auto_update_desc">背景檢查後透過 Root 靜默安裝更新。</string>
     <string name="settings_auto_update_needs_root">請先開啟「靜默安裝」。</string>
     <string name="settings_notifications_needed">通知已關閉：背景檢查無法提示更新。</string>
+    <string name="installed_batch_processed">批次更新請求已處理</string>
+    <string name="detail_downgrade">降級安裝 %1$s</string>
+    <string name="detail_latest_unavailable">最新版本資源暫不可用</string>
+    <string name="detail_resources_unavailable">所選版本資源不可用</string>
 </resources>

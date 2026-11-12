@@ -1,5 +1,9 @@
 package io.github.tophtab.lspstore.ui.screens.installed
 
+import io.github.tophtab.lspstore.domain.usecase.batchCompletion
+import io.github.tophtab.lspstore.domain.usecase.BatchCompletion
+import io.github.tophtab.lspstore.domain.model.Release
+import io.github.tophtab.lspstore.domain.model.ResolvedInstallTarget
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
@@ -40,8 +44,6 @@ import io.github.tophtab.lspstore.domain.variant.ScoredAsset
 import io.github.tophtab.lspstore.domain.variant.VariantDecision
 import io.github.tophtab.lspstore.domain.variant.VariantResolver
 import io.github.tophtab.lspstore.domain.variant.VariantSignature
-import io.github.tophtab.lspstore.domain.variant.onEvaluatedNoCandidate
-import io.github.tophtab.lspstore.domain.variant.onUserPicked
 import io.github.tophtab.lspstore.ui.RefreshScrollGate
 import io.github.tophtab.lspstore.ui.toUserMessage
 import io.github.tophtab.lspstore.ui.variant.variantReasonText
@@ -77,6 +79,7 @@ data class InstalledVariantPicker(
     val error: String? = null,
     /** Set when the picker was opened by an update tap; picking continues that update. */
     val caller: UpdateInfo? = null,
+    val release: Release? = null,
 )
 
 data class InstalledUiState(
@@ -348,6 +351,15 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
         val repoPackage = info.module.packageName
         startingUpdates += repoPackage
         viewModelScope.launch {
+            val taskId = container.installTaskRegistry.claim(repoPackage, info.installed.packageName)
+            if (taskId == null) {
+                startingUpdates -= repoPackage
+                return@launch
+            }
+            var submitted = false
+            container.installTaskRegistry.stage(taskId, InstallStage.PREPARING)
+            val job = coroutineContext[Job]
+            container.installTaskRegistry.onCancel(taskId) { job?.cancel() }
             try {
                 runCatching { moduleRepository.getDetail(repoPackage) }
                     .onSuccess { detail ->
@@ -371,7 +383,7 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
                             ?: ModuleVariantState()
                         val resolution = container.resolveVariantUseCase.resolve(
                             release = release,
-                            state = state,
+                            state = state.forInstalled(info.installed),
                             device = container.deviceProfile,
                             expectedPackage = info.installed.packageName,
                             installed = InstalledVariantHint.of(info.installed),
@@ -381,11 +393,14 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
                             // "choose variant" action is the override.
                             is VariantDecision.Pick -> {
                                 val version = release.version
+                                submitted = true
                                 coordinator.start(
                                     ModuleInstallRequest(
                                         repoPackageName = repoPackage,
                                         title = info.module.title,
                                         asset = decision.asset,
+                                        taskId = taskId,
+                                        target = ResolvedInstallTarget.of(release, decision.asset),
                                         installedPackage = info.installed.packageName,
                                         versionCode = version?.versionCode
                                             ?: info.latest.versionCode,
@@ -396,10 +411,7 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
                             }
 
                             is VariantDecision.NotApplicable -> {
-                                libraryRepository.setVariantState(
-                                    repoPackage,
-                                    state.onEvaluatedNoCandidate(decision.reason),
-                                )
+                                libraryRepository.recordInstallResult(repoPackage, ok = false)
                                 _state.update {
                                     it.copy(
                                         message = container.appContext.variantReasonText(
@@ -423,6 +435,7 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
                     }
             } finally {
                 startingUpdates -= repoPackage
+                if (!submitted) container.installTaskRegistry.release(taskId)
             }
         }
     }
@@ -470,22 +483,23 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
             val failed = items.count { it.phase == BatchInstallPhase.FAILED }
             val skipped = items.count { it.phase == BatchInstallPhase.SKIPPED }
             val cancelled = items.count { it.phase == BatchInstallPhase.CANCELLED }
-            val message = when {
-                failed > 0 -> failureMessage(result.failures, failed)
+            val message = when (batchCompletion(result, items)) {
+                BatchCompletion.FAILURES -> failureMessage(result.failures, failed)
 
-                skipped > 0 -> container.appContext.getString(
+                BatchCompletion.SKIPPED -> container.appContext.getString(
                     R.string.installed_finished_skipped,
                     skipped,
                 )
 
                 // Per-row cancels are not failures, but "all modules
                 // updated" would be a lie when some were stopped.
-                cancelled > 0 -> container.appContext.getString(
+                BatchCompletion.CANCELLED -> container.appContext.getString(
                     R.string.installed_finished_cancelled,
                     cancelled,
                 )
 
-                else -> container.appContext.getString(R.string.installed_all_updated)
+                BatchCompletion.PROCESSED -> container.appContext.getString(R.string.installed_batch_processed)
+                BatchCompletion.COMPLETED -> container.appContext.getString(R.string.installed_all_updated)
             }
             _state.update {
                 it.copy(
@@ -540,7 +554,12 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
         _state.update { current ->
             if (!isCurrentBatch(generation)) return@update current
             val item = current.rowStates[packageName] ?: return@update current
-            current.copy(rowStates = current.rowStates + (packageName to transform(item)))
+            val next = transform(item)
+            val duplicate = next.phase == BatchInstallPhase.ALREADY_RUNNING && item.phase != BatchInstallPhase.ALREADY_RUNNING
+            current.copy(
+                batchTotal = (current.batchTotal - if (duplicate) 1 else 0).coerceAtLeast(0),
+                rowStates = current.rowStates + (packageName to next),
+            )
         }
         val after = _state.value.rowStates[packageName]?.phase
         if (after == null || after == before) return
@@ -585,6 +604,9 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
     private fun ModuleInstallRun.asRowState(): BatchInstallState = BatchInstallState(
         phase = when (stage) {
             InstallStage.QUEUED -> BatchInstallPhase.QUEUED
+            InstallStage.PREPARING -> BatchInstallPhase.PREPARING
+            InstallStage.WAITING_TO_INSTALL -> BatchInstallPhase.WAITING_TO_INSTALL
+            InstallStage.PENDING_CONFIRMATION -> BatchInstallPhase.PENDING_CONFIRMATION
             InstallStage.DOWNLOADING -> BatchInstallPhase.DOWNLOADING
             InstallStage.INSTALLING -> BatchInstallPhase.INSTALLING
         },
@@ -663,7 +685,7 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
                     val installedModule = caller?.installed
                         ?: installedCopyForRepo(
                             repoPackageName, installed, links,
-                            variantStates[repoPackageName]?.signature?.packageName,
+                            variantStates[repoPackageName]?.activePackage,
                         )
                     val includePreReleases = preReleases.tracksPreReleases(
                         installedPackage = installedModule?.packageName,
@@ -685,7 +707,7 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
                         return@launch
                     }
                     val resolver = VariantResolver(container.deviceProfile)
-                    val state = variantStates[repoPackageName] ?: ModuleVariantState()
+                    val state = (variantStates[repoPackageName] ?: ModuleVariantState()).forInstalled(installedModule)
                     // The user explicitly opened the picker: probing is allowed
                     // even when the module is currently NOT_APPLICABLE.
                     val installedHint = installedModule?.let(InstalledVariantHint::of)
@@ -710,8 +732,8 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
                             expectedPackage = expectedPackageName,
                             installed = installedHint,
                         ),
-                    ).map { it.copy(recommended = it.asset.name == recommendedName) }
-                    val selectedName = state.signature?.let { signature ->
+                    ).map { it.copy(recommended = it.asset.name == recommendedName) }.sortedByDescending { it.recommended }
+                    val selectedName = state.migrated().explicitPreference?.let { signature ->
                         candidates.firstOrNull {
                             signature.matches(it.asset.name, it.traits)
                         }?.asset?.name
@@ -722,6 +744,7 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
                         current.copy(
                             variantPicker = picker.copy(
                                 candidates = candidates,
+                                release = release,
                                 selectedAssetName = selectedName,
                                 isLoading = false,
                                 error = if (candidates.isEmpty()) {
@@ -763,10 +786,7 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
             if (asset == null) {
                 libraryRepository.clearVariantState(picker.repoPackageName)
             } else {
-                libraryRepository.setVariantState(
-                    picker.repoPackageName,
-                    ModuleVariantState().onUserPicked(signatureOf(asset)),
-                )
+                libraryRepository.setExplicitPreference(picker.repoPackageName, signatureOf(asset))
             }
             _state.update {
                 it.copy(
@@ -789,6 +809,7 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
                         repoPackageName = picker.repoPackageName,
                         title = caller.module.title,
                         asset = asset,
+                        target = picker.release?.let { ResolvedInstallTarget.of(it, asset, explicit = true) },
                         installedPackage = caller.installed.packageName,
                         versionCode = caller.latest.versionCode,
                         versionName = caller.latest.versionName,
@@ -895,13 +916,13 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
     private fun recompute() {
         if (index.isEmpty() && installed.isEmpty() && pending.isEmpty()) return
         val byPackage = index.associateBy { it.packageName }
-        val chosenPackages = variantStates.values.mapNotNull { it.signature?.packageName }.toSet()
+        val chosenPackages = variantStates.values.mapNotNull { it.activePackage }.toSet()
         val xposed = installed.filter {
             it.isXposedModule || it.packageName in links || it.packageName in chosenPackages
         }.filter { module ->
             val repo = repoModuleFor(module.packageName, byPackage, links)
             repo == null || installedCopyForRepo(
-                repo.packageName, installed, links, variantStates[repo.packageName]?.signature?.packageName,
+                repo.packageName, installed, links, variantStates[repo.packageName]?.activePackage,
             )?.packageName == module.packageName
         }
         val pendingPackages = pending.keys

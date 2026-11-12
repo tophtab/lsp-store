@@ -80,7 +80,14 @@ class RangeProbe(
     private val failures = LinkedHashMap<String, Long>()
     private var cache: LinkedHashMap<String, ApkMeta>? = null
 
-    override suspend fun fetch(asset: ReleaseAsset): ApkMeta? {
+    private val inFlight = java.util.concurrent.ConcurrentHashMap<String, kotlinx.coroutines.sync.Mutex>()
+
+    override suspend fun cached(asset: ReleaseAsset): ApkMeta? = cacheGet(cacheKey(asset))
+
+    override suspend fun fetch(asset: ReleaseAsset): ApkMeta? =
+        inFlight.computeIfAbsent(cacheKey(asset)) { kotlinx.coroutines.sync.Mutex() }.withLock { fetchOnce(asset) }
+
+    private suspend fun fetchOnce(asset: ReleaseAsset): ApkMeta? {
         val key = cacheKey(asset)
         cacheGet(key)?.let { return it }
         if (failedRecently(key)) return null

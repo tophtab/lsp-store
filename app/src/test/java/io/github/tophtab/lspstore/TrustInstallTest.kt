@@ -49,7 +49,7 @@ class TrustInstallTest {
         val links = mutableListOf<Pair<String, String>>()
     }
 
-    private fun pipeline(driver: Driver, recorded: Recorded): InstallPreparedApkUseCase {
+    private fun pipeline(driver: Driver, recorded: Recorded): ModuleInstaller {
         val settings = fake(SettingsRepository::class.java) { name, _ ->
             check(name == "getRootInstall")
             flowOf(false)
@@ -62,17 +62,40 @@ class TrustInstallTest {
             }
             Unit
         }
+        val currentPending = kotlinx.coroutines.flow.MutableStateFlow<Map<String, PendingInstall>>(emptyMap())
         val pending = fake(PendingInstallRepository::class.java) { name, args ->
             when (name) {
-                "markPending" -> recorded.pending.add(args[0] as PendingInstall)
+                "getPending" -> return@fake currentPending
+                "markPending" -> {
+                    val entry = args[0] as PendingInstall
+                    recorded.pending.add(entry)
+                    currentPending.value = mapOf(entry.packageName to entry)
+                }
+                "clearIfCurrent" -> {
+                    val entry = args[0] as PendingInstall
+                    val matches = currentPending.value[entry.packageName] == entry
+                    if (matches) currentPending.value = emptyMap()
+                    return@fake matches
+                }
                 "clear" -> Unit
                 else -> error("Unexpected pending operation: $name")
             }
             Unit
         }
-        return InstallPreparedApkUseCase(
-            driver, settings, library, pending, SystemInstallSerializer(), { it.message.orEmpty() },
-        )
+        val registry = InstallTaskRegistry()
+        val serializer = SystemInstallSerializer()
+        val confirmation = InstallConfirmation(library, pending, registry, serializer) { pkg ->
+            val entry = currentPending.value[pkg]
+            entry?.let { installed(pkg, it.versionCode).copy(versionName = it.versionName, lastUpdateTime = it.createdAt + 1L) }
+        }
+        val execution = InstallExecution(driver, settings, library, pending, serializer, registry, confirmation)
+        val useCase = InstallPreparedApkUseCase(execution)
+        return object : ModuleInstaller {
+            override suspend fun install(prepared: PreparedInstall.Ready): InstallOutcome {
+                val id = requireNotNull(registry.claim(prepared.info.module.packageName, prepared.info.installed.packageName))
+                return useCase.install(prepared.copy(taskId = id))
+            }
+        }
     }
 
     private fun ready(file: File) = PreparedInstall.Ready(

@@ -159,12 +159,13 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        (application as LspStoreApp).container.installer.foregroundState.setResumed(true)
+        val container = (application as LspStoreApp).container
+        val returningTasks = container.installTaskRegistry.pendingIds()
+        container.installer.foregroundState.setResumed(true)
         // A delegated install hands the screen to another app. Returning here
         // means that installer closed: release its slot (a cancelled dialog
         // sends no broadcast) and settle what actually landed.
-        val container = (application as LspStoreApp).container
-        lifecycleScope.launch { container.reconcileAfterInstallerReturn() }
+        lifecycleScope.launch { container.reconcileAfterInstallerReturn(returningTasks) }
     }
 
     override fun onPause() {

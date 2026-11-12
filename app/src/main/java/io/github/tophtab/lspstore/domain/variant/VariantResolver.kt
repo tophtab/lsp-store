@@ -175,7 +175,7 @@ class VariantResolver(private val device: DeviceProfile) {
         expectedPackage: String? = null,
         installed: InstalledVariantHint? = null,
     ): VariantDecision = resolve(
-        release, signature = state.signature, probes = probes, allowProbes = true,
+        release, signature = state.recommendationSignature, probes = probes, allowProbes = true,
         expectedPackage = expectedPackage, installed = installed,
     )
 
@@ -343,9 +343,9 @@ class VariantResolver(private val device: DeviceProfile) {
      */
     private fun ranking(): Comparator<ScoredAsset> =
         compareBy<ScoredAsset> { isOtherApp(it) }
+            .thenByDescending { it.installedFit }
             .thenByDescending { fitTier(it) }
             .thenByDescending { it.score }
-            .thenByDescending { it.installedFit }
             .thenByDescending { minSdkTier(it) }
             .thenByDescending { osTier(it) }
             .thenByDescending { apiTier(it) }

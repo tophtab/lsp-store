@@ -321,4 +321,8 @@
     <string name="settings_auto_update_desc">バックグラウンド確認後、root 経由で更新をサイレントにインストールします。</string>
     <string name="settings_auto_update_needs_root">先に「サイレントインストール」をオンにしてください。</string>
     <string name="settings_notifications_needed">通知がオフです: バックグラウンド確認は更新を通知できません。</string>
+    <string name="installed_batch_processed">一括更新リクエストを処理しました</string>
+    <string name="detail_downgrade">%1$s にダウングレード</string>
+    <string name="detail_latest_unavailable">最新バージョンのファイルは一時的に利用できません</string>
+    <string name="detail_resources_unavailable">選択したバージョンのファイルは利用できません</string>
 </resources>

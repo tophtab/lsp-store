@@ -29,8 +29,18 @@ fun pendingInstallLanded(
     pending: PendingInstall,
     installedVersionCode: Long?,
     installedLastUpdateTime: Long?,
+    installedVersionName: String? = null,
 ): Boolean {
     if (installedVersionCode == null) return false
+    if (pending.target != null) {
+        val target = pending.target
+        val code = target.apkVersionCode
+        if (target.apkPackageName != null && target.apkPackageName != pending.packageName) return false
+        if (code != null && code != installedVersionCode) return false
+        if (target.apkVersionName != null && target.apkVersionName != installedVersionName) return false
+        val updated = installedLastUpdateTime ?: return false
+        return updated >= pending.createdAt && updated > (pending.previousLastUpdateTime ?: 0L)
+    }
     val target = pending.versionCode
     if (target <= 0L) return true
     if (installedVersionCode > target) return true
@@ -56,7 +66,7 @@ fun settlePendingInstall(
     abandonAfterMs: Long,
     allowAbandonment: Boolean = true,
 ): PendingSettlement {
-    if (pendingInstallLanded(pending, installed?.versionCode, installed?.lastUpdateTime)) {
+    if (pendingInstallLanded(pending, installed?.versionCode, installed?.lastUpdateTime, installed?.versionName)) {
         return PendingSettlement.LANDED
     }
     if (allowAbandonment && pending.createdAt > 0L && now - pending.createdAt > abandonAfterMs) {

@@ -321,4 +321,8 @@
     <string name="settings_auto_update_desc">يثبّت التحديثات بصمت عبر الجذر بعد الفحص في الخلفية.</string>
     <string name="settings_auto_update_needs_root">شغّل "تثبيت صامت" أولًا.</string>
     <string name="settings_notifications_needed">الإشعارات متوقفة: لا يمكن للفحص في الخلفية الإبلاغ عن التحديثات.</string>
+    <string name="installed_batch_processed">تمت معالجة طلبات التحديث الجماعي</string>
+    <string name="detail_downgrade">تثبيت الإصدار الأقدم %1$s</string>
+    <string name="detail_latest_unavailable">ملفات أحدث إصدار غير متاحة مؤقتًا</string>
+    <string name="detail_resources_unavailable">ملفات الإصدار المحدد غير متاحة</string>
 </resources>

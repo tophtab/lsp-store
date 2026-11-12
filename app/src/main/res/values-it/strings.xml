@@ -321,4 +321,8 @@
     <string name="settings_auto_update_desc">Installa gli aggiornamenti in silenzio tramite root dopo un controllo in background.</string>
     <string name="settings_auto_update_needs_root">Attiva prima "Installazione silenziosa".</string>
     <string name="settings_notifications_needed">Le notifiche sono disattivate: il controllo in background non può segnalare aggiornamenti.</string>
+    <string name="installed_batch_processed">Richieste di aggiornamento in blocco elaborate</string>
+    <string name="detail_downgrade">Installa versione precedente %1$s</string>
+    <string name="detail_latest_unavailable">Le risorse dell’ultima versione sono temporaneamente non disponibili</string>
+    <string name="detail_resources_unavailable">Le risorse della versione selezionata non sono disponibili</string>
 </resources>

@@ -2,13 +2,16 @@ package io.github.tophtab.lspstore
 
 import java.io.ByteArrayOutputStream
 import java.io.File
+import java.nio.file.Files
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.async
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import io.github.tophtab.lspstore.data.probe.ByteRangeSource
@@ -32,6 +35,38 @@ class RangeProbeTest {
     private fun probe(source: ByteRangeSource): RangeProbe {
         val cacheDir = File(System.getProperty("java.io.tmpdir"), "probe-${System.nanoTime()}")
         return RangeProbe(source, File(cacheDir, "variant-cache.json"), json)
+    }
+
+    @Test
+    fun concurrentRequestsForOneAssetShareTheSameRangeProbe() = kotlinx.coroutines.test.runTest {
+        val bytes = apkBytes(ManifestFixture().bytes())
+        val entered = kotlinx.coroutines.CompletableDeferred<Unit>()
+        val resume = kotlinx.coroutines.CompletableDeferred<Unit>()
+        var reads = 0
+        val source = ByteRangeSource { _, start, end ->
+            reads++
+            entered.complete(Unit)
+            resume.await()
+            bytes.copyOfRange(start.toInt(), end.toInt() + 1)
+        }
+        val directory = Files.createTempDirectory("shared-probe").toFile()
+        try {
+            val probe = RangeProbe(source, File(directory, "cache.json"), Json { ignoreUnknownKeys = true })
+            val asset = ReleaseAsset("module.apk", "https://example.invalid/module.apk", null, bytes.size.toLong(), 0, null)
+            val first = async { probe.fetch(asset) }
+            entered.await()
+            val second = async { probe.fetch(asset) }
+            kotlinx.coroutines.yield()
+            resume.complete(Unit)
+            assertEquals(first.await(), second.await())
+            val initialReads = reads
+            val reference = FakeRangeSource(bytes)
+            RangeProbe(reference, File(directory, "reference.json"), json).fetch(asset)
+            assertEquals(reference.reads, initialReads)
+            assertNotNull(probe.cached(asset))
+            assertEquals(probe.cached(asset), probe.fetch(asset))
+            assertEquals(initialReads, reads)
+        } finally { directory.deleteRecursively() }
     }
 
     @Test

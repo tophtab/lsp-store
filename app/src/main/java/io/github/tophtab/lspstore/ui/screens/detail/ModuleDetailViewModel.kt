@@ -1,5 +1,7 @@
 package io.github.tophtab.lspstore.ui.screens.detail
 
+import io.github.tophtab.lspstore.domain.usecase.ReleaseProbeRequests
+import io.github.tophtab.lspstore.domain.model.ResolvedInstallTarget
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
@@ -37,7 +39,6 @@ import io.github.tophtab.lspstore.domain.variant.InstalledVariantHint
 import io.github.tophtab.lspstore.domain.variant.ModuleVariantState
 import io.github.tophtab.lspstore.domain.variant.VariantSignature
 import io.github.tophtab.lspstore.domain.model.installedCopyForRepo
-import io.github.tophtab.lspstore.domain.variant.onUserPicked
 import kotlin.coroutines.cancellation.CancellationException
 
 data class ModuleDetailUiState(
@@ -75,6 +76,9 @@ data class ModuleDetailUiState(
     /** P2 probe results for [probedTag], shown in the picker/sheet. */
     val probes: Map<String, ApkMeta> = emptyMap(),
     val probedTag: String? = null,
+    val probedRelease: Release? = null,
+    val variantResolution: io.github.tophtab.lspstore.domain.usecase.VariantResolution? = null,
+    val probeGeneration: Int = 0,
     val isProbing: Boolean = false,
     val pendingInstall: PendingInstall? = null,
     val installLogs: List<String> = emptyList(),
@@ -100,6 +104,7 @@ data class ModuleDetailUiState(
                 latest = latest,
                 installed = installed,
                 publishedRaw = module.latestTimeFor(channel),
+                confirmed = variantState?.confirmedInstall,
             )
         }
 }
@@ -131,6 +136,7 @@ class ModuleDetailViewModel(
     private var summaryTranslationJob: Job? = null
     private var readmeTranslationJob: Job? = null
     private var loadJob: Job? = null
+    private val probeRequests = ReleaseProbeRequests()
     private val notesTranslationJobs = mutableMapOf<String, Job>()
 
     /**
@@ -196,10 +202,10 @@ class ModuleDetailViewModel(
         }
         viewModelScope.launch {
             libraryRepository.variantStates.collect { value ->
-                val previousPackage = variantStates[packageName]?.signature?.packageName
+                val previousPackage = variantStates[packageName]?.activePackage
                 variantStates = value
                 _state.update { it.copy(variantState = stateForModule(value, it.installed)) }
-                if (value[packageName]?.signature?.packageName != previousPackage) resolveInstalled()
+                if (value[packageName]?.activePackage != previousPackage) resolveInstalled()
             }
         }
         viewModelScope.launch {
@@ -255,6 +261,7 @@ class ModuleDetailViewModel(
     }
 
     fun load() {
+        probeRequests.invalidate()
         cancelTranslations()
         // A second refresh replaces the first one: two loads writing `detail`
         // and the translation state would otherwise race each other.
@@ -281,6 +288,7 @@ class ModuleDetailViewModel(
                         isLoading = false,
                         isRefreshing = false,
                         detail = detail,
+                        probeGeneration = it.probeGeneration + 1,
                         installed = installed,
                         variantState = stateForModule(variantStates, installed),
                         // The persisted opt-in may point at a stream this module
@@ -386,11 +394,11 @@ class ModuleDetailViewModel(
     }
 
     /** Explicit user action: fill the picker/sheet with probed metadata when allowed. */
-    fun probeRelease(release: Release) {
-        if (_state.value.probedTag == release.tagName && _state.value.probes.isNotEmpty()) return
-        val state = stateForModule(variantStates, _state.value.installed) ?: ModuleVariantState()
+    fun probeRelease(release: Release, forceProbe: Boolean = false) {
+        val request = probeRequests.begin(release)
+        val state = stateForModule(variantStates, _state.value.installed)
         viewModelScope.launch {
-            _state.update { it.copy(isProbing = true) }
+            _state.update { it.copy(isProbing = true, probes = emptyMap(), probedTag = release.tagName, probedRelease = release, variantResolution = null) }
             val resolution = container.resolveVariantUseCase.resolve(
                 release = release,
                 state = state,
@@ -399,31 +407,33 @@ class ModuleDetailViewModel(
                     installedPackage = _state.value.installed?.packageName,
                     repoPackage = packageName,
                 ),
-                forceProbe = true,
+                forceProbe = forceProbe,
                 installed = _state.value.installed?.let(InstalledVariantHint::of),
             )
+            if (!probeRequests.isCurrent(request)) return@launch
             _state.update {
                 it.copy(
                     isProbing = false,
                     probes = resolution.probes,
+                    variantResolution = resolution,
+                    probedRelease = release,
                     probedTag = release.tagName,
                 )
             }
         }
     }
 
-    fun installAsset(asset: ReleaseAsset) {
-        // Picking an asset (picker or manual sheet) is an explicit user choice.
-        val signature = signatureOf(asset)
-        val current = stateForModule(variantStates, _state.value.installed) ?: ModuleVariantState()
-        // The remembered-choice toast is only news when the pick was not already
-        // the trusted signature; read before the state below overwrites it.
-        val announceRemembered = current.status != ModuleVariantState.Status.TRUSTED ||
-            current.signature != signature
-        viewModelScope.launch {
-            libraryRepository.setVariantState(packageName, current.onUserPicked(signature))
-        }
-        startInstall(asset, announceRemembered)
+    fun installAsset(target: ResolvedInstallTarget) {
+        val current = _state.value
+        if (current.activeInstall != null || current.pendingInstall != null) return
+        coordinator.start(ModuleInstallRequest(
+            repoPackageName = packageName, title = current.detail?.module?.title ?: packageName,
+            asset = target.asset, installedPackage = current.installed?.packageName,
+            versionCode = target.releaseVersion?.versionCode ?: 0L,
+            versionName = target.releaseVersion?.versionName ?: target.asset.name,
+            target = target,
+            announceRemembered = target.explicitSelection && current.variantState?.migrated()?.explicitPreference != target.signature,
+        ))
     }
 
     /** Discards a delegated install that never produced a package event. */
@@ -641,24 +651,6 @@ class ModuleDetailViewModel(
      * The chain deliberately does not run in `viewModelScope`: leaving the page
      * must not abort an install that is already downloading (komi keeps it too).
      */
-    private fun startInstall(asset: ReleaseAsset, announceRemembered: Boolean) {
-        val current = _state.value
-        if (current.activeInstall != null) return
-        val version = versionFor(asset)
-        _state.update { it.copy(message = null) }
-        coordinator.start(
-            ModuleInstallRequest(
-                repoPackageName = packageName,
-                title = current.detail?.module?.title ?: packageName,
-                asset = asset,
-                installedPackage = current.installed?.packageName,
-                versionCode = version?.versionCode ?: 0L,
-                versionName = version?.versionName ?: asset.name,
-                announceRemembered = announceRemembered,
-            ),
-        )
-    }
-
     /**
      * Mirrors the coordinator run into UI state. A run that disappeared while this
      * page was showing it has finished, so the installed copy is rescanned.
@@ -702,7 +694,8 @@ class ModuleDetailViewModel(
 
     private fun updatePendingState() {
         val target = _state.value.installed?.packageName ?: packageName
-        val pending = pendingInstalls[target] ?: pendingInstalls[packageName]
+        val pending = pendingInstalls.values.firstOrNull { it.repoPackageName == packageName }
+            ?: pendingInstalls[target] ?: pendingInstalls[packageName]
         _state.update { it.copy(pendingInstall = pending) }
     }
 
@@ -723,8 +716,9 @@ class ModuleDetailViewModel(
     private fun stateForModule(
         states: Map<String, ModuleVariantState>,
         installed: InstalledModule?,
-    ): ModuleVariantState? = states[packageName]
+    ): ModuleVariantState = (states[packageName]
         ?: installed?.packageName?.let { states[it] }
+        ?: ModuleVariantState()).forInstalled(installed)
 
     /** Direct install, or an imported module linked to this repository entry. */
     private suspend fun findInstalled(): InstalledModule? {
@@ -732,7 +726,7 @@ class ModuleDetailViewModel(
         // Detail is the screen that reacts to an install finishing, so it must
         // not read the 30 s scan cache used by browsing screens.
         val all = installedRepository.getInstalledModules(force = true)
-        val activePackage = variantStates[packageName]?.signature?.packageName
+        val activePackage = variantStates[packageName]?.activePackage
         return installedCopyForRepo(packageName, all, activeLinks, activePackage)
     }
 

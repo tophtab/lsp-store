@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.first
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import io.github.tophtab.lspstore.domain.model.InstalledModule
@@ -21,6 +22,12 @@ interface PendingInstallRepository {
     suspend fun markPending(install: PendingInstall)
 
     suspend fun clear(packageName: String)
+
+    suspend fun clearIfCurrent(install: PendingInstall): Boolean {
+        if (pending.first()[install.packageName] != install) return false
+        clear(install.packageName)
+        return true
+    }
 
     suspend fun clearAll()
 
@@ -69,6 +76,18 @@ class PendingInstallRepositoryImpl(private val context: Context) : PendingInstal
                 prefs[Keys.INSTALLS] = encode(updated)
             }
         }
+    }
+
+    override suspend fun clearIfCurrent(install: PendingInstall): Boolean {
+        var cleared = false
+        context.pendingInstallDataStore.edit { prefs ->
+            val current = decode(prefs[Keys.INSTALLS])
+            if (install in current) {
+                prefs[Keys.INSTALLS] = encode(current - install)
+                cleared = true
+            }
+        }
+        return cleared
     }
 
     override suspend fun clearAll() {

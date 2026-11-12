@@ -321,4 +321,8 @@
     <string name="settings_auto_update_desc">백그라운드 확인 후 루트를 통해 업데이트를 자동으로 설치합니다.</string>
     <string name="settings_auto_update_needs_root">먼저 "자동 설치"를 켜세요.</string>
     <string name="settings_notifications_needed">알림이 꺼져 있습니다: 백그라운드 확인이 업데이트를 알릴 수 없습니다.</string>
+    <string name="installed_batch_processed">일괄 업데이트 요청 처리 완료</string>
+    <string name="detail_downgrade">%1$s 버전으로 다운그레이드</string>
+    <string name="detail_latest_unavailable">최신 버전의 파일을 일시적으로 사용할 수 없습니다</string>
+    <string name="detail_resources_unavailable">선택한 버전의 파일을 사용할 수 없습니다</string>
 </resources>

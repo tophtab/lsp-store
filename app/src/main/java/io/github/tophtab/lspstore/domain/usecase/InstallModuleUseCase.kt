@@ -1,30 +1,20 @@
 package io.github.tophtab.lspstore.domain.usecase
 
+import io.github.tophtab.lspstore.data.install.InstallExecution
+import io.github.tophtab.lspstore.domain.model.ResolvedInstallTarget
 import android.content.Context
 import kotlin.coroutines.cancellation.CancellationException
-import kotlinx.coroutines.flow.first
 import io.github.tophtab.lspstore.R
-import io.github.tophtab.lspstore.data.install.readInstallIdentity
-import io.github.tophtab.lspstore.data.install.assetCacheKey
-import io.github.tophtab.lspstore.data.install.ApkInstallDriver
-import io.github.tophtab.lspstore.data.install.installWithSlot
 import io.github.tophtab.lspstore.data.install.DownloadManager
 import io.github.tophtab.lspstore.data.install.InstallOutcome
-import io.github.tophtab.lspstore.data.install.SystemInstallSerializer
 import io.github.tophtab.lspstore.data.repository.LibraryRepository
 import io.github.tophtab.lspstore.data.repository.ModuleRepository
-import io.github.tophtab.lspstore.data.repository.PendingInstallRepository
-import io.github.tophtab.lspstore.data.repository.SettingsRepository
-import io.github.tophtab.lspstore.domain.model.PendingInstall
 import io.github.tophtab.lspstore.domain.model.ReleaseAsset
 import io.github.tophtab.lspstore.domain.model.UpdateInfo
 import io.github.tophtab.lspstore.domain.variant.DeviceProfile
 import io.github.tophtab.lspstore.domain.variant.InstalledVariantHint
 import io.github.tophtab.lspstore.domain.variant.ModuleVariantState
-import io.github.tophtab.lspstore.domain.variant.Reason
 import io.github.tophtab.lspstore.domain.variant.VariantDecision
-import io.github.tophtab.lspstore.domain.variant.VariantSignature
-import io.github.tophtab.lspstore.domain.variant.onEvaluatedNoCandidate
 import io.github.tophtab.lspstore.ui.variant.variantReasonText
 import java.io.File
 
@@ -37,6 +27,8 @@ sealed interface PreparedInstall {
         val file: File,
         val asset: ReleaseAsset,
         val state: ModuleVariantState,
+        val target: ResolvedInstallTarget? = null,
+        val taskId: String? = null,
     ) : PreparedInstall
 
     data class Failed(override val info: UpdateInfo, val message: String) : PreparedInstall
@@ -78,7 +70,7 @@ class PrepareModuleInstallUseCase(
             // Probe ambiguous defaults without changing remembered choices.
             val resolution = resolveVariant.resolve(
                 release = release,
-                state = state,
+                state = state.forInstalled(info.installed),
                 device = deviceProfile(),
                 expectedPackage = info.installed.packageName,
                 // An update follows the copy that is already on the device; this
@@ -95,14 +87,11 @@ class PrepareModuleInstallUseCase(
                     val asset = decision.asset
                     onAssetResolved(asset)
                     val file = downloadManager.downloadBlocking(asset, onProgress)
-                    PreparedInstall.Ready(info, file, asset, state)
+                    PreparedInstall.Ready(info, file, asset, state, ResolvedInstallTarget.of(release, asset))
                 }
 
                 is VariantDecision.NotApplicable -> {
-                    libraryRepository.setVariantState(
-                        info.module.packageName,
-                        state.onEvaluatedNoCandidate(decision.reason),
-                    )
+                    libraryRepository.recordInstallResult(info.module.packageName, ok = false)
                     PreparedInstall.Failed(info, context.variantReasonText(decision.reason))
                 }
             }
@@ -122,67 +111,15 @@ class PrepareModuleInstallUseCase(
  * outcome bookkeeping (pending state, variant memory, install result).
  */
 class InstallPreparedApkUseCase(
-    private val installer: ApkInstallDriver,
-    private val settingsRepository: SettingsRepository,
-    private val libraryRepository: LibraryRepository,
-    private val pendingRepository: PendingInstallRepository,
-    private val systemInstallSerializer: SystemInstallSerializer,
-    private val failureMessage: (Throwable) -> String,
+    private val execution: InstallExecution,
     private val allowUi: Boolean = true,
 ) : ModuleInstaller {
-
     override suspend fun install(prepared: PreparedInstall.Ready): InstallOutcome {
         val info = prepared.info
-        val identity = readInstallIdentity(prepared.file)
-        val installTarget = identity?.packageName ?: info.installed.packageName
-        val linkAfterInstall = installTarget.takeIf { it != info.module.packageName }
-            ?.let { it to info.module.packageName }
-        val outcome = try {
-            installWithSlot(
-                installer, systemInstallSerializer, prepared.file, installTarget,
-                useRoot = settingsRepository.rootInstall.first(), allowUi = allowUi,
-            )
-        } catch (cancellation: CancellationException) {
-            throw cancellation
-        } catch (error: Throwable) {
-            InstallOutcome.Failure(failureMessage(error))
-        }
-        when (outcome) {
-            InstallOutcome.Completed -> {
-                systemInstallSerializer.markCompleted(installTarget)
-                pendingRepository.clear(installTarget)
-                linkAfterInstall?.let { (installedPackage, repoPackage) ->
-                    libraryRepository.linkModule(installedPackage, repoPackage)
-                }
-                libraryRepository.recordInstallResult(
-                    info.module.packageName,
-                    ok = true,
-                    signature = VariantSignature.ofAsset(prepared.asset.name, installTarget),
-                )
-            }
-            // Delegated installs keep the slot until the package broadcast or the
-            // serializer timeout releases it.
-            InstallOutcome.DelegatedToSystem -> {
-                pendingRepository.markPending(
-                    PendingInstall(
-                        packageName = installTarget,
-                        repoPackageName = info.module.packageName,
-                        title = info.module.title,
-                        versionCode = identity?.versionCode ?: info.latest.versionCode,
-                        versionName = identity?.versionName ?: info.latest.versionName,
-                        assetName = prepared.asset.name,
-                        createdAt = System.currentTimeMillis(),
-                        downloadKey = assetCacheKey(prepared.asset),
-                    ),
-                )
-            }
-            is InstallOutcome.Failure -> {
-                systemInstallSerializer.markCompleted(installTarget)
-                pendingRepository.clear(installTarget)
-                installer.invalidateDownload(prepared.asset)
-                libraryRepository.recordInstallResult(info.module.packageName, ok = false)
-            }
-        }
-        return outcome
+        return execution.install(
+            info.module.packageName, info.module.title, prepared.asset, prepared.file,
+            info.installed.packageName, prepared.target, requireNotNull(prepared.taskId),
+            info.latest.versionCode, info.latest.versionName, allowUi,
+        )
     }
 }

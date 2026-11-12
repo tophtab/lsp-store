@@ -31,6 +31,7 @@ enum class ReleaseChannel {
     ALL,
 }
 
+@Serializable
 data class ModuleVersion(
     val versionCode: Long,
     val versionName: String,
@@ -224,10 +225,8 @@ data class ModuleDetail(
     )
 
     fun latestReleaseFor(channel: ReleaseChannel): Release? {
-        val target = module.latestFor(channel)
-        val candidates = releasesFor(channel)
-        return candidates.firstOrNull { it.tagName == target?.raw }
-            ?: candidates.firstOrNull { it.apkAssets.isNotEmpty() }
+        val target = module.latestFor(channel) ?: return null
+        return releaseForUpdate(target, channel)
     }
 
     /**
@@ -236,7 +235,11 @@ data class ModuleDetail(
      * the update. A stale mirror must never substitute an older APK.
      */
     fun releaseForUpdate(version: ModuleVersion, includePreReleases: Boolean): Release? {
-        val candidates = releasesFor(includePreReleases)
+        return releaseForUpdate(version, if (includePreReleases) ReleaseChannel.PRE_RELEASE else ReleaseChannel.STABLE)
+    }
+
+    fun releaseForUpdate(version: ModuleVersion, channel: ReleaseChannel): Release? {
+        val candidates = releasesFor(channel)
         val requested = candidates.firstOrNull { it.matchesVersion(version) }
         return requested?.takeIf { it.apkAssets.isNotEmpty() }
             ?: candidates.firstOrNull {
@@ -246,6 +249,11 @@ data class ModuleDetail(
             ?: requested
     }
 }
+
+/** Null/blank means automatic; a missing manual selection stays unavailable. */
+fun ModuleDetail.selectedRelease(channel: ReleaseChannel, manualTag: String?): Release? =
+    if (manualTag.isNullOrBlank()) latestReleaseFor(channel)
+    else releasesFor(channel).firstOrNull { it.tagName == manualTag }
 
 data class Release(
     val tagName: String,
@@ -273,6 +281,7 @@ data class Release(
     }
 }
 
+@Serializable
 data class ReleaseAsset(
     val name: String,
     val downloadUrl: String,
@@ -324,4 +333,7 @@ data class PendingInstall(
     val assetName: String = "",
     val createdAt: Long = 0L,
     val downloadKey: String? = null,
+    val taskId: String? = null,
+    val target: ResolvedInstallTarget? = null,
+    val previousLastUpdateTime: Long? = null,
 )

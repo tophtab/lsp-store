@@ -321,4 +321,8 @@
     <string name="settings_auto_update_desc">Тихо устанавливает обновления через root после фоновой проверки.</string>
     <string name="settings_auto_update_needs_root">Сначала включите «Тихую установку».</string>
     <string name="settings_notifications_needed">Уведомления отключены: фоновая проверка не сможет сообщать об обновлениях.</string>
+    <string name="installed_batch_processed">Запросы пакетного обновления обработаны</string>
+    <string name="detail_downgrade">Установить более старую версию %1$s</string>
+    <string name="detail_latest_unavailable">Файлы последней версии временно недоступны</string>
+    <string name="detail_resources_unavailable">Файлы выбранной версии недоступны</string>
 </resources>

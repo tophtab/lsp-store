@@ -229,10 +229,11 @@ fun InstalledScreen(
     var nextIndex = 0
     val repositoryIndex = if (repositoryCount > 0) nextIndex++ else -1
 
-    // The stop FAB counts every row that reached a terminal phase, including
-    // cancelled ones, so the fraction never stalls.
+    // A hand-off is processed for batch progress while its installation remains
+    // pending. Duplicate requests are excluded from batchTotal by the ViewModel.
     val doneCount = state.rowStates.values.count {
         it.phase == BatchInstallPhase.COMPLETED ||
+            it.phase == BatchInstallPhase.PENDING_CONFIRMATION ||
             it.phase == BatchInstallPhase.FAILED ||
             it.phase == BatchInstallPhase.SKIPPED ||
             it.phase == BatchInstallPhase.CANCELLED
@@ -672,6 +673,8 @@ private fun InstallPill(
 
         BatchInstallPhase.WAITING_TO_INSTALL -> stringResource(R.string.installed_state_waiting)
         BatchInstallPhase.INSTALLING -> stringResource(R.string.installed_state_installing)
+        BatchInstallPhase.PENDING_CONFIRMATION -> stringResource(R.string.pending_install)
+        BatchInstallPhase.ALREADY_RUNNING -> stringResource(R.string.installed_state_waiting)
         BatchInstallPhase.COMPLETED -> stringResource(R.string.installed_state_done)
         BatchInstallPhase.FAILED -> stringResource(R.string.installed_state_failed)
         BatchInstallPhase.SKIPPED,

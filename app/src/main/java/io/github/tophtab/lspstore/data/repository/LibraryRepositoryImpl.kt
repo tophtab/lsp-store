@@ -1,5 +1,6 @@
 package io.github.tophtab.lspstore.data.repository
 
+import io.github.tophtab.lspstore.domain.model.ConfirmedInstallRecord
 import android.content.Context
 import androidx.datastore.preferences.core.MutablePreferences
 import androidx.datastore.preferences.core.Preferences
@@ -20,6 +21,7 @@ import io.github.tophtab.lspstore.domain.variant.ModuleVariantState
 import io.github.tophtab.lspstore.domain.variant.VariantSignature
 import io.github.tophtab.lspstore.domain.variant.onInstallFailed
 import io.github.tophtab.lspstore.domain.variant.onInstallSucceeded
+import io.github.tophtab.lspstore.domain.variant.onUserPicked
 import io.github.tophtab.lspstore.domain.variant.withoutNotApplicableVerdicts
 
 private val Context.libraryDataStore by preferencesDataStore(name = "library")
@@ -61,11 +63,28 @@ interface LibraryRepository {
     suspend fun unlinkModule(installedPackage: String)
     suspend fun setVariantState(packageName: String, state: ModuleVariantState)
     suspend fun clearVariantState(packageName: String)
+    suspend fun setExplicitPreference(packageName: String, signature: VariantSignature) {
+        val current = variantStates.first()[packageName] ?: ModuleVariantState()
+        setVariantState(packageName, current.migrated().onUserPicked(signature))
+    }
+    suspend fun seedVariantState(packageName: String, state: ModuleVariantState) {
+        if (packageName !in variantStates.first()) setVariantState(packageName, state)
+    }
     suspend fun recordInstallResult(
         packageName: String,
         ok: Boolean,
         signature: VariantSignature? = null,
     )
+
+    suspend fun recordConfirmedInstall(packageName: String, record: ConfirmedInstallRecord) {
+        val state = variantStates.first()[packageName] ?: ModuleVariantState()
+        setVariantState(packageName, state.onInstallSucceeded(record.target.signature.copy(packageName = record.packageName)).copy(confirmedInstall = record, preferenceMigrated = true))
+    }
+
+    suspend fun invalidateConfirmedInstall(packageName: String, expected: ConfirmedInstallRecord) {
+        val current = variantStates.first()[packageName] ?: return
+        if (current.confirmedInstall == expected) setVariantState(packageName, current.copy(confirmedInstall = null, signature = null))
+    }
 
     /** Idempotent one-off migration of the legacy asset-name preferences. */
     suspend fun migratePreferredVariants()
@@ -141,7 +160,7 @@ class LibraryRepositoryImpl(private val context: Context) : LibraryRepository {
 
     /** repository module package name -> variant status + semantic signature */
     override val variantStates: Flow<Map<String, ModuleVariantState>> = context.libraryDataStore.data
-        .map { decodeVariantStates(it[Keys.VARIANT_STATE]).withoutNotApplicableVerdicts() }
+        .map { decodeVariantStates(it[Keys.VARIANT_STATE]).mapValues { entry -> entry.value.migrated() }.withoutNotApplicableVerdicts() }
 
     override suspend fun toggleFavourite(packageName: String) {
         context.libraryDataStore.edit { prefs ->
@@ -252,8 +271,8 @@ class LibraryRepositoryImpl(private val context: Context) : LibraryRepository {
     }
 
     /**
-     * Pins the semantic variant used the next time this module is updated, and
-     * marks it trusted right away: the user has stated what they want.
+     * Writes the full local state; preference and confirmation changes use their
+     * dedicated atomic edits so they cannot overwrite each other.
      */
     override suspend fun setVariantState(packageName: String, state: ModuleVariantState) {
         context.libraryDataStore.edit { prefs ->
@@ -263,14 +282,29 @@ class LibraryRepositoryImpl(private val context: Context) : LibraryRepository {
         }
     }
 
+    override suspend fun setExplicitPreference(packageName: String, signature: VariantSignature) {
+        context.libraryDataStore.edit { prefs ->
+            val states = decodeVariantStates(prefs[Keys.VARIANT_STATE]).toMutableMap()
+            val current = (states[packageName] ?: ModuleVariantState()).migrated()
+            states[packageName] = current.onUserPicked(signature)
+            prefs[Keys.VARIANT_STATE] = encodeVariantStates(states)
+        }
+    }
+
+    override suspend fun seedVariantState(packageName: String, state: ModuleVariantState) {
+        context.libraryDataStore.edit { prefs ->
+            val states = decodeVariantStates(prefs[Keys.VARIANT_STATE]).toMutableMap()
+            if (packageName in states) return@edit
+            states[packageName] = state.migrated()
+            prefs[Keys.VARIANT_STATE] = encodeVariantStates(states)
+        }
+    }
+
     override suspend fun clearVariantState(packageName: String) {
         context.libraryDataStore.edit { prefs ->
             val current = decodeVariantStates(prefs[Keys.VARIANT_STATE]).toMutableMap()
-            val activePackage = current[packageName]?.signature?.packageName
-            if (activePackage == null) {
-                current.remove(packageName)
-            } else {
-                current[packageName] = ModuleVariantState(signature = VariantSignature(packageName = activePackage))
+            current[packageName]?.let { state ->
+                current[packageName] = state.migrated().copy(explicitPreference = null, preferenceMigrated = true)
             }
             prefs[Keys.VARIANT_STATE] = encodeVariantStates(current)
         }
@@ -287,13 +321,33 @@ class LibraryRepositoryImpl(private val context: Context) : LibraryRepository {
     ) {
         context.libraryDataStore.edit { prefs ->
             val current = decodeVariantStates(prefs[Keys.VARIANT_STATE]).toMutableMap()
-            val state = current[packageName] ?: ModuleVariantState()
+            val state = (current[packageName] ?: ModuleVariantState()).migrated()
             current[packageName] = if (ok) {
                 state.onInstallSucceeded(signature)
             } else {
                 state.onInstallFailed()
             }
             prefs[Keys.VARIANT_STATE] = encodeVariantStates(current)
+        }
+    }
+
+    override suspend fun invalidateConfirmedInstall(packageName: String, expected: ConfirmedInstallRecord) {
+        context.libraryDataStore.edit { prefs ->
+            val states = decodeVariantStates(prefs[Keys.VARIANT_STATE]).toMutableMap()
+            val current = states[packageName] ?: return@edit
+            if (current.confirmedInstall != expected) return@edit
+            states[packageName] = current.migrated().copy(confirmedInstall = null, signature = null)
+            prefs[Keys.VARIANT_STATE] = encodeVariantStates(states)
+        }
+    }
+
+    override suspend fun recordConfirmedInstall(packageName: String, record: ConfirmedInstallRecord) {
+        context.libraryDataStore.edit { prefs ->
+            val states = decodeVariantStates(prefs[Keys.VARIANT_STATE]).toMutableMap()
+            val state = (states[packageName] ?: ModuleVariantState()).migrated()
+            states[packageName] = state.onInstallSucceeded(record.target.signature.copy(packageName = record.packageName))
+                .copy(confirmedInstall = record, preferenceMigrated = true)
+            prefs[Keys.VARIANT_STATE] = encodeVariantStates(states)
         }
     }
 
@@ -325,24 +379,25 @@ class LibraryRepositoryImpl(private val context: Context) : LibraryRepository {
         context.libraryDataStore.edit { prefs ->
             val current = decodeVariantStates(prefs[Keys.VARIANT_STATE])
             val cleaned = current.withoutNotApplicableVerdicts()
-            if (cleaned.size != current.size) {
+            if (cleaned != current) {
                 prefs[Keys.VARIANT_STATE] = encodeVariantStates(cleaned)
             }
         }
     }
 
     override suspend fun snapshot(): LibraryBackup =
-        readBackup(context.libraryDataStore.data.first()).copy(
+        readBackup(context.libraryDataStore.data.first()).portable().copy(
             exportedAt = System.currentTimeMillis(),
         )
 
     override suspend fun restore(backup: LibraryBackup, mode: LibraryRestoreMode) {
         context.libraryDataStore.edit { prefs ->
             val target = when (mode) {
-                LibraryRestoreMode.MERGE -> readBackup(prefs).mergedWith(backup)
-                LibraryRestoreMode.REPLACE -> backup
+                LibraryRestoreMode.MERGE -> readBackup(prefs).mergedWith(backup.portable())
+                LibraryRestoreMode.REPLACE -> backup.portable()
             }
             writeBackup(prefs, target)
+            prefs[Keys.PREFERRED_VARIANTS] = ""
         }
     }
 
@@ -361,8 +416,8 @@ class LibraryRepositoryImpl(private val context: Context) : LibraryRepository {
 
     /**
      * Writes every library key, including empty ones: a replace must also clear
-     * entries the backup does not have. The legacy preferred-variants key is left
-     * alone (the migration drains it once) and no settings key is touched.
+     * entries the backup does not have. Restore also drains legacy preferences;
+     * no settings key is touched.
      */
     private fun writeBackup(prefs: MutablePreferences, backup: LibraryBackup) {
         prefs[Keys.FAVOURITES] = encodeList(backup.favourites)

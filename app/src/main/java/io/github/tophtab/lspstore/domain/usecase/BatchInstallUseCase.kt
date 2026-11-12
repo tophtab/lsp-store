@@ -1,8 +1,14 @@
 package io.github.tophtab.lspstore.domain.usecase
 
+import io.github.tophtab.lspstore.data.install.InstallTaskRegistry
+import io.github.tophtab.lspstore.data.install.InstallStage
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.cancellation.CancellationException
+import kotlinx.coroutines.async
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -31,6 +37,8 @@ enum class BatchInstallPhase {
 
     INSTALLING,
     COMPLETED,
+    PENDING_CONFIRMATION,
+    ALREADY_RUNNING,
     FAILED,
     SKIPPED,
 
@@ -74,6 +82,16 @@ data class BatchInstallState(
 ) {
     val progress: Float
         get() = if (total <= 0L) 0f else (downloaded.toFloat() / total).coerceIn(0f, 1f)
+}
+
+enum class BatchCompletion { FAILURES, SKIPPED, CANCELLED, PROCESSED, COMPLETED }
+
+fun batchCompletion(result: BatchInstallUseCase.Result, states: Collection<BatchInstallState>): BatchCompletion = when {
+    result.failures.isNotEmpty() || states.any { it.phase == BatchInstallPhase.FAILED } -> BatchCompletion.FAILURES
+    states.any { it.phase == BatchInstallPhase.SKIPPED } -> BatchCompletion.SKIPPED
+    states.any { it.phase == BatchInstallPhase.CANCELLED } -> BatchCompletion.CANCELLED
+    result.delegated > 0 || states.any { it.phase == BatchInstallPhase.ALREADY_RUNNING } -> BatchCompletion.PROCESSED
+    else -> BatchCompletion.COMPLETED
 }
 
 /** Resolves and downloads the APK for one update (fakeable for tests). */
@@ -154,6 +172,7 @@ class BatchInstallUseCase(
     private val installPrepared: ModuleInstaller,
     private val abandonDownload: (asset: ReleaseAsset) -> Unit,
     private val downloadSlots: DownloadSlots,
+    private val registry: InstallTaskRegistry = InstallTaskRegistry(),
 ) {
 
     data class Result(
@@ -194,6 +213,8 @@ class BatchInstallUseCase(
                 detail = detail?.takeIf { it.isNotBlank() },
             )
         }
+        val claims = ConcurrentHashMap<String, String>()
+        val handedOff = ConcurrentHashMap.newKeySet<String>()
         val installQueue = Channel<PreparedInstall.Ready>(Channel.UNLIMITED)
         try {
             supervisorScope {
@@ -218,15 +239,26 @@ class BatchInstallUseCase(
                                 it.copy(phase = BatchInstallPhase.CANCELLED)
                             }
                             abandonDownload(prepared.asset)
+                            prepared.taskId?.let(registry::release)
                             continue
                         }
+                        prepared.taskId?.let { registry.stage(it, InstallStage.WAITING_TO_INSTALL) }
                         onItem(packageName) { it.copy(phase = BatchInstallPhase.INSTALLING) }
+                        val installJob = async(start = CoroutineStart.LAZY) { installPrepared.install(prepared) }
+                        control.attach(packageName, installJob)
                         val outcome = try {
-                            installPrepared.install(prepared)
+                            installJob.await()
                         } catch (cancellation: CancellationException) {
-                            throw cancellation
+                            currentCoroutineContext().ensureActive()
+                            if (!control.isCancelled(packageName)) throw cancellation
+                            onItem(packageName) { it.copy(phase = BatchInstallPhase.CANCELLED) }
+                            prepared.taskId?.let(registry::release)
+                            abandonDownload(prepared.asset)
+                            continue
                         } catch (error: Throwable) {
                             InstallOutcome.Failure(error.message.orEmpty())
+                        } finally {
+                            control.detach(packageName, installJob)
                         }
                         val phase = when (outcome) {
                             is InstallOutcome.Failure -> {
@@ -238,6 +270,7 @@ class BatchInstallUseCase(
                                 BatchInstallPhase.FAILED
                             }
 
+                            InstallOutcome.DelegatedToSystem -> BatchInstallPhase.PENDING_CONFIRMATION
                             else -> BatchInstallPhase.COMPLETED
                         }
                         onItem(packageName) { it.copy(phase = phase) }
@@ -248,8 +281,10 @@ class BatchInstallUseCase(
                         // waiting here used to freeze "update all" for 180 s
                         // after one cancelled installer.
                         if (outcome is InstallOutcome.DelegatedToSystem) {
+                            handedOff += requireNotNull(prepared.taskId)
+                            prepared.taskId.let { registry.stage(it, InstallStage.PENDING_CONFIRMATION) }
                             delegated.incrementAndGet()
-                        }
+                        } else prepared.taskId?.let(registry::release)
                     }
                 }
 
@@ -263,6 +298,7 @@ class BatchInstallUseCase(
                     return scope.launch {
                         val self = coroutineContext[Job]
                         if (self != null) control.attach(packageName, self)
+                        var id: String? = null
                         var asset: ReleaseAsset? = null
                         var preparedNormally = false
                         try {
@@ -272,6 +308,15 @@ class BatchInstallUseCase(
                                 }
                                 return@launch
                             }
+                            id = registry.claim(packageName, info.installed.packageName)
+                            val taskId = id
+                            if (taskId == null) {
+                                onItem(packageName) { it.copy(phase = BatchInstallPhase.ALREADY_RUNNING) }
+                                preparedNormally = true
+                                return@launch
+                            }
+                            claims[packageName] = taskId
+                            registry.onCancel(taskId) { control.cancel(packageName) }
                             downloadSlots.withSlot {
                                 // A queued target may have been cancelled while
                                 // it waited for the slot; never start it then.
@@ -284,6 +329,7 @@ class BatchInstallUseCase(
                                 onItem(packageName) {
                                     it.copy(phase = BatchInstallPhase.PREPARING)
                                 }
+                                registry.stage(taskId, InstallStage.PREPARING)
                                 val prepared = prepareInstall.prepare(
                                     info = info,
                                     includePreReleases = includePreReleases(info),
@@ -292,9 +338,11 @@ class BatchInstallUseCase(
                                         ?: ModuleVariantState(),
                                     onAssetResolved = { resolved ->
                                         asset = resolved
+                                        registry.asset(taskId, resolved)
                                         control.assetResolved(packageName, resolved)
                                     },
                                     onProgress = { downloaded, bytes ->
+                                        registry.update(taskId) { it.copy(stage = InstallStage.DOWNLOADING, downloaded = downloaded, total = bytes) }
                                         onItem(packageName) {
                                             it.copy(
                                                 phase = BatchInstallPhase.DOWNLOADING,
@@ -321,10 +369,12 @@ class BatchInstallUseCase(
                                                 downloaded = it.total,
                                             )
                                         }
-                                        installQueue.send(prepared)
+                                        registry.stage(taskId, InstallStage.WAITING_TO_INSTALL)
+                                        installQueue.send(prepared.copy(taskId = taskId))
                                     }
 
                                     is PreparedInstall.Failed -> {
+                                        registry.release(taskId)
                                         if (control.isCancelled(packageName)) {
                                             onItem(packageName) {
                                                 it.copy(phase = BatchInstallPhase.CANCELLED)
@@ -341,8 +391,9 @@ class BatchInstallUseCase(
                                         }
                                     }
 
-                                    is PreparedInstall.NeedsVariant -> onItem(packageName) {
-                                        it.copy(phase = BatchInstallPhase.SKIPPED)
+                                    is PreparedInstall.NeedsVariant -> {
+                                        registry.release(taskId)
+                                        onItem(packageName) { it.copy(phase = BatchInstallPhase.SKIPPED) }
                                     }
                                 }
                             }
@@ -369,6 +420,7 @@ class BatchInstallUseCase(
                             // actual download lives in DownloadManager's scope.
                             if (!preparedNormally) {
                                 asset?.let(abandonDownload)
+                                id?.let(registry::release)
                             }
                             if (self != null) control.detach(packageName, self)
                         }
@@ -386,6 +438,7 @@ class BatchInstallUseCase(
             }
         } finally {
             installQueue.cancel()
+            claims.values.filterNot { it in handedOff }.forEach(registry::release)
         }
         return Result(
             failures = synchronized(failures) { failures.toList() },

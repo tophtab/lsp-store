@@ -220,8 +220,8 @@ class BatchInstallUseCaseTest {
         // gate (released by the broadcast or the resume reconcile).
         assertEquals(2, result.delegated)
         assertEquals(listOf("com.example.a", "com.example.b"), installed)
-        assertEquals(BatchInstallPhase.COMPLETED, recorder.phases["com.example.a"])
-        assertEquals(BatchInstallPhase.COMPLETED, recorder.phases["com.example.b"])
+        assertEquals(BatchInstallPhase.PENDING_CONFIRMATION, recorder.phases["com.example.a"])
+        assertEquals(BatchInstallPhase.PENDING_CONFIRMATION, recorder.phases["com.example.b"])
     }
 
     @Test

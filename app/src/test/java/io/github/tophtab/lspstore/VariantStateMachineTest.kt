@@ -87,7 +87,8 @@ class VariantStateMachineTest {
             .onUserPicked(picked, now = 30L)
 
         assertEquals(ModuleVariantState.Status.TRUSTED, state.status)
-        assertEquals(picked, state.signature)
+        assertEquals(picked, state.explicitPreference)
+        assertNull(state.signature)
         assertEquals(0, state.failures)
     }
 
