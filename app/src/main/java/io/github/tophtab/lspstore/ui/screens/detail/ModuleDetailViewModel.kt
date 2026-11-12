@@ -38,7 +38,7 @@ import io.github.tophtab.lspstore.domain.variant.ApkMeta
 import io.github.tophtab.lspstore.domain.variant.InstalledVariantHint
 import io.github.tophtab.lspstore.domain.variant.ModuleVariantState
 import io.github.tophtab.lspstore.domain.variant.VariantSignature
-import io.github.tophtab.lspstore.domain.model.installedCopyForRepo
+import io.github.tophtab.lspstore.data.repository.findInstalledCopy
 import kotlin.coroutines.cancellation.CancellationException
 
 data class ModuleDetailUiState(
@@ -182,8 +182,9 @@ class ModuleDetailViewModel(
         }
         viewModelScope.launch {
             libraryRepository.links.collect { value ->
+                val previous = links.filterValues { it == packageName }
                 links = value
-                resolveInstalled()
+                if (previous != value.filterValues { it == packageName }) resolveInstalled()
             }
         }
         viewModelScope.launch {
@@ -217,7 +218,13 @@ class ModuleDetailViewModel(
             }
         }
         viewModelScope.launch {
-            container.prunePendingInstalls(installedRepository.getInstalledModules())
+            try {
+                container.prunePendingInstallsForModule(packageName)
+            } catch (cancellation: CancellationException) {
+                throw cancellation
+            } catch (_: Exception) {
+                // A later resume or package event retries unreadable packages.
+            }
         }
         viewModelScope.launch {
             // The install chain lives on the app scope, so this screen can be
@@ -723,11 +730,14 @@ class ModuleDetailViewModel(
     /** Direct install, or an imported module linked to this repository entry. */
     private suspend fun findInstalled(): InstalledModule? {
         val activeLinks = links.ifEmpty { libraryRepository.links.first() }
-        // Detail is the screen that reacts to an install finishing, so it must
-        // not read the 30 s scan cache used by browsing screens.
-        val all = installedRepository.getInstalledModules(force = true)
         val activePackage = variantStates[packageName]?.activePackage
-        return installedCopyForRepo(packageName, all, activeLinks, activePackage)
+        return try {
+            installedRepository.findInstalledCopy(packageName, activeLinks, activePackage)
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (_: Exception) {
+            _state.value.installed
+        }
     }
 
     companion object {

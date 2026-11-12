@@ -52,12 +52,15 @@ import io.github.tophtab.lspstore.domain.usecase.PendingSettlement
 import io.github.tophtab.lspstore.domain.usecase.PrepareModuleInstallUseCase
 import io.github.tophtab.lspstore.domain.usecase.ResolveVariantUseCase
 import io.github.tophtab.lspstore.domain.usecase.pendingInstallLanded
+import io.github.tophtab.lspstore.domain.usecase.checkPendingInstalls
 import io.github.tophtab.lspstore.domain.usecase.settlePendingInstall
 import io.github.tophtab.lspstore.domain.model.InstalledModule
 import io.github.tophtab.lspstore.domain.model.PendingInstall
 import io.github.tophtab.lspstore.domain.variant.ApkProbe
 import io.github.tophtab.lspstore.domain.variant.DeviceProfile
+import io.github.tophtab.lspstore.domain.variant.ModuleVariantState
 import io.github.tophtab.lspstore.domain.variant.VariantSignature
+import kotlin.coroutines.cancellation.CancellationException
 
 class AppContainer(context: Context) {
     val appContext: Context = context.applicationContext
@@ -117,11 +120,13 @@ class AppContainer(context: Context) {
     val installConfirmation = InstallConfirmation(
         libraryRepository, pendingInstallRepository, installTaskRegistry, systemInstallSerializer,
         readInstalled = { packageName ->
-            runCatching {
-                @Suppress("DEPRECATION")
-                val info = appContext.packageManager.getPackageInfo(packageName, 0)
-                InstalledModule(packageName, info.longVersionCode, info.versionName, packageName, false, null, lastUpdateTime = info.lastUpdateTime)
-            }.getOrNull()
+            try {
+                installedRepository.getInstalledModule(packageName)
+            } catch (cancellation: CancellationException) {
+                throw cancellation
+            } catch (_: Exception) {
+                null
+            }
         },
     )
     val installExecution = InstallExecution(
@@ -304,9 +309,32 @@ class AppContainer(context: Context) {
 
     suspend fun prunePendingInstalls(installed: List<InstalledModule>): List<PendingInstall> {
         val entries = pendingInstallRepository.pending.first().values.toList()
+        val states = libraryRepository.variantStates.first()
+        return settleAndPrune(entries, states, installed)
+    }
+
+    /** Opening a detail page only reconciles hand-offs and records for that module. */
+    suspend fun prunePendingInstallsForModule(repoPackage: String): List<PendingInstall> {
+        val entries = pendingInstallRepository.pending.first().values.filter {
+            (it.repoPackageName ?: it.packageName) == repoPackage
+        }
+        val states = libraryRepository.variantStates.first().filterKeys { it == repoPackage }
+        val names = (entries.map { it.packageName } + states.values.mapNotNull {
+            it.confirmedInstall?.packageName
+        }).toSet()
+        val installed = names.mapNotNull { installedRepository.getInstalledModule(it) }
+        return settleAndPrune(entries, states, installed)
+    }
+
+    private suspend fun settleAndPrune(
+        entries: List<PendingInstall>,
+        states: Map<String, ModuleVariantState>,
+        installed: List<InstalledModule>,
+    ): List<PendingInstall> {
+        val byPackage = installed.associateBy { it.packageName }
         val reached = mutableListOf<PendingInstall>()
         entries.forEach { entry ->
-            when (settlePendingInstall(entry, installed.firstOrNull { it.packageName == entry.packageName }, System.currentTimeMillis(), DEFAULT_PENDING_MAX_AGE_MS, installer.foregroundState.isResumed)) {
+            when (settlePendingInstall(entry, byPackage[entry.packageName], System.currentTimeMillis(), DEFAULT_PENDING_MAX_AGE_MS, installer.foregroundState.isResumed)) {
                 PendingSettlement.LANDED -> {
                     completePendingInstall(entry.packageName, entry)
                     reached += entry
@@ -316,9 +344,9 @@ class AppContainer(context: Context) {
             }
         }
         // Drop invalid local source records as soon as a scan observes a replacement.
-        libraryRepository.variantStates.first().forEach { (repo, state) ->
+        states.forEach { (repo, state) ->
             val record = state.confirmedInstall ?: return@forEach
-            val match = installed.firstOrNull { it.packageName == record.packageName }
+            val match = byPackage[record.packageName]
             if (!record.matches(match) && !record.matches(installConfirmation.installed(record.packageName))) {
                 libraryRepository.invalidateConfirmedInstall(repo, record)
             }
@@ -331,7 +359,7 @@ class AppContainer(context: Context) {
      *
      * `PACKAGE_ADDED` is an implicit broadcast: manifest receivers do not get it
      * while the app is backgrounded (Android 8+), which is exactly the state an
-     * external installer puts us in. Rescanning PackageManager on resume is the
+     * external installer puts us in. Querying target packages on resume is the
      * only reliable completion signal, so pending installs are reconciled here.
      */
     suspend fun reconcilePendingInstalls(
@@ -343,24 +371,23 @@ class AppContainer(context: Context) {
     ) {
         val entries = snapshot ?: pendingInstallRepository.pending.first().values.toList()
         var unresolved = emptyList<PendingInstall>()
+        var unreadable = emptySet<String>()
         repeat(retries) { attempt ->
             val current = pendingInstallRepository.pending.first()
             val pendingInstalls = entries.filter { current[it.packageName] == it }
             if (pendingInstalls.isEmpty()) return
-            val installed = runCatching { installedRepository.getInstalledModules(force = true) }
-                .getOrNull() ?: return
             val stillOpen = mutableListOf<PendingInstall>()
-            pendingInstalls.forEach { pending ->
-                val match = installed.firstOrNull { it.packageName == pending.packageName }
-                when (
-                    settlePendingInstall(
-                        pending = pending,
-                        installed = match,
-                        now = System.currentTimeMillis(),
-                        abandonAfterMs = abandonAfterMs,
-                        allowAbandonment = installer.foregroundState.isResumed,
-                    )
-                ) {
+            val checks = checkPendingInstalls(
+                pendingInstalls,
+                installedRepository::getInstalledModule,
+                System.currentTimeMillis(),
+                abandonAfterMs,
+                installer.foregroundState.isResumed,
+            )
+            unreadable = checks.filterNot { it.readable }.map { it.pending.packageName }.toSet()
+            checks.forEach { check ->
+                val pending = check.pending
+                when (check.settlement) {
                     PendingSettlement.LANDED -> completePendingInstall(pending.packageName, pending)
                     PendingSettlement.ABANDONED -> {
                         if (installer.foregroundState.isResumed) {
@@ -382,6 +409,7 @@ class AppContainer(context: Context) {
         // where "still not installed" can only mean the dialog was cancelled.
         val now = System.currentTimeMillis()
         unresolved.forEach { pending ->
+            if (pending.packageName in unreadable) return@forEach
             val expired = abandonUnresolved ||
                 (pending.createdAt > 0L && now - pending.createdAt > abandonAfterMs)
             if (expired && installer.foregroundState.isResumed) {
