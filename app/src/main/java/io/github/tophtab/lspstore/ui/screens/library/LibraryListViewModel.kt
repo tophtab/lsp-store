@@ -45,6 +45,7 @@ class LibraryListViewModel(
     val state = _state.asStateFlow()
 
     private var index: List<Module> = emptyList()
+    private var byPackage: Map<String, Module> = emptyMap()
     private var names: List<String> = emptyList()
     private var installedRaw: Set<String> = emptySet()
     private var links: Map<String, String> = emptyMap()
@@ -109,6 +110,7 @@ class LibraryListViewModel(
                 modules to installed
             }.onSuccess { (modules, installed) ->
                 index = modules
+                byPackage = modules.associateBy { it.packageName }
                 installedRaw = installed
                 _state.update { it.copy(isLoading = false) }
                 refreshInstalledBadges()
@@ -122,8 +124,6 @@ class LibraryListViewModel(
     }
 
     private fun rebuild() {
-        if (index.isEmpty()) return
-        val byPackage = index.associateBy { it.packageName }
         _state.update {
             it.copy(
                 modules = names
@@ -134,8 +134,6 @@ class LibraryListViewModel(
     }
 
     private fun refreshInstalledBadges() {
-        if (index.isEmpty()) return
-        val byPackage = index.associateBy { it.packageName }
         val resolved = installedRaw
             .mapNotNull { repoModuleFor(it, byPackage, links)?.packageName }
             .toSet()

@@ -9,7 +9,6 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
@@ -131,36 +130,38 @@ class LibraryRepositoryImpl(private val context: Context) : LibraryRepository {
         MapSerializer(String.serializer(), ModuleVariantState.serializer())
 
     override val favourites: Flow<List<String>> = context.libraryDataStore.data
-        .map { decodeList(it[Keys.FAVOURITES]) }
+        .decodedField(Keys.FAVOURITES, ::decodeList)
 
     override val recentlyViewed: Flow<List<String>> = context.libraryDataStore.data
-        .map { decodeList(it[Keys.RECENTLY_VIEWED]) }
+        .decodedField(Keys.RECENTLY_VIEWED, ::decodeList)
 
     override val skippedUpdates: Flow<Map<String, SkippedVersion>> = context.libraryDataStore.data
-        .map { decodeSkipped(it[Keys.SKIPPED]) }
+        .decodedField(Keys.SKIPPED, ::decodeSkipped)
 
     /** Installed or repository package names whose updates the user ignored. */
     override val ignoredUpdates: Flow<Set<String>> = context.libraryDataStore.data
-        .map { decodeList(it[Keys.IGNORED_UPDATES]).toSet() }
+        .decodedField(Keys.IGNORED_UPDATES) { decodeList(it).toSet() }
 
     /** Repository package names the user hid from browsing. */
     override val ignoredModules: Flow<Set<String>> = context.libraryDataStore.data
-        .map { decodeList(it[Keys.IGNORED_MODULES]).toSet() }
+        .decodedField(Keys.IGNORED_MODULES) { decodeList(it).toSet() }
 
     /** Repository package names that opted into pre-release tracking. */
     override val preReleaseModules: Flow<Set<String>> = context.libraryDataStore.data
-        .map { decodeList(it[Keys.PRE_RELEASE_MODULES]).toSet() }
+        .decodedField(Keys.PRE_RELEASE_MODULES) { decodeList(it).toSet() }
 
     override val searchHistory: Flow<List<String>> = context.libraryDataStore.data
-        .map { decodeList(it[Keys.SEARCH_HISTORY]) }
+        .decodedField(Keys.SEARCH_HISTORY, ::decodeList)
 
     /** installed package name -> repository module package name */
     override val links: Flow<Map<String, String>> = context.libraryDataStore.data
-        .map { decodeLinks(it[Keys.LINKS]) }
+        .decodedField(Keys.LINKS, ::decodeLinks)
 
     /** repository module package name -> variant status + semantic signature */
     override val variantStates: Flow<Map<String, ModuleVariantState>> = context.libraryDataStore.data
-        .map { decodeVariantStates(it[Keys.VARIANT_STATE]).mapValues { entry -> entry.value.migrated() }.withoutNotApplicableVerdicts() }
+        .decodedField(Keys.VARIANT_STATE) { raw ->
+            decodeVariantStates(raw).mapValues { it.value.migrated() }.withoutNotApplicableVerdicts()
+        }
 
     override suspend fun toggleFavourite(packageName: String) {
         context.libraryDataStore.edit { prefs ->
