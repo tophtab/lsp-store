@@ -33,6 +33,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.tophtab.lspstore.R
 import io.github.tophtab.lspstore.domain.model.Module
+import io.github.tophtab.lspstore.domain.model.InstalledModule
 import io.github.tophtab.lspstore.ui.LocalAppContainer
 import io.github.tophtab.lspstore.ui.components.EmptyBox
 import io.github.tophtab.lspstore.ui.components.ErrorBox
@@ -101,7 +102,7 @@ fun LibraryListScreen(
                     items(state.modules, key = { it.packageName }) { module ->
                         LibraryRow(
                             module = module,
-                            installed = module.packageName in state.installedPackages,
+                            installed = state.installedCopies[module.packageName],
                             kind = kind,
                             onClick = { onOpenModule(module.packageName) },
                             onRemove = { viewModel.remove(module.packageName) },
@@ -116,7 +117,7 @@ fun LibraryListScreen(
 @Composable
 private fun LibraryRow(
     module: Module,
-    installed: Boolean,
+    installed: InstalledModule?,
     kind: LibraryKind,
     onClick: () -> Unit,
     onRemove: () -> Unit,
@@ -127,11 +128,11 @@ private fun LibraryRow(
         contentPadding = PaddingValues(14.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            if (installed) {
+            if (installed != null) {
                 ModuleAvatar(
                     module,
                     size = 44,
-                    installedPackage = module.packageName,
+                    installed = installed,
                 )
                 Spacer(Modifier.width(12.dp))
             }
@@ -156,7 +157,7 @@ private fun LibraryRow(
                     modifier = Modifier.padding(top = 6.dp),
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
-                    if (installed) {
+                    if (installed != null) {
                         KomiInfoChip(stringResource(R.string.label_installed))
                     }
                     module.latestRelease?.let { KomiInfoChip(it.versionName) }

@@ -3,9 +3,9 @@
 package io.github.tophtab.lspstore.ui.components
 
 import android.text.format.DateUtils
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -21,13 +21,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.graphics.drawable.toBitmap
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import coil.size.Precision
+import io.github.tophtab.lspstore.data.device.PackageIcon
+import io.github.tophtab.lspstore.domain.model.InstalledModule
 import io.github.tophtab.lspstore.domain.model.Module
 import io.github.tophtab.lspstore.ui.design.KomiEmpty
 import io.github.tophtab.lspstore.ui.design.KomiError
@@ -80,25 +84,17 @@ fun VersionChip(text: String, container: Color, content: Color) {
 }
 
 @Composable
-fun ModuleAvatar(module: Module, size: Int = 48, installedPackage: String? = null) {
-    val context = LocalContext.current
-    val installedIcon = remember(installedPackage) {
-        installedPackage?.let { packageName -> loadPackageIcon(context, packageName) }
-    }
+fun ModuleAvatar(module: Module, size: Int = 48, installed: InstalledModule? = null) {
     val avatar = module.contributorAvatarUrl
     val shape = RoundedCornerShape(14.dp)
     val monogram = module.title.trim().take(2).uppercase()
     when {
-        installedIcon != null -> Image(
-            bitmap = installedIcon,
-            contentDescription = module.title,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .size(size.dp)
-                .clip(shape),
+        installed != null -> PackageAvatar(
+            packageName = installed.packageName,
+            label = module.title,
+            lastUpdateTime = installed.lastUpdateTime,
+            size = size,
         )
-
-        installedPackage != null -> MonogramTile(monogram, size, shape)
 
         !avatar.isNullOrBlank() -> AsyncImage(
             model = avatar,
@@ -120,38 +116,29 @@ fun ModuleAvatar(module: Module, size: Int = 48, installedPackage: String? = nul
  * known.
  */
 @Composable
-fun PackageAvatar(packageName: String, label: String?, size: Int = 44) {
+fun PackageAvatar(packageName: String, label: String?, lastUpdateTime: Long, size: Int = 44) {
     val context = LocalContext.current
-    val icon = remember(packageName) { loadPackageIcon(context, packageName) }
+    val sizePx = with(LocalDensity.current) { size.dp.roundToPx() }
+    val request = remember(context, packageName, lastUpdateTime, sizePx) {
+        ImageRequest.Builder(context)
+            .data(PackageIcon(packageName, lastUpdateTime, sizePx))
+            .size(sizePx)
+            .precision(Precision.EXACT)
+            .build()
+    }
     val shape = RoundedCornerShape(14.dp)
-    if (icon != null) {
-        Image(
-            bitmap = icon,
+    Box(Modifier.size(size.dp).clip(shape)) {
+        Box(Modifier.clearAndSetSemantics {}) {
+            MonogramTile(label.orEmpty().trim().take(2).uppercase(), size, shape)
+        }
+        AsyncImage(
+            model = request,
             contentDescription = label,
             contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .size(size.dp)
-                .clip(shape),
-        )
-    } else {
-        MonogramTile(
-            monogram = label.orEmpty().trim().take(2).uppercase(),
-            size = size,
-            shape = shape,
+            modifier = Modifier.fillMaxSize(),
         )
     }
 }
-
-private fun loadPackageIcon(
-    context: android.content.Context,
-    packageName: String,
-): androidx.compose.ui.graphics.ImageBitmap? = runCatching {
-    context.packageManager
-        .getApplicationIcon(packageName)
-        .toBitmap()
-        .asImageBitmap()
-}.getOrNull()
-
 
 @Composable
 private fun MonogramTile(

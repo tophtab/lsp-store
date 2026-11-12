@@ -136,6 +136,7 @@ class ModuleDetailViewModel(
     private var summaryTranslationJob: Job? = null
     private var readmeTranslationJob: Job? = null
     private var loadJob: Job? = null
+    internal val readmeDocument = ReadmeDocument()
     private val probeRequests = ReleaseProbeRequests()
     private val notesTranslationJobs = mutableMapOf<String, Job>()
 

@@ -14,6 +14,8 @@ import io.github.tophtab.lspstore.R
 import io.github.tophtab.lspstore.di.AppContainer
 import io.github.tophtab.lspstore.ui.toUserMessage
 import io.github.tophtab.lspstore.domain.model.Module
+import io.github.tophtab.lspstore.domain.model.InstalledModule
+import io.github.tophtab.lspstore.domain.model.installedCopyForRepo
 import io.github.tophtab.lspstore.domain.model.repoModuleFor
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -30,6 +32,7 @@ data class LibraryUiState(
     val error: String? = null,
     val modules: List<Module> = emptyList(),
     val installedPackages: Set<String> = emptySet(),
+    val installedCopies: Map<String, InstalledModule> = emptyMap(),
 )
 
 class LibraryListViewModel(
@@ -46,7 +49,7 @@ class LibraryListViewModel(
 
     private var index: List<Module> = emptyList()
     private var names: List<String> = emptyList()
-    private var installedRaw: Set<String> = emptySet()
+    private var installedRaw: List<InstalledModule> = emptyList()
     private var links: Map<String, String> = emptyMap()
     private var ignoredModules: Set<String> = emptySet()
     private var loadJob: Job? = null
@@ -104,8 +107,6 @@ class LibraryListViewModel(
                 val modules = moduleRepository.getIndex(force = false)
                 val installed = installedRepository.getInstalledModules()
                     .filter { it.isXposedModule }
-                    .map { it.packageName }
-                    .toSet()
                 modules to installed
             }.onSuccess { (modules, installed) ->
                 index = modules
@@ -137,9 +138,12 @@ class LibraryListViewModel(
         if (index.isEmpty()) return
         val byPackage = index.associateBy { it.packageName }
         val resolved = installedRaw
-            .mapNotNull { repoModuleFor(it, byPackage, links)?.packageName }
-            .toSet()
-        _state.update { it.copy(installedPackages = resolved) }
+            .mapNotNull { installed ->
+                repoModuleFor(installed.packageName, byPackage, links)?.packageName?.let { it to installed }
+            }
+            .groupBy({ it.first }, { it.second })
+            .mapValues { (repo, copies) -> installedCopyForRepo(repo, copies, links)!! }
+        _state.update { it.copy(installedPackages = resolved.keys, installedCopies = resolved) }
     }
 
     companion object {
