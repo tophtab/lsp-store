@@ -485,7 +485,7 @@ private fun DetailContent(
         installedPackage = state.installed?.packageName,
         repoPackage = detail.module.packageName,
     )
-    val decision = remember(selectedRelease, variantState, probes, installedHint, expectedPackageName) {
+    val decision = remember(device, selectedRelease, variantState, probes, installedHint, expectedPackageName) {
         selectedRelease?.let {
             resolver.resolveForUpdate(
                 variantState,
@@ -501,13 +501,14 @@ private fun DetailContent(
     LaunchedEffect(selectedRelease?.tagName) {
         selectedRelease?.let { onProbeAssets(it) }
     }
-    val candidates = remember(selectedRelease, decision, probes, installedHint, expectedPackageName) {
+    val candidates = remember(device, selectedRelease, variantState, decision, probes, installedHint, expectedPackageName) {
         val base = selectedRelease?.let {
-            // Same expected package and installed hint as the decision above, so
-            // a candidate row and the install button never disagree.
+            // Same expected package, installed hint and probe policy as the
+            // decision above, so a row and the install button never disagree.
             resolver.candidates(
                 it,
                 probes = probes,
+                allowProbes = !variantState.isTrusted,
                 expectedPackage = expectedPackageName,
                 installed = installedHint,
             )

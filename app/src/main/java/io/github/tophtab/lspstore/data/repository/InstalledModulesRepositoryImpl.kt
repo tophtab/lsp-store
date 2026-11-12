@@ -69,15 +69,31 @@ class InstalledModulesRepositoryImpl(
         val modules = withContext(Dispatchers.IO) {
             val pm = context.packageManager
             val apiLevel = Build.VERSION.SDK_INT
-            val packages = pm.getInstalledPackages(
-                PackageManager.GET_META_DATA or PackageManager.GET_PROVIDERS,
-            )
+            // Enumerate with no metadata flags. Asking PackageManager for
+            // GET_META_DATA or GET_PROVIDERS here makes it build one Binder
+            // reply for every installed app; on devices with hundreds of
+            // packages that reply can exceed the transaction buffer, and a
+            // single unreadable package fails the whole list. The extra fields
+            // are fetched per package below, where each reply stays small and a
+            // failure only loses that package's module fields.
+            val packages = pm.getInstalledPackages(0)
+            val seen = HashSet<String>(packages.size)
             packages.mapNotNull { pkg ->
+                if (!seen.add(pkg.packageName)) return@mapNotNull null
                 val app = pkg.applicationInfo ?: return@mapNotNull null
-                val meta = app.metaData
+                // A failed lookup only loses this package's module metadata; the
+                // package itself stays in the list so pending-install settlement
+                // and version comparisons still see it.
+                val extras = runCatching {
+                    pm.getPackageInfo(
+                        pkg.packageName,
+                        PackageManager.GET_META_DATA or PackageManager.GET_PROVIDERS,
+                    )
+                }.getOrNull()
+                val meta = extras?.applicationInfo?.metaData
                 val hasLegacyXposedMeta = meta != null &&
                     (meta.containsKey("xposedmodule") || meta.containsKey("xposedminversion"))
-                val hasLibXposedProvider = pkg.providers?.any {
+                val hasLibXposedProvider = extras?.providers?.any {
                     it.name == "io.github.libxposed.service.XposedProvider"
                 } == true
                 // The framework half of the scan; the module/ABI rules live in
