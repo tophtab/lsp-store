@@ -2,8 +2,8 @@ package io.github.tophtab.lspstore.data.device
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.drawable.BitmapDrawable
 import androidx.core.graphics.drawable.toBitmap
+import androidx.core.graphics.drawable.toDrawable
 import coil.ImageLoader
 import coil.decode.DataSource
 import coil.fetch.DrawableResult
@@ -26,7 +26,7 @@ internal class PackageIconFetcher(private val data: PackageIcon, private val con
     override suspend fun fetch(): FetchResult = withContext(Dispatchers.IO) {
         val drawable = context.packageManager.getApplicationIcon(data.packageName)
         val bitmap = drawable.toBitmap(data.sizePx, data.sizePx, Bitmap.Config.ARGB_8888)
-        DrawableResult(BitmapDrawable(context.resources, bitmap), isSampled = false, dataSource = DataSource.DISK)
+        DrawableResult(bitmap.toDrawable(context.resources), isSampled = false, dataSource = DataSource.DISK)
     }
 
     class Factory : Fetcher.Factory<PackageIcon> {
