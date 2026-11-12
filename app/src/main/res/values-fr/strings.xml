@@ -321,4 +321,8 @@
     <string name="settings_auto_update_desc">Installe les mises à jour en silence via root après une vérification en arrière-plan.</string>
     <string name="settings_auto_update_needs_root">Activez d\'abord « Installation silencieuse ».</string>
     <string name="settings_notifications_needed">Les notifications sont désactivées : la vérification en arrière-plan ne peut pas signaler les mises à jour.</string>
+    <string name="installed_batch_processed">Demandes de mise à jour groupée traitées</string>
+    <string name="detail_downgrade">Installer la version antérieure %1$s</string>
+    <string name="detail_latest_unavailable">Les fichiers de la dernière version sont temporairement indisponibles</string>
+    <string name="detail_resources_unavailable">Les fichiers de la version sélectionnée sont indisponibles</string>
 </resources>

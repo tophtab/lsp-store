@@ -47,15 +47,17 @@ class ResolveVariantUseCase(
         installed: InstalledVariantHint? = null,
     ): VariantResolution {
         val resolver = VariantResolver(device)
+        val cached = release.apkAssets.mapNotNull { asset -> probe.cached(asset)?.let { asset.name to it } }.toMap()
         val nameDecision = resolver.resolve(
             release,
-            signature = state.signature,
-            allowProbes = false,
+            signature = state.recommendationSignature,
+            probes = cached,
+            allowProbes = true,
             expectedPackage = expectedPackage,
             installed = installed,
         )
         if (nameDecision is VariantDecision.NotApplicable) {
-            return VariantResolution(nameDecision)
+            return VariantResolution(nameDecision, cached)
         }
 
         // A DEFAULT pick is a real default, but the archive is the only thing that
@@ -66,7 +68,7 @@ class ResolveVariantUseCase(
         // Legacy NOT_APPLICABLE records are retryable, just like UNKNOWN. They
         // must not suppress the probes that could disprove the old verdict.
         val shouldProbe = forceProbe || !state.isTrusted || ambiguous
-        if (!shouldProbe) return VariantResolution(nameDecision)
+        if (!shouldProbe) return VariantResolution(nameDecision, cached)
 
         val targets: List<ReleaseAsset> = when {
             forceProbe -> resolver.ranked(
@@ -85,19 +87,19 @@ class ResolveVariantUseCase(
             nameDecision is VariantDecision.Pick -> listOf(nameDecision.asset)
             else -> emptyList()
         }.take(maxProbes)
-        if (targets.isEmpty()) return VariantResolution(nameDecision)
+        if (targets.isEmpty()) return VariantResolution(nameDecision, cached)
 
-        val probes = coroutineScope {
-            targets.map { asset ->
+        val probes = cached + coroutineScope {
+            targets.filterNot { it.name in cached }.map { asset ->
                 async { probe.fetch(asset)?.let { asset.name to it } }
             }.awaitAll().filterNotNull().toMap()
         }
-        if (probes.isEmpty()) return VariantResolution(nameDecision)
+        if (probes.isEmpty()) return VariantResolution(nameDecision, cached)
 
         return VariantResolution(
             decision = resolver.resolve(
                 release = release,
-                signature = state.signature,
+                signature = state.recommendationSignature,
                 probes = probes,
                 allowProbes = true,
                 expectedPackage = expectedPackage,

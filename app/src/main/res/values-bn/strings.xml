@@ -321,4 +321,8 @@
     <string name="settings_auto_update_desc">ব্যাকগ্রাউন্ড চেকের পরে রুটের মাধ্যমে নীরবে আপডেট ইনস্টল করে।</string>
     <string name="settings_auto_update_needs_root">প্রথমে "নীরব ইনস্টল" চালু করুন।</string>
     <string name="settings_notifications_needed">বিজ্ঞপ্তি বন্ধ আছে: ব্যাকগ্রাউন্ড চেক আপডেট জানাতে পারবে না।</string>
+    <string name="installed_batch_processed">একসাথে আপডেটের অনুরোধ প্রক্রিয়া করা হয়েছে</string>
+    <string name="detail_downgrade">পুরোনো সংস্করণ %1$s ইনস্টল করুন</string>
+    <string name="detail_latest_unavailable">সর্বশেষ সংস্করণের ফাইল সাময়িকভাবে অনুপলব্ধ</string>
+    <string name="detail_resources_unavailable">নির্বাচিত সংস্করণের ফাইল অনুপলব্ধ</string>
 </resources>

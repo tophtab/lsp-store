@@ -1,5 +1,6 @@
 package io.github.tophtab.lspstore.domain.usecase
 
+import io.github.tophtab.lspstore.domain.model.ConfirmedInstallRecord
 import java.time.Instant
 import io.github.tophtab.lspstore.domain.model.InstalledModule
 import io.github.tophtab.lspstore.domain.model.Module
@@ -23,7 +24,7 @@ object UpdateChecker {
         variantStates: Map<String, ModuleVariantState> = emptyMap(),
     ): List<UpdateInfo> {
         val byPackage = index.associateBy { it.packageName }
-        val chosenPackages = variantStates.values.mapNotNull { it.signature?.packageName }.toSet()
+        val chosenPackages = variantStates.values.mapNotNull { it.activePackage }.toSet()
         return installed.asSequence()
             .filter { it.isXposedModule || it.packageName in links || it.packageName in chosenPackages }
             .mapNotNull { installedModule ->
@@ -33,7 +34,7 @@ object UpdateChecker {
                 // A confirmed replacement becomes the copy we follow. If it was
                 // uninstalled, the remaining old package can receive updates again.
                 val activePackage = (variantStates[module.packageName]
-                    ?: variantStates[installedModule.packageName])?.signature?.packageName
+                    ?: variantStates[installedModule.packageName])?.activePackage
                 if (installedCopyForRepo(module.packageName, installed, links, activePackage)
                         ?.packageName != installedModule.packageName
                 ) return@mapNotNull null
@@ -51,7 +52,7 @@ object UpdateChecker {
                 val latest = module.latestFor(includePreReleases) ?: return@mapNotNull null
                 val skippedVersion = skipped[installedModule.packageName] ?: skipped[module.packageName]
                 if (skippedVersion?.matches(latest) == true) return@mapNotNull null
-                if (isUpdateAvailable(latest, installedModule, module.latestTimeFor(includePreReleases))) {
+                if (isUpdateAvailable(latest, installedModule, module.latestTimeFor(includePreReleases), (variantStates[module.packageName] ?: variantStates[installedModule.packageName])?.confirmedInstall)) {
                     UpdateInfo(module = module, installed = installedModule, latest = latest)
                 } else {
                     null
@@ -80,7 +81,19 @@ object UpdateChecker {
         latest: ModuleVersion,
         installed: InstalledModule,
         publishedRaw: String?,
+        confirmed: ConfirmedInstallRecord? = null,
     ): Boolean {
+        if (confirmed?.matches(installed) == true) {
+            val source = confirmed.target
+            val published = publishedRaw?.let { runCatching { Instant.parse(it) }.getOrNull() }
+            val previous = source.publishedAt?.let { runCatching { Instant.parse(it) }.getOrNull() }
+            if (latest.raw == source.releaseTag && published != null && previous != null) return published > previous
+            val version = source.releaseVersion
+            if (version != null) {
+                if (latest.versionCode != version.versionCode) return latest.versionCode > version.versionCode
+                if (published != null && previous != null) return published > previous
+            }
+        }
         if (latest.versionCode != installed.versionCode) {
             return latest.versionCode > installed.versionCode
         }

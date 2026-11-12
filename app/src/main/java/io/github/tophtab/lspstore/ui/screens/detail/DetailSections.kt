@@ -1,6 +1,9 @@
 @file:OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 package io.github.tophtab.lspstore.ui.screens.detail
 
+import io.github.tophtab.lspstore.domain.model.installAction
+import io.github.tophtab.lspstore.domain.model.InstallAction
+import io.github.tophtab.lspstore.domain.model.ResolvedInstallTarget
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -385,6 +388,8 @@ internal fun HeroStatusPill(
 internal fun InstallControls(
     state: ModuleDetailUiState,
     targetVersion: ModuleVersion?,
+    target: ResolvedInstallTarget?,
+    resolvingSelection: Boolean,
     showUpdateHint: Boolean,
     installEnabled: Boolean,
     notApplicableReason: String?,
@@ -395,10 +400,11 @@ internal fun InstallControls(
     // A run that is already installing has nothing left to cancel, so the button
     // shows the stage and stays inert (komi does the same). A queued run has not
     // started transferring yet but can still be cancelled.
-    val queued = run?.takeIf { it.stage == InstallStage.QUEUED }
+    val queued = run?.takeIf { it.stage == InstallStage.QUEUED || it.stage == InstallStage.PREPARING }
     val downloading = run?.takeIf { it.stage == InstallStage.DOWNLOADING }
-    val installing = run?.stage == InstallStage.INSTALLING
-    val active = queued != null || downloading != null || installing
+    val installing = run?.stage == InstallStage.INSTALLING || run?.stage == InstallStage.WAITING_TO_INSTALL
+    val pending = state.pendingInstall != null || run?.stage == InstallStage.PENDING_CONFIRMATION
+    val active = queued != null || downloading != null || installing || pending
 
     Column {
         if (showUpdateHint && targetVersion != null) {
@@ -416,13 +422,23 @@ internal fun InstallControls(
         }
 
         val buttonLabel = when {
+            pending -> stringResource(R.string.pending_install)
+            run?.stage == InstallStage.PREPARING -> stringResource(R.string.installed_state_preparing)
+            run?.stage == InstallStage.WAITING_TO_INSTALL -> stringResource(R.string.installed_state_waiting)
             queued != null -> stringResource(R.string.detail_queued)
             downloading != null -> stringResource(R.string.detail_downloading)
             installing -> stringResource(R.string.detail_installing)
-            targetVersion == null -> stringResource(R.string.detail_no_release)
-            showUpdateHint -> stringResource(R.string.detail_update_to, targetVersion.versionName)
-            state.installed != null -> stringResource(R.string.detail_reinstall, targetVersion.versionName)
-            else -> stringResource(R.string.detail_install, targetVersion.versionName)
+            resolvingSelection -> stringResource(R.string.installed_state_preparing)
+            target == null -> stringResource(R.string.detail_no_release)
+            else -> {
+                val versionName = target.apkVersionName ?: targetVersion?.versionName ?: target.asset.name
+                when (installAction(target, state.installed, state.variantState)) {
+                    InstallAction.INSTALL -> stringResource(R.string.detail_install, versionName)
+                    InstallAction.UPDATE -> stringResource(R.string.detail_update_to, versionName)
+                    InstallAction.REINSTALL -> stringResource(R.string.detail_reinstall, versionName)
+                    InstallAction.DOWNGRADE -> stringResource(R.string.detail_downgrade, versionName)
+                }
+            }
         }
         // While downloading the second line is the byte counter plus the cancel
         // affordance; the percentage is already the filled part of the button.

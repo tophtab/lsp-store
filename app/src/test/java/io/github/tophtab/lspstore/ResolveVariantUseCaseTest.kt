@@ -23,6 +23,21 @@ class ResolveVariantUseCaseTest {
     private val device = DeviceProfile(sdkInt = 36, abis = listOf("arm64-v8a", "armeabi-v7a"))
 
     @Test
+    fun cachedMetadataIsUsedEvenForATrustedNameDecisionWithoutMoreProbes() = runBlocking {
+        val release = releaseOf("app-arm64-v8a.apk", "app-universal.apk")
+        val probe = object : ApkProbe {
+            var calls = 0
+            override suspend fun cached(asset: ReleaseAsset): ApkMeta? = ApkMeta(packageName = "com.example.module", versionCode = 4559)
+            override suspend fun fetch(asset: ReleaseAsset): ApkMeta? { calls++; return null }
+        }
+        val state = ModuleVariantState(status = ModuleVariantState.Status.TRUSTED, signature = VariantSignature(abi = "arm64-v8a"))
+        val resolution = ResolveVariantUseCase(probe).resolve(release, state, device)
+        assertEquals(2, resolution.probes.size)
+        assertEquals(0, probe.calls)
+        assertEquals("app-arm64-v8a.apk", (resolution.decision as VariantDecision.Pick).asset.name)
+    }
+
+    @Test
     fun trustedModulesNeverProbe() = runBlocking {
         val release = releaseOf("app-arm64-v8a.apk", "app-universal.apk")
         val probe = FakeProbe(emptyMap())

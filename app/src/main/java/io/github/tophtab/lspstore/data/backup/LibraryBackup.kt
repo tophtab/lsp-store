@@ -33,6 +33,10 @@ data class LibraryBackup(
     val variantStates: Map<String, ModuleVariantState> = emptyMap(),
 ) {
 
+    fun portable(): LibraryBackup = copy(variantStates = variantStates.mapValues { (_, state) ->
+        state.migrated().copy(confirmedInstall = null, signature = null)
+    })
+
     /**
      * Merges [incoming] under this snapshot. Lists become a union with the local
      * entries first; maps keep the local value on a key conflict. Nothing already

@@ -358,4 +358,8 @@
     <string name="settings_auto_update_desc">后台检查后通过 Root 静默安装更新。</string>
     <string name="settings_auto_update_needs_root">请先开启“静默安装”。</string>
     <string name="settings_notifications_needed">通知已关闭：后台检查无法提示更新。</string>
+    <string name="installed_batch_processed">批量更新请求已处理</string>
+    <string name="detail_downgrade">降级安装 %1$s</string>
+    <string name="detail_latest_unavailable">最新版本资源暂不可用</string>
+    <string name="detail_resources_unavailable">所选版本资源不可用</string>
 </resources>

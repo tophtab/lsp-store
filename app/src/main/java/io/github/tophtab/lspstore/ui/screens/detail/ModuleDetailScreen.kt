@@ -2,6 +2,8 @@
 
 package io.github.tophtab.lspstore.ui.screens.detail
 
+import io.github.tophtab.lspstore.domain.model.ResolvedInstallTarget
+
 import android.app.Activity
 import android.content.Intent
 import android.provider.Settings
@@ -126,6 +128,7 @@ import io.github.tophtab.lspstore.domain.variant.ScoredAsset
 import io.github.tophtab.lspstore.domain.variant.InstalledVariantHint
 import io.github.tophtab.lspstore.domain.variant.VariantDecision
 import io.github.tophtab.lspstore.domain.variant.VariantResolver
+import io.github.tophtab.lspstore.domain.model.selectedRelease
 import io.github.tophtab.lspstore.domain.variant.selectInstallAsset
 import io.github.tophtab.lspstore.ui.LocalAppContainer
 import io.github.tophtab.lspstore.ui.components.ErrorBox
@@ -451,8 +454,8 @@ private fun DetailContent(
     state: ModuleDetailUiState,
     detail: ModuleDetail,
     listState: LazyListState,
-    onInstallAsset: (ReleaseAsset) -> Unit,
-    onProbeAssets: (Release) -> Unit,
+    onInstallAsset: (ResolvedInstallTarget) -> Unit,
+    onProbeAssets: (Release, Boolean) -> Unit,
     onTranslateNotes: (String, String, Boolean) -> Unit,
     onOpenAuthor: (String) -> Unit,
     onCancel: () -> Unit,
@@ -465,9 +468,9 @@ private fun DetailContent(
     // rebuilt whenever the detail or the probes change, and a saved object
     // would not survive the trip through the saved-state registry.
     var selectedReleaseTag by rememberSaveable(state.channel) {
-        mutableStateOf(latestRelease?.tagName.orEmpty())
+        mutableStateOf("")
     }
-    val selectedRelease = releases.firstOrNull { it.tagName == selectedReleaseTag } ?: latestRelease
+    val selectedRelease = detail.selectedRelease(state.channel, selectedReleaseTag)
     val context = LocalContext.current
     val container = LocalAppContainer.current
     val device by container.deviceProfileFlow.collectAsStateWithLifecycle()
@@ -475,7 +478,7 @@ private fun DetailContent(
     val emptyVariantState = remember { ModuleVariantState() }
     val variantState = state.variantState ?: emptyVariantState
     val probes = remember(state.probedTag, state.probes, selectedRelease) {
-        if (state.probedTag == selectedRelease?.tagName) state.probes else emptyMap()
+        if (state.probedRelease == selectedRelease) state.probes else emptyMap()
     }
     val installedHint = remember(state.installed) {
         state.installed?.let(InstalledVariantHint::of)
@@ -484,7 +487,7 @@ private fun DetailContent(
         installedPackage = state.installed?.packageName,
         repoPackage = detail.module.packageName,
     )
-    val decision = remember(device, selectedRelease, variantState, probes, installedHint, expectedPackageName) {
+    val fallbackDecision = remember(device, selectedRelease, variantState, probes, installedHint, expectedPackageName) {
         selectedRelease?.let {
             resolver.resolveForUpdate(
                 variantState,
@@ -495,10 +498,12 @@ private fun DetailContent(
             )
         }
     }
+    val recommendationReady = state.probedRelease == selectedRelease && state.variantResolution != null && !state.isProbing
+    val decision = if (recommendationReady) state.variantResolution.decision else fallbackDecision
     // Lazy validation still probes on the detail page (variant-selection.md 7.1):
     // one ranged read per candidate, cached per asset. Remembered choices stay preferred.
-    LaunchedEffect(selectedRelease?.tagName) {
-        selectedRelease?.let { onProbeAssets(it) }
+    LaunchedEffect(selectedRelease, device, variantState, installedHint, state.probeGeneration) {
+        selectedRelease?.let { onProbeAssets(it, false) }
     }
     val candidates = remember(device, selectedRelease, variantState, decision, probes, installedHint, expectedPackageName) {
         val base = selectedRelease?.let {
@@ -515,7 +520,7 @@ private fun DetailContent(
         val recommendedName = (decision as? VariantDecision.Pick)?.asset?.name
         // Best fit first, so the default the install button uses is the first row
         // of the resource sheet too.
-        resolver.ranked(base).map { it.copy(recommended = it.asset.name == recommendedName) }
+        resolver.ranked(base).map { it.copy(recommended = it.asset.name == recommendedName) }.sortedByDescending { it.recommended }
     }
     var userPickedAssetName by rememberSaveable(selectedRelease?.tagName) {
         mutableStateOf("")
@@ -525,6 +530,12 @@ private fun DetailContent(
         default = decision?.defaultAsset(),
         userPickedName = userPickedAssetName,
     )
+    val selectedTarget = if (selectedRelease != null && selectedAsset != null) {
+        ResolvedInstallTarget.of(selectedRelease, selectedAsset, userPickedAssetName.isNotBlank()).let { target ->
+            val meta = probes[selectedAsset.name]
+            target.copy(apkPackageName = meta?.packageName, apkVersionCode = meta?.versionCode, apkVersionName = meta?.versionName)
+        }
+    } else null
     // The stored verdict is only a cache of a past decision: the resolver just
     // re-checked it against the release on screen. A stale NOT_APPLICABLE - a
     // framework upgrade, or the pre-1.2.0 API-number block - must not disable the
@@ -595,7 +606,7 @@ private fun DetailContent(
                     onOpenVersions = { versionSheetVisible = true },
                     onOpenAssets = {
                         assetSheetVisible = true
-                        selectedRelease?.let(onProbeAssets)
+                        selectedRelease?.let { onProbeAssets(it, true) }
                     },
                 )
             }
@@ -605,15 +616,21 @@ private fun DetailContent(
             InstallControls(
                 state = state,
                 targetVersion = selectedRelease?.version,
+                target = selectedTarget,
+                resolvingSelection = !recommendationReady && userPickedAssetName.isBlank() && selectedRelease?.apkAssets?.isNotEmpty() == true,
                 showUpdateHint = state.updateAvailable && selectedRelease == latestRelease,
-                installEnabled = selectedAsset != null &&
+                installEnabled = selectedAsset != null && (recommendationReady || userPickedAssetName.isNotBlank()) &&
                     selectedRelease?.apkAssets?.isNotEmpty() == true,
-                notApplicableReason = notApplicableReason,
+                notApplicableReason = when {
+                    selectedRelease == null && selectedReleaseTag.isNotBlank() -> stringResource(R.string.detail_resources_unavailable)
+                    selectedRelease == null || selectedRelease.apkAssets.isEmpty() -> stringResource(R.string.detail_latest_unavailable)
+                    else -> notApplicableReason
+                },
                 onInstall = {
                     // The button is only enabled with a selected asset, and the
                     // resource row above already shows which one it installs;
                     // changing it is one tap away.
-                    selectedAsset?.let(onInstallAsset)
+                    selectedTarget?.let(onInstallAsset)
                 },
                 onCancel = onCancel,
             )

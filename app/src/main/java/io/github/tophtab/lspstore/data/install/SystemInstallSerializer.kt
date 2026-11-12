@@ -14,31 +14,33 @@ import kotlinx.coroutines.withTimeoutOrNull
  * the slot) so that installer dialogs never stack up.
  */
 class SystemInstallSerializer {
-    private val pending = MutableStateFlow<String?>(null)
+    private val pending = MutableStateFlow<Pair<String, String?>?>(null)
 
     suspend fun awaitFreeAndMarkPending(
         packageName: String,
         timeoutMs: Long = DEFAULT_TIMEOUT_MS,
+        taskId: String? = null,
     ) {
+        val owner = packageName to taskId
         val acquired = withTimeoutOrNull(timeoutMs) {
-            while (!pending.compareAndSet(null, packageName)) {
+            while (!pending.compareAndSet(null, owner)) {
                 pending.first { it == null }
             }
         }
         if (acquired == null) {
             // The delegated installer never reported back in time; carry on so a
             // batch update cannot deadlock on a dismissed dialog.
-            pending.value = packageName
+            pending.value = owner
         }
     }
 
-    fun markCompleted(packageName: String) {
+    fun markCompleted(packageName: String, taskId: String? = null) {
         // Only the hand-off that owns the slot may release it: a late broadcast
         // for the previous install must not open the gate for the next one.
-        pending.compareAndSet(packageName, null)
+        pending.compareAndSet(packageName to taskId, null)
     }
 
-    fun isHeldBy(packageName: String): Boolean = pending.value == packageName
+    fun isHeldBy(packageName: String): Boolean = pending.value?.first == packageName
 
     companion object {
         /**

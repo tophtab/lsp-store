@@ -105,7 +105,7 @@ class LspStoreApp : Application(), ImageLoaderFactory {
                 installed.filter { it.isXposedModule }.forEach { module ->
                     val repoPackage = links[module.packageName] ?: module.packageName
                     if (repoPackage in states) return@forEach
-                    container.libraryRepository.setVariantState(
+                    container.libraryRepository.seedVariantState(
                         repoPackage,
                         ModuleVariantState(
                             status = ModuleVariantState.Status.TRUSTED,

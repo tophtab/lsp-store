@@ -321,4 +321,8 @@
     <string name="settings_auto_update_desc">बैकग्राउंड जाँच के बाद रूट के माध्यम से अपडेट चुपचाप इंस्टॉल करता है।</string>
     <string name="settings_auto_update_needs_root">पहले "साइलेंट इंस्टाल" चालू करें।</string>
     <string name="settings_notifications_needed">सूचनाएँ बंद हैं: बैकग्राउंड जाँच अपडेट की सूचना नहीं दे सकती।</string>
+    <string name="installed_batch_processed">सामूहिक अपडेट अनुरोध संसाधित किए गए</string>
+    <string name="detail_downgrade">पुराना संस्करण %1$s इंस्टॉल करें</string>
+    <string name="detail_latest_unavailable">नवीनतम संस्करण की फ़ाइलें अस्थायी रूप से उपलब्ध नहीं हैं</string>
+    <string name="detail_resources_unavailable">चुने गए संस्करण की फ़ाइलें उपलब्ध नहीं हैं</string>
 </resources>

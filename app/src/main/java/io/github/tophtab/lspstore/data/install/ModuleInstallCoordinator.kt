@@ -1,30 +1,24 @@
 package io.github.tophtab.lspstore.data.install
 
+import io.github.tophtab.lspstore.domain.model.ResolvedInstallTarget
 import android.content.Context
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 import io.github.tophtab.lspstore.R
 import io.github.tophtab.lspstore.data.repository.LibraryRepository
-import io.github.tophtab.lspstore.data.repository.PendingInstallRepository
-import io.github.tophtab.lspstore.data.repository.SettingsRepository
-import io.github.tophtab.lspstore.domain.model.PendingInstall
 import io.github.tophtab.lspstore.domain.model.ReleaseAsset
-import io.github.tophtab.lspstore.domain.variant.VariantSignature
 
 /** Which part of a module install is currently running. */
-enum class InstallStage { QUEUED, DOWNLOADING, INSTALLING }
+enum class InstallStage { QUEUED, PREPARING, DOWNLOADING, WAITING_TO_INSTALL, INSTALLING, PENDING_CONFIRMATION }
 
 /**
  * One in-flight install started from a module page. Progress is published so the
@@ -32,7 +26,8 @@ enum class InstallStage { QUEUED, DOWNLOADING, INSTALLING }
  */
 data class ModuleInstallRun(
     val repoPackageName: String,
-    val asset: ReleaseAsset,
+    val asset: ReleaseAsset?,
+    val taskId: String = "",
     val stage: InstallStage = InstallStage.QUEUED,
     val downloaded: Long = 0L,
     val total: Long = 0L,
@@ -54,6 +49,8 @@ data class ModuleInstallRequest(
     val versionName: String = "",
     /** The user just picked this variant, so remembering it is news worth a toast. */
     val announceRemembered: Boolean = false,
+    val target: ResolvedInstallTarget? = null,
+    val taskId: String? = null,
 )
 
 /**
@@ -72,16 +69,11 @@ class ModuleInstallCoordinator(
     private val scope: CoroutineScope,
     private val downloadManager: DownloadManager,
     private val downloadSlots: DownloadSlots,
-    private val installer: ApkInstaller,
-    private val settingsRepository: SettingsRepository,
     private val libraryRepository: LibraryRepository,
-    private val pendingRepository: PendingInstallRepository,
-    private val systemInstallSerializer: SystemInstallSerializer,
+    private val registry: InstallTaskRegistry,
+    private val execution: InstallExecution,
 ) {
-    private val _runs = MutableStateFlow<Map<String, ModuleInstallRun>>(emptyMap())
-
-    /** Installs currently downloading or installing, keyed by repository package. */
-    val runs = _runs.asStateFlow()
+    val runs = registry.runs
 
     private val _messages = MutableSharedFlow<String>(extraBufferCapacity = 8)
 
@@ -91,76 +83,50 @@ class ModuleInstallCoordinator(
     private val jobs = ConcurrentHashMap<String, Job>()
 
     /** Whether a chain already owns this package, synchronously for callers. */
-    fun isRunning(repoPackageName: String): Boolean = jobs.containsKey(repoPackageName)
+    fun isRunning(repoPackageName: String): Boolean = registry.isRunning(repoPackageName)
 
     /** Packages currently owned by a chain, for "update all" selection. */
-    fun runningPackages(): Set<String> = jobs.keys.toSet()
+    fun runningPackages(): Set<String> = registry.runningPackages()
 
     /** Starts the chain; a second start for the same module is ignored. */
-    @Synchronized
     fun start(request: ModuleInstallRequest) {
-        // Register before execution: a cached download can finish synchronously
-        // and otherwise remove its entry before this method has inserted it.
-        val job = scope.launch(start = CoroutineStart.LAZY) {
-            try {
-                execute(request)
-            } catch (cancellation: CancellationException) {
-                finish(request.repoPackageName, context.getString(R.string.download_cancelled))
-                throw cancellation
-            } catch (error: Throwable) {
-                finish(
-                    request.repoPackageName,
-                    error.message ?: context.getString(R.string.error_install_failed),
-                )
-            }
-        }
-        if (jobs.putIfAbsent(request.repoPackageName, job) != null) {
-            job.cancel()
-            return
-        }
-        // Publish the run before the job starts: every log/progress update below
-        // transforms an existing entry instead of creating one.
-        _runs.update { current ->
-            current + (
-                request.repoPackageName to ModuleInstallRun(
-                    repoPackageName = request.repoPackageName,
-                    asset = request.asset,
-                    total = request.asset.size,
-                )
-            )
-        }
-        job.invokeOnCompletion {
-            // Cancellation can happen before a lazy job enters its body.
-            synchronized(this) {
-                if (jobs.remove(request.repoPackageName, job)) {
-                    _runs.update { it - request.repoPackageName }
+        scope.launch {
+            val id = request.taskId ?: registry.claim(request.repoPackageName, request.installedPackage) ?: return@launch
+            if (!registry.owns(id)) return@launch
+            val fixed = request.copy(taskId = id)
+            val job = scope.launch(start = CoroutineStart.LAZY) {
+                try {
+                    if (fixed.target?.explicitSelection == true) {
+                        libraryRepository.setExplicitPreference(fixed.repoPackageName, fixed.target.signature)
+                    }
+                    execute(fixed)
+                } catch (cancellation: CancellationException) {
+                    finish(id, context.getString(R.string.download_cancelled))
+                    throw cancellation
+                } catch (error: Throwable) {
+                    finish(id, error.message ?: context.getString(R.string.error_install_failed))
+                } finally {
+                    if (registry.runs.value[fixed.repoPackageName]?.stage != InstallStage.PENDING_CONFIRMATION) registry.release(id)
                 }
             }
-        }
-        job.start()
-    }
-
-    /**
-     * Aborts a running download. The install stage cannot be recalled once the
-     * APK is with the device's installer, so it is left alone.
-     */
-    fun cancel(repoPackageName: String) {
-        val run = _runs.value[repoPackageName] ?: return
-        when (run.stage) {
-            // Nothing is transferring yet, so there is no download task to
-            // cancel: stopping the job releases the slot and removes the run.
-            InstallStage.QUEUED -> jobs[repoPackageName]?.cancel()
-            // The awaiting coroutine observes CANCELLED and produces the
-            // message, so there is exactly one place that finishes a run.
-            InstallStage.DOWNLOADING ->
-                downloadManager.cancel(downloadManager.keyOf(run.asset))
-
-            InstallStage.INSTALLING -> Unit
+            jobs[id] = job
+            registry.asset(id, fixed.asset)
+            registry.onCancel(id) {
+                downloadManager.cancel(downloadManager.keyOf(fixed.asset))
+                job.cancel()
+            }
+            job.invokeOnCompletion {
+                jobs.remove(id, job)
+                if (registry.runs.value[fixed.repoPackageName]?.stage != InstallStage.PENDING_CONFIRMATION) registry.release(id)
+            }
+            job.start()
         }
     }
+
+    fun cancel(repoPackageName: String) = registry.cancel(repoPackageName)
 
     private suspend fun execute(request: ModuleInstallRequest) {
-        val repo = request.repoPackageName
+        val repo = requireNotNull(request.taskId)
         log(repo, "Waiting for a download slot")
         // The transfer, not the install, holds the slot: once the APK is on
         // disk another module may start downloading while this one installs.
@@ -223,72 +189,17 @@ class ModuleInstallCoordinator(
     }
 
     private suspend fun install(request: ModuleInstallRequest, file: File) {
-        val repo = request.repoPackageName
-        val useRoot = settingsRepository.rootInstall.first()
-        val identity = readInstallIdentity(file)
-        val installTarget = identity?.packageName ?: request.installedPackage ?: repo
-        val linkAfterInstall = installTarget.takeIf { it != repo }?.let { it to repo }
-
-        log(repo, "Installing ${request.asset.name}")
-        val serializer = systemInstallSerializer
-        val outcome = try {
-            installWithSlot(installer, serializer, file, installTarget, useRoot = useRoot, allowUi = true)
-        } catch (cancellation: CancellationException) {
-            throw cancellation
-        } catch (error: Throwable) {
-            InstallOutcome.Failure(error.message ?: "install failed")
-        }
-
+        val id = requireNotNull(request.taskId)
+        val outcome = execution.install(
+            request.repoPackageName, request.title, request.asset, file,
+            request.installedPackage, request.target, id, request.versionCode, request.versionName,
+        )
         when (outcome) {
-            InstallOutcome.Completed -> {
-                serializer.markCompleted(installTarget)
-                pendingRepository.clear(installTarget)
-                linkAfterInstall?.let { (installedPackage, repoPackage) ->
-                    libraryRepository.linkModule(installedPackage, repoPackage)
-                }
-                libraryRepository.recordInstallResult(
-                    repo,
-                    ok = true,
-                    signature = VariantSignature.ofAsset(request.asset.name, installTarget),
-                )
-                log(repo, "Installed")
-                finish(
-                    repo,
-                    if (request.announceRemembered) {
-                        context.getString(R.string.variant_remembered)
-                    } else {
-                        context.getString(R.string.detail_installed_apk, request.asset.name)
-                    },
-                )
-            }
-
-            InstallOutcome.DelegatedToSystem -> {
-                // The installer app owns the APK from here on. Persist a pending
-                // state until the package broadcast arrives instead of showing a
-                // one-off message.
-                pendingRepository.markPending(
-                    PendingInstall(
-                        packageName = installTarget,
-                        repoPackageName = repo,
-                        title = request.title,
-                        versionCode = identity?.versionCode ?: request.versionCode,
-                        versionName = identity?.versionName ?: request.versionName.ifBlank { request.asset.name },
-                        assetName = request.asset.name,
-                        createdAt = System.currentTimeMillis(),
-                        downloadKey = downloadManager.keyOf(request.asset),
-                    ),
-                )
-                log(repo, "Handed off to the system installer")
-                finish(repo, null)
-            }
-
+            InstallOutcome.Completed -> finish(id, if (request.announceRemembered) context.getString(R.string.variant_remembered) else context.getString(R.string.detail_installed_apk, request.asset.name))
+            InstallOutcome.DelegatedToSystem -> log(id, "Waiting for installation confirmation")
             is InstallOutcome.Failure -> {
-                serializer.markCompleted(installTarget)
-                pendingRepository.clear(installTarget)
                 downloadManager.invalidate(downloadManager.keyOf(request.asset))
-                libraryRepository.recordInstallResult(repo, ok = false)
-                log(repo, outcome.message)
-                finish(repo, outcome.message)
+                finish(id, outcome.message)
             }
         }
     }
@@ -297,20 +208,10 @@ class ModuleInstallCoordinator(
         update(repoPackageName) { it.copy(logs = it.logs + line) }
     }
 
-    private fun update(
-        repoPackageName: String,
-        transform: (ModuleInstallRun) -> ModuleInstallRun,
-    ) {
-        _runs.update { current ->
-            val run = current[repoPackageName] ?: return@update current
-            current + (repoPackageName to transform(run))
-        }
-    }
+    private fun update(id: String, transform: (ModuleInstallRun) -> ModuleInstallRun) = registry.update(id, transform)
 
-    @Synchronized
-    private fun finish(repoPackageName: String, message: String?) {
-        jobs.remove(repoPackageName)
-        _runs.update { it - repoPackageName }
+    private fun finish(id: String, message: String?) {
+        registry.release(id)
         if (message != null) _messages.tryEmit(message)
     }
 }

@@ -321,4 +321,8 @@
     <string name="settings_auto_update_desc">Instaluje aktualizacje cicho przez root po sprawdzeniu w tle.</string>
     <string name="settings_auto_update_needs_root">Najpierw włącz „Cichą instalację”.</string>
     <string name="settings_notifications_needed">Powiadomienia są wyłączone: sprawdzanie w tle nie może zgłaszać aktualizacji.</string>
+    <string name="installed_batch_processed">Przetworzono żądania aktualizacji zbiorczej</string>
+    <string name="detail_downgrade">Zainstaluj starszą wersję %1$s</string>
+    <string name="detail_latest_unavailable">Pliki najnowszej wersji są tymczasowo niedostępne</string>
+    <string name="detail_resources_unavailable">Pliki wybranej wersji są niedostępne</string>
 </resources>

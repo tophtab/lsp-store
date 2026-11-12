@@ -321,4 +321,8 @@
     <string name="settings_auto_update_desc">Arka plan denetiminden sonra güncellemeleri root üzerinden sessizce yükler.</string>
     <string name="settings_auto_update_needs_root">Önce "Sessiz kurulum"u açın.</string>
     <string name="settings_notifications_needed">Bildirimler kapalı: arka plan denetimi güncellemeleri bildiremez.</string>
+    <string name="installed_batch_processed">Toplu güncelleme istekleri işlendi</string>
+    <string name="detail_downgrade">%1$s sürümüne düşür</string>
+    <string name="detail_latest_unavailable">En son sürümün dosyaları geçici olarak kullanılamıyor</string>
+    <string name="detail_resources_unavailable">Seçilen sürümün dosyaları kullanılamıyor</string>
 </resources>

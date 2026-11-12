@@ -364,4 +364,8 @@
     <string name="settings_auto_update_desc">Installs updates silently through root after a background check.</string>
     <string name="settings_auto_update_needs_root">Turn on Silent install first.</string>
     <string name="settings_notifications_needed">Notifications are off: background checks cannot report updates.</string>
+    <string name="installed_batch_processed">Batch update requests processed</string>
+    <string name="detail_downgrade">Downgrade to %1$s</string>
+    <string name="detail_latest_unavailable">Latest version resources are temporarily unavailable</string>
+    <string name="detail_resources_unavailable">Resources for the selected version are unavailable</string>
 </resources>

@@ -1,5 +1,9 @@
 package io.github.tophtab.lspstore.di
 
+import io.github.tophtab.lspstore.domain.usecase.DEFAULT_PENDING_MAX_AGE_MS
+import io.github.tophtab.lspstore.data.install.InstallConfirmation
+import io.github.tophtab.lspstore.data.install.InstallExecution
+import io.github.tophtab.lspstore.data.install.InstallTaskRegistry
 import android.content.Context
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -109,7 +113,26 @@ class AppContainer(context: Context) {
      */
     private val installScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
+    val installTaskRegistry = InstallTaskRegistry(initiallyReady = false)
+    val installConfirmation = InstallConfirmation(
+        libraryRepository, pendingInstallRepository, installTaskRegistry, systemInstallSerializer,
+        readInstalled = { packageName ->
+            runCatching {
+                @Suppress("DEPRECATION")
+                val info = appContext.packageManager.getPackageInfo(packageName, 0)
+                InstalledModule(packageName, info.longVersionCode, info.versionName, packageName, false, null, lastUpdateTime = info.lastUpdateTime)
+            }.getOrNull()
+        },
+    )
+    val installExecution = InstallExecution(
+        installer, settingsRepository, libraryRepository, pendingInstallRepository,
+        systemInstallSerializer, installTaskRegistry, installConfirmation,
+    )
+
     init {
+        installScope.launch {
+            installTaskRegistry.restore(pendingInstallRepository.pending.first().values)
+        }
         // Mirror the setting once at startup and whenever it changes. The gate
         // itself is a plain lambda read, so no download waits on DataStore.
         installScope.launch {
@@ -130,11 +153,9 @@ class AppContainer(context: Context) {
         scope = installScope,
         downloadManager = downloadManager,
         downloadSlots = downloadSlots,
-        installer = installer,
-        settingsRepository = settingsRepository,
         libraryRepository = libraryRepository,
-        pendingRepository = pendingInstallRepository,
-        systemInstallSerializer = systemInstallSerializer,
+        registry = installTaskRegistry,
+        execution = installExecution,
     )
 
     private val translationHttpClient: HttpClient = createTranslationHttpClient()
@@ -153,14 +174,7 @@ class AppContainer(context: Context) {
     )
 
     /** Global install slot + outcome bookkeeping for one downloaded APK. */
-    val installPreparedApkUseCase: InstallPreparedApkUseCase = InstallPreparedApkUseCase(
-        installer = installer,
-        settingsRepository = settingsRepository,
-        libraryRepository = libraryRepository,
-        pendingRepository = pendingInstallRepository,
-        systemInstallSerializer = systemInstallSerializer,
-        failureMessage = { it.message ?: appContext.getString(R.string.error_install_failed) },
-    )
+    val installPreparedApkUseCase = InstallPreparedApkUseCase(installExecution)
 
     /** "Update all": concurrent downloads, serialized installs. */
     val batchInstallUseCase: BatchInstallUseCase = BatchInstallUseCase(
@@ -168,18 +182,11 @@ class AppContainer(context: Context) {
         installPrepared = installPreparedApkUseCase,
         abandonDownload = { asset -> downloadManager.cancel(downloadManager.keyOf(asset)) },
         downloadSlots = downloadSlots,
+        registry = installTaskRegistry,
     )
 
     /** Background twin: same bookkeeping, never opens an installer UI. */
-    private val silentInstallPreparedApkUseCase: InstallPreparedApkUseCase = InstallPreparedApkUseCase(
-        installer = installer,
-        settingsRepository = settingsRepository,
-        libraryRepository = libraryRepository,
-        pendingRepository = pendingInstallRepository,
-        systemInstallSerializer = systemInstallSerializer,
-        failureMessage = { it.message ?: appContext.getString(R.string.error_install_failed) },
-        allowUi = false,
-    )
+    private val silentInstallPreparedApkUseCase = InstallPreparedApkUseCase(installExecution, allowUi = false)
 
     /** "Update all" for the background check: a non-root install just fails. */
     private val backgroundBatchInstallUseCase: BatchInstallUseCase = BatchInstallUseCase(
@@ -187,6 +194,7 @@ class AppContainer(context: Context) {
         installPrepared = silentInstallPreparedApkUseCase,
         abandonDownload = { asset -> downloadManager.cancel(downloadManager.keyOf(asset)) },
         downloadSlots = downloadSlots,
+        registry = installTaskRegistry,
     )
 
     val updateNotifier = UpdateNotifier(appContext)
@@ -215,25 +223,16 @@ class AppContainer(context: Context) {
      * installed screen is composed (background broadcast, resume after a
      * system-installer round trip).
      */
-    suspend fun completePendingInstall(packageName: String) {
-        val pending = runCatching { pendingInstallRepository.pending.first()[packageName] }
-            .getOrNull() ?: return
-        recordPendingInstallResult(pending)
-        pendingInstallRepository.clear(packageName)
-        systemInstallSerializer.markCompleted(packageName)
-        installer.confirmInstalled(packageName)
+    suspend fun completePendingInstall(packageName: String, expected: PendingInstall? = null) {
+        val pending = expected ?: pendingInstallRepository.pending.first()[packageName] ?: return
+        if (installConfirmation.confirm(pending)) installer.confirmInstalled(packageName)
     }
 
-    /**
-     * Drops a hand-off that never landed (installer dialog dismissed, package
-     * uninstalled). Nothing is recorded, so the module keeps its update and the
-     * variant memory is not marked as a successful install.
-     */
-    suspend fun cancelPendingInstall(packageName: String) {
-        val pending = pendingInstallRepository.pending.first()[packageName]
-        pending?.downloadKey?.let { downloadManager.invalidate(it) }
-        pendingInstallRepository.clear(packageName)
-        systemInstallSerializer.markCompleted(packageName)
+    suspend fun cancelPendingInstall(packageName: String, expected: PendingInstall? = null) {
+        val pending = expected ?: pendingInstallRepository.pending.first()[packageName] ?: return
+        installConfirmation.cancel(pending) {
+            pending.downloadKey?.let { downloadManager.invalidate(it) }
+        }
     }
 
     /**
@@ -255,7 +254,7 @@ class AppContainer(context: Context) {
         val pending = runCatching { pendingInstallRepository.pending.first()[packageName] }
             .getOrNull()
         if (removed) {
-            if (pending != null) cancelPendingInstall(packageName)
+            if (pending != null) cancelPendingInstall(packageName, pending)
             installer.notifyPackageChanged(packageName)
             return
         }
@@ -277,16 +276,17 @@ class AppContainer(context: Context) {
                 pending = pending,
                 installedVersionCode = packageInfo?.longVersionCode,
                 installedLastUpdateTime = packageInfo?.lastUpdateTime,
+                installedVersionName = packageInfo?.versionName,
             )
         ) {
-            completePendingInstall(packageName)
+            completePendingInstall(packageName, pending)
         } else {
             if (
                 installer.foregroundState.isResumed &&
                 pending.createdAt > 0L &&
                 System.currentTimeMillis() - pending.createdAt > ABANDONED_PENDING_MS
             ) {
-                cancelPendingInstall(packageName)
+                cancelPendingInstall(packageName, pending)
             }
             // PackageManager can lag the broadcast, so the installed list is
             // worth rescanning even while the hand-off stays pending.
@@ -294,43 +294,34 @@ class AppContainer(context: Context) {
         }
         // The broadcast is the installer's own proof that it closed, so the slot
         // is free even when PackageManager has not caught up yet.
-        systemInstallSerializer.markCompleted(packageName)
+        systemInstallSerializer.markCompleted(packageName, InstallTaskRegistry.idOf(pending))
     }
 
-    /**
-     * Records a delegated install as successful. The asset name that was handed
-     * to the installer is the only trace of which variant landed, so it becomes
-     * the remembered signature.
-     */
+    /** Re-checks a persisted hand-off through the shared confirmation path. */
     suspend fun recordPendingInstallResult(pending: PendingInstall) {
-        val packageName = pending.repoPackageName ?: pending.packageName
-        if (pending.packageName != packageName) {
-            libraryRepository.linkModule(pending.packageName, packageName)
-        }
-        libraryRepository.recordInstallResult(
-            packageName,
-            ok = true,
-            signature = pending.assetName
-                .takeIf { it.isNotBlank() }
-                ?.let { VariantSignature.ofAsset(it, pending.packageName) },
-        )
+        completePendingInstall(pending.packageName, pending)
     }
 
-    /**
-     * Prunes pending installs after an installed scan and records the ones whose
-     * target version has landed. Callers use this instead of touching the
-     * repository directly so a completed install is never dropped unrecorded.
-     */
     suspend fun prunePendingInstalls(installed: List<InstalledModule>): List<PendingInstall> {
-        // An external installer may still be waiting for its user. Background
-        // scans must not expire its APK or hand-off; package events still record
-        // completed installs, and returning to the store settles cancellations.
-        if (!installer.foregroundState.isResumed) return emptyList()
-        val reached = runCatching { pendingInstallRepository.prune(installed) }
-            .getOrDefault(emptyList())
-        reached.forEach {
-            recordPendingInstallResult(it)
-            systemInstallSerializer.markCompleted(it.packageName)
+        val entries = pendingInstallRepository.pending.first().values.toList()
+        val reached = mutableListOf<PendingInstall>()
+        entries.forEach { entry ->
+            when (settlePendingInstall(entry, installed.firstOrNull { it.packageName == entry.packageName }, System.currentTimeMillis(), DEFAULT_PENDING_MAX_AGE_MS, installer.foregroundState.isResumed)) {
+                PendingSettlement.LANDED -> {
+                    completePendingInstall(entry.packageName, entry)
+                    reached += entry
+                }
+                PendingSettlement.ABANDONED -> cancelPendingInstall(entry.packageName, entry)
+                PendingSettlement.PENDING -> Unit
+            }
+        }
+        // Drop invalid local source records as soon as a scan observes a replacement.
+        libraryRepository.variantStates.first().forEach { (repo, state) ->
+            val record = state.confirmedInstall ?: return@forEach
+            val match = installed.firstOrNull { it.packageName == record.packageName }
+            if (!record.matches(match) && !record.matches(installConfirmation.installed(record.packageName))) {
+                libraryRepository.invalidateConfirmedInstall(repo, record)
+            }
         }
         return reached
     }
@@ -348,16 +339,18 @@ class AppContainer(context: Context) {
         retryDelayMs: Long = 1200L,
         abandonAfterMs: Long = ABANDONED_PENDING_MS,
         abandonUnresolved: Boolean = false,
+        snapshot: Collection<PendingInstall>? = null,
     ) {
+        val entries = snapshot ?: pendingInstallRepository.pending.first().values.toList()
         var unresolved = emptyList<PendingInstall>()
         repeat(retries) { attempt ->
-            val pendingInstalls = runCatching { pendingInstallRepository.pending.first() }
-                .getOrDefault(emptyMap())
+            val current = pendingInstallRepository.pending.first()
+            val pendingInstalls = entries.filter { current[it.packageName] == it }
             if (pendingInstalls.isEmpty()) return
             val installed = runCatching { installedRepository.getInstalledModules(force = true) }
                 .getOrNull() ?: return
             val stillOpen = mutableListOf<PendingInstall>()
-            pendingInstalls.values.forEach { pending ->
+            pendingInstalls.forEach { pending ->
                 val match = installed.firstOrNull { it.packageName == pending.packageName }
                 when (
                     settlePendingInstall(
@@ -368,10 +361,10 @@ class AppContainer(context: Context) {
                         allowAbandonment = installer.foregroundState.isResumed,
                     )
                 ) {
-                    PendingSettlement.LANDED -> completePendingInstall(pending.packageName)
+                    PendingSettlement.LANDED -> completePendingInstall(pending.packageName, pending)
                     PendingSettlement.ABANDONED -> {
                         if (installer.foregroundState.isResumed) {
-                            cancelPendingInstall(pending.packageName)
+                            cancelPendingInstall(pending.packageName, pending)
                         }
                     }
                     PendingSettlement.PENDING -> stillOpen += pending
@@ -392,7 +385,7 @@ class AppContainer(context: Context) {
             val expired = abandonUnresolved ||
                 (pending.createdAt > 0L && now - pending.createdAt > abandonAfterMs)
             if (expired && installer.foregroundState.isResumed) {
-                cancelPendingInstall(pending.packageName)
+                cancelPendingInstall(pending.packageName, pending)
             }
         }
     }
@@ -402,20 +395,18 @@ class AppContainer(context: Context) {
      * trip. A cancelled installer screen sends no broadcast but does close, so
      * this is where its slot and pending entry are released.
      */
-    suspend fun reconcileAfterInstallerReturn() {
+    suspend fun reconcileAfterInstallerReturn(returningTasks: Set<String>) {
         if (!installer.foregroundState.isResumed) return
-        val pendingKeys = runCatching { pendingInstallRepository.pending.first().keys }
-            .getOrDefault(emptySet())
-        // Release the gate before reconciling: a cancelled dialog would otherwise
-        // make the next install wait for its full timeout.
-        pendingKeys.forEach {
+        val entries = pendingInstallRepository.pending.first().values.filter { InstallTaskRegistry.idOf(it) in returningTasks }
+        entries.forEach {
             if (!installer.foregroundState.isResumed) return
-            systemInstallSerializer.markCompleted(it)
+            systemInstallSerializer.markCompleted(it.packageName, InstallTaskRegistry.idOf(it))
         }
         reconcilePendingInstalls(
             retries = 4,
             retryDelayMs = 800L,
             abandonUnresolved = true,
+            snapshot = entries,
         )
     }
 

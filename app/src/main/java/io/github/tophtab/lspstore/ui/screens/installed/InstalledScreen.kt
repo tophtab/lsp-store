@@ -672,6 +672,8 @@ private fun InstallPill(
 
         BatchInstallPhase.WAITING_TO_INSTALL -> stringResource(R.string.installed_state_waiting)
         BatchInstallPhase.INSTALLING -> stringResource(R.string.installed_state_installing)
+        BatchInstallPhase.PENDING_CONFIRMATION -> stringResource(R.string.pending_install)
+        BatchInstallPhase.ALREADY_RUNNING -> stringResource(R.string.installed_state_waiting)
         BatchInstallPhase.COMPLETED -> stringResource(R.string.installed_state_done)
         BatchInstallPhase.FAILED -> stringResource(R.string.installed_state_failed)
         BatchInstallPhase.SKIPPED,
