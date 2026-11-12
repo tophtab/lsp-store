@@ -45,18 +45,21 @@ fun pendingInstallLanded(
 /**
  * Settles one persisted hand-off. [abandonAfterMs] is the window in which a
  * hand-off that has not landed is still considered in flight; past it, the
- * installer dialog was dismissed or the package was uninstalled.
+ * installer dialog was dismissed or the package was uninstalled. Background
+ * scans set [allowAbandonment] to false: the user may still be reading the
+ * external installer's confirmation page, so elapsed time cannot cancel it.
  */
 fun settlePendingInstall(
     pending: PendingInstall,
     installed: InstalledModule?,
     now: Long,
     abandonAfterMs: Long,
+    allowAbandonment: Boolean = true,
 ): PendingSettlement {
     if (pendingInstallLanded(pending, installed?.versionCode, installed?.lastUpdateTime)) {
         return PendingSettlement.LANDED
     }
-    if (pending.createdAt > 0L && now - pending.createdAt > abandonAfterMs) {
+    if (allowAbandonment && pending.createdAt > 0L && now - pending.createdAt > abandonAfterMs) {
         return PendingSettlement.ABANDONED
     }
     return PendingSettlement.PENDING
