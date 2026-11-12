@@ -143,7 +143,7 @@
     <string name="settings_root">静默安装</string>
     <string name="settings_root_detected">检测到 su，APK 将静默安装</string>
     <string name="settings_root_unavailable">此设备没有 su</string>
-    <string name="settings_root_desc">通过 su 静默安装和更新 APK</string>
+    <string name="settings_root_desc">通过root权限静默安装和更新APK</string>
     <string name="settings_library">资料库</string>
     <string name="import_title">导入已安装模块</string>
     <string name="import_desc">已安装但不在仓库中的 LSPosed 模块。将一个模块链接到仓库模块即可检查更新。下载的 APK 必须与已安装的包匹配才能原地更新。</string>
