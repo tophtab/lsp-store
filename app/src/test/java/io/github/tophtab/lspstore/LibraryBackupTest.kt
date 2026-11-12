@@ -17,6 +17,7 @@ class LibraryBackupTest {
         skippedUpdates = mapOf("com.example.a" to "10400-1.4.0"),
         ignoredUpdates = listOf("com.example.d"),
         ignoredModules = listOf("com.example.e"),
+        ignoredKeywords = listOf("Douyin"),
         preReleaseModules = listOf("com.example.f"),
         searchHistory = listOf("example"),
         links = mapOf("com.installed" to "com.example.a"),
@@ -76,11 +77,13 @@ class LibraryBackupTest {
         val local = LibraryBackup(
             favourites = listOf("com.example.a", "com.example.b"),
             ignoredModules = listOf("com.example.x"),
+            ignoredKeywords = listOf("Douyin"),
             recentlyViewed = listOf("com.example.r1"),
         )
         val incoming = LibraryBackup(
             favourites = listOf("com.example.b", "com.example.c"),
             ignoredModules = listOf("com.example.y"),
+            ignoredKeywords = listOf("douyin", "TikTok"),
             recentlyViewed = listOf("com.example.r2", "com.example.r1"),
         )
 
@@ -91,6 +94,8 @@ class LibraryBackupTest {
             merged.favourites,
         )
         assertEquals(listOf("com.example.x", "com.example.y"), merged.ignoredModules)
+        // Keywords match case-insensitively, so the merge is case-insensitive too.
+        assertEquals(listOf("Douyin", "TikTok"), merged.ignoredKeywords)
         assertEquals(listOf("com.example.r1", "com.example.r2"), merged.recentlyViewed)
     }
 

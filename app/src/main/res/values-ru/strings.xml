@@ -334,4 +334,19 @@
     <string name="detail_downgrade">Установить более старую версию %1$s</string>
     <string name="detail_latest_unavailable">Файлы последней версии временно недоступны</string>
     <string name="detail_resources_unavailable">Файлы выбранной версии недоступны</string>
+    <!-- Ignore keywords -->
+    <string name="action_add">Добавить</string>
+    <string name="detail_hidden_by_keyword">Скрыто по ключевому слову: %1$s</string>
+    <string name="library_keywords_section">Ключевые слова · %1$d</string>
+    <string name="library_modules_section">Модули · %1$d</string>
+    <string name="library_add_ignore_keyword">Добавить ключевое слово для игнорирования</string>
+    <string name="library_remove_ignore_keyword">Удалить ключевое слово</string>
+    <string name="library_ignore_keyword_placeholder">напр. Douyin</string>
+    <string name="library_ignore_keyword_hint">Совпадает с названием, пакетом и описанием модуля; без учёта регистра.</string>
+    <string name="library_ignore_keyword_preview">Скроет модулей: %1$d</string>
+    <string name="library_ignore_keyword_matches">Модулей: %1$d</string>
+    <string name="library_ignore_keyword_blank">Введите ключевое слово</string>
+    <string name="library_ignore_keyword_duplicate">Ключевое слово уже добавлено</string>
+    <string name="library_ignore_keyword_too_long">Не более %1$d символов</string>
+    <string name="library_ignore_keyword_limit">Не более %1$d ключевых слов</string>
 </resources>

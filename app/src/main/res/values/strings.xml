@@ -377,4 +377,20 @@
     <string name="detail_downgrade">Downgrade to %1$s</string>
     <string name="detail_latest_unavailable">Latest version resources are temporarily unavailable</string>
     <string name="detail_resources_unavailable">Resources for the selected version are unavailable</string>
+
+    <!-- Ignore keywords -->
+    <string name="action_add">Add</string>
+    <string name="detail_hidden_by_keyword">Hidden by keyword: %1$s</string>
+    <string name="library_keywords_section">Keywords · %1$d</string>
+    <string name="library_modules_section">Modules · %1$d</string>
+    <string name="library_add_ignore_keyword">Add ignore keyword</string>
+    <string name="library_remove_ignore_keyword">Remove keyword</string>
+    <string name="library_ignore_keyword_placeholder">e.g. Douyin</string>
+    <string name="library_ignore_keyword_hint">Matches module name, package and description; case-insensitive.</string>
+    <string name="library_ignore_keyword_preview">Hides %1$d modules</string>
+    <string name="library_ignore_keyword_matches">%1$d modules</string>
+    <string name="library_ignore_keyword_blank">Enter a keyword</string>
+    <string name="library_ignore_keyword_duplicate">Keyword already added</string>
+    <string name="library_ignore_keyword_too_long">At most %1$d characters</string>
+    <string name="library_ignore_keyword_limit">At most %1$d keywords</string>
 </resources>

@@ -13,6 +13,7 @@ import io.github.tophtab.lspstore.R
 import io.github.tophtab.lspstore.di.AppContainer
 import io.github.tophtab.lspstore.ui.RefreshScrollGate
 import io.github.tophtab.lspstore.ui.toUserMessage
+import io.github.tophtab.lspstore.domain.model.HiddenModules
 import io.github.tophtab.lspstore.domain.model.InstalledModule
 import io.github.tophtab.lspstore.domain.model.Module
 import io.github.tophtab.lspstore.domain.model.repoPackagesOf
@@ -59,7 +60,7 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
     private var index: List<Module> = emptyList()
     private var installed: List<InstalledModule> = emptyList()
     private var links: Map<String, String> = emptyMap()
-    private var ignoredModules: Set<String> = emptySet()
+    private var hidden: HiddenModules = HiddenModules()
     private var loadJob: Job? = null
     private val refreshScrollGate = RefreshScrollGate()
     private val searchScrollGate = RefreshScrollGate()
@@ -69,10 +70,10 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
             libraryRepository.links.collect { links = it; rebuild() }
         }
         viewModelScope.launch {
-            // Ignoring a module hides it from every shelf and from search, but
-            // not from the installed tab: the package is still installed and
-            // still needs managing.
-            libraryRepository.ignoredModules.collect { ignoredModules = it; rebuild() }
+            // Ignoring a module, by package or by keyword, hides it from every
+            // shelf and from search, but not from the installed tab: the package
+            // is still installed and still needs managing.
+            libraryRepository.hiddenModules.collect { hidden = it; rebuild() }
         }
         load(force = false)
     }
@@ -223,7 +224,7 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
         // the only place to browse modules, so a fixed limit hid the rest.
         // Zero-star modules stay at the end of the "Most starred" list instead
         // of being dropped.
-        val visible = index.filterNot { it.packageName in ignoredModules }
+        val visible = hidden.filter(index)
         val recentlyUpdated = visible
             .sortedByDescending { it.lastPublishedAt ?: Instant.EPOCH }
         val mostStarred = visible
@@ -234,11 +235,7 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
             emptyList()
         } else {
             visible
-                .filter { module ->
-                    module.title.contains(query, ignoreCase = true) ||
-                        module.packageName.contains(query, ignoreCase = true) ||
-                        module.summary?.contains(query, ignoreCase = true) == true
-                }
+                .filter { module -> module.matchesText(query) }
                 .sortedByDescending { it.lastPublishedAt ?: Instant.EPOCH }
         }
 

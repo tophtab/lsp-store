@@ -371,4 +371,20 @@
     <string name="detail_downgrade">降级安装 %1$s</string>
     <string name="detail_latest_unavailable">最新版本资源暂不可用</string>
     <string name="detail_resources_unavailable">所选版本资源不可用</string>
+
+    <!-- Ignore keywords -->
+    <string name="action_add">添加</string>
+    <string name="detail_hidden_by_keyword">被关键词隐藏：%1$s</string>
+    <string name="library_keywords_section">关键词 · %1$d</string>
+    <string name="library_modules_section">模块 · %1$d</string>
+    <string name="library_add_ignore_keyword">添加忽略关键词</string>
+    <string name="library_remove_ignore_keyword">移除关键词</string>
+    <string name="library_ignore_keyword_placeholder">例如：抖音</string>
+    <string name="library_ignore_keyword_hint">匹配模块名称、包名和简介，不区分大小写</string>
+    <string name="library_ignore_keyword_preview">将隐藏 %1$d 个模块</string>
+    <string name="library_ignore_keyword_matches">%1$d 个模块</string>
+    <string name="library_ignore_keyword_blank">请输入关键词</string>
+    <string name="library_ignore_keyword_duplicate">该关键词已存在</string>
+    <string name="library_ignore_keyword_too_long">最多 %1$d 个字符</string>
+    <string name="library_ignore_keyword_limit">最多 %1$d 个关键词</string>
 </resources>

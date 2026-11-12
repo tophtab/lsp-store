@@ -334,4 +334,19 @@
     <string name="detail_downgrade">Installa versione precedente %1$s</string>
     <string name="detail_latest_unavailable">Le risorse dell’ultima versione sono temporaneamente non disponibili</string>
     <string name="detail_resources_unavailable">Le risorse della versione selezionata non sono disponibili</string>
+    <!-- Ignore keywords -->
+    <string name="action_add">Aggiungi</string>
+    <string name="detail_hidden_by_keyword">Nascosto dalla parola chiave: %1$s</string>
+    <string name="library_keywords_section">Parole chiave · %1$d</string>
+    <string name="library_modules_section">Moduli · %1$d</string>
+    <string name="library_add_ignore_keyword">Aggiungi parola chiave da ignorare</string>
+    <string name="library_remove_ignore_keyword">Rimuovi parola chiave</string>
+    <string name="library_ignore_keyword_placeholder">ad es. Douyin</string>
+    <string name="library_ignore_keyword_hint">Corrisponde a nome, pacchetto e descrizione del modulo; senza distinzione tra maiuscole e minuscole.</string>
+    <string name="library_ignore_keyword_preview">Nasconderà %1$d moduli</string>
+    <string name="library_ignore_keyword_matches">%1$d moduli</string>
+    <string name="library_ignore_keyword_blank">Inserisci una parola chiave</string>
+    <string name="library_ignore_keyword_duplicate">Parola chiave già aggiunta</string>
+    <string name="library_ignore_keyword_too_long">Massimo %1$d caratteri</string>
+    <string name="library_ignore_keyword_limit">Massimo %1$d parole chiave</string>
 </resources>
