@@ -334,4 +334,19 @@
     <string name="detail_downgrade">Zainstaluj starszą wersję %1$s</string>
     <string name="detail_latest_unavailable">Pliki najnowszej wersji są tymczasowo niedostępne</string>
     <string name="detail_resources_unavailable">Pliki wybranej wersji są niedostępne</string>
+    <!-- Ignore keywords -->
+    <string name="action_add">Dodaj</string>
+    <string name="detail_hidden_by_keyword">Ukryte przez słowo kluczowe: %1$s</string>
+    <string name="library_keywords_section">Słowa kluczowe · %1$d</string>
+    <string name="library_modules_section">Moduły · %1$d</string>
+    <string name="library_add_ignore_keyword">Dodaj słowo kluczowe do ignorowania</string>
+    <string name="library_remove_ignore_keyword">Usuń słowo kluczowe</string>
+    <string name="library_ignore_keyword_placeholder">np. Douyin</string>
+    <string name="library_ignore_keyword_hint">Pasuje do nazwy, pakietu i opisu modułu; bez rozróżniania wielkości liter.</string>
+    <string name="library_ignore_keyword_preview">Ukryje moduły: %1$d</string>
+    <string name="library_ignore_keyword_matches">Moduły: %1$d</string>
+    <string name="library_ignore_keyword_blank">Wpisz słowo kluczowe</string>
+    <string name="library_ignore_keyword_duplicate">Słowo kluczowe już dodano</string>
+    <string name="library_ignore_keyword_too_long">Maksymalnie %1$d znaków</string>
+    <string name="library_ignore_keyword_limit">Maksymalnie %1$d słów kluczowych</string>
 </resources>

@@ -334,4 +334,19 @@
     <string name="detail_downgrade">%1$s sürümüne düşür</string>
     <string name="detail_latest_unavailable">En son sürümün dosyaları geçici olarak kullanılamıyor</string>
     <string name="detail_resources_unavailable">Seçilen sürümün dosyaları kullanılamıyor</string>
+    <!-- Ignore keywords -->
+    <string name="action_add">Ekle</string>
+    <string name="detail_hidden_by_keyword">Anahtar sözcükle gizlendi: %1$s</string>
+    <string name="library_keywords_section">Anahtar sözcükler · %1$d</string>
+    <string name="library_modules_section">Modüller · %1$d</string>
+    <string name="library_add_ignore_keyword">Yoksayılacak anahtar sözcük ekle</string>
+    <string name="library_remove_ignore_keyword">Anahtar sözcüğü kaldır</string>
+    <string name="library_ignore_keyword_placeholder">ör. Douyin</string>
+    <string name="library_ignore_keyword_hint">Modül adı, paket ve açıklamayla eşleşir; büyük/küçük harfe duyarsız.</string>
+    <string name="library_ignore_keyword_preview">%1$d modül gizlenir</string>
+    <string name="library_ignore_keyword_matches">%1$d modül</string>
+    <string name="library_ignore_keyword_blank">Bir anahtar sözcük girin</string>
+    <string name="library_ignore_keyword_duplicate">Anahtar sözcük zaten eklendi</string>
+    <string name="library_ignore_keyword_too_long">En fazla %1$d karakter</string>
+    <string name="library_ignore_keyword_limit">En fazla %1$d anahtar sözcük</string>
 </resources>

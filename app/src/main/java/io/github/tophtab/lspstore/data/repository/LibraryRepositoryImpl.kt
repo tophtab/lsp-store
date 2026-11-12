@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.builtins.MapSerializer
@@ -15,6 +16,7 @@ import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
 import io.github.tophtab.lspstore.data.backup.LibraryBackup
 import io.github.tophtab.lspstore.data.backup.LibraryRestoreMode
+import io.github.tophtab.lspstore.domain.model.HiddenModules
 import io.github.tophtab.lspstore.domain.model.ModuleVersion
 import io.github.tophtab.lspstore.domain.model.SkippedVersion
 import io.github.tophtab.lspstore.domain.variant.ModuleVariantState
@@ -40,6 +42,15 @@ interface LibraryRepository {
     /** Repository package names hidden from every browsing list. */
     val ignoredModules: Flow<Set<String>>
 
+    /**
+     * Substrings that hide every module whose name, package or summary matches.
+     * Stored trimmed and unique case-insensitively.
+     */
+    val ignoredKeywords: Flow<List<String>>
+
+    /** Package-level and keyword rules combined, ready for browsing filters. */
+    val hiddenModules: Flow<HiddenModules>
+
     /** Repository package names whose update checks also follow pre-releases. */
     val preReleaseModules: Flow<Set<String>>
     val searchHistory: Flow<List<String>>
@@ -54,7 +65,8 @@ interface LibraryRepository {
     suspend fun clearSkippedUpdates()
     suspend fun setUpdateCheckEnabled(packageName: String, enabled: Boolean)
     suspend fun setModuleIgnored(packageName: String, ignored: Boolean)
-    suspend fun clearIgnoredModules()
+    suspend fun addIgnoredKeyword(keyword: String)
+    suspend fun removeIgnoredKeyword(keyword: String)
     suspend fun setPreReleasesEnabled(packageName: String, enabled: Boolean)
     suspend fun clearIgnoredUpdates()
     suspend fun addSearchQuery(query: String)
@@ -114,6 +126,7 @@ class LibraryRepositoryImpl(private val context: Context) : LibraryRepository {
         val SKIPPED = stringPreferencesKey("skipped")
         val IGNORED_UPDATES = stringPreferencesKey("ignored_updates")
         val IGNORED_MODULES = stringPreferencesKey("ignored_modules")
+        val IGNORED_KEYWORDS = stringPreferencesKey("ignored_keywords")
         val PRE_RELEASE_MODULES = stringPreferencesKey("pre_release_modules")
         val SEARCH_HISTORY = stringPreferencesKey("search_history")
         val LINKS = stringPreferencesKey("manual_links")
@@ -146,6 +159,14 @@ class LibraryRepositoryImpl(private val context: Context) : LibraryRepository {
     /** Repository package names the user hid from browsing. */
     override val ignoredModules: Flow<Set<String>> = context.libraryDataStore.data
         .map { decodeList(it[Keys.IGNORED_MODULES]).toSet() }
+
+    override val ignoredKeywords: Flow<List<String>> = context.libraryDataStore.data
+        .map { decodeList(it[Keys.IGNORED_KEYWORDS]) }
+
+    override val hiddenModules: Flow<HiddenModules> =
+        combine(ignoredModules, ignoredKeywords) { packages, keywords ->
+            HiddenModules(packages = packages, keywords = keywords)
+        }
 
     /** Repository package names that opted into pre-release tracking. */
     override val preReleaseModules: Flow<Set<String>> = context.libraryDataStore.data
@@ -235,8 +256,25 @@ class LibraryRepositoryImpl(private val context: Context) : LibraryRepository {
         }
     }
 
-    override suspend fun clearIgnoredModules() {
-        context.libraryDataStore.edit { it[Keys.IGNORED_MODULES] = "" }
+    override suspend fun addIgnoredKeyword(keyword: String) {
+        val trimmed = keyword.trim()
+        if (trimmed.isEmpty() || trimmed.length > HiddenModules.MAX_KEYWORD_LENGTH) return
+        context.libraryDataStore.edit { prefs ->
+            val current = decodeList(prefs[Keys.IGNORED_KEYWORDS])
+            val known = current.any { it.equals(trimmed, ignoreCase = true) }
+            if (known || current.size >= HiddenModules.MAX_KEYWORDS) return@edit
+            // Newest first, like the ignored module list.
+            prefs[Keys.IGNORED_KEYWORDS] = encodeList(listOf(trimmed) + current)
+        }
+    }
+
+    override suspend fun removeIgnoredKeyword(keyword: String) {
+        context.libraryDataStore.edit { prefs ->
+            val current = decodeList(prefs[Keys.IGNORED_KEYWORDS])
+            prefs[Keys.IGNORED_KEYWORDS] = encodeList(
+                current.filterNot { it.equals(keyword, ignoreCase = true) },
+            )
+        }
     }
 
     override suspend fun addSearchQuery(query: String) {
@@ -408,6 +446,7 @@ class LibraryRepositoryImpl(private val context: Context) : LibraryRepository {
         skippedUpdates = decodeSkipped(prefs[Keys.SKIPPED]).mapValues { it.value.raw },
         ignoredUpdates = decodeList(prefs[Keys.IGNORED_UPDATES]),
         ignoredModules = decodeList(prefs[Keys.IGNORED_MODULES]),
+        ignoredKeywords = decodeList(prefs[Keys.IGNORED_KEYWORDS]),
         preReleaseModules = decodeList(prefs[Keys.PRE_RELEASE_MODULES]),
         searchHistory = decodeList(prefs[Keys.SEARCH_HISTORY]),
         links = decodeLinks(prefs[Keys.LINKS]),
@@ -427,6 +466,7 @@ class LibraryRepositoryImpl(private val context: Context) : LibraryRepository {
         }
         prefs[Keys.IGNORED_UPDATES] = encodeList(backup.ignoredUpdates)
         prefs[Keys.IGNORED_MODULES] = encodeList(backup.ignoredModules)
+        prefs[Keys.IGNORED_KEYWORDS] = encodeList(backup.ignoredKeywords)
         prefs[Keys.PRE_RELEASE_MODULES] = encodeList(backup.preReleaseModules)
         prefs[Keys.SEARCH_HISTORY] = encodeList(backup.searchHistory.take(MAX_SEARCH_HISTORY))
         prefs[Keys.LINKS] = encodeLinks(backup.links)

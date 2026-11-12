@@ -334,4 +334,19 @@
     <string name="detail_downgrade">पुराना संस्करण %1$s इंस्टॉल करें</string>
     <string name="detail_latest_unavailable">नवीनतम संस्करण की फ़ाइलें अस्थायी रूप से उपलब्ध नहीं हैं</string>
     <string name="detail_resources_unavailable">चुने गए संस्करण की फ़ाइलें उपलब्ध नहीं हैं</string>
+    <!-- Ignore keywords -->
+    <string name="action_add">जोड़ें</string>
+    <string name="detail_hidden_by_keyword">कीवर्ड से छिपा: %1$s</string>
+    <string name="library_keywords_section">कीवर्ड · %1$d</string>
+    <string name="library_modules_section">मॉड्यूल · %1$d</string>
+    <string name="library_add_ignore_keyword">अनदेखा करने का कीवर्ड जोड़ें</string>
+    <string name="library_remove_ignore_keyword">कीवर्ड हटाएँ</string>
+    <string name="library_ignore_keyword_placeholder">उदा. Douyin</string>
+    <string name="library_ignore_keyword_hint">मॉड्यूल का नाम, पैकेज और विवरण से मिलाता है; केस-असंवेदनशील।</string>
+    <string name="library_ignore_keyword_preview">%1$d मॉड्यूल छिपाएगा</string>
+    <string name="library_ignore_keyword_matches">%1$d मॉड्यूल</string>
+    <string name="library_ignore_keyword_blank">कीवर्ड दर्ज करें</string>
+    <string name="library_ignore_keyword_duplicate">कीवर्ड पहले से जोड़ा गया है</string>
+    <string name="library_ignore_keyword_too_long">अधिकतम %1$d अक्षर</string>
+    <string name="library_ignore_keyword_limit">अधिकतम %1$d कीवर्ड</string>
 </resources>

@@ -338,6 +338,15 @@ fun ModuleDetailScreen(packageName: String, onBack: () -> Unit, onOpenAuthor: (S
                         }
                     },
                 )
+                if (state.hiddenByKeywords.isNotEmpty()) {
+                    ActionSheetInfoRow(
+                        icon = Icons.Filled.Block,
+                        label = stringResource(
+                            R.string.detail_hidden_by_keyword,
+                            state.hiddenByKeywords.joinToString(", "),
+                        ),
+                    )
+                }
                 ActionSheetRow(
                     icon = if (state.isModuleIgnored) Icons.Filled.Restore else Icons.Filled.Block,
                     label = stringResource(
@@ -406,6 +415,32 @@ fun ModuleDetailScreen(packageName: String, onBack: () -> Unit, onOpenAuthor: (S
                 fontSize = 13.sp,
             )
         }
+    }
+}
+
+/** Read-only action-sheet row for state this sheet cannot change. */
+@Composable
+private fun ActionSheetInfoRow(icon: ImageVector, label: String) {
+    val colors = MaterialTheme.colorScheme
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = colors.onSurfaceVariant,
+            modifier = Modifier.size(22.dp),
+        )
+        KomiText(
+            text = label,
+            role = KomiTextRole.Body,
+            color = colors.onSurfaceVariant,
+            maxLines = 2,
+        )
     }
 }
 

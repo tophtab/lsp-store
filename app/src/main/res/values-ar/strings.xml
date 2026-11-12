@@ -334,4 +334,19 @@
     <string name="detail_downgrade">تثبيت الإصدار الأقدم %1$s</string>
     <string name="detail_latest_unavailable">ملفات أحدث إصدار غير متاحة مؤقتًا</string>
     <string name="detail_resources_unavailable">ملفات الإصدار المحدد غير متاحة</string>
+    <!-- Ignore keywords -->
+    <string name="action_add">إضافة</string>
+    <string name="detail_hidden_by_keyword">مخفي بواسطة الكلمة المفتاحية: %1$s</string>
+    <string name="library_keywords_section">الكلمات المفتاحية · %1$d</string>
+    <string name="library_modules_section">الوحدات · %1$d</string>
+    <string name="library_add_ignore_keyword">إضافة كلمة مفتاحية للتجاهل</string>
+    <string name="library_remove_ignore_keyword">إزالة الكلمة المفتاحية</string>
+    <string name="library_ignore_keyword_placeholder">مثال: Douyin</string>
+    <string name="library_ignore_keyword_hint">يطابق اسم الوحدة واسم الحزمة والوصف؛ دون تمييز بين الحروف الكبيرة والصغيرة.</string>
+    <string name="library_ignore_keyword_preview">سيخفي %1$d من الوحدات</string>
+    <string name="library_ignore_keyword_matches">%1$d من الوحدات</string>
+    <string name="library_ignore_keyword_blank">أدخل كلمة مفتاحية</string>
+    <string name="library_ignore_keyword_duplicate">الكلمة المفتاحية مضافة بالفعل</string>
+    <string name="library_ignore_keyword_too_long">%1$d حرفًا كحد أقصى</string>
+    <string name="library_ignore_keyword_limit">%1$d كلمات مفتاحية كحد أقصى</string>
 </resources>
