@@ -34,6 +34,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
@@ -287,6 +288,7 @@ fun ModuleDetailScreen(packageName: String, onBack: () -> Unit, onOpenAuthor: (S
                 modifier = Modifier.fillMaxSize().padding(innerPadding),
             ) {
                 DetailContent(
+                    readmeDocument = viewModel.readmeDocument,
                     state = state,
                     detail = detail,
                     listState = listState,
@@ -484,8 +486,14 @@ private fun ActionSheetRow(
  * history list. Sections that need GitHub-only data (forks/issues/license) are
  * synthesised from the fields the repository does expose.
  */
+/** Regular sections keep a 24 dp gap; README blocks use the list's 12 dp gap. */
+private fun LazyListScope.detailItem(key: String, bottomSpace: Dp = 12.dp, content: @Composable () -> Unit) {
+    item(key = key) { Box(Modifier.padding(bottom = bottomSpace)) { content() } }
+}
+
 @Composable
 private fun DetailContent(
+    readmeDocument: ReadmeDocument,
     state: ModuleDetailUiState,
     detail: ModuleDetail,
     listState: LazyListState,
@@ -587,6 +595,10 @@ private fun DetailContent(
             ?.let { Html.fromHtml(it, Html.FROM_HTML_MODE_LEGACY).toString().trim() }
             ?.takeIf { it.isNotEmpty() }
     }
+    val readme = if (state.showTranslation) state.translatedReadmeHtml ?: detail.readmeHtml else detail.readmeHtml
+    val readmeBlocks = rememberReadmeBlocks(readme, detail.module.url, readmeDocument)
+    val readmeStyle = LocalKomiType.current.styleFor(KomiTextRole.Body).copy(fontSize = 14.sp)
+    val afterReadme = if (state.installLogs.isEmpty()) 0.dp else 12.dp
     // The page knows which release is selected, so it asks for that release's
     // notes translation. A manual translate request is handled once for the
     // release on screen; only the auto-translate setting keeps translating new
@@ -614,9 +626,9 @@ private fun DetailContent(
         state = listState,
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item(key = "hero") {
+        detailItem(key = "hero") {
             DetailHero(
                 state = state,
                 detail = detail,
@@ -624,7 +636,7 @@ private fun DetailContent(
             )
         }
 
-        item(key = "pickers") {
+        detailItem(key = "pickers") {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 // komi's order: stream buttons first, then the resource/version
                 // pickers they filter. A module without pre-releases greys the
@@ -647,7 +659,7 @@ private fun DetailContent(
             }
         }
 
-        item(key = "install") {
+        detailItem(key = "install") {
             InstallControls(
                 state = state,
                 targetVersion = selectedRelease?.version,
@@ -671,15 +683,15 @@ private fun DetailContent(
             )
         }
 
-        item(key = "stats") {
+        detailItem(key = "stats") {
             StatsSection(detail = detail)
         }
 
         if (notesText != null && currentRelease != null) {
-            item(key = "whats_new_header") {
+            detailItem(key = "whats_new_header") {
                 SectionHeading(stringResource(R.string.detail_whats_new))
             }
-            item(key = "whats_new") {
+            detailItem(key = "whats_new") {
                 val displayedNotes = if (state.showTranslation) {
                     state.translatedNotes[currentRelease.tagName] ?: notesText
                 } else {
@@ -694,31 +706,38 @@ private fun DetailContent(
             }
         }
 
-        item(key = "about_header") {
+        detailItem(key = "about_header") {
             SectionHeading(stringResource(R.string.detail_about))
         }
-        item(key = "about") {
-            val readme = if (state.showTranslation) {
-                state.translatedReadmeHtml ?: detail.readmeHtml
-            } else {
-                detail.readmeHtml
+        when {
+            readmeBlocks == null -> detailItem(key = "about_loading", bottomSpace = afterReadme) {
+                Box(Modifier.fillMaxWidth().height(30.dp), contentAlignment = Alignment.CenterStart) {
+                    CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.dp)
+                }
             }
-            if (readme.isNullOrBlank()) {
+            readmeBlocks.isEmpty() -> detailItem(key = "about", bottomSpace = afterReadme) {
                 KomiText(
-                    text = stringResource(R.string.detail_no_readme),
+                    stringResource(R.string.detail_no_readme),
                     role = KomiTextRole.Body,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-            } else {
-                ReadmeContent(html = readme, baseUrl = detail.module.url)
+            }
+            else -> items(
+                count = readmeBlocks.size,
+                key = { "readme:$it" },
+                contentType = { readmeBlocks[it]::class },
+            ) { index ->
+                Box(Modifier.padding(bottom = if (index == readmeBlocks.lastIndex) afterReadme else 0.dp)) {
+                    ReadmeBlockView(readmeBlocks[index], readmeStyle)
+                }
             }
         }
 
         if (state.installLogs.isNotEmpty()) {
-            item(key = "logs_header") {
+            detailItem(key = "logs_header") {
                 SectionHeading(stringResource(R.string.detail_logs))
             }
-            item(key = "logs") {
+            detailItem(key = "logs", bottomSpace = 0.dp) {
                 InstallLogCard(lines = state.installLogs)
             }
         }

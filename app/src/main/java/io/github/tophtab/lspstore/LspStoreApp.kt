@@ -14,6 +14,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 import io.github.tophtab.lspstore.data.device.LauncherIcon
+import io.github.tophtab.lspstore.data.device.PackageIconFetcher
+import io.github.tophtab.lspstore.data.device.PackageIconKeyer
 import io.github.tophtab.lspstore.data.install.PackageEventReceiver
 import io.github.tophtab.lspstore.data.update.UpdateScheduler
 import io.github.tophtab.lspstore.di.AppContainer
@@ -51,10 +53,14 @@ class LspStoreApp : Application(), ImageLoaderFactory {
         refreshDeviceProfile()
     }
 
-    /** Coil loader with SVG support and a browser UA, so CDN badges render. */
+    /** Async package icons plus SVG support and a browser UA for CDN badges. */
     override fun newImageLoader(): ImageLoader =
         ImageLoader.Builder(this)
-            .components { add(SvgDecoder.Factory()) }
+            .components {
+                add(SvgDecoder.Factory())
+                add(PackageIconFetcher.Factory())
+                add(PackageIconKeyer())
+            }
             .okHttpClient {
                 OkHttpClient.Builder()
                     .addInterceptor { chain ->

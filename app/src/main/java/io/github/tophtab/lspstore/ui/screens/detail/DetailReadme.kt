@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
@@ -29,19 +28,22 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.LinkInteractionListener
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLinkStyles
@@ -49,7 +51,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.fromHtml
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -62,7 +63,6 @@ import io.github.tophtab.lspstore.ui.design.KomiDivider
 import io.github.tophtab.lspstore.ui.design.KomiSurface
 import io.github.tophtab.lspstore.ui.design.KomiText
 import io.github.tophtab.lspstore.ui.theme.KomiTextRole
-import io.github.tophtab.lspstore.ui.theme.LocalKomiType
 
 internal val SCRIPT_TAG = Regex("<script[\\s\\S]*?</script>", RegexOption.IGNORE_CASE)
 internal val AD_ASIDE = Regex("<aside class=\"ad-slot[\\s\\S]*?</aside>", RegexOption.IGNORE_CASE)
@@ -127,49 +127,31 @@ internal val SUMMARY_TAG = Regex("<summary\\b[^>]*>([\\s\\S]*?)</summary>", Rege
 internal val HR_TAG = Regex("<hr\\b[^>]*>", RegexOption.IGNORE_CASE)
 
 /**
- * Readme renderer. The repository returns GitHub-rendered HTML; it is split
- * into headings, code blocks, quotes, lists, tables, foldable details and
- * images so the detail page keeps the markdown hierarchy while staying one
- * scrolling column (a WebView inside a LazyColumn swallows vertical drags).
+ * Parse on a worker and retain the page's result so lazy scroll restoration
+ * never starts with an empty item count when returning to this screen.
  */
 @Composable
-internal fun ReadmeContent(html: String, baseUrl: String?) {
+internal fun rememberReadmeBlocks(html: String?, baseUrl: String?, document: ReadmeDocument): List<ReadmeBlock>? {
     val dark = isSystemInDarkTheme()
     val accent = MaterialTheme.colorScheme.onPrimaryContainer
-    val uriHandler = LocalUriHandler.current
-    val linkStyles = remember(accent) {
-        TextLinkStyles(
-            style = SpanStyle(color = accent, textDecoration = TextDecoration.Underline),
-        )
-    }
     val inlineCode = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
-    val linkListener = remember(uriHandler) {
-        LinkInteractionListener { link ->
-            val url = (link as? LinkAnnotation.Url)?.url.orEmpty()
-            if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("mailto:")) {
-                runCatching { uriHandler.openUri(url) }
-            }
-        }
+    val key = remember(html, baseUrl, dark, accent, inlineCode) {
+        ReadmeDocumentKey(html.orEmpty(), baseUrl, dark, accent, inlineCode)
     }
-    val links = remember(linkStyles, linkListener, inlineCode) {
-        ReadmeLinks(linkStyles, linkListener, inlineCode)
-    }
-    val blocks = remember(html, baseUrl, dark, links) { parseReadme(html, baseUrl, links, dark) }
-    if (blocks.isEmpty()) {
-        KomiText(
-            text = stringResource(R.string.detail_no_readme),
-            role = KomiTextRole.Body,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+    val parsed = remember(document, key) {
+        mutableStateOf(
+            if (key.html.isBlank()) emptyList() else document.cached(key) ?: document.previousContent(key),
         )
-        return
     }
-    val bodyStyle = LocalKomiType.current.styleFor(KomiTextRole.Body).copy(fontSize = 14.sp)
-    ReadmeBlocks(blocks = blocks, bodyStyle = bodyStyle)
+    LaunchedEffect(document, key) {
+        if (key.html.isNotBlank()) parsed.value = document.load(key)
+    }
+    return parsed.value
 }
 
 internal class ReadmeLinks(
     val styles: TextLinkStyles,
-    val listener: LinkInteractionListener,
+    val listener: LinkInteractionListener?,
     val inlineCodeBackground: Color,
 )
 
@@ -188,6 +170,23 @@ internal fun ReadmeBlocks(
 
 @Composable
 internal fun ReadmeBlockView(block: ReadmeBlock, bodyStyle: TextStyle) {
+    val uriHandler = LocalUriHandler.current
+    val guarded = remember(uriHandler) {
+        object : UriHandler {
+            override fun openUri(uri: String) {
+                if (uri.startsWith("http://") || uri.startsWith("https://") || uri.startsWith("mailto:")) {
+                    runCatching { uriHandler.openUri(uri) }
+                }
+            }
+        }
+    }
+    CompositionLocalProvider(LocalUriHandler provides guarded) {
+        ReadmeBlockBody(block, bodyStyle)
+    }
+}
+
+@Composable
+private fun ReadmeBlockBody(block: ReadmeBlock, bodyStyle: TextStyle) {
     val muted = MaterialTheme.colorScheme.onSurfaceVariant
     when (block) {
         is ReadmeBlock.Text -> Text(
@@ -390,7 +389,7 @@ internal fun ReadmeTableRowView(row: ReadmeTableRow) {
 /** GitHub `<details>` block: collapsed by default, like komi's expandable fence. */
 @Composable
 internal fun ReadmeDetailsView(block: ReadmeBlock.Details, bodyStyle: TextStyle) {
-    var expanded by remember(block.title) { mutableStateOf(false) }
+    var expanded by rememberSaveable(block.title) { mutableStateOf(false) }
     val shape = MaterialTheme.shapes.small
     val outline = MaterialTheme.colorScheme.outlineVariant
     Column(

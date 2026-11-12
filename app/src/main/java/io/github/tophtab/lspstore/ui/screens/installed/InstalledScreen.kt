@@ -546,7 +546,7 @@ private fun UpdateRow(
             ModuleAvatar(
                 info.module,
                 size = 44,
-                installedPackage = info.installed.packageName,
+                installed = info.installed,
             )
             Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
@@ -779,6 +779,7 @@ private fun InstalledRow(
             PackageAvatar(
                 packageName = module.packageName,
                 label = module.label,
+                lastUpdateTime = module.lastUpdateTime,
                 size = 48,
             )
             Spacer(Modifier.width(12.dp))
