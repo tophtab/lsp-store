@@ -4,11 +4,9 @@
     <string name="action_more">Daha fazla</string>
     <string name="action_clear">Temizle</string>
     <string name="action_refresh">Yenile</string>
-    <string name="action_sort">Sırala</string>
     <string name="action_share">Paylaş</string>
     <string name="action_cancel">İptal</string>
     <string name="action_save">Kaydet</string>
-    <string name="action_download">İndir</string>
     <string name="action_update">Güncelle</string>
     <string name="action_unskip">Yoksaymayı bırak</string>
     <string name="action_restore_update">Güncellemeleri geri yükle</string>
@@ -20,9 +18,7 @@
     <string name="sort_updated">Yakın zamanda güncellendi</string>
     <string name="sort_stars">En çok yıldızlı</string>
     <string name="sort_name">Ad</string>
-    <string name="nav_home">Ana sayfa</string>
     <string name="nav_repository">Depo</string>
-    <string name="nav_search">Ara</string>
     <string name="nav_installed">Yüklü</string>
     <string name="nav_settings">Ayarlar</string>
     <string name="module_updated_relative">Güncellendi %1$s</string>
@@ -30,20 +26,17 @@
     <string name="home_no_modules">Kullanılabilir modül yok</string>
     <string name="home_section_recently_updated">Yakın zamanda güncellendi</string>
     <string name="home_section_most_starred">En çok yıldızlı</string>
-    <string name="home_browse_all">Tüm modüllere göz atın</string>
     <string name="home_load_failed">Modüller yüklenemedi</string>
-    <string name="search_placeholder">Arama modülleri: %1$d</string>
-    <string name="search_favourites">Favoriler</string>
-    <string name="search_recent">Son aramalar</string>
     <string name="search_empty">Aramanızla eşleşen modül yok</string>
-    <string name="search_count">Bulunan modüller: %1$d</string>
+    <plurals name="search_count">
+        <item quantity="one">Bulunan modül: %1$d</item>
+        <item quantity="other">Bulunan modüller: %1$d</item>
+    </plurals>
     <string name="installed_empty">Bu cihazda LSPosed modülü algılanmadı</string>
     <string name="installed_search_hint">Kurulu modülleri arayın</string>
-    <string name="installed_section_updates">Güncellemeler (%1$d)</string>
     <string name="installed_section_up_to_date">Depoda (%1$d)</string>
     <string name="installed_section_unknown">Depoda bulunamadı (%1$d)</string>
     <string name="pending_install">Yükleme bekleniyor</string>
-    <string name="installed_update_all">Tümünü güncelle</string>
     <string name="installed_update_all_count">Tümünü güncelle (%1$d)</string>
     <string name="installed_version_arrow">%1$s -&gt; %2$s</string>
     <string name="installed_batch_cancelled">Toplu güncelleme iptal edildi</string>
@@ -57,9 +50,10 @@
     <string name="installed_cancel_download">İndirmeyi iptal et</string>
     <string name="installed_retry_update">Güncellemeyi yeniden dene</string>
     <string name="installed_all_updated">Tüm modüller başarıyla güncellendi</string>
-    <string name="installed_finished_failures">Arızalar: %1$d</string>
-    <string name="installed_batch_installer_busy">Yükleyici hâlâ açık, %1$d güncelleme atlandı</string>
-    <string name="installed_updated_one">%1$s\'dan %2$s\'e güncellendi</string>
+    <plurals name="installed_finished_failures">
+        <item quantity="one">Hata: %1$d</item>
+        <item quantity="other">Hatalar: %1$d</item>
+    </plurals>
     <string name="installed_batch_failure_download">APK indirilemedi</string>
     <string name="installed_check_failed">Güncellemeler kontrol edilemedi</string>
     <string name="installed_choose_variant">Çeşit seçin</string>
@@ -81,7 +75,6 @@
     <string name="installed_variant_auto_saved">Otomatik çeşit seçimini kullanma</string>
     <string name="installed_update_ignored">%1$s için güncelleme yok sayıldı</string>
     <string name="installed_update_unignored">%1$s için güncelleme geri yüklendi</string>
-    <string name="detail_readme">Beni oku</string>
     <string name="detail_whats_new">Ne var ne yok</string>
     <string name="detail_about">Bu uygulama hakkında</string>
     <string name="detail_releases">Bültenler</string>
@@ -91,7 +84,10 @@
     <string name="detail_reinstall">%1$s\'ı yeniden yükleyin</string>
     <string name="detail_install">%1$s yükleyin</string>
     <string name="detail_no_releases">Sürüm yok</string>
-    <string name="detail_downloads">%1$s - indirmeler: %2$d</string>
+    <plurals name="detail_downloads">
+        <item quantity="one">%1$s - indirme: %2$d</item>
+        <item quantity="other">%1$s - indirmeler: %2$d</item>
+    </plurals>
     <string name="detail_no_apk">APK öğesi yok</string>
     <string name="detail_readme_details">Detaylar</string>
     <string name="detail_no_readme">Benioku yok</string>
@@ -106,7 +102,6 @@
     <string name="detail_uninstall">Kaldır</string>
     <string name="detail_open_source">Açık kaynak</string>
     <string name="detail_install_finished">Kurulum tamamlandı</string>
-    <string name="detail_install_failed">Kurulum başarısız oldu: %1$s</string>
     <string name="detail_scope">Kapsam</string>
     <string name="detail_contributors">Katkıda Bulunanlar</string>
     <string name="detail_installed_apk">Yüklendi %1$s</string>
@@ -176,7 +171,7 @@
     <string name="backup_export_done">Kitaplık dışa aktarıldı</string>
     <string name="backup_export_failed">Kitaplık dışa aktarılamadı</string>
     <string name="backup_import_title">Kitaplık içe aktarılsın mı?</string>
-    <string name="backup_import_summary">Yedekte %1$d favori, %2$d yok sayılan modül ve %3$d atlanan sürüm var.</string>
+    <string name="backup_import_summary">Yedekte %1$s, %2$s ve %3$s var.</string>
     <string name="backup_import_note">Birleştirme eksik öğeleri ekler ve mevcut seçimleri korur. Değiştirme önce mevcut kitaplığı siler.</string>
     <string name="backup_import_merge">Birleştir (önerilir)</string>
     <string name="backup_import_replace">Mevcut verileri değiştir</string>
@@ -245,8 +240,14 @@
     <string name="variant_incompatible_api">LSPosed API\'si gerektirir %1$d</string>
     <string name="variant_remembered">Gelecekteki güncellemeler için seçiminizi hatırladım</string>
     <string name="variant_not_module">Bu APK bir Xposed modülü değil</string>
-    <string name="installed_finished_skipped">%1$d modülün farklı bir seçeneğe ihtiyacı var - güncellemek için bunları açın</string>
-    <string name="installed_finished_cancelled">İptal edildi: %1$d</string>
+    <plurals name="installed_finished_skipped">
+        <item quantity="one">%1$d modül için varyant seçimi gerekiyor - güncellemek için açın</item>
+        <item quantity="other">%1$d modül için varyant seçimi gerekiyor - güncellemek için açın</item>
+    </plurals>
+    <plurals name="installed_finished_cancelled">
+        <item quantity="one">İptal edildi: %1$d</item>
+        <item quantity="other">İptal edildi: %1$d</item>
+    </plurals>
     <string name="settings_root_unavailable_msg">Kök (su) bu cihazda mevcut değil</string>
     <string name="onboarding_welcome_title">LSP Store\'a Hoş Geldiniz</string>
     <string name="onboarding_welcome_body">LSPosed modüllerini güncelleme ve tarama aracı</string>
@@ -270,12 +271,14 @@
     <string name="about_source_title">GitHub üzerinde kaynak kodu</string>
     <string name="about_source_body">Bu proje işinize yaradıysa GitHub üzerinde yıldız verin. Bu benim için çok önemli.</string>
     <string name="author_no_modules">Bu yazara ait modül yok</string>
-    <string name="author_module_count">Modüller: %1$d</string>
+    <plurals name="author_module_count">
+        <item quantity="one">Modül: %1$d</item>
+        <item quantity="other">Modüller: %1$d</item>
+    </plurals>
     <string name="author_load_failed">Modüller yüklenemedi</string>
     <string name="error_network">Ağ kullanılamıyor, bağlantınızı kontrol edin</string>
     <string name="error_timeout">İstek zaman aşımına uğradı</string>
     <string name="error_http">Sunucu hatası (%1$d)</string>
-    <string name="error_no_apk_asset">APK öğesi bulunamadı</string>
     <string name="error_install_failed">Yükleme başarısız oldu</string>
     <string name="installer_silent_failed">Sessiz yükleme başarısız oldu (su)</string>
     <string name="installer_launch_failed">Yükleyici başlatılamıyor</string>
@@ -284,11 +287,13 @@
     <string name="verifier_package_mismatch">APK paketi %1$s beklenen %2$s ile eşleşmiyor</string>
     <string name="download_channel_name">İndirilenler</string>
     <string name="download_channel_desc">APK indirme ilerlemesi</string>
-    <string name="download_notification_title">Aktif indirmeler: %1$d</string>
+    <plurals name="download_notification_title">
+        <item quantity="one">Aktif indirme: %1$d</item>
+        <item quantity="other">Aktif indirmeler: %1$d</item>
+    </plurals>
     <string name="download_notification_text">%1$s / %2$s</string>
     <string name="download_notification_unknown">İndirmeye hazırlanıyor…</string>
     <string name="action_cancel_all">Tümünü iptal et</string>
-    <string name="action_close">Kapat</string>
     <string name="detail_stats">İstatistikler</string>
     <string name="detail_stat_stars">Yıldızlar</string>
     <string name="detail_stat_releases">Bültenler</string>
@@ -307,10 +312,16 @@
     <string name="updates_channel_name">Modül güncellemeleri</string>
     <string name="updates_channel_desc">Arka plan denetiminden güncelleme uyarıları</string>
     <string name="updates_notification_title_one">%1$s için güncelleme var</string>
-    <string name="updates_notification_title_many">%1$d modül güncellemesi mevcut</string>
+    <plurals name="updates_notification_title_many">
+        <item quantity="one">%1$d modül güncellemesi mevcut</item>
+        <item quantity="other">%1$d modül güncellemesi mevcut</item>
+    </plurals>
     <string name="updates_auto_title">Otomatik güncelleme tamamlandı</string>
-    <string name="updates_auto_text">%1$d güncellendi, %2$d başarısız</string>
-    <string name="updates_auto_text_ok">%1$d modül güncellendi</string>
+    <string name="updates_auto_text">%1$s, %2$s</string>
+    <plurals name="updates_auto_text_ok">
+        <item quantity="one">%1$d modül güncellendi</item>
+        <item quantity="other">%1$d modül güncellendi</item>
+    </plurals>
     <string name="updates_auto_channel_name">Otomatik güncelleme sonuçları</string>
     <string name="updates_auto_channel_desc">Root ile otomatik güncellemelerin sessiz özetleri</string>
     <string name="settings_updates_section">Güncellemeler</string>
@@ -334,19 +345,59 @@
     <string name="detail_downgrade">%1$s sürümüne düşür</string>
     <string name="detail_latest_unavailable">En son sürümün dosyaları geçici olarak kullanılamıyor</string>
     <string name="detail_resources_unavailable">Seçilen sürümün dosyaları kullanılamıyor</string>
+
+    <!-- Counts composed independently in backup and update summaries. -->
+    <plurals name="updates_auto_text_failed">
+        <item quantity="one">%1$d modül güncellenemedi</item>
+        <item quantity="other">%1$d modül güncellenemedi</item>
+    </plurals>
+
+    <plurals name="backup_favourites_count">
+        <item quantity="one">%1$d favori</item>
+        <item quantity="other">%1$d favori</item>
+    </plurals>
+
+    <plurals name="backup_ignored_modules_count">
+        <item quantity="one">%1$d yok sayılan modül</item>
+        <item quantity="other">%1$d yok sayılan modül</item>
+    </plurals>
+
+    <plurals name="backup_skipped_versions_count">
+        <item quantity="one">%1$d atlanan sürüm</item>
+        <item quantity="other">%1$d atlanan sürüm</item>
+    </plurals>
+
     <!-- Ignore keywords -->
     <string name="action_add">Ekle</string>
     <string name="detail_hidden_by_keyword">Anahtar sözcükle gizlendi: %1$s</string>
-    <string name="library_keywords_section">Anahtar sözcükler · %1$d</string>
-    <string name="library_modules_section">Modüller · %1$d</string>
+    <plurals name="library_keywords_section">
+        <item quantity="one">Anahtar sözcük · %1$d</item>
+        <item quantity="other">Anahtar sözcükler · %1$d</item>
+    </plurals>
+    <plurals name="library_modules_section">
+        <item quantity="one">Modül · %1$d</item>
+        <item quantity="other">Modüller · %1$d</item>
+    </plurals>
     <string name="library_add_ignore_keyword">Yoksayılacak anahtar sözcük ekle</string>
     <string name="library_remove_ignore_keyword">Anahtar sözcüğü kaldır</string>
     <string name="library_ignore_keyword_placeholder">ör. Douyin</string>
     <string name="library_ignore_keyword_hint">Modül adı, paket ve açıklamayla eşleşir; büyük/küçük harfe duyarsız.</string>
-    <string name="library_ignore_keyword_preview">%1$d modül gizlenir</string>
-    <string name="library_ignore_keyword_matches">%1$d modül</string>
+    <plurals name="library_ignore_keyword_preview">
+        <item quantity="one">%1$d modül gizlenir</item>
+        <item quantity="other">%1$d modül gizlenir</item>
+    </plurals>
+    <plurals name="library_ignore_keyword_matches">
+        <item quantity="one">%1$d modül</item>
+        <item quantity="other">%1$d modül</item>
+    </plurals>
     <string name="library_ignore_keyword_blank">Bir anahtar sözcük girin</string>
     <string name="library_ignore_keyword_duplicate">Anahtar sözcük zaten eklendi</string>
-    <string name="library_ignore_keyword_too_long">En fazla %1$d karakter</string>
-    <string name="library_ignore_keyword_limit">En fazla %1$d anahtar sözcük</string>
+    <plurals name="library_ignore_keyword_too_long">
+        <item quantity="one">En fazla %1$d karakter</item>
+        <item quantity="other">En fazla %1$d karakter</item>
+    </plurals>
+    <plurals name="library_ignore_keyword_limit">
+        <item quantity="one">En fazla %1$d anahtar sözcük</item>
+        <item quantity="other">En fazla %1$d anahtar sözcük</item>
+    </plurals>
 </resources>

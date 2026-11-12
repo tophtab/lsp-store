@@ -4,11 +4,9 @@
     <string name="action_more">Más</string>
     <string name="action_clear">Borrar</string>
     <string name="action_refresh">Recargar</string>
-    <string name="action_sort">Ordenar</string>
     <string name="action_share">Compartir</string>
     <string name="action_cancel">Cancelar</string>
     <string name="action_save">Guardar</string>
-    <string name="action_download">Descargar</string>
     <string name="action_update">Actualizar</string>
     <string name="action_unskip">Dejar de ignorar</string>
     <string name="action_restore_update">Restaurar actualizaciones</string>
@@ -20,9 +18,7 @@
     <string name="sort_updated">Actualizado recientemente</string>
     <string name="sort_stars">Más destacados</string>
     <string name="sort_name">Nombre</string>
-    <string name="nav_home">Inicio</string>
     <string name="nav_repository">Repositorio</string>
-    <string name="nav_search">Buscar</string>
     <string name="nav_installed">Instalado</string>
     <string name="nav_settings">Ajustes</string>
     <string name="module_updated_relative">Actualizado %1$s</string>
@@ -30,20 +26,18 @@
     <string name="home_no_modules">No hay módulos disponibles</string>
     <string name="home_section_recently_updated">Actualizado recientemente</string>
     <string name="home_section_most_starred">Más destacados</string>
-    <string name="home_browse_all">Explorar todos los módulos</string>
     <string name="home_load_failed">No se pudieron cargar los módulos</string>
-    <string name="search_placeholder">Módulos de búsqueda: %1$d</string>
-    <string name="search_favourites">Favoritos</string>
-    <string name="search_recent">Búsquedas recientes</string>
     <string name="search_empty">Ningún módulo coincide con su búsqueda</string>
-    <string name="search_count">Módulos encontrados: %1$d</string>
+    <plurals name="search_count">
+        <item quantity="one">Módulo encontrado: %1$d</item>
+        <item quantity="many">Módulos encontrados: %1$d</item>
+        <item quantity="other">Módulos encontrados: %1$d</item>
+    </plurals>
     <string name="installed_empty">No se detectaron módulos LSPosed en este dispositivo</string>
     <string name="installed_search_hint">Buscar módulos instalados</string>
-    <string name="installed_section_updates">Actualizaciones (%1$d)</string>
     <string name="installed_section_up_to_date">En el repositorio (%1$d)</string>
     <string name="installed_section_unknown">No encontrado en el repositorio (%1$d)</string>
     <string name="pending_install">Instalación pendiente</string>
-    <string name="installed_update_all">Actualizar todo</string>
     <string name="installed_update_all_count">Actualizar todo (%1$d)</string>
     <string name="installed_version_arrow">%1$s -&gt; %2$s</string>
     <string name="installed_batch_cancelled">Actualización por lotes cancelada</string>
@@ -57,9 +51,11 @@
     <string name="installed_cancel_download">Cancelar descarga</string>
     <string name="installed_retry_update">Reintentar actualización</string>
     <string name="installed_all_updated">Todos los módulos actualizados exitosamente.</string>
-    <string name="installed_finished_failures">Fallos: %1$d</string>
-    <string name="installed_batch_installer_busy">El instalador aún está abierto, %1$d actualizaciones omitidas</string>
-    <string name="installed_updated_one">Actualizado %1$s a %2$s</string>
+    <plurals name="installed_finished_failures">
+        <item quantity="one">Fallo: %1$d</item>
+        <item quantity="many">Fallos: %1$d</item>
+        <item quantity="other">Fallos: %1$d</item>
+    </plurals>
     <string name="installed_batch_failure_download">No se pudo descargar el APK</string>
     <string name="installed_check_failed">No se pudieron verificar las actualizaciones</string>
     <string name="installed_choose_variant">Elige variante</string>
@@ -81,7 +77,6 @@
     <string name="installed_variant_auto_saved">Usando la selección automática de variantes</string>
     <string name="installed_update_ignored">Actualización ignorada para %1$s</string>
     <string name="installed_update_unignored">Actualización restaurada para %1$s</string>
-    <string name="detail_readme">Léame</string>
     <string name="detail_whats_new">Qué hay de nuevo</string>
     <string name="detail_about">Acerca de esta aplicación</string>
     <string name="detail_releases">Lanzamientos</string>
@@ -91,7 +86,11 @@
     <string name="detail_reinstall">Reinstalar %1$s</string>
     <string name="detail_install">Instalar %1$s</string>
     <string name="detail_no_releases">Sin lanzamientos</string>
-    <string name="detail_downloads">%1$s - descargas: %2$d</string>
+    <plurals name="detail_downloads">
+        <item quantity="one">%1$s - descarga: %2$d</item>
+        <item quantity="many">%1$s - descargas: %2$d</item>
+        <item quantity="other">%1$s - descargas: %2$d</item>
+    </plurals>
     <string name="detail_no_apk">Sin recursos APK</string>
     <string name="detail_readme_details">Detalles</string>
     <string name="detail_no_readme">Sin archivo Léame</string>
@@ -106,7 +105,6 @@
     <string name="detail_uninstall">Desinstalar</string>
     <string name="detail_open_source">Código abierto</string>
     <string name="detail_install_finished">Instalación terminada</string>
-    <string name="detail_install_failed">Error de instalación: %1$s</string>
     <string name="detail_scope">Alcance</string>
     <string name="detail_contributors">Colaboradores</string>
     <string name="detail_installed_apk">Instalado %1$s</string>
@@ -176,7 +174,7 @@
     <string name="backup_export_done">Biblioteca exportada</string>
     <string name="backup_export_failed">No se pudo exportar la biblioteca</string>
     <string name="backup_import_title">¿Importar biblioteca?</string>
-    <string name="backup_import_summary">La copia contiene %1$d favoritos, %2$d módulos ignorados y %3$d versiones omitidas.</string>
+    <string name="backup_import_summary">La copia contiene %1$s, %2$s y %3$s.</string>
     <string name="backup_import_note">Combinar añade lo que falta y conserva las elecciones actuales. Reemplazar elimina primero la biblioteca actual.</string>
     <string name="backup_import_merge">Combinar (recomendado)</string>
     <string name="backup_import_replace">Reemplazar datos actuales</string>
@@ -245,8 +243,16 @@
     <string name="variant_incompatible_api">Requiere API LSPosed %1$d</string>
     <string name="variant_remembered">Recordó su elección para futuras actualizaciones.</string>
     <string name="variant_not_module">Este APK no es un módulo Xposed</string>
-    <string name="installed_finished_skipped">%1$d los módulos necesitan una opción de variante: ábralos para actualizar</string>
-    <string name="installed_finished_cancelled">Canceladas: %1$d</string>
+    <plurals name="installed_finished_skipped">
+        <item quantity="one">%1$d módulo necesita elegir una variante; ábrelo para actualizar</item>
+        <item quantity="many">%1$d módulos necesitan elegir una variante; ábrelos para actualizar</item>
+        <item quantity="other">%1$d módulos necesitan elegir una variante; ábrelos para actualizar</item>
+    </plurals>
+    <plurals name="installed_finished_cancelled">
+        <item quantity="one">Cancelado: %1$d</item>
+        <item quantity="many">Cancelados: %1$d</item>
+        <item quantity="other">Cancelados: %1$d</item>
+    </plurals>
     <string name="settings_root_unavailable_msg">Root (su) no está disponible en este dispositivo</string>
     <string name="onboarding_welcome_title">Bienvenido a LSP Store</string>
     <string name="onboarding_welcome_body">Una herramienta para actualizar y explorar módulos de LSPosed</string>
@@ -270,12 +276,15 @@
     <string name="about_source_title">Código fuente en GitHub</string>
     <string name="about_source_body">Si este proyecto te resulta útil, deja una estrella en GitHub. Significa mucho para mí.</string>
     <string name="author_no_modules">No hay módulos de este autor.</string>
-    <string name="author_module_count">Módulos: %1$d</string>
+    <plurals name="author_module_count">
+        <item quantity="one">Módulo: %1$d</item>
+        <item quantity="many">Módulos: %1$d</item>
+        <item quantity="other">Módulos: %1$d</item>
+    </plurals>
     <string name="author_load_failed">No se pudieron cargar los módulos</string>
     <string name="error_network">Red no disponible, verifique su conexión</string>
     <string name="error_timeout">La solicitud expiró</string>
     <string name="error_http">Error del servidor (%1$d)</string>
-    <string name="error_no_apk_asset">No se encontró ningún recurso APK</string>
     <string name="error_install_failed">La instalación falló</string>
     <string name="installer_silent_failed">Error en la instalación silenciosa (su)</string>
     <string name="installer_launch_failed">No se puede iniciar el instalador</string>
@@ -284,11 +293,14 @@
     <string name="verifier_package_mismatch">El paquete APK %1$s no coincide con el esperado %2$s</string>
     <string name="download_channel_name">Descargas</string>
     <string name="download_channel_desc">Progreso de descarga de APK</string>
-    <string name="download_notification_title">Descargas activas: %1$d</string>
+    <plurals name="download_notification_title">
+        <item quantity="one">Descarga activa: %1$d</item>
+        <item quantity="many">Descargas activas: %1$d</item>
+        <item quantity="other">Descargas activas: %1$d</item>
+    </plurals>
     <string name="download_notification_text">%1$s / %2$s</string>
     <string name="download_notification_unknown">Preparando descarga…</string>
     <string name="action_cancel_all">Cancelar todo</string>
-    <string name="action_close">Cerrar</string>
     <string name="detail_stats">Estadísticas</string>
     <string name="detail_stat_stars">estrellas</string>
     <string name="detail_stat_releases">Lanzamientos</string>
@@ -307,10 +319,18 @@
     <string name="updates_channel_name">Actualizaciones de módulos</string>
     <string name="updates_channel_desc">Alertas de actualización de la comprobación en segundo plano</string>
     <string name="updates_notification_title_one">Actualización disponible para %1$s</string>
-    <string name="updates_notification_title_many">%1$d actualizaciones de módulos disponibles</string>
+    <plurals name="updates_notification_title_many">
+        <item quantity="one">%1$d actualización de módulo disponible</item>
+        <item quantity="many">%1$d actualizaciones de módulos disponibles</item>
+        <item quantity="other">%1$d actualizaciones de módulos disponibles</item>
+    </plurals>
     <string name="updates_auto_title">Actualización automática finalizada</string>
-    <string name="updates_auto_text">%1$d actualizados, %2$d fallidos</string>
-    <string name="updates_auto_text_ok">%1$d módulos actualizados</string>
+    <string name="updates_auto_text">%1$s, %2$s</string>
+    <plurals name="updates_auto_text_ok">
+        <item quantity="one">%1$d módulo actualizado</item>
+        <item quantity="many">%1$d módulos actualizados</item>
+        <item quantity="other">%1$d módulos actualizados</item>
+    </plurals>
     <string name="updates_auto_channel_name">Resultados de actualización automática</string>
     <string name="updates_auto_channel_desc">Resúmenes silenciosos de las actualizaciones automáticas con root</string>
     <string name="settings_updates_section">Actualizaciones</string>
@@ -334,19 +354,69 @@
     <string name="detail_downgrade">Instalar versión anterior %1$s</string>
     <string name="detail_latest_unavailable">Los recursos de la última versión no están disponibles temporalmente</string>
     <string name="detail_resources_unavailable">Los recursos de la versión seleccionada no están disponibles</string>
+
+    <!-- Counts composed independently in backup and update summaries. -->
+    <plurals name="updates_auto_text_failed">
+        <item quantity="one">%1$d módulo fallido</item>
+        <item quantity="many">%1$d módulos fallidos</item>
+        <item quantity="other">%1$d módulos fallidos</item>
+    </plurals>
+
+    <plurals name="backup_favourites_count">
+        <item quantity="one">%1$d favorito</item>
+        <item quantity="many">%1$d favoritos</item>
+        <item quantity="other">%1$d favoritos</item>
+    </plurals>
+
+    <plurals name="backup_ignored_modules_count">
+        <item quantity="one">%1$d módulo ignorado</item>
+        <item quantity="many">%1$d módulos ignorados</item>
+        <item quantity="other">%1$d módulos ignorados</item>
+    </plurals>
+
+    <plurals name="backup_skipped_versions_count">
+        <item quantity="one">%1$d versión omitida</item>
+        <item quantity="many">%1$d versiones omitidas</item>
+        <item quantity="other">%1$d versiones omitidas</item>
+    </plurals>
+
     <!-- Ignore keywords -->
     <string name="action_add">Añadir</string>
     <string name="detail_hidden_by_keyword">Oculto por palabra clave: %1$s</string>
-    <string name="library_keywords_section">Palabras clave · %1$d</string>
-    <string name="library_modules_section">Módulos · %1$d</string>
+    <plurals name="library_keywords_section">
+        <item quantity="one">Palabra clave · %1$d</item>
+        <item quantity="many">Palabras clave · %1$d</item>
+        <item quantity="other">Palabras clave · %1$d</item>
+    </plurals>
+    <plurals name="library_modules_section">
+        <item quantity="one">Módulo · %1$d</item>
+        <item quantity="many">Módulos · %1$d</item>
+        <item quantity="other">Módulos · %1$d</item>
+    </plurals>
     <string name="library_add_ignore_keyword">Añadir palabra clave para ignorar</string>
     <string name="library_remove_ignore_keyword">Quitar palabra clave</string>
     <string name="library_ignore_keyword_placeholder">p. ej., Douyin</string>
     <string name="library_ignore_keyword_hint">Coincide con el nombre, el paquete y la descripción del módulo; no distingue mayúsculas.</string>
-    <string name="library_ignore_keyword_preview">Ocultará %1$d módulos</string>
-    <string name="library_ignore_keyword_matches">%1$d módulos</string>
+    <plurals name="library_ignore_keyword_preview">
+        <item quantity="one">Ocultará %1$d módulo</item>
+        <item quantity="many">Ocultará %1$d módulos</item>
+        <item quantity="other">Ocultará %1$d módulos</item>
+    </plurals>
+    <plurals name="library_ignore_keyword_matches">
+        <item quantity="one">%1$d módulo</item>
+        <item quantity="many">%1$d módulos</item>
+        <item quantity="other">%1$d módulos</item>
+    </plurals>
     <string name="library_ignore_keyword_blank">Introduce una palabra clave</string>
     <string name="library_ignore_keyword_duplicate">La palabra clave ya está añadida</string>
-    <string name="library_ignore_keyword_too_long">Máximo %1$d caracteres</string>
-    <string name="library_ignore_keyword_limit">Máximo %1$d palabras clave</string>
+    <plurals name="library_ignore_keyword_too_long">
+        <item quantity="one">Máximo %1$d carácter</item>
+        <item quantity="many">Máximo %1$d caracteres</item>
+        <item quantity="other">Máximo %1$d caracteres</item>
+    </plurals>
+    <plurals name="library_ignore_keyword_limit">
+        <item quantity="one">Máximo %1$d palabra clave</item>
+        <item quantity="many">Máximo %1$d palabras clave</item>
+        <item quantity="other">Máximo %1$d palabras clave</item>
+    </plurals>
 </resources>

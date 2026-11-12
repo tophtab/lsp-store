@@ -6,11 +6,9 @@
     <string name="action_more">更多</string>
     <string name="action_clear">清除</string>
     <string name="action_refresh">重新整理</string>
-    <string name="action_sort">排序</string>
     <string name="action_share">分享</string>
     <string name="action_cancel">取消</string>
     <string name="action_save">儲存</string>
-    <string name="action_download">下載</string>
     <string name="action_update">更新</string>
     <string name="action_unskip">取消忽略</string>
     <string name="action_restore_update">恢復更新</string>
@@ -26,9 +24,7 @@
     <string name="sort_name">名稱</string>
 
     <!-- Navigation -->
-    <string name="nav_home">首頁</string>
     <string name="nav_repository">倉庫</string>
-    <string name="nav_search">搜尋</string>
     <string name="nav_installed">已安裝</string>
     <string name="nav_settings">設定</string>
 
@@ -40,30 +36,26 @@
     <string name="home_no_modules">沒有可用模組</string>
     <string name="home_section_recently_updated">最近更新</string>
     <string name="home_section_most_starred">星標最多</string>
-    <string name="home_browse_all">瀏覽全部模組</string>
     <string name="home_load_failed">載入模組失敗</string>
 
     <!-- Search -->
-    <string name="search_placeholder">搜尋模組：%1$d</string>
-    <string name="search_favourites">收藏</string>
-    <string name="search_recent">最近搜尋</string>
     <string name="search_empty">沒有匹配的模組</string>
-    <string name="search_count">找到模組：%1$d</string>
+    <plurals name="search_count">
+        <item quantity="other">找到模組：%1$d</item>
+    </plurals>
 
     <!-- Installed -->
     <string name="installed_empty">未檢測到 LSPosed 模組</string>
-    <string name="installed_section_updates">可更新 (%1$d)</string>
     <string name="installed_section_up_to_date">倉庫中 (%1$d)</string>
     <string name="installed_section_unknown">未找到倉庫 (%1$d)</string>
     <string name="pending_install">等待安裝</string>
-    <string name="installed_update_all">全部更新</string>
     <string name="installed_update_all_count">全部更新(%1$d)</string>
     <string name="installed_version_arrow">%1$s -&gt; %2$s</string>
-    <string name="installed_finished_failures">失敗：%1$d</string>
+    <plurals name="installed_finished_failures">
+        <item quantity="other">失敗：%1$d</item>
+    </plurals>
     <string name="installed_all_updated">所有模組皆已成功更新</string>
     <string name="installer_no_handler">此裝置上沒有可安裝 APK 的應用程式</string>
-    <string name="installed_batch_installer_busy">安裝器仍處於開啟狀態，已略過 %1$d 個更新</string>
-    <string name="installed_updated_one">已將 %1$s 更新到 %2$s</string>
     <string name="installed_batch_failure_download">下載 APK 失敗</string>
     <string name="installed_check_failed">檢查更新失敗</string>
     <string name="installed_choose_variant">選擇變體</string>
@@ -89,7 +81,6 @@
     <string name="installed_update_unignored">已恢復 %1$s 的更新</string>
 
     <!-- Detail -->
-    <string name="detail_readme">說明</string>
     <string name="detail_whats_new">更新內容</string>
     <string name="detail_about">關於此應用</string>
     <string name="detail_releases">版本</string>
@@ -99,7 +90,9 @@
     <string name="detail_reinstall">重新安裝 %1$s</string>
     <string name="detail_install">安裝 %1$s</string>
     <string name="detail_no_releases">沒有版本</string>
-    <string name="detail_downloads">%1$s - 下載：%2$d</string>
+    <plurals name="detail_downloads">
+        <item quantity="other">%1$s - 下載：%2$d</item>
+    </plurals>
     <string name="detail_no_apk">沒有 APK 檔案</string>
     <string name="detail_readme_details">詳情</string>
     <string name="detail_no_readme">沒有說明</string>
@@ -190,7 +183,7 @@
     <string name="backup_export_done">資料庫已匯出</string>
     <string name="backup_export_failed">無法匯出資料庫</string>
     <string name="backup_import_title">匯入資料庫？</string>
-    <string name="backup_import_summary">備份包含 %1$d 個收藏、%2$d 個忽略的模組和 %3$d 個略過的版本。</string>
+    <string name="backup_import_summary">備份包含 %1$s、%2$s和%3$s。</string>
     <string name="backup_import_note">合併會補齊缺少項目並保留現有選擇；覆寫會先刪除目前資料庫。</string>
     <string name="backup_import_merge">合併（建議）</string>
     <string name="backup_import_replace">覆寫現有資料</string>
@@ -258,8 +251,12 @@
     <string name="variant_incompatible_api">需要 LSPosed API %1$d</string>
     <string name="variant_remembered">已記住你的選擇，後續更新將自動使用</string>
     <string name="variant_not_module">此 APK 不是 Xposed 模組</string>
-    <string name="installed_finished_skipped">%1$d 個模組需要選擇變體，請開啟它們進行更新</string>
-    <string name="installed_finished_cancelled">已取消: %1$d</string>
+    <plurals name="installed_finished_skipped">
+        <item quantity="other">%1$d 個模組需要選擇變體，請開啟它們進行更新</item>
+    </plurals>
+    <plurals name="installed_finished_cancelled">
+        <item quantity="other">已取消：%1$d</item>
+    </plurals>
     <string name="variant_picker_subtitle">該版本包含多個 APK。</string>
     <string name="settings_root_unavailable_msg">此裝置沒有 root (su)</string>
 
@@ -290,18 +287,18 @@
 
     <!-- Author -->
     <string name="author_no_modules">該作者沒有模組</string>
-    <string name="author_module_count">模組：%1$d</string>
+    <plurals name="author_module_count">
+        <item quantity="other">模組：%1$d</item>
+    </plurals>
     <string name="author_load_failed">載入模組失敗</string>
 
     <!-- Installer -->
-    <string name="error_no_apk_asset">未找到 APK 檔案</string>
     <string name="error_install_failed">安裝失敗</string>
     <string name="installer_launch_failed">無法啟動安裝器</string>
     <string name="installer_uninstall_launch_failed">無法開啟解除安裝程式</string>
 
     <!-- Notifications -->
     <string name="detail_install_finished">安裝完成</string>
-    <string name="detail_install_failed">安裝失敗：%1$s</string>
     <string name="detail_scope">作用範圍</string>
     <string name="detail_contributors">貢獻者</string>
     <string name="verifier_package_mismatch">APK 套件名稱 %1$s 與預期的 %2$s 不一致</string>
@@ -322,11 +319,12 @@
     <string name="error_http">伺服器錯誤（%1$d）</string>
     <string name="download_channel_name">下載</string>
     <string name="download_channel_desc">APK 下載進度</string>
-    <string name="download_notification_title">正在下載：%1$d</string>
+    <plurals name="download_notification_title">
+        <item quantity="other">正在下載：%1$d</item>
+    </plurals>
     <string name="download_notification_text">%1$s / %2$s</string>
     <string name="download_notification_unknown">正在準備下載…</string>
     <string name="action_cancel_all">全部取消</string>
-    <string name="action_close">關閉</string>
     <string name="installed_search_hint">搜尋已安裝的模組</string>
     <string name="detail_stats">統計</string>
     <string name="detail_stat_stars">星標</string>
@@ -342,10 +340,14 @@
     <string name="updates_channel_name">模組更新</string>
     <string name="updates_channel_desc">背景檢查的更新提醒</string>
     <string name="updates_notification_title_one">%1$s 有可用更新</string>
-    <string name="updates_notification_title_many">有 %1$d 個模組更新可用</string>
+    <plurals name="updates_notification_title_many">
+        <item quantity="other">有 %1$d 個模組更新可用</item>
+    </plurals>
     <string name="updates_auto_title">自動更新完成</string>
-    <string name="updates_auto_text">已更新 %1$d 個，失敗 %2$d 個</string>
-    <string name="updates_auto_text_ok">已更新 %1$d 個模組</string>
+    <string name="updates_auto_text">%1$s，%2$s</string>
+    <plurals name="updates_auto_text_ok">
+        <item quantity="other">已更新 %1$d 個模組</item>
+    </plurals>
     <string name="updates_auto_channel_name">自動更新結果</string>
     <string name="updates_auto_channel_desc">Root 自動更新的靜默摘要</string>
     <string name="settings_updates_section">更新</string>
@@ -369,19 +371,49 @@
     <string name="detail_downgrade">降級安裝 %1$s</string>
     <string name="detail_latest_unavailable">最新版本資源暫不可用</string>
     <string name="detail_resources_unavailable">所選版本資源不可用</string>
+
+    <!-- Counts composed independently in backup and update summaries. -->
+    <plurals name="updates_auto_text_failed">
+        <item quantity="other">%1$d 個模組更新失敗</item>
+    </plurals>
+
+    <plurals name="backup_favourites_count">
+        <item quantity="other">%1$d 個收藏</item>
+    </plurals>
+
+    <plurals name="backup_ignored_modules_count">
+        <item quantity="other">%1$d 個忽略的模組</item>
+    </plurals>
+
+    <plurals name="backup_skipped_versions_count">
+        <item quantity="other">%1$d 個略過的版本</item>
+    </plurals>
+
     <!-- Ignore keywords -->
     <string name="action_add">新增</string>
     <string name="detail_hidden_by_keyword">被關鍵字隱藏：%1$s</string>
-    <string name="library_keywords_section">關鍵字 · %1$d</string>
-    <string name="library_modules_section">模組 · %1$d</string>
+    <plurals name="library_keywords_section">
+        <item quantity="other">關鍵字 · %1$d</item>
+    </plurals>
+    <plurals name="library_modules_section">
+        <item quantity="other">模組 · %1$d</item>
+    </plurals>
     <string name="library_add_ignore_keyword">新增忽略關鍵字</string>
     <string name="library_remove_ignore_keyword">移除關鍵字</string>
     <string name="library_ignore_keyword_placeholder">例如：抖音</string>
     <string name="library_ignore_keyword_hint">比對模組名稱、套件名稱和簡介，不分大小寫</string>
-    <string name="library_ignore_keyword_preview">將隱藏 %1$d 個模組</string>
-    <string name="library_ignore_keyword_matches">%1$d 個模組</string>
+    <plurals name="library_ignore_keyword_preview">
+        <item quantity="other">將隱藏 %1$d 個模組</item>
+    </plurals>
+    <plurals name="library_ignore_keyword_matches">
+        <item quantity="other">%1$d 個模組</item>
+    </plurals>
     <string name="library_ignore_keyword_blank">請輸入關鍵字</string>
     <string name="library_ignore_keyword_duplicate">此關鍵字已存在</string>
-    <string name="library_ignore_keyword_too_long">最多 %1$d 個字元</string>
-    <string name="library_ignore_keyword_limit">最多 %1$d 個關鍵字</string>
+    <plurals name="library_ignore_keyword_too_long">
+        <item quantity="other">最多 %1$d 個字元</item>
+    </plurals>
+    <plurals name="library_ignore_keyword_limit">
+        <item quantity="other">最多 %1$d 個關鍵字</item>
+    </plurals>
 </resources>

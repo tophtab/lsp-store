@@ -9,11 +9,9 @@
     <string name="action_more">More</string>
     <string name="action_clear">Clear</string>
     <string name="action_refresh">Refresh</string>
-    <string name="action_sort">Sort</string>
     <string name="action_share">Share</string>
     <string name="action_cancel">Cancel</string>
     <string name="action_save">Save</string>
-    <string name="action_download">Download</string>
     <string name="action_update">Update</string>
     <string name="action_unskip">Unignore</string>
     <string name="action_restore_update">Restore updates</string>
@@ -29,9 +27,7 @@
     <string name="sort_name">Name</string>
 
     <!-- Navigation -->
-    <string name="nav_home">Home</string>
     <string name="nav_repository">Repository</string>
-    <string name="nav_search">Search</string>
     <string name="nav_installed">Installed</string>
     <string name="nav_settings">Settings</string>
 
@@ -43,24 +39,21 @@
     <string name="home_no_modules">No modules available</string>
     <string name="home_section_recently_updated">Recently updated</string>
     <string name="home_section_most_starred">Most starred</string>
-    <string name="home_browse_all">Browse all modules</string>
     <string name="home_load_failed">Failed to load modules</string>
 
     <!-- Search -->
-    <string name="search_placeholder">Search modules: %1$d</string>
-    <string name="search_favourites">Favourites</string>
-    <string name="search_recent">Recent searches</string>
     <string name="search_empty">No modules match your search</string>
-    <string name="search_count">Modules found: %1$d</string>
+    <plurals name="search_count">
+        <item quantity="one">Module found: %1$d</item>
+        <item quantity="other">Modules found: %1$d</item>
+    </plurals>
 
     <!-- Installed -->
     <string name="installed_empty">No LSPosed modules detected on this device</string>
     <string name="installed_search_hint">Search installed modules</string>
-    <string name="installed_section_updates">Updates (%1$d)</string>
     <string name="installed_section_up_to_date">In repository (%1$d)</string>
     <string name="installed_section_unknown">Not found in repository (%1$d)</string>
     <string name="pending_install">Pending install</string>
-    <string name="installed_update_all">Update all</string>
     <string name="installed_update_all_count">Update all (%1$d)</string>
     <string name="installed_version_arrow">%1$s -&gt; %2$s</string>
     <string name="installed_batch_cancelled">Batch update cancelled</string>
@@ -74,9 +67,10 @@
     <string name="installed_cancel_download">Cancel download</string>
     <string name="installed_retry_update">Retry update</string>
     <string name="installed_all_updated">All modules updated successfully</string>
-    <string name="installed_finished_failures">Failures: %1$d</string>
-    <string name="installed_batch_installer_busy">Installer still open, %1$d update(s) skipped</string>
-    <string name="installed_updated_one">Updated %1$s to %2$s</string>
+    <plurals name="installed_finished_failures">
+        <item quantity="one">Failure: %1$d</item>
+        <item quantity="other">Failures: %1$d</item>
+    </plurals>
     <string name="installed_batch_failure_download">Downloading the APK failed</string>
     <string name="installed_check_failed">Failed to check updates</string>
     <string name="installed_choose_variant">Choose variant</string>
@@ -103,7 +97,6 @@
     <string name="installed_uninstall_confirm_message">Uninstall %1$s? This cannot be undone.</string>
 
     <!-- Detail -->
-    <string name="detail_readme">Readme</string>
     <string name="detail_whats_new">What\'s new</string>
     <string name="detail_about">About this app</string>
     <string name="detail_releases">Releases</string>
@@ -113,7 +106,10 @@
     <string name="detail_reinstall">Reinstall %1$s</string>
     <string name="detail_install">Install %1$s</string>
     <string name="detail_no_releases">No releases</string>
-    <string name="detail_downloads">%1$s - downloads: %2$d</string>
+    <plurals name="detail_downloads">
+        <item quantity="one">%1$s - download: %2$d</item>
+        <item quantity="other">%1$s - downloads: %2$d</item>
+    </plurals>
     <string name="detail_no_apk">No APK assets</string>
     <string name="detail_readme_details">Details</string>
     <string name="detail_no_readme">No readme</string>
@@ -128,7 +124,6 @@
     <string name="detail_uninstall">Uninstall</string>
     <string name="detail_open_source">Open source</string>
     <string name="detail_install_finished">Installation finished</string>
-    <string name="detail_install_failed">Installation failed: %1$s</string>
     <string name="detail_scope">Scope</string>
     <string name="detail_contributors">Contributors</string>
     <string name="detail_installed_apk">Installed %1$s</string>
@@ -208,7 +203,7 @@
     <string name="backup_export_done">Library exported</string>
     <string name="backup_export_failed">Could not export the library</string>
     <string name="backup_import_title">Import library?</string>
-    <string name="backup_import_summary">Backup has %1$d favourites, %2$d ignored modules and %3$d skipped versions.</string>
+    <string name="backup_import_summary">Backup has %1$s, %2$s and %3$s.</string>
     <string name="backup_import_note">Merge adds missing entries and keeps current choices. Replace deletes the current library first.</string>
     <string name="backup_import_merge">Merge (recommended)</string>
     <string name="backup_import_replace">Replace current data</string>
@@ -281,8 +276,14 @@
     <string name="variant_incompatible_api">Requires LSPosed API %1$d</string>
     <string name="variant_remembered">Remembered your choice for future updates</string>
     <string name="variant_not_module">This APK is not an Xposed module</string>
-    <string name="installed_finished_skipped">%1$d modules need a variant choice - open them to update</string>
-    <string name="installed_finished_cancelled">Cancelled: %1$d</string>
+    <plurals name="installed_finished_skipped">
+        <item quantity="one">%1$d module needs a variant choice - open it to update</item>
+        <item quantity="other">%1$d modules need a variant choice - open them to update</item>
+    </plurals>
+    <plurals name="installed_finished_cancelled">
+        <item quantity="one">Cancelled: %1$d</item>
+        <item quantity="other">Cancelled: %1$d</item>
+    </plurals>
     <string name="settings_root_unavailable_msg">Root (su) is not available on this device</string>
 
     <!-- Onboarding -->
@@ -312,14 +313,16 @@
 
     <!-- Author -->
     <string name="author_no_modules">No modules from this author</string>
-    <string name="author_module_count">Modules: %1$d</string>
+    <plurals name="author_module_count">
+        <item quantity="one">Module: %1$d</item>
+        <item quantity="other">Modules: %1$d</item>
+    </plurals>
     <string name="author_load_failed">Failed to load modules</string>
 
     <!-- Installer -->
     <string name="error_network">Network unavailable, check your connection</string>
     <string name="error_timeout">The request timed out</string>
     <string name="error_http">Server error (%1$d)</string>
-    <string name="error_no_apk_asset">No APK asset found</string>
     <string name="error_repository_stale">The repository is still serving an older release. Try again.</string>
     <string name="error_install_failed">Install failed</string>
     <string name="installer_silent_failed">Silent install failed (su)</string>
@@ -331,11 +334,13 @@
     <!-- Notifications -->
     <string name="download_channel_name">Downloads</string>
     <string name="download_channel_desc">APK download progress</string>
-    <string name="download_notification_title">Active downloads: %1$d</string>
+    <plurals name="download_notification_title">
+        <item quantity="one">Active download: %1$d</item>
+        <item quantity="other">Active downloads: %1$d</item>
+    </plurals>
     <string name="download_notification_text">%1$s / %2$s</string>
     <string name="download_notification_unknown">Preparing download…</string>
     <string name="action_cancel_all">Cancel all</string>
-    <string name="action_close">Close</string>
     <string name="detail_stats">Stats</string>
     <string name="detail_stat_stars">Stars</string>
     <string name="detail_stat_releases">Releases</string>
@@ -350,10 +355,16 @@
     <string name="updates_channel_name">Module updates</string>
     <string name="updates_channel_desc">Update alerts from the background check</string>
     <string name="updates_notification_title_one">%1$s update available</string>
-    <string name="updates_notification_title_many">%1$d module updates available</string>
+    <plurals name="updates_notification_title_many">
+        <item quantity="one">%1$d module update available</item>
+        <item quantity="other">%1$d module updates available</item>
+    </plurals>
     <string name="updates_auto_title">Auto-update finished</string>
-    <string name="updates_auto_text">%1$d updated, %2$d failed</string>
-    <string name="updates_auto_text_ok">%1$d modules updated</string>
+    <string name="updates_auto_text">%1$s, %2$s</string>
+    <plurals name="updates_auto_text_ok">
+        <item quantity="one">%1$d module updated</item>
+        <item quantity="other">%1$d modules updated</item>
+    </plurals>
     <string name="updates_auto_channel_name">Auto-update results</string>
     <string name="updates_auto_channel_desc">Silent summaries of automatic root updates</string>
     <string name="settings_updates_section">Updates</string>
@@ -378,19 +389,58 @@
     <string name="detail_latest_unavailable">Latest version resources are temporarily unavailable</string>
     <string name="detail_resources_unavailable">Resources for the selected version are unavailable</string>
 
+    <!-- Counts composed independently in backup and update summaries. -->
+    <plurals name="updates_auto_text_failed">
+        <item quantity="one">%1$d module failed</item>
+        <item quantity="other">%1$d modules failed</item>
+    </plurals>
+
+    <plurals name="backup_favourites_count">
+        <item quantity="one">%1$d favourite</item>
+        <item quantity="other">%1$d favourites</item>
+    </plurals>
+
+    <plurals name="backup_ignored_modules_count">
+        <item quantity="one">%1$d ignored module</item>
+        <item quantity="other">%1$d ignored modules</item>
+    </plurals>
+
+    <plurals name="backup_skipped_versions_count">
+        <item quantity="one">%1$d skipped version</item>
+        <item quantity="other">%1$d skipped versions</item>
+    </plurals>
+
     <!-- Ignore keywords -->
     <string name="action_add">Add</string>
     <string name="detail_hidden_by_keyword">Hidden by keyword: %1$s</string>
-    <string name="library_keywords_section">Keywords · %1$d</string>
-    <string name="library_modules_section">Modules · %1$d</string>
+    <plurals name="library_keywords_section">
+        <item quantity="one">Keyword · %1$d</item>
+        <item quantity="other">Keywords · %1$d</item>
+    </plurals>
+    <plurals name="library_modules_section">
+        <item quantity="one">Module · %1$d</item>
+        <item quantity="other">Modules · %1$d</item>
+    </plurals>
     <string name="library_add_ignore_keyword">Add ignore keyword</string>
     <string name="library_remove_ignore_keyword">Remove keyword</string>
     <string name="library_ignore_keyword_placeholder">e.g. Douyin</string>
     <string name="library_ignore_keyword_hint">Matches module name, package and description; case-insensitive.</string>
-    <string name="library_ignore_keyword_preview">Hides %1$d modules</string>
-    <string name="library_ignore_keyword_matches">%1$d modules</string>
+    <plurals name="library_ignore_keyword_preview">
+        <item quantity="one">Hides %1$d module</item>
+        <item quantity="other">Hides %1$d modules</item>
+    </plurals>
+    <plurals name="library_ignore_keyword_matches">
+        <item quantity="one">%1$d module</item>
+        <item quantity="other">%1$d modules</item>
+    </plurals>
     <string name="library_ignore_keyword_blank">Enter a keyword</string>
     <string name="library_ignore_keyword_duplicate">Keyword already added</string>
-    <string name="library_ignore_keyword_too_long">At most %1$d characters</string>
-    <string name="library_ignore_keyword_limit">At most %1$d keywords</string>
+    <plurals name="library_ignore_keyword_too_long">
+        <item quantity="one">At most %1$d character</item>
+        <item quantity="other">At most %1$d characters</item>
+    </plurals>
+    <plurals name="library_ignore_keyword_limit">
+        <item quantity="one">At most %1$d keyword</item>
+        <item quantity="other">At most %1$d keywords</item>
+    </plurals>
 </resources>

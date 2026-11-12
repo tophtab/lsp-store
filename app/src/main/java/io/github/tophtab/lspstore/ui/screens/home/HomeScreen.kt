@@ -34,6 +34,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -214,7 +215,7 @@ fun HomeScreen(
                             )
                         } else {
                             KomiText(
-                                text = stringResource(R.string.search_count, searchResults.size),
+                                text = pluralStringResource(R.plurals.search_count, searchResults.size, searchResults.size),
                                 role = KomiTextRole.Label,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(horizontal = 14.dp, vertical = 4.dp),

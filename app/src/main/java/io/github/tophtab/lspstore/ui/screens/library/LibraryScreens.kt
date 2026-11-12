@@ -31,6 +31,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -234,8 +235,9 @@ fun IgnoredModulesScreen(onBack: () -> Unit, onOpenModule: (String) -> Unit) {
                     if (state.keywords.isNotEmpty()) {
                         item(span = StaggeredGridItemSpan.FullLine, key = "keywords-header") {
                             IgnoredSectionHeader(
-                                stringResource(
-                                    R.string.library_keywords_section,
+                                pluralStringResource(
+                                    R.plurals.library_keywords_section,
+                                    state.keywords.size,
                                     state.keywords.size,
                                 ),
                             )
@@ -278,8 +280,9 @@ fun IgnoredModulesScreen(onBack: () -> Unit, onOpenModule: (String) -> Unit) {
                         else -> {
                             item(span = StaggeredGridItemSpan.FullLine, key = "modules-header") {
                                 IgnoredSectionHeader(
-                                    stringResource(
-                                        R.string.library_modules_section,
+                                    pluralStringResource(
+                                        R.plurals.library_modules_section,
+                                        state.items.size,
                                         state.items.size,
                                     ),
                                 )
@@ -362,7 +365,7 @@ private fun KeywordRow(item: IgnoredKeywordItem, onRemove: () -> Unit) {
                 )
                 item.matchCount?.let { count ->
                     KomiText(
-                        text = stringResource(R.string.library_ignore_keyword_matches, count),
+                        text = pluralStringResource(R.plurals.library_ignore_keyword_matches, count, count),
                         role = KomiTextRole.Body,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 11.sp,
@@ -413,7 +416,7 @@ private fun AddIgnoreKeywordDialog(
                 fontSize = 11.sp,
             )
             val feedback = error ?: matchCount?.let {
-                stringResource(R.string.library_ignore_keyword_preview, it)
+                pluralStringResource(R.plurals.library_ignore_keyword_preview, it, it)
             }
             if (feedback != null) {
                 KomiText(

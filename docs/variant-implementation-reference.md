@@ -1,9 +1,6 @@
-> 当前安装规则见 [install-behavior.md](install-behavior.md)。本文保留历史设计规格；
-> 拦截、警告和确认相关规则已取消。
->
-> **状态：参考文档（P1 / P2）。**
-> 本文保留设备画像、Range 探测、AXML/Zip 解析等详细规格，做 P1/P2 时直接照此实施，
-> 不要在本轮 P0 里提前动手。
+> 历史适用版本：0.2.0 开发阶段（2026-10-20）。本文保留设备画像、Range 探测、AXML/Zip
+> 解析等设计规格。当前安装规则见 [install-behavior.md](install-behavior.md)，性能与缓存规则见
+> [performance-behavior.md](performance-behavior.md)。下文的拦截、警告、确认和范围约束属于历史设计。
 
 # 变体选择 + 懒验证：一次性实施计划
 

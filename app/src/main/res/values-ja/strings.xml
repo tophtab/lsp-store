@@ -4,11 +4,9 @@
     <string name="action_more">その他</string>
     <string name="action_clear">クリア</string>
     <string name="action_refresh">更新</string>
-    <string name="action_sort">並べ替え</string>
     <string name="action_share">共有</string>
     <string name="action_cancel">キャンセル</string>
     <string name="action_save">保存</string>
-    <string name="action_download">ダウンロード</string>
     <string name="action_update">アップデート</string>
     <string name="action_unskip">無視を解除</string>
     <string name="action_restore_update">アップデートを復元する</string>
@@ -20,9 +18,7 @@
     <string name="sort_updated">最近更新された</string>
     <string name="sort_stars">最もスターが多い</string>
     <string name="sort_name">名前</string>
-    <string name="nav_home">ホーム</string>
     <string name="nav_repository">リポジトリ</string>
-    <string name="nav_search">検索</string>
     <string name="nav_installed">インストール済み</string>
     <string name="nav_settings">設定</string>
     <string name="module_updated_relative">更新されました %1$s</string>
@@ -30,20 +26,16 @@
     <string name="home_no_modules">利用可能なモジュールがありません</string>
     <string name="home_section_recently_updated">最近更新された</string>
     <string name="home_section_most_starred">最もスターが多い</string>
-    <string name="home_browse_all">すべてのモジュールを参照する</string>
     <string name="home_load_failed">モジュールのロードに失敗しました</string>
-    <string name="search_placeholder">検索モジュール: %1$d</string>
-    <string name="search_favourites">お気に入り</string>
-    <string name="search_recent">最近の検索</string>
     <string name="search_empty">検索に一致するモジュールはありません</string>
-    <string name="search_count">見つかったモジュール: %1$d</string>
+    <plurals name="search_count">
+        <item quantity="other">見つかったモジュール: %1$d</item>
+    </plurals>
     <string name="installed_empty">このデバイスでは LSPosed モジュールが検出されませんでした</string>
     <string name="installed_search_hint">インストールされているモジュールを検索する</string>
-    <string name="installed_section_updates">更新情報 (%1$d)</string>
     <string name="installed_section_up_to_date">リポジトリ内 (%1$d)</string>
     <string name="installed_section_unknown">リポジトリ (%1$d) に見つかりません</string>
     <string name="pending_install">インストールを保留中</string>
-    <string name="installed_update_all">すべて更新</string>
     <string name="installed_update_all_count">すべて更新 (%1$d)</string>
     <string name="installed_version_arrow">%1$s -&gt; %2$s</string>
     <string name="installed_batch_cancelled">バッチ更新がキャンセルされました</string>
@@ -57,9 +49,9 @@
     <string name="installed_cancel_download">ダウンロードをキャンセル</string>
     <string name="installed_retry_update">更新を再試行</string>
     <string name="installed_all_updated">すべてのモジュールが正常に更新されました</string>
-    <string name="installed_finished_failures">失敗: %1$d</string>
-    <string name="installed_batch_installer_busy">インストーラーはまだ開いていますが、%1$d 個のアップデートがスキップされました</string>
-    <string name="installed_updated_one">%1$s を %2$s に更新しました</string>
+    <plurals name="installed_finished_failures">
+        <item quantity="other">失敗: %1$d</item>
+    </plurals>
     <string name="installed_batch_failure_download">APK のダウンロードに失敗しました</string>
     <string name="installed_check_failed">アップデートの確認に失敗しました</string>
     <string name="installed_choose_variant">バリエーションを選択してください</string>
@@ -81,7 +73,6 @@
     <string name="installed_variant_auto_saved">自動バリアント選択の使用</string>
     <string name="installed_update_ignored">%1$s の更新は無視されました</string>
     <string name="installed_update_unignored">%1$s の更新が復元されました</string>
-    <string name="detail_readme">お読みください</string>
     <string name="detail_whats_new">新着情報</string>
     <string name="detail_about">このアプリについて</string>
     <string name="detail_releases">リリース</string>
@@ -91,7 +82,9 @@
     <string name="detail_reinstall">再インストール %1$s</string>
     <string name="detail_install">%1$s をインストールします</string>
     <string name="detail_no_releases">リリースはありません</string>
-    <string name="detail_downloads">%1$s - ダウンロード: %2$d</string>
+    <plurals name="detail_downloads">
+        <item quantity="other">%1$s - ダウンロード: %2$d</item>
+    </plurals>
     <string name="detail_no_apk">APK アセットなし</string>
     <string name="detail_readme_details">詳細</string>
     <string name="detail_no_readme">Readme なし</string>
@@ -106,7 +99,6 @@
     <string name="detail_uninstall">アンインストール</string>
     <string name="detail_open_source">オープンソース</string>
     <string name="detail_install_finished">インストールが完了しました</string>
-    <string name="detail_install_failed">インストールに失敗しました: %1$s</string>
     <string name="detail_scope">範囲</string>
     <string name="detail_contributors">貢献者</string>
     <string name="detail_installed_apk">インストール済み %1$s</string>
@@ -176,7 +168,7 @@
     <string name="backup_export_done">ライブラリをエクスポートしました</string>
     <string name="backup_export_failed">ライブラリをエクスポートできませんでした</string>
     <string name="backup_import_title">ライブラリをインポートしますか？</string>
-    <string name="backup_import_summary">バックアップにはお気に入り %1$d 件、無視したモジュール %2$d 件、スキップしたバージョン %3$d 件が含まれています。</string>
+    <string name="backup_import_summary">バックアップには%1$s、%2$s、%3$sが含まれています。</string>
     <string name="backup_import_note">マージは不足している項目を追加し、現在の選択を保持します。置き換えは現在のライブラリを先に削除します。</string>
     <string name="backup_import_merge">マージ（推奨）</string>
     <string name="backup_import_replace">現在のデータを置き換える</string>
@@ -245,8 +237,12 @@
     <string name="variant_incompatible_api">LSPosed API %1$d が必要です</string>
     <string name="variant_remembered">今後のアップデートのために選択を記憶しました</string>
     <string name="variant_not_module">この APK は Xowned モジュールではありません</string>
-    <string name="installed_finished_skipped">%1$d モジュールにはバリアントの選択が必要です - モジュールを開いて更新します</string>
-    <string name="installed_finished_cancelled">キャンセル: %1$d</string>
+    <plurals name="installed_finished_skipped">
+        <item quantity="other">%1$d 件のモジュールでバリアントの選択が必要です。開いて更新してください</item>
+    </plurals>
+    <plurals name="installed_finished_cancelled">
+        <item quantity="other">キャンセル: %1$d</item>
+    </plurals>
     <string name="settings_root_unavailable_msg">このデバイスではルート (su) を使用できません</string>
     <string name="onboarding_welcome_title">LSP Storeへようこそ</string>
     <string name="onboarding_welcome_body">LSPosed モジュールの更新と閲覧ツール</string>
@@ -270,12 +266,13 @@
     <string name="about_source_title">GitHub のソースコード</string>
     <string name="about_source_body">このプロジェクトが役に立ったら、GitHub でスターを付けてもらえると嬉しいです。</string>
     <string name="author_no_modules">この作者のモジュールはありません</string>
-    <string name="author_module_count">モジュール: %1$d</string>
+    <plurals name="author_module_count">
+        <item quantity="other">モジュール: %1$d</item>
+    </plurals>
     <string name="author_load_failed">モジュールのロードに失敗しました</string>
     <string name="error_network">ネットワークが利用できません。接続を確認してください</string>
     <string name="error_timeout">リクエストがタイムアウトしました</string>
     <string name="error_http">サーバーエラー (%1$d)</string>
-    <string name="error_no_apk_asset">APK アセットが見つかりません</string>
     <string name="error_install_failed">インストールに失敗しました</string>
     <string name="installer_silent_failed">サイレントインストールに失敗しました (su)</string>
     <string name="installer_launch_failed">インストーラーを起動できません</string>
@@ -284,11 +281,12 @@
     <string name="verifier_package_mismatch">APK パッケージ %1$s は期待される %2$s と一致しません</string>
     <string name="download_channel_name">ダウンロード</string>
     <string name="download_channel_desc">APKダウンロードの進行状況</string>
-    <string name="download_notification_title">アクティブなダウンロード: %1$d</string>
+    <plurals name="download_notification_title">
+        <item quantity="other">アクティブなダウンロード: %1$d</item>
+    </plurals>
     <string name="download_notification_text">%1$s / %2$s</string>
     <string name="download_notification_unknown">ダウンロードを準備しています…</string>
     <string name="action_cancel_all">すべてキャンセル</string>
-    <string name="action_close">閉じる</string>
     <string name="detail_stats">統計</string>
     <string name="detail_stat_stars">スター</string>
     <string name="detail_stat_releases">リリース</string>
@@ -307,10 +305,14 @@
     <string name="updates_channel_name">モジュールの更新</string>
     <string name="updates_channel_desc">バックグラウンド確認からの更新通知</string>
     <string name="updates_notification_title_one">%1$s の更新があります</string>
-    <string name="updates_notification_title_many">%1$d 件のモジュール更新があります</string>
+    <plurals name="updates_notification_title_many">
+        <item quantity="other">%1$d 件のモジュール更新があります</item>
+    </plurals>
     <string name="updates_auto_title">自動更新が完了しました</string>
-    <string name="updates_auto_text">%1$d 件更新、%2$d 件失敗</string>
-    <string name="updates_auto_text_ok">%1$d 件のモジュールを更新しました</string>
+    <string name="updates_auto_text">%1$s、%2$s</string>
+    <plurals name="updates_auto_text_ok">
+        <item quantity="other">%1$d 件のモジュールを更新しました</item>
+    </plurals>
     <string name="updates_auto_channel_name">自動更新の結果</string>
     <string name="updates_auto_channel_desc">root 自動更新のサイレント概要</string>
     <string name="settings_updates_section">更新</string>
@@ -334,19 +336,49 @@
     <string name="detail_downgrade">%1$s にダウングレード</string>
     <string name="detail_latest_unavailable">最新バージョンのファイルは一時的に利用できません</string>
     <string name="detail_resources_unavailable">選択したバージョンのファイルは利用できません</string>
+
+    <!-- Counts composed independently in backup and update summaries. -->
+    <plurals name="updates_auto_text_failed">
+        <item quantity="other">%1$d 件のモジュールの更新に失敗しました</item>
+    </plurals>
+
+    <plurals name="backup_favourites_count">
+        <item quantity="other">お気に入り %1$d 件</item>
+    </plurals>
+
+    <plurals name="backup_ignored_modules_count">
+        <item quantity="other">無視したモジュール %1$d 件</item>
+    </plurals>
+
+    <plurals name="backup_skipped_versions_count">
+        <item quantity="other">スキップしたバージョン %1$d 件</item>
+    </plurals>
+
     <!-- Ignore keywords -->
     <string name="action_add">追加</string>
     <string name="detail_hidden_by_keyword">キーワードで非表示: %1$s</string>
-    <string name="library_keywords_section">キーワード · %1$d</string>
-    <string name="library_modules_section">モジュール · %1$d</string>
+    <plurals name="library_keywords_section">
+        <item quantity="other">キーワード · %1$d</item>
+    </plurals>
+    <plurals name="library_modules_section">
+        <item quantity="other">モジュール · %1$d</item>
+    </plurals>
     <string name="library_add_ignore_keyword">無視キーワードを追加</string>
     <string name="library_remove_ignore_keyword">キーワードを削除</string>
     <string name="library_ignore_keyword_placeholder">例: Douyin</string>
     <string name="library_ignore_keyword_hint">モジュール名、パッケージ、説明に一致します（大文字と小文字は区別しません）。</string>
-    <string name="library_ignore_keyword_preview">%1$d 件のモジュールを非表示にします</string>
-    <string name="library_ignore_keyword_matches">%1$d 件のモジュール</string>
+    <plurals name="library_ignore_keyword_preview">
+        <item quantity="other">%1$d 件のモジュールを非表示にします</item>
+    </plurals>
+    <plurals name="library_ignore_keyword_matches">
+        <item quantity="other">%1$d 件のモジュール</item>
+    </plurals>
     <string name="library_ignore_keyword_blank">キーワードを入力</string>
     <string name="library_ignore_keyword_duplicate">このキーワードは既に追加されています</string>
-    <string name="library_ignore_keyword_too_long">最大 %1$d 文字</string>
-    <string name="library_ignore_keyword_limit">最大 %1$d 個のキーワード</string>
+    <plurals name="library_ignore_keyword_too_long">
+        <item quantity="other">最大 %1$d 文字</item>
+    </plurals>
+    <plurals name="library_ignore_keyword_limit">
+        <item quantity="other">最大 %1$d 個のキーワード</item>
+    </plurals>
 </resources>

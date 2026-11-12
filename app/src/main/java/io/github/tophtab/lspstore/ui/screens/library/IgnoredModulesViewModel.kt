@@ -126,8 +126,9 @@ class IgnoredModulesViewModel(private val container: AppContainer) : ViewModel()
         return when {
             draft.isEmpty() -> context.getString(R.string.library_ignore_keyword_blank)
             draft.length > HiddenModules.MAX_KEYWORD_LENGTH ->
-                context.getString(
-                    R.string.library_ignore_keyword_too_long,
+                context.resources.getQuantityString(
+                    R.plurals.library_ignore_keyword_too_long,
+                    HiddenModules.MAX_KEYWORD_LENGTH,
                     HiddenModules.MAX_KEYWORD_LENGTH,
                 )
 
@@ -135,7 +136,11 @@ class IgnoredModulesViewModel(private val container: AppContainer) : ViewModel()
                 context.getString(R.string.library_ignore_keyword_duplicate)
 
             keywords.size >= HiddenModules.MAX_KEYWORDS ->
-                context.getString(R.string.library_ignore_keyword_limit, HiddenModules.MAX_KEYWORDS)
+                context.resources.getQuantityString(
+                    R.plurals.library_ignore_keyword_limit,
+                    HiddenModules.MAX_KEYWORDS,
+                    HiddenModules.MAX_KEYWORDS,
+                )
 
             else -> null
         }

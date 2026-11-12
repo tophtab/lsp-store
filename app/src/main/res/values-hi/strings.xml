@@ -4,11 +4,9 @@
     <string name="action_more">और</string>
     <string name="action_clear">साफ़ करें</string>
     <string name="action_refresh">रीफ़्रेश करें</string>
-    <string name="action_sort">क्रमबद्ध करें</string>
     <string name="action_share">साझा करें</string>
     <string name="action_cancel">रद्द करें</string>
     <string name="action_save">सहेजें</string>
-    <string name="action_download">डाउनलोड करें</string>
     <string name="action_update">अपडेट करें</string>
     <string name="action_unskip">अनदेखा करना बंद करें</string>
     <string name="action_restore_update">अद्यतन पुनर्स्थापित करें</string>
@@ -20,9 +18,7 @@
     <string name="sort_updated">हाल ही में अद्यतन किया गया</string>
     <string name="sort_stars">सर्वाधिक तारांकित</string>
     <string name="sort_name">नाम</string>
-    <string name="nav_home">होम</string>
     <string name="nav_repository">कोष</string>
-    <string name="nav_search">खोजें</string>
     <string name="nav_installed">इंस्टॉल किए गए</string>
     <string name="nav_settings">सेटिंग्स</string>
     <string name="module_updated_relative">अद्यतन किया गया %1$s</string>
@@ -30,20 +26,17 @@
     <string name="home_no_modules">कोई मॉड्यूल उपलब्ध नहीं है</string>
     <string name="home_section_recently_updated">हाल ही में अद्यतन किया गया</string>
     <string name="home_section_most_starred">सर्वाधिक तारांकित</string>
-    <string name="home_browse_all">सभी मॉड्यूल ब्राउज़ करें</string>
     <string name="home_load_failed">मॉड्यूल लोड करने में विफल</string>
-    <string name="search_placeholder">खोज मॉड्यूल: %1$d</string>
-    <string name="search_favourites">पसंदीदा</string>
-    <string name="search_recent">हाल की खोजें</string>
     <string name="search_empty">कोई भी मॉड्यूल आपकी खोज से मेल नहीं खाता</string>
-    <string name="search_count">मॉड्यूल मिले: %1$d</string>
+    <plurals name="search_count">
+        <item quantity="one">मॉड्यूल मिला: %1$d</item>
+        <item quantity="other">मॉड्यूल मिले: %1$d</item>
+    </plurals>
     <string name="installed_empty">इस डिवाइस पर कोई LSPosed मॉड्यूल नहीं पाया गया</string>
     <string name="installed_search_hint">स्थापित मॉड्यूल खोजें</string>
-    <string name="installed_section_updates">अपडेट (%1$d)</string>
     <string name="installed_section_up_to_date">भंडार में (%1$d)</string>
     <string name="installed_section_unknown">भंडार में नहीं मिला (%1$d)</string>
     <string name="pending_install">लंबित स्थापना</string>
-    <string name="installed_update_all">सभी अपडेट करें</string>
     <string name="installed_update_all_count">सभी अपडेट करें (%1$d)</string>
     <string name="installed_version_arrow">%1$s -&gt; %2$s</string>
     <string name="installed_batch_cancelled">बैच अद्यतन रद्द कर दिया गया</string>
@@ -57,9 +50,10 @@
     <string name="installed_cancel_download">डाउनलोड रद्द करें</string>
     <string name="installed_retry_update">अपडेट फिर से आज़माएँ</string>
     <string name="installed_all_updated">सभी मॉड्यूल सफलतापूर्वक अपडेट हो गए</string>
-    <string name="installed_finished_failures">विफलताएँ: %1$d</string>
-    <string name="installed_batch_installer_busy">इंस्टॉलर अभी भी खुला है, %1$d अपडेट छोड़ दिया गया है</string>
-    <string name="installed_updated_one">%1$s से %2$s तक अपडेट किया गया</string>
+    <plurals name="installed_finished_failures">
+        <item quantity="one">विफलता: %1$d</item>
+        <item quantity="other">विफलताएँ: %1$d</item>
+    </plurals>
     <string name="installed_batch_failure_download">APK डाउनलोड विफल रहा</string>
     <string name="installed_check_failed">अद्यतनों की जाँच करने में विफल</string>
     <string name="installed_choose_variant">वैरिएंट चुनें</string>
@@ -81,7 +75,6 @@
     <string name="installed_variant_auto_saved">स्वचालित संस्करण चयन का उपयोग करना</string>
     <string name="installed_update_ignored">%1$s के लिए अद्यतन पर ध्यान नहीं दिया गया</string>
     <string name="installed_update_unignored">%1$s के लिए अद्यतन बहाल किया गया</string>
-    <string name="detail_readme">रीडमी</string>
     <string name="detail_whats_new">नया क्या है</string>
     <string name="detail_about">इस ऐप के बारे में</string>
     <string name="detail_releases">विज्ञप्ति</string>
@@ -91,7 +84,10 @@
     <string name="detail_reinstall">पुनः स्थापित करें %1$s</string>
     <string name="detail_install">स्थापित करें %1$s</string>
     <string name="detail_no_releases">कोई रिलीज़ नहीं</string>
-    <string name="detail_downloads">%1$s - डाउनलोड: %2$d</string>
+    <plurals name="detail_downloads">
+        <item quantity="one">%1$s - डाउनलोड: %2$d</item>
+        <item quantity="other">%1$s - डाउनलोड: %2$d</item>
+    </plurals>
     <string name="detail_no_apk">कोई एपीके संपत्ति नहीं</string>
     <string name="detail_readme_details">विवरण</string>
     <string name="detail_no_readme">कोई रीडमी नहीं</string>
@@ -106,7 +102,6 @@
     <string name="detail_uninstall">अनइंस्टॉल करें</string>
     <string name="detail_open_source">ओपन सोर्स</string>
     <string name="detail_install_finished">स्थापना समाप्त</string>
-    <string name="detail_install_failed">स्थापना विफल: %1$s</string>
     <string name="detail_scope">दायरा</string>
     <string name="detail_contributors">योगदानकर्ताओं</string>
     <string name="detail_installed_apk">स्थापित %1$s</string>
@@ -176,7 +171,7 @@
     <string name="backup_export_done">लाइब्रेरी निर्यात हो गई</string>
     <string name="backup_export_failed">लाइब्रेरी निर्यात नहीं हो सकी</string>
     <string name="backup_import_title">लाइब्रेरी आयात करें?</string>
-    <string name="backup_import_summary">बैकअप में %1$d पसंदीदा, %2$d अनदेखे मॉड्यूल और %3$d छोड़े गए संस्करण हैं।</string>
+    <string name="backup_import_summary">बैकअप में %1$s, %2$s और %3$s हैं।</string>
     <string name="backup_import_note">मर्ज छूटी प्रविष्टियाँ जोड़ता है और मौजूदा चयन रखता है। बदलें पहले मौजूदा लाइब्रेरी मिटाता है।</string>
     <string name="backup_import_merge">मर्ज करें (अनुशंसित)</string>
     <string name="backup_import_replace">मौजूदा डेटा बदलें</string>
@@ -245,8 +240,14 @@
     <string name="variant_incompatible_api">एलएसपोज़्ड एपीआई की आवश्यकता है %1$d</string>
     <string name="variant_remembered">भविष्य के अपडेट के लिए आपकी पसंद को याद रखा</string>
     <string name="variant_not_module">यह एपीके एक एक्सपोज़ड मॉड्यूल नहीं है</string>
-    <string name="installed_finished_skipped">%1$d मॉड्यूल को एक भिन्न विकल्प की आवश्यकता होती है - उन्हें अपडेट करने के लिए खोलें</string>
-    <string name="installed_finished_cancelled">रद्द किए गए: %1$d</string>
+    <plurals name="installed_finished_skipped">
+        <item quantity="one">%1$d मॉड्यूल के लिए वैरिएंट चुनना आवश्यक है - अपडेट करने के लिए उसे खोलें</item>
+        <item quantity="other">%1$d मॉड्यूल के लिए वैरिएंट चुनना आवश्यक है - अपडेट करने के लिए उन्हें खोलें</item>
+    </plurals>
+    <plurals name="installed_finished_cancelled">
+        <item quantity="one">रद्द किया गया: %1$d</item>
+        <item quantity="other">रद्द किए गए: %1$d</item>
+    </plurals>
     <string name="settings_root_unavailable_msg">इस डिवाइस पर रूट (su) उपलब्ध नहीं है</string>
     <string name="onboarding_welcome_title">LSP Store में आपका स्वागत है</string>
     <string name="onboarding_welcome_body">LSPosed मॉड्यूल को अपडेट और ब्राउज़ करने का टूल</string>
@@ -270,12 +271,14 @@
     <string name="about_source_title">GitHub पर सोर्स कोड</string>
     <string name="about_source_body">अगर यह प्रोजेक्ट आपके काम आया है, तो GitHub पर स्टार दें। इससे मुझे बहुत मदद मिलती है।</string>
     <string name="author_no_modules">इस लेखक का कोई मॉड्यूल नहीं</string>
-    <string name="author_module_count">मॉड्यूल: %1$d</string>
+    <plurals name="author_module_count">
+        <item quantity="one">मॉड्यूल: %1$d</item>
+        <item quantity="other">मॉड्यूल: %1$d</item>
+    </plurals>
     <string name="author_load_failed">मॉड्यूल लोड करने में विफल</string>
     <string name="error_network">नेटवर्क अनुपलब्ध है, अपना कनेक्शन जांचें</string>
     <string name="error_timeout">अनुरोध का समय समाप्त हो गया</string>
     <string name="error_http">सर्वर त्रुटि (%1$d)</string>
-    <string name="error_no_apk_asset">कोई APK संपत्ति नहीं मिली</string>
     <string name="error_install_failed">इंस्टॉल विफल</string>
     <string name="installer_silent_failed">मौन स्थापना विफल (सु)</string>
     <string name="installer_launch_failed">इंस्टॉलर लॉन्च करने में असमर्थ</string>
@@ -284,11 +287,13 @@
     <string name="verifier_package_mismatch">एपीके पैकेज %1$s अपेक्षित से मेल नहीं खाता %2$s</string>
     <string name="download_channel_name">डाउनलोड</string>
     <string name="download_channel_desc">एपीके डाउनलोड प्रगति</string>
-    <string name="download_notification_title">सक्रिय डाउनलोड: %1$d</string>
+    <plurals name="download_notification_title">
+        <item quantity="one">सक्रिय डाउनलोड: %1$d</item>
+        <item quantity="other">सक्रिय डाउनलोड: %1$d</item>
+    </plurals>
     <string name="download_notification_text">%1$s / %2$s</string>
     <string name="download_notification_unknown">डाउनलोड की तैयारी की जा रही है…</string>
     <string name="action_cancel_all">सभी रद्द करें</string>
-    <string name="action_close">बंद करें</string>
     <string name="detail_stats">आँकड़े</string>
     <string name="detail_stat_stars">सितारे</string>
     <string name="detail_stat_releases">विज्ञप्ति</string>
@@ -307,10 +312,16 @@
     <string name="updates_channel_name">मॉड्यूल अपडेट</string>
     <string name="updates_channel_desc">बैकग्राउंड जाँच से अपडेट सूचनाएँ</string>
     <string name="updates_notification_title_one">%1$s के लिए अपडेट उपलब्ध</string>
-    <string name="updates_notification_title_many">%1$d मॉड्यूल अपडेट उपलब्ध</string>
+    <plurals name="updates_notification_title_many">
+        <item quantity="one">%1$d मॉड्यूल अपडेट उपलब्ध है</item>
+        <item quantity="other">%1$d मॉड्यूल अपडेट उपलब्ध हैं</item>
+    </plurals>
     <string name="updates_auto_title">स्वचालित अपडेट पूरा हुआ</string>
-    <string name="updates_auto_text">%1$d अपडेट हुए, %2$d विफल</string>
-    <string name="updates_auto_text_ok">%1$d मॉड्यूल अपडेट हुए</string>
+    <string name="updates_auto_text">%1$s, %2$s</string>
+    <plurals name="updates_auto_text_ok">
+        <item quantity="one">%1$d मॉड्यूल अपडेट हुआ</item>
+        <item quantity="other">%1$d मॉड्यूल अपडेट हुए</item>
+    </plurals>
     <string name="updates_auto_channel_name">स्वचालित अपडेट परिणाम</string>
     <string name="updates_auto_channel_desc">Root स्वचालित अपडेट के मौन सारांश</string>
     <string name="settings_updates_section">अपडेट</string>
@@ -334,19 +345,59 @@
     <string name="detail_downgrade">पुराना संस्करण %1$s इंस्टॉल करें</string>
     <string name="detail_latest_unavailable">नवीनतम संस्करण की फ़ाइलें अस्थायी रूप से उपलब्ध नहीं हैं</string>
     <string name="detail_resources_unavailable">चुने गए संस्करण की फ़ाइलें उपलब्ध नहीं हैं</string>
+
+    <!-- Counts composed independently in backup and update summaries. -->
+    <plurals name="updates_auto_text_failed">
+        <item quantity="one">%1$d मॉड्यूल का अपडेट विफल हुआ</item>
+        <item quantity="other">%1$d मॉड्यूल के अपडेट विफल हुए</item>
+    </plurals>
+
+    <plurals name="backup_favourites_count">
+        <item quantity="one">%1$d पसंदीदा</item>
+        <item quantity="other">%1$d पसंदीदा</item>
+    </plurals>
+
+    <plurals name="backup_ignored_modules_count">
+        <item quantity="one">%1$d अनदेखा मॉड्यूल</item>
+        <item quantity="other">%1$d अनदेखे मॉड्यूल</item>
+    </plurals>
+
+    <plurals name="backup_skipped_versions_count">
+        <item quantity="one">%1$d छोड़ा गया संस्करण</item>
+        <item quantity="other">%1$d छोड़े गए संस्करण</item>
+    </plurals>
+
     <!-- Ignore keywords -->
     <string name="action_add">जोड़ें</string>
     <string name="detail_hidden_by_keyword">कीवर्ड से छिपा: %1$s</string>
-    <string name="library_keywords_section">कीवर्ड · %1$d</string>
-    <string name="library_modules_section">मॉड्यूल · %1$d</string>
+    <plurals name="library_keywords_section">
+        <item quantity="one">कीवर्ड · %1$d</item>
+        <item quantity="other">कीवर्ड · %1$d</item>
+    </plurals>
+    <plurals name="library_modules_section">
+        <item quantity="one">मॉड्यूल · %1$d</item>
+        <item quantity="other">मॉड्यूल · %1$d</item>
+    </plurals>
     <string name="library_add_ignore_keyword">अनदेखा करने का कीवर्ड जोड़ें</string>
     <string name="library_remove_ignore_keyword">कीवर्ड हटाएँ</string>
     <string name="library_ignore_keyword_placeholder">उदा. Douyin</string>
     <string name="library_ignore_keyword_hint">मॉड्यूल का नाम, पैकेज और विवरण से मिलाता है; केस-असंवेदनशील।</string>
-    <string name="library_ignore_keyword_preview">%1$d मॉड्यूल छिपाएगा</string>
-    <string name="library_ignore_keyword_matches">%1$d मॉड्यूल</string>
+    <plurals name="library_ignore_keyword_preview">
+        <item quantity="one">%1$d मॉड्यूल छिपाएगा</item>
+        <item quantity="other">%1$d मॉड्यूल छिपाएगा</item>
+    </plurals>
+    <plurals name="library_ignore_keyword_matches">
+        <item quantity="one">%1$d मॉड्यूल</item>
+        <item quantity="other">%1$d मॉड्यूल</item>
+    </plurals>
     <string name="library_ignore_keyword_blank">कीवर्ड दर्ज करें</string>
     <string name="library_ignore_keyword_duplicate">कीवर्ड पहले से जोड़ा गया है</string>
-    <string name="library_ignore_keyword_too_long">अधिकतम %1$d अक्षर</string>
-    <string name="library_ignore_keyword_limit">अधिकतम %1$d कीवर्ड</string>
+    <plurals name="library_ignore_keyword_too_long">
+        <item quantity="one">अधिकतम %1$d अक्षर</item>
+        <item quantity="other">अधिकतम %1$d अक्षर</item>
+    </plurals>
+    <plurals name="library_ignore_keyword_limit">
+        <item quantity="one">अधिकतम %1$d कीवर्ड</item>
+        <item quantity="other">अधिकतम %1$d कीवर्ड</item>
+    </plurals>
 </resources>

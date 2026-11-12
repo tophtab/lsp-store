@@ -1,5 +1,9 @@
 # P0 实施清单：变体选择 + 懒验证
 
+> 历史适用版本：0.2.0 开发阶段（2026-10-20）。本文保留当时的施工草案、环境和决策。
+> 当前安装与更新规则见 [install-behavior.md](install-behavior.md)，性能与缓存规则见
+> [performance-behavior.md](performance-behavior.md)。下文的旧门禁、确认和范围约束属于历史设计。
+
 配套文档：`docs/variant-selection.md`（数据、结论、已定决策）。
 P1（设备画像）/ P2（Range 探测）的详细规格在 `docs/variant-implementation-reference.md`，**本次不做**，但接口要留好。
 所有产品决策已确认，可以直接动手，不需要再问。
