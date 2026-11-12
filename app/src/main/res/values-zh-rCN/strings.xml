@@ -9,6 +9,7 @@
     <string name="action_sort">排序</string>
     <string name="action_share">分享</string>
     <string name="action_cancel">取消</string>
+    <string name="action_save">保存</string>
     <string name="action_download">下载</string>
     <string name="action_update">更新</string>
     <string name="action_unskip">取消忽略</string>
@@ -347,11 +348,19 @@
     <string name="updates_auto_title">自动更新完成</string>
     <string name="updates_auto_text">已更新 %1$d 个，失败 %2$d 个</string>
     <string name="updates_auto_text_ok">已更新 %1$d 个模块</string>
+    <string name="updates_auto_channel_name">自动更新结果</string>
+    <string name="updates_auto_channel_desc">Root 自动更新的静默汇总</string>
     <string name="settings_updates_section">更新</string>
     <string name="settings_background_check">后台检查</string>
     <string name="settings_background_check_desc">按计划获取模块仓库并提示新版本。</string>
     <string name="settings_check_interval">检查间隔</string>
     <string name="settings_interval_days">%1$d 天</string>
+    <string name="settings_check_interval_desc">长按间隔可自定义小时数。</string>
+    <string name="settings_check_interval_custom_current">自定义间隔：%1$d 小时，长按可修改。</string>
+    <string name="settings_check_interval_custom_title">自定义检查间隔</string>
+    <string name="settings_check_interval_custom_desc">输入 1 到 168 之间的整数小时。</string>
+    <string name="settings_check_interval_custom_invalid">请输入 1 到 168 之间的数字。</string>
+    <string name="settings_check_interval_hours_label">小时</string>
     <string name="settings_wifi_only">仅 Wi-Fi</string>
     <string name="settings_wifi_only_desc">仅在非计费网络上运行后台检查。</string>
     <string name="settings_auto_update">自动安装更新</string>
@@ -362,4 +371,20 @@
     <string name="detail_downgrade">降级安装 %1$s</string>
     <string name="detail_latest_unavailable">最新版本资源暂不可用</string>
     <string name="detail_resources_unavailable">所选版本资源不可用</string>
+
+    <!-- Ignore keywords -->
+    <string name="action_add">添加</string>
+    <string name="detail_hidden_by_keyword">被关键词隐藏：%1$s</string>
+    <string name="library_keywords_section">关键词 · %1$d</string>
+    <string name="library_modules_section">模块 · %1$d</string>
+    <string name="library_add_ignore_keyword">添加忽略关键词</string>
+    <string name="library_remove_ignore_keyword">移除关键词</string>
+    <string name="library_ignore_keyword_placeholder">例如：抖音</string>
+    <string name="library_ignore_keyword_hint">匹配模块名称、包名和简介，不区分大小写</string>
+    <string name="library_ignore_keyword_preview">将隐藏 %1$d 个模块</string>
+    <string name="library_ignore_keyword_matches">%1$d 个模块</string>
+    <string name="library_ignore_keyword_blank">请输入关键词</string>
+    <string name="library_ignore_keyword_duplicate">该关键词已存在</string>
+    <string name="library_ignore_keyword_too_long">最多 %1$d 个字符</string>
+    <string name="library_ignore_keyword_limit">最多 %1$d 个关键词</string>
 </resources>

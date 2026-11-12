@@ -12,6 +12,7 @@ import kotlinx.coroutines.launch
 import io.github.tophtab.lspstore.R
 import io.github.tophtab.lspstore.di.AppContainer
 import io.github.tophtab.lspstore.ui.toUserMessage
+import io.github.tophtab.lspstore.domain.model.HiddenModules
 import io.github.tophtab.lspstore.domain.model.Module
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -21,10 +22,23 @@ data class IgnoredModuleItem(
     val title: String,
 )
 
+/** One keyword rule, with how many modules it currently matches. */
+data class IgnoredKeywordItem(
+    val keyword: String,
+    /** Matches in the loaded index; null while the index is unavailable. */
+    val matchCount: Int?,
+)
+
 data class IgnoredModulesUiState(
     val isLoading: Boolean = true,
     val error: String? = null,
     val items: List<IgnoredModuleItem> = emptyList(),
+    val keywords: List<IgnoredKeywordItem> = emptyList(),
+    val isAddingKeyword: Boolean = false,
+    val keywordDraft: String = "",
+    val keywordError: String? = null,
+    /** Modules the draft would hide, so an over-broad keyword is visible before it is added. */
+    val keywordMatchCount: Int? = null,
 )
 
 class IgnoredModulesViewModel(private val container: AppContainer) : ViewModel() {
@@ -35,14 +49,17 @@ class IgnoredModulesViewModel(private val container: AppContainer) : ViewModel()
     private val _state = MutableStateFlow(IgnoredModulesUiState())
     val state = _state.asStateFlow()
 
-    private var index: List<Module> = emptyList()
+    /** Null until the index loads; keyword editing must not depend on it. */
+    private var index: List<Module>? = null
     private var ignored: Set<String> = emptySet()
+    private var keywords: List<String> = emptyList()
     private var loadJob: Job? = null
 
     init {
         viewModelScope.launch {
-            libraryRepository.ignoredModules.collect { value ->
-                ignored = value
+            libraryRepository.hiddenModules.collect { value ->
+                ignored = value.packages
+                keywords = value.keywords
                 rebuild()
             }
         }
@@ -53,16 +70,88 @@ class IgnoredModulesViewModel(private val container: AppContainer) : ViewModel()
         viewModelScope.launch { libraryRepository.setModuleIgnored(packageName, ignored = false) }
     }
 
-    fun clearAll() {
-        viewModelScope.launch { libraryRepository.clearIgnoredModules() }
+    fun openAddKeyword() {
+        _state.update {
+            it.copy(
+                isAddingKeyword = true,
+                keywordDraft = "",
+                keywordError = null,
+                keywordMatchCount = null,
+            )
+        }
+    }
+
+    fun dismissAddKeyword() {
+        _state.update { it.copy(isAddingKeyword = false, keywordError = null) }
+    }
+
+    fun onKeywordDraftChange(draft: String) {
+        _state.update {
+            it.copy(
+                keywordDraft = draft,
+                keywordError = null,
+                keywordMatchCount = draft.trim().takeIf(String::isNotEmpty)?.let(::matchCount),
+            )
+        }
+    }
+
+    fun addKeyword() {
+        val draft = _state.value.keywordDraft.trim()
+        val message = validate(draft)
+        if (message != null) {
+            _state.update { it.copy(keywordError = message) }
+            return
+        }
+        viewModelScope.launch {
+            libraryRepository.addIgnoredKeyword(draft)
+            _state.update {
+                it.copy(
+                    isAddingKeyword = false,
+                    keywordDraft = "",
+                    keywordError = null,
+                    keywordMatchCount = null,
+                )
+            }
+        }
+    }
+
+    fun removeKeyword(keyword: String) {
+        viewModelScope.launch { libraryRepository.removeIgnoredKeyword(keyword) }
     }
 
     fun refresh() = load()
 
+    private fun validate(draft: String): String? {
+        val context = container.appContext
+        return when {
+            draft.isEmpty() -> context.getString(R.string.library_ignore_keyword_blank)
+            draft.length > HiddenModules.MAX_KEYWORD_LENGTH ->
+                context.getString(
+                    R.string.library_ignore_keyword_too_long,
+                    HiddenModules.MAX_KEYWORD_LENGTH,
+                )
+
+            keywords.any { it.equals(draft, ignoreCase = true) } ->
+                context.getString(R.string.library_ignore_keyword_duplicate)
+
+            keywords.size >= HiddenModules.MAX_KEYWORDS ->
+                context.getString(R.string.library_ignore_keyword_limit, HiddenModules.MAX_KEYWORDS)
+
+            else -> null
+        }
+    }
+
+    private fun matchCount(draft: String): Int? {
+        val modules = index ?: return null
+        val trimmed = draft.trim()
+        if (trimmed.isEmpty()) return 0
+        return modules.count { it.matchesText(trimmed) }
+    }
+
     private fun load() {
         loadJob?.cancel()
         loadJob = viewModelScope.launch {
-            _state.update { it.copy(isLoading = index.isEmpty(), error = null) }
+            _state.update { it.copy(isLoading = index == null, error = null) }
             runCatching { moduleRepository.getIndex(force = false) }
                 .onSuccess { modules ->
                     index = modules
@@ -89,14 +178,26 @@ class IgnoredModulesViewModel(private val container: AppContainer) : ViewModel()
         // The index supplies the display title; a module that left the
         // repository still has an entry, so the row falls back to its package
         // name and stays restorable.
-        val byPackage = index.associateBy { it.packageName }
+        val byPackage = index?.associateBy { it.packageName }.orEmpty()
         val items = ignored.map { name ->
             IgnoredModuleItem(
                 packageName = name,
                 title = byPackage[name]?.title ?: name,
             )
         }
-        _state.update { it.copy(items = items) }
+        val keywordItems = keywords.map { keyword ->
+            IgnoredKeywordItem(keyword = keyword, matchCount = matchCount(keyword))
+        }
+        _state.update {
+            it.copy(
+                items = items,
+                keywords = keywordItems,
+                // The draft often still holds a value when the index arrives.
+                keywordMatchCount = it.keywordDraft.trim()
+                    .takeIf(String::isNotEmpty)
+                    ?.let(::matchCount),
+            )
+        }
     }
 
     companion object {

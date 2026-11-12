@@ -7,6 +7,7 @@
     <string name="action_sort">ترتيب</string>
     <string name="action_share">مشاركة</string>
     <string name="action_cancel">إلغاء</string>
+    <string name="action_save">حفظ</string>
     <string name="action_download">تنزيل</string>
     <string name="action_update">تحديث</string>
     <string name="action_unskip">إلغاء التجاهل</string>
@@ -310,11 +311,19 @@
     <string name="updates_auto_title">اكتمل التحديث التلقائي</string>
     <string name="updates_auto_text">تم تحديث %1$d وفشل %2$d</string>
     <string name="updates_auto_text_ok">تم تحديث %1$d من الوحدات</string>
+    <string name="updates_auto_channel_name">نتائج التحديث التلقائي</string>
+    <string name="updates_auto_channel_desc">ملخصات صامتة للتحديثات التلقائية عبر root</string>
     <string name="settings_updates_section">التحديثات</string>
     <string name="settings_background_check">الفحص في الخلفية</string>
     <string name="settings_background_check_desc">اجلب مستودع الوحدات وأبلغ عن الإصدارات الجديدة وفق جدول.</string>
     <string name="settings_check_interval">فاصل الفحص</string>
     <string name="settings_interval_days">%1$d ي</string>
+    <string name="settings_check_interval_desc">اضغط مطولاً على الفاصل لتعيين ساعات مخصصة.</string>
+    <string name="settings_check_interval_custom_current">فاصل مخصص: %1$d س. اضغط مطولاً للتغيير.</string>
+    <string name="settings_check_interval_custom_title">فاصل فحص مخصص</string>
+    <string name="settings_check_interval_custom_desc">أدخل عددًا صحيحًا من الساعات بين 1 و168.</string>
+    <string name="settings_check_interval_custom_invalid">أدخل رقمًا بين 1 و168.</string>
+    <string name="settings_check_interval_hours_label">ساعات</string>
     <string name="settings_wifi_only">Wi-Fi فقط</string>
     <string name="settings_wifi_only_desc">شغّل الفحص في الخلفية على الشبكات غير المقننة فقط.</string>
     <string name="settings_auto_update">تثبيت التحديثات تلقائيًا</string>
@@ -325,4 +334,19 @@
     <string name="detail_downgrade">تثبيت الإصدار الأقدم %1$s</string>
     <string name="detail_latest_unavailable">ملفات أحدث إصدار غير متاحة مؤقتًا</string>
     <string name="detail_resources_unavailable">ملفات الإصدار المحدد غير متاحة</string>
+    <!-- Ignore keywords -->
+    <string name="action_add">إضافة</string>
+    <string name="detail_hidden_by_keyword">مخفي بواسطة الكلمة المفتاحية: %1$s</string>
+    <string name="library_keywords_section">الكلمات المفتاحية · %1$d</string>
+    <string name="library_modules_section">الوحدات · %1$d</string>
+    <string name="library_add_ignore_keyword">إضافة كلمة مفتاحية للتجاهل</string>
+    <string name="library_remove_ignore_keyword">إزالة الكلمة المفتاحية</string>
+    <string name="library_ignore_keyword_placeholder">مثال: Douyin</string>
+    <string name="library_ignore_keyword_hint">يطابق اسم الوحدة واسم الحزمة والوصف؛ دون تمييز بين الحروف الكبيرة والصغيرة.</string>
+    <string name="library_ignore_keyword_preview">سيخفي %1$d من الوحدات</string>
+    <string name="library_ignore_keyword_matches">%1$d من الوحدات</string>
+    <string name="library_ignore_keyword_blank">أدخل كلمة مفتاحية</string>
+    <string name="library_ignore_keyword_duplicate">الكلمة المفتاحية مضافة بالفعل</string>
+    <string name="library_ignore_keyword_too_long">%1$d حرفًا كحد أقصى</string>
+    <string name="library_ignore_keyword_limit">%1$d كلمات مفتاحية كحد أقصى</string>
 </resources>

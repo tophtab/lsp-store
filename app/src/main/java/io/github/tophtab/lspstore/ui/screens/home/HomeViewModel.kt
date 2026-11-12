@@ -13,6 +13,7 @@ import io.github.tophtab.lspstore.R
 import io.github.tophtab.lspstore.di.AppContainer
 import io.github.tophtab.lspstore.ui.RefreshScrollGate
 import io.github.tophtab.lspstore.ui.toUserMessage
+import io.github.tophtab.lspstore.domain.model.HiddenModules
 import io.github.tophtab.lspstore.domain.model.InstalledModule
 import io.github.tophtab.lspstore.domain.model.Module
 import io.github.tophtab.lspstore.domain.model.repoPackagesOf
@@ -60,7 +61,7 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
     private var shelves = HomeShelves()
     private var installed: List<InstalledModule> = emptyList()
     private var links: Map<String, String> = emptyMap()
-    private var ignoredModules: Set<String> = emptySet()
+    private var hidden: HiddenModules = HiddenModules()
     private var loadJob: Job? = null
     private val refreshScrollGate = RefreshScrollGate()
     private val searchScrollGate = RefreshScrollGate()
@@ -70,10 +71,10 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
             libraryRepository.links.collect { links = it; rebuildInstalledBadges() }
         }
         viewModelScope.launch {
-            // Ignoring a module hides it from every shelf and from search, but
-            // not from the installed tab: the package is still installed and
-            // still needs managing.
-            libraryRepository.ignoredModules.collect { ignoredModules = it; rebuildShelves() }
+            // Ignoring a module, by package or by keyword, hides it from every
+            // shelf and from search, but not from the installed tab: the package
+            // is still installed and still needs managing.
+            libraryRepository.hiddenModules.collect { hidden = it; rebuildShelves() }
         }
         load(force = false)
     }
@@ -222,7 +223,7 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
     }
 
     private fun rebuildShelves() {
-        shelves = HomeShelves.build(index, ignoredModules)
+        shelves = HomeShelves.build(index, hidden)
         _state.update {
             it.copy(
                 recentlyUpdated = shelves.recentlyUpdated,

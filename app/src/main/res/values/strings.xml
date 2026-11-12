@@ -12,6 +12,7 @@
     <string name="action_sort">Sort</string>
     <string name="action_share">Share</string>
     <string name="action_cancel">Cancel</string>
+    <string name="action_save">Save</string>
     <string name="action_download">Download</string>
     <string name="action_update">Update</string>
     <string name="action_unskip">Unignore</string>
@@ -353,11 +354,19 @@
     <string name="updates_auto_title">Auto-update finished</string>
     <string name="updates_auto_text">%1$d updated, %2$d failed</string>
     <string name="updates_auto_text_ok">%1$d modules updated</string>
+    <string name="updates_auto_channel_name">Auto-update results</string>
+    <string name="updates_auto_channel_desc">Silent summaries of automatic root updates</string>
     <string name="settings_updates_section">Updates</string>
     <string name="settings_background_check">Check in the background</string>
     <string name="settings_background_check_desc">Fetch the module repository and report new versions on a schedule.</string>
     <string name="settings_check_interval">Check interval</string>
     <string name="settings_interval_days">%1$d d</string>
+    <string name="settings_check_interval_desc">Long-press the interval to set custom hours.</string>
+    <string name="settings_check_interval_custom_current">Custom interval: %1$d h. Long-press to change.</string>
+    <string name="settings_check_interval_custom_title">Custom check interval</string>
+    <string name="settings_check_interval_custom_desc">Enter a whole number of hours from 1 to 168.</string>
+    <string name="settings_check_interval_custom_invalid">Enter a number from 1 to 168.</string>
+    <string name="settings_check_interval_hours_label">Hours</string>
     <string name="settings_wifi_only">Wi-Fi only</string>
     <string name="settings_wifi_only_desc">Run the background check on unmetered networks only.</string>
     <string name="settings_auto_update">Install updates automatically</string>
@@ -368,4 +377,20 @@
     <string name="detail_downgrade">Downgrade to %1$s</string>
     <string name="detail_latest_unavailable">Latest version resources are temporarily unavailable</string>
     <string name="detail_resources_unavailable">Resources for the selected version are unavailable</string>
+
+    <!-- Ignore keywords -->
+    <string name="action_add">Add</string>
+    <string name="detail_hidden_by_keyword">Hidden by keyword: %1$s</string>
+    <string name="library_keywords_section">Keywords · %1$d</string>
+    <string name="library_modules_section">Modules · %1$d</string>
+    <string name="library_add_ignore_keyword">Add ignore keyword</string>
+    <string name="library_remove_ignore_keyword">Remove keyword</string>
+    <string name="library_ignore_keyword_placeholder">e.g. Douyin</string>
+    <string name="library_ignore_keyword_hint">Matches module name, package and description; case-insensitive.</string>
+    <string name="library_ignore_keyword_preview">Hides %1$d modules</string>
+    <string name="library_ignore_keyword_matches">%1$d modules</string>
+    <string name="library_ignore_keyword_blank">Enter a keyword</string>
+    <string name="library_ignore_keyword_duplicate">Keyword already added</string>
+    <string name="library_ignore_keyword_too_long">At most %1$d characters</string>
+    <string name="library_ignore_keyword_limit">At most %1$d keywords</string>
 </resources>

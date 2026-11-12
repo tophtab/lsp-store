@@ -7,6 +7,7 @@
     <string name="action_sort">Sırala</string>
     <string name="action_share">Paylaş</string>
     <string name="action_cancel">İptal</string>
+    <string name="action_save">Kaydet</string>
     <string name="action_download">İndir</string>
     <string name="action_update">Güncelle</string>
     <string name="action_unskip">Yoksaymayı bırak</string>
@@ -310,11 +311,19 @@
     <string name="updates_auto_title">Otomatik güncelleme tamamlandı</string>
     <string name="updates_auto_text">%1$d güncellendi, %2$d başarısız</string>
     <string name="updates_auto_text_ok">%1$d modül güncellendi</string>
+    <string name="updates_auto_channel_name">Otomatik güncelleme sonuçları</string>
+    <string name="updates_auto_channel_desc">Root ile otomatik güncellemelerin sessiz özetleri</string>
     <string name="settings_updates_section">Güncellemeler</string>
     <string name="settings_background_check">Arka planda denetle</string>
     <string name="settings_background_check_desc">Modül deposunu çeker ve zamanlanmış olarak yeni sürümleri bildirir.</string>
     <string name="settings_check_interval">Denetim aralığı</string>
     <string name="settings_interval_days">%1$d g</string>
+    <string name="settings_check_interval_desc">Özel saat ayarlamak için aralığa uzun basın.</string>
+    <string name="settings_check_interval_custom_current">Özel aralık: %1$d sa. Değiştirmek için uzun basın.</string>
+    <string name="settings_check_interval_custom_title">Özel denetim aralığı</string>
+    <string name="settings_check_interval_custom_desc">1 ile 168 arasında tam saat sayısı girin.</string>
+    <string name="settings_check_interval_custom_invalid">1 ile 168 arasında bir sayı girin.</string>
+    <string name="settings_check_interval_hours_label">Saat</string>
     <string name="settings_wifi_only">Yalnızca Wi-Fi</string>
     <string name="settings_wifi_only_desc">Arka plan denetimini yalnızca ölçümlenmeyen ağlarda çalıştır.</string>
     <string name="settings_auto_update">Güncellemeleri otomatik yükle</string>
@@ -325,4 +334,19 @@
     <string name="detail_downgrade">%1$s sürümüne düşür</string>
     <string name="detail_latest_unavailable">En son sürümün dosyaları geçici olarak kullanılamıyor</string>
     <string name="detail_resources_unavailable">Seçilen sürümün dosyaları kullanılamıyor</string>
+    <!-- Ignore keywords -->
+    <string name="action_add">Ekle</string>
+    <string name="detail_hidden_by_keyword">Anahtar sözcükle gizlendi: %1$s</string>
+    <string name="library_keywords_section">Anahtar sözcükler · %1$d</string>
+    <string name="library_modules_section">Modüller · %1$d</string>
+    <string name="library_add_ignore_keyword">Yoksayılacak anahtar sözcük ekle</string>
+    <string name="library_remove_ignore_keyword">Anahtar sözcüğü kaldır</string>
+    <string name="library_ignore_keyword_placeholder">ör. Douyin</string>
+    <string name="library_ignore_keyword_hint">Modül adı, paket ve açıklamayla eşleşir; büyük/küçük harfe duyarsız.</string>
+    <string name="library_ignore_keyword_preview">%1$d modül gizlenir</string>
+    <string name="library_ignore_keyword_matches">%1$d modül</string>
+    <string name="library_ignore_keyword_blank">Bir anahtar sözcük girin</string>
+    <string name="library_ignore_keyword_duplicate">Anahtar sözcük zaten eklendi</string>
+    <string name="library_ignore_keyword_too_long">En fazla %1$d karakter</string>
+    <string name="library_ignore_keyword_limit">En fazla %1$d anahtar sözcük</string>
 </resources>

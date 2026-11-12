@@ -1,6 +1,7 @@
 package io.github.tophtab.lspstore.ui.screens.home
 
 import io.github.tophtab.lspstore.domain.model.Module
+import io.github.tophtab.lspstore.domain.model.HiddenModules
 import java.time.Instant
 
 /** Sorted once per catalogue/visibility change; typing only filters this order. */
@@ -11,16 +12,12 @@ internal data class HomeShelves(
     fun search(query: String): List<Module> {
         val trimmed = query.trim()
         if (trimmed.isEmpty()) return emptyList()
-        return recentlyUpdated.filter { module ->
-            module.title.contains(trimmed, ignoreCase = true) ||
-                module.packageName.contains(trimmed, ignoreCase = true) ||
-                module.summary?.contains(trimmed, ignoreCase = true) == true
-        }
+        return recentlyUpdated.filter { module -> module.matchesText(trimmed) }
     }
 
     companion object {
-        fun build(index: List<Module>, ignored: Set<String>): HomeShelves {
-            val visible = index.filterNot { it.packageName in ignored }
+        fun build(index: List<Module>, hidden: HiddenModules): HomeShelves {
+            val visible = hidden.filter(index)
             return HomeShelves(
                 recentlyUpdated = visible.sortedByDescending { it.lastPublishedAt ?: Instant.EPOCH },
                 mostStarred = visible.sortedWith(

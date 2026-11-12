@@ -25,6 +25,8 @@ data class LibraryBackup(
     val skippedUpdates: Map<String, String> = emptyMap(),
     val ignoredUpdates: List<String> = emptyList(),
     val ignoredModules: List<String> = emptyList(),
+    /** Case-insensitive substrings hidden from every browsing list. */
+    val ignoredKeywords: List<String> = emptyList(),
     val preReleaseModules: List<String> = emptyList(),
     val searchHistory: List<String> = emptyList(),
     /** installed package name -> repository package name */
@@ -51,6 +53,7 @@ data class LibraryBackup(
         skippedUpdates = incoming.skippedUpdates + skippedUpdates,
         ignoredUpdates = mergeLists(ignoredUpdates, incoming.ignoredUpdates),
         ignoredModules = mergeLists(ignoredModules, incoming.ignoredModules),
+        ignoredKeywords = mergeKeywords(ignoredKeywords, incoming.ignoredKeywords),
         preReleaseModules = mergeLists(preReleaseModules, incoming.preReleaseModules),
         searchHistory = mergeLists(searchHistory, incoming.searchHistory)
             .take(SEARCH_HISTORY_LIMIT),
@@ -103,6 +106,15 @@ data class LibraryBackup(
         fun mergeLists(local: List<String>, incoming: List<String>): List<String> {
             val known = local.toMutableSet()
             return local + incoming.filter { known.add(it) }
+        }
+
+        /** Keywords are case-insensitive at match time, so merge them the same way. */
+        private fun mergeKeywords(local: List<String>, incoming: List<String>): List<String> {
+            val merged = local.toMutableList()
+            incoming.forEach { candidate ->
+                if (merged.none { it.equals(candidate, ignoreCase = true) }) merged += candidate
+            }
+            return merged
         }
     }
 }

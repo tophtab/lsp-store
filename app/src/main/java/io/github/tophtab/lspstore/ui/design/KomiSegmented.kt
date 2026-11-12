@@ -1,8 +1,10 @@
 package io.github.tophtab.lspstore.ui.design
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -98,12 +100,14 @@ fun KomiSegmented(
  * every cell wraps its label, so it can sit in a row's trailing slot next to a
  * title instead of filling the whole width.
  */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun KomiCompactSegmented(
     segments: List<KomiSegment>,
     selectedIndex: Int,
     onSelect: (Int) -> Unit,
     modifier: Modifier = Modifier,
+    onLongSelect: ((Int) -> Unit)? = null,
 ) {
     if (segments.isEmpty()) return
     val shape = MaterialTheme.shapes.small
@@ -133,7 +137,16 @@ fun KomiCompactSegmented(
                     .background(
                         if (selected) MaterialTheme.colorScheme.primary else Color.Transparent,
                     )
-                    .clickable { onSelect(index) }
+                    .then(
+                        if (onLongSelect != null) {
+                            Modifier.combinedClickable(
+                                onClick = { onSelect(index) },
+                                onLongClick = { onLongSelect(index) },
+                            )
+                        } else {
+                            Modifier.clickable { onSelect(index) }
+                        },
+                    )
                     .padding(horizontal = 9.dp, vertical = 6.dp),
                 contentAlignment = Alignment.Center,
             ) {

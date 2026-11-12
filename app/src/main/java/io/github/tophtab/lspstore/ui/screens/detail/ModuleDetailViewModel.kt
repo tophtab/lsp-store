@@ -56,6 +56,11 @@ data class ModuleDetailUiState(
     val isFavourite: Boolean = false,
     /** Whether the user hid this module from the repository's browsing lists. */
     val isModuleIgnored: Boolean = false,
+    /**
+     * Keyword rules that also hide this module. They are rules, not entries, so
+     * this page cannot remove them; it only explains why the module is hidden.
+     */
+    val hiddenByKeywords: List<String> = emptyList(),
     /** Download/install started from this page, still running. */
     val activeInstall: ModuleInstallRun? = null,
     val message: String? = null,
@@ -150,6 +155,9 @@ class ModuleDetailViewModel(
     /** The user chose the original; auto-translate must not undo that choice. */
     private var autoTranslateSuppressed = false
 
+    /** Keyword rules as last emitted by the library; matched against the loaded module. */
+    private var hiddenKeywords: List<String> = emptyList()
+
     /**
      * The user turned translation on with the top-bar action. A reload keeps
      * translating content even when its language matches the target, because
@@ -176,8 +184,16 @@ class ModuleDetailViewModel(
             }
         }
         viewModelScope.launch {
-            libraryRepository.ignoredModules.collect { ignored ->
-                _state.update { it.copy(isModuleIgnored = packageName in ignored) }
+            libraryRepository.hiddenModules.collect { hidden ->
+                hiddenKeywords = hidden.keywords
+                _state.update {
+                    it.copy(
+                        isModuleIgnored = packageName in hidden.packages,
+                        hiddenByKeywords = it.detail?.let { detail ->
+                            hiddenKeywords.filter(detail.module::matchesText)
+                        }.orEmpty(),
+                    )
+                }
             }
         }
         viewModelScope.launch {
@@ -288,6 +304,7 @@ class ModuleDetailViewModel(
                         isLoading = false,
                         isRefreshing = false,
                         detail = detail,
+                        hiddenByKeywords = hiddenKeywords.filter(detail.module::matchesText),
                         probeGeneration = it.probeGeneration + 1,
                         installed = installed,
                         variantState = stateForModule(variantStates, installed),

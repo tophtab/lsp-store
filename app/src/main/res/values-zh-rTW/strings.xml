@@ -9,6 +9,7 @@
     <string name="action_sort">排序</string>
     <string name="action_share">分享</string>
     <string name="action_cancel">取消</string>
+    <string name="action_save">儲存</string>
     <string name="action_download">下載</string>
     <string name="action_update">更新</string>
     <string name="action_unskip">取消忽略</string>
@@ -345,11 +346,19 @@
     <string name="updates_auto_title">自動更新完成</string>
     <string name="updates_auto_text">已更新 %1$d 個，失敗 %2$d 個</string>
     <string name="updates_auto_text_ok">已更新 %1$d 個模組</string>
+    <string name="updates_auto_channel_name">自動更新結果</string>
+    <string name="updates_auto_channel_desc">Root 自動更新的靜默摘要</string>
     <string name="settings_updates_section">更新</string>
     <string name="settings_background_check">背景檢查</string>
     <string name="settings_background_check_desc">依排程取得模組儲存庫並提示新版本。</string>
     <string name="settings_check_interval">檢查間隔</string>
     <string name="settings_interval_days">%1$d 天</string>
+    <string name="settings_check_interval_desc">長按間隔可自訂小時數。</string>
+    <string name="settings_check_interval_custom_current">自訂間隔：%1$d 小時，長按可修改。</string>
+    <string name="settings_check_interval_custom_title">自訂檢查間隔</string>
+    <string name="settings_check_interval_custom_desc">輸入 1 到 168 之間的整數小時。</string>
+    <string name="settings_check_interval_custom_invalid">請輸入 1 到 168 之間的數字。</string>
+    <string name="settings_check_interval_hours_label">小時</string>
     <string name="settings_wifi_only">僅 Wi-Fi</string>
     <string name="settings_wifi_only_desc">僅在非計量網路上執行背景檢查。</string>
     <string name="settings_auto_update">自動安裝更新</string>
@@ -360,4 +369,19 @@
     <string name="detail_downgrade">降級安裝 %1$s</string>
     <string name="detail_latest_unavailable">最新版本資源暫不可用</string>
     <string name="detail_resources_unavailable">所選版本資源不可用</string>
+    <!-- Ignore keywords -->
+    <string name="action_add">新增</string>
+    <string name="detail_hidden_by_keyword">被關鍵字隱藏：%1$s</string>
+    <string name="library_keywords_section">關鍵字 · %1$d</string>
+    <string name="library_modules_section">模組 · %1$d</string>
+    <string name="library_add_ignore_keyword">新增忽略關鍵字</string>
+    <string name="library_remove_ignore_keyword">移除關鍵字</string>
+    <string name="library_ignore_keyword_placeholder">例如：抖音</string>
+    <string name="library_ignore_keyword_hint">比對模組名稱、套件名稱和簡介，不分大小寫</string>
+    <string name="library_ignore_keyword_preview">將隱藏 %1$d 個模組</string>
+    <string name="library_ignore_keyword_matches">%1$d 個模組</string>
+    <string name="library_ignore_keyword_blank">請輸入關鍵字</string>
+    <string name="library_ignore_keyword_duplicate">此關鍵字已存在</string>
+    <string name="library_ignore_keyword_too_long">最多 %1$d 個字元</string>
+    <string name="library_ignore_keyword_limit">最多 %1$d 個關鍵字</string>
 </resources>
