@@ -50,7 +50,9 @@ class VariantResolver(private val device: DeviceProfile) {
         return assets.map { asset ->
             val traits = parseTraits(asset.name)
             val meta = if (allowProbes) probes[asset.name] else null
-            val blocked = blockReason(asset.name, meta, multiVariant, expectedPackage)
+            val blocked = blockReason(meta, expectedPackage)
+            val bundledName = multiVariant && isBundledName(asset.name) &&
+                !identifiesAsModule(meta, expectedPackage)
             val debug = meta?.debuggable ?: traits.debugName
             ScoredAsset(
                 asset = asset,
@@ -58,7 +60,7 @@ class VariantResolver(private val device: DeviceProfile) {
                 score = if (blocked != null) 0 else score(traits, meta),
                 recommended = false,
                 blocked = blocked,
-                warning = warning(traits, meta),
+                warning = if (bundledName) Reason(Reason.Kind.BUNDLED_APP) else warning(traits, meta),
                 debug = debug,
                 meta = meta,
                 installedFit = installedFit(traits, meta, installed),
@@ -144,13 +146,18 @@ class VariantResolver(private val device: DeviceProfile) {
             )
         }
 
+        // Names can affect the default without removing the user's choices.
+        // Prefer an ordinary module name over a suspected companion even when
+        // that companion is the only non-debug build.
+        val defaults = eligible.filter { it.warning?.kind != Reason.Kind.BUNDLED_APP }
+            .ifEmpty { eligible }
         // Debug builds are only a penalty. A release whose only non-debug
         // candidate is unique does not need to ask the user.
-        val nonDebug = eligible.filter { !it.debug }
+        val nonDebug = defaults.filter { !it.debug }
         if (nonDebug.size == 1) return pick(nonDebug.single())
-        if (eligible.size == 1) return pick(eligible.single())
+        if (defaults.size == 1) return pick(defaults.single())
 
-        val ranked = eligible.sortedWith(ranking())
+        val ranked = defaults.sortedWith(ranking())
         val top = ranked[0]
         val second = ranked[1]
         if (isDecisive(top, second)) return pick(top)
@@ -236,34 +243,22 @@ class VariantResolver(private val device: DeviceProfile) {
     }
 
     /**
-     * Only what the APK proves about itself (a foreign package without any Xposed
-     * declaration) may block a candidate, plus a companion-app looking name that
-     * no probe has cleared yet. Everything else - a `minsdk35` token or the
-     * manifest minSdk, an ABI token, the libxposed API number - is advisory: it
-     * ranks and warns, and the system installer decides later (#47, #65, #69).
-     *
-     * The name layer is still what keeps a companion app out of the picker when
-     * nothing has been probed yet, so a bundled name blocks until the archive is
-     * read; a probe that shows the module's own package or declaration wins.
+     * Only an archive with a foreign package and no module declaration can
+     * block a candidate. File names are guesses: a failed remote probe must not
+     * disable an APK called Client or Provider. The local gate verifies it after
+     * download, before the installer receives it.
      */
     private fun blockReason(
-        assetName: String,
         meta: ApkMeta?,
-        multiVariant: Boolean,
         expectedPackage: String?,
     ): Reason? {
         if (meta?.packageName != null && expectedPackage != null &&
-            meta.packageName != expectedPackage && !meta.hasXposedDeclaration
+            meta.packageName != expectedPackage && !meta.hasXposedDeclaration && !meta.hasLegacyInit
         ) {
             return Reason(
                 Reason.Kind.PACKAGE_MISMATCH,
                 listOf(meta.packageName, expectedPackage),
             )
-        }
-        // Bundled apps only exist inside multi-APK releases; a single APK named
-        // "Pro" is still the module itself.
-        if (multiVariant && isBundledName(assetName) && !identifiesAsModule(meta, expectedPackage)) {
-            return Reason(Reason.Kind.BUNDLED_APP)
         }
         return null
     }
@@ -271,7 +266,7 @@ class VariantResolver(private val device: DeviceProfile) {
     /** The archive says it is the module, so a companion-app looking name is moot. */
     private fun identifiesAsModule(meta: ApkMeta?, expectedPackage: String?): Boolean {
         if (meta == null) return false
-        return meta.hasXposedDeclaration ||
+        return meta.hasXposedDeclaration || meta.hasLegacyInit ||
             (expectedPackage != null && meta.packageName == expectedPackage)
     }
 
@@ -390,7 +385,8 @@ class VariantResolver(private val device: DeviceProfile) {
      * whose assets all have zero downloads.
      */
     private fun ranking(): Comparator<ScoredAsset> =
-        compareByDescending<ScoredAsset> { fitTier(it) }
+        compareBy<ScoredAsset> { it.warning?.kind == Reason.Kind.BUNDLED_APP }
+            .thenByDescending { fitTier(it) }
             .thenByDescending { it.score }
             .thenByDescending { it.installedFit }
             .thenByDescending { minSdkTier(it) }

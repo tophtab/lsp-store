@@ -32,7 +32,7 @@ class LspStoreApp : Application(), ImageLoaderFactory {
         syncUpdateSchedule()
         reconcilePendingInstalls()
         seedVariantStates()
-        dropAdvisoryApiVerdicts()
+        dropNotApplicableVerdicts()
         refreshDeviceProfile()
     }
 
@@ -105,17 +105,16 @@ class LspStoreApp : Application(), ImageLoaderFactory {
     }
 
     /**
-     * One-off cleanup for users coming from 1.1.x: a NOT_APPLICABLE verdict the
-     * old API-number block wrote survives app upgrades and would otherwise hide
-     * the module from updates forever (#65, #69).
+     * Forget every legacy NOT_APPLICABLE verdict, including the minSdk and ABI
+     * verdicts left behind after the earlier API-only cleanup (#65, #69).
      */
-    private fun dropAdvisoryApiVerdicts() {
+    private fun dropNotApplicableVerdicts() {
         val prefs = getSharedPreferences(VARIANT_PREFS, MODE_PRIVATE)
-        if (prefs.getBoolean(KEY_API_VERDICT_CLEANUP_DONE, false)) return
+        if (prefs.getBoolean(KEY_VERDICT_CLEANUP_DONE, false)) return
         appScope.launch {
             runCatching {
-                container.libraryRepository.dropAdvisoryApiVerdicts()
-                prefs.edit().putBoolean(KEY_API_VERDICT_CLEANUP_DONE, true).apply()
+                container.libraryRepository.dropNotApplicableVerdicts()
+                prefs.edit().putBoolean(KEY_VERDICT_CLEANUP_DONE, true).apply()
             }
         }
     }
@@ -166,6 +165,6 @@ class LspStoreApp : Application(), ImageLoaderFactory {
                 "Chrome/126.0.0.0 Mobile Safari/537.36 LSPStore/1.0"
         const val VARIANT_PREFS = "variant_state"
         const val KEY_VARIANT_SEED_DONE = "variant_seed_done"
-        const val KEY_API_VERDICT_CLEANUP_DONE = "api_verdict_cleanup_done"
+        const val KEY_VERDICT_CLEANUP_DONE = "not_applicable_verdict_cleanup_done"
     }
 }

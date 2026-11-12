@@ -428,7 +428,7 @@ class ModuleDetailViewModel(
     /** Discards a delegated install that never produced a package event. */
     fun dismissPending() {
         val target = _state.value.pendingInstall?.packageName ?: return
-        viewModelScope.launch { pendingRepository.clear(target) }
+        viewModelScope.launch { container.cancelPendingInstall(target) }
     }
 
     /**

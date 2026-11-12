@@ -74,27 +74,16 @@ fun ModuleVariantState.onUserPicked(
     updatedAt = now,
 )
 
-/** The resolver found no installable candidate for this device. */
+/** No candidate on this attempt: keep it retryable without hiding updates. */
+@Suppress("UNUSED_PARAMETER") // Reason is displayed by callers, never persisted as a gate.
 fun ModuleVariantState.onEvaluatedNoCandidate(
     reason: Reason,
     now: Long = System.currentTimeMillis(),
-): ModuleVariantState = copy(
-    status = ModuleVariantState.Status.NOT_APPLICABLE,
-    failures = 0,
-    reason = reason.storageKey(),
-    updatedAt = now,
-)
+): ModuleVariantState = onInstallFailed(now)
 
 /**
- * Drops the NOT_APPLICABLE verdicts that the pre-1.2.0 API-number block wrote.
- *
- * A stored [ModuleVariantState.reason] of [Reason.Kind.API_TOO_NEW] can only come
- * from a build that refused installs over `minApiVersion`. Since #47 that number
- * is advisory, so the verdict must not keep the module out of updates or disable
- * its install button any more (#65, #69). Current builds never store it.
+ * Drops legacy NOT_APPLICABLE verdicts of every kind. A device change, an APK
+ * added to the same tag or a failed probe can invalidate any of them.
  */
-fun Map<String, ModuleVariantState>.withoutAdvisoryApiVerdicts(): Map<String, ModuleVariantState> =
-    filterValues { state ->
-        !state.isNotApplicable ||
-            Reason.fromStorage(state.reason)?.kind != Reason.Kind.API_TOO_NEW
-    }
+fun Map<String, ModuleVariantState>.withoutNotApplicableVerdicts(): Map<String, ModuleVariantState> =
+    filterValues { !it.isNotApplicable }
