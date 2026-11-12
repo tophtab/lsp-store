@@ -7,6 +7,7 @@
     <string name="action_sort">সাজান</string>
     <string name="action_share">শেয়ার করুন</string>
     <string name="action_cancel">বাতিল</string>
+    <string name="action_save">সংরক্ষণ</string>
     <string name="action_download">ডাউনলোড</string>
     <string name="action_update">আপডেট</string>
     <string name="action_unskip">উপেক্ষা বন্ধ করুন</string>
@@ -315,6 +316,12 @@
     <string name="settings_background_check_desc">নির্দিষ্ট সময়সূচিতে মডিউল রিপোজিটরি আনুন এবং নতুন সংস্করণ জানান।</string>
     <string name="settings_check_interval">চেকের বিরতি</string>
     <string name="settings_interval_days">%1$d দিন</string>
+    <string name="settings_check_interval_desc">কাস্টম ঘণ্টা সেট করতে ব্যবধানে দীর্ঘক্ষণ চাপুন।</string>
+    <string name="settings_check_interval_custom_current">কাস্টম ব্যবধান: %1$d ঘণ্টা। পরিবর্তন করতে দীর্ঘক্ষণ চাপুন।</string>
+    <string name="settings_check_interval_custom_title">কাস্টম চেকের ব্যবধান</string>
+    <string name="settings_check_interval_custom_desc">1 থেকে 168-এর মধ্যে পূর্ণ ঘণ্টার সংখ্যা লিখুন।</string>
+    <string name="settings_check_interval_custom_invalid">1 থেকে 168-এর মধ্যে একটি সংখ্যা লিখুন।</string>
+    <string name="settings_check_interval_hours_label">ঘণ্টা</string>
     <string name="settings_wifi_only">শুধু Wi-Fi</string>
     <string name="settings_wifi_only_desc">শুধুমাত্র আনমিটারড নেটওয়ার্কে ব্যাকগ্রাউন্ড চেক চালান।</string>
     <string name="settings_auto_update">আপডেট স্বয়ংক্রিয়ভাবে ইনস্টল করুন</string>

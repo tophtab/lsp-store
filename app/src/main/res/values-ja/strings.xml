@@ -7,6 +7,7 @@
     <string name="action_sort">並べ替え</string>
     <string name="action_share">共有</string>
     <string name="action_cancel">キャンセル</string>
+    <string name="action_save">保存</string>
     <string name="action_download">ダウンロード</string>
     <string name="action_update">アップデート</string>
     <string name="action_unskip">無視を解除</string>
@@ -315,6 +316,12 @@
     <string name="settings_background_check_desc">定期的にモジュールリポジトリを取得し、新しいバージョンを通知します。</string>
     <string name="settings_check_interval">確認間隔</string>
     <string name="settings_interval_days">%1$d 日</string>
+    <string name="settings_check_interval_desc">間隔を長押ししてカスタム時間を設定します。</string>
+    <string name="settings_check_interval_custom_current">カスタム間隔：%1$d 時間（長押しで変更）</string>
+    <string name="settings_check_interval_custom_title">確認間隔をカスタム</string>
+    <string name="settings_check_interval_custom_desc">1～168 の整数で時間を入力してください。</string>
+    <string name="settings_check_interval_custom_invalid">1～168 の数字を入力してください。</string>
+    <string name="settings_check_interval_hours_label">時間</string>
     <string name="settings_wifi_only">Wi-Fi のみ</string>
     <string name="settings_wifi_only_desc">バックグラウンド確認を従量制でないネットワークでのみ実行します。</string>
     <string name="settings_auto_update">更新を自動でインストール</string>

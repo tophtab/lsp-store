@@ -7,6 +7,7 @@
     <string name="action_sort">Ordenar</string>
     <string name="action_share">Compartir</string>
     <string name="action_cancel">Cancelar</string>
+    <string name="action_save">Guardar</string>
     <string name="action_download">Descargar</string>
     <string name="action_update">Actualizar</string>
     <string name="action_unskip">Dejar de ignorar</string>
@@ -315,6 +316,12 @@
     <string name="settings_background_check_desc">Obtén el repositorio de módulos y avisa de nuevas versiones de forma periódica.</string>
     <string name="settings_check_interval">Intervalo de comprobación</string>
     <string name="settings_interval_days">%1$d d</string>
+    <string name="settings_check_interval_desc">Mantén pulsado el intervalo para definir horas personalizadas.</string>
+    <string name="settings_check_interval_custom_current">Intervalo personalizado: %1$d h. Mantén pulsado para cambiarlo.</string>
+    <string name="settings_check_interval_custom_title">Intervalo de comprobación personalizado</string>
+    <string name="settings_check_interval_custom_desc">Introduce un número entero de horas entre 1 y 168.</string>
+    <string name="settings_check_interval_custom_invalid">Introduce un número entre 1 y 168.</string>
+    <string name="settings_check_interval_hours_label">Horas</string>
     <string name="settings_wifi_only">Solo Wi-Fi</string>
     <string name="settings_wifi_only_desc">Ejecuta la comprobación en segundo plano solo en redes no medidas.</string>
     <string name="settings_auto_update">Instalar actualizaciones automáticamente</string>

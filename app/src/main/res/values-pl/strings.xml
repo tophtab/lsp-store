@@ -7,6 +7,7 @@
     <string name="action_sort">Sortuj</string>
     <string name="action_share">Udostępnij</string>
     <string name="action_cancel">Anuluj</string>
+    <string name="action_save">Zapisz</string>
     <string name="action_download">Pobierz</string>
     <string name="action_update">Aktualizuj</string>
     <string name="action_unskip">Przestań ignorować</string>
@@ -315,6 +316,12 @@
     <string name="settings_background_check_desc">Pobieraj repozytorium modułów i zgłaszaj nowe wersje według harmonogramu.</string>
     <string name="settings_check_interval">Interwał sprawdzania</string>
     <string name="settings_interval_days">%1$d d</string>
+    <string name="settings_check_interval_desc">Przytrzymaj interwał, aby ustawić własne godziny.</string>
+    <string name="settings_check_interval_custom_current">Interwał niestandardowy: %1$d godz. Przytrzymaj, aby zmienić.</string>
+    <string name="settings_check_interval_custom_title">Niestandardowy interwał sprawdzania</string>
+    <string name="settings_check_interval_custom_desc">Podaj całkowitą liczbę godzin od 1 do 168.</string>
+    <string name="settings_check_interval_custom_invalid">Podaj liczbę od 1 do 168.</string>
+    <string name="settings_check_interval_hours_label">Godziny</string>
     <string name="settings_wifi_only">Tylko Wi-Fi</string>
     <string name="settings_wifi_only_desc">Uruchamiaj sprawdzanie w tle tylko w sieciach bez limitu danych.</string>
     <string name="settings_auto_update">Instaluj aktualizacje automatycznie</string>

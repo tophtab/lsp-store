@@ -9,6 +9,7 @@
     <string name="action_sort">排序</string>
     <string name="action_share">分享</string>
     <string name="action_cancel">取消</string>
+    <string name="action_save">儲存</string>
     <string name="action_download">下載</string>
     <string name="action_update">更新</string>
     <string name="action_unskip">取消忽略</string>
@@ -350,6 +351,12 @@
     <string name="settings_background_check_desc">依排程取得模組儲存庫並提示新版本。</string>
     <string name="settings_check_interval">檢查間隔</string>
     <string name="settings_interval_days">%1$d 天</string>
+    <string name="settings_check_interval_desc">長按間隔可自訂小時數。</string>
+    <string name="settings_check_interval_custom_current">自訂間隔：%1$d 小時，長按可修改。</string>
+    <string name="settings_check_interval_custom_title">自訂檢查間隔</string>
+    <string name="settings_check_interval_custom_desc">輸入 1 到 168 之間的整數小時。</string>
+    <string name="settings_check_interval_custom_invalid">請輸入 1 到 168 之間的數字。</string>
+    <string name="settings_check_interval_hours_label">小時</string>
     <string name="settings_wifi_only">僅 Wi-Fi</string>
     <string name="settings_wifi_only_desc">僅在非計量網路上執行背景檢查。</string>
     <string name="settings_auto_update">自動安裝更新</string>

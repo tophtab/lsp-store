@@ -7,6 +7,7 @@
     <string name="action_sort">Trier</string>
     <string name="action_share">Partager</string>
     <string name="action_cancel">Annuler</string>
+    <string name="action_save">Enregistrer</string>
     <string name="action_download">Télécharger</string>
     <string name="action_update">Mettre à jour</string>
     <string name="action_unskip">Ne plus ignorer</string>
@@ -315,6 +316,12 @@
     <string name="settings_background_check_desc">Récupère le dépôt de modules et signale les nouvelles versions selon un calendrier.</string>
     <string name="settings_check_interval">Intervalle de vérification</string>
     <string name="settings_interval_days">%1$d j</string>
+    <string name="settings_check_interval_desc">Appuyez longuement sur l\'intervalle pour définir des heures personnalisées.</string>
+    <string name="settings_check_interval_custom_current">Intervalle personnalisé : %1$d h. Appuyez longuement pour le modifier.</string>
+    <string name="settings_check_interval_custom_title">Intervalle de vérification personnalisé</string>
+    <string name="settings_check_interval_custom_desc">Saisissez un nombre entier d\'heures entre 1 et 168.</string>
+    <string name="settings_check_interval_custom_invalid">Saisissez un nombre entre 1 et 168.</string>
+    <string name="settings_check_interval_hours_label">Heures</string>
     <string name="settings_wifi_only">Wi-Fi uniquement</string>
     <string name="settings_wifi_only_desc">Lance la vérification en arrière-plan uniquement sur les réseaux non limités.</string>
     <string name="settings_auto_update">Installer les mises à jour automatiquement</string>

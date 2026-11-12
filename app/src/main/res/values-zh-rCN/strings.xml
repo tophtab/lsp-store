@@ -9,6 +9,7 @@
     <string name="action_sort">排序</string>
     <string name="action_share">分享</string>
     <string name="action_cancel">取消</string>
+    <string name="action_save">保存</string>
     <string name="action_download">下载</string>
     <string name="action_update">更新</string>
     <string name="action_unskip">取消忽略</string>
@@ -352,6 +353,12 @@
     <string name="settings_background_check_desc">按计划获取模块仓库并提示新版本。</string>
     <string name="settings_check_interval">检查间隔</string>
     <string name="settings_interval_days">%1$d 天</string>
+    <string name="settings_check_interval_desc">长按间隔可自定义小时数。</string>
+    <string name="settings_check_interval_custom_current">自定义间隔：%1$d 小时，长按可修改。</string>
+    <string name="settings_check_interval_custom_title">自定义检查间隔</string>
+    <string name="settings_check_interval_custom_desc">输入 1 到 168 之间的整数小时。</string>
+    <string name="settings_check_interval_custom_invalid">请输入 1 到 168 之间的数字。</string>
+    <string name="settings_check_interval_hours_label">小时</string>
     <string name="settings_wifi_only">仅 Wi-Fi</string>
     <string name="settings_wifi_only_desc">仅在非计费网络上运行后台检查。</string>
     <string name="settings_auto_update">自动安装更新</string>

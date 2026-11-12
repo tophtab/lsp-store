@@ -12,6 +12,7 @@
     <string name="action_sort">Sort</string>
     <string name="action_share">Share</string>
     <string name="action_cancel">Cancel</string>
+    <string name="action_save">Save</string>
     <string name="action_download">Download</string>
     <string name="action_update">Update</string>
     <string name="action_unskip">Unignore</string>
@@ -358,6 +359,12 @@
     <string name="settings_background_check_desc">Fetch the module repository and report new versions on a schedule.</string>
     <string name="settings_check_interval">Check interval</string>
     <string name="settings_interval_days">%1$d d</string>
+    <string name="settings_check_interval_desc">Long-press the interval to set custom hours.</string>
+    <string name="settings_check_interval_custom_current">Custom interval: %1$d h. Long-press to change.</string>
+    <string name="settings_check_interval_custom_title">Custom check interval</string>
+    <string name="settings_check_interval_custom_desc">Enter a whole number of hours from 1 to 168.</string>
+    <string name="settings_check_interval_custom_invalid">Enter a number from 1 to 168.</string>
+    <string name="settings_check_interval_hours_label">Hours</string>
     <string name="settings_wifi_only">Wi-Fi only</string>
     <string name="settings_wifi_only_desc">Run the background check on unmetered networks only.</string>
     <string name="settings_auto_update">Install updates automatically</string>
