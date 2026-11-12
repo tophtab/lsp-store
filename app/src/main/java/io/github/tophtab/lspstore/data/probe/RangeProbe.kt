@@ -3,9 +3,11 @@ package io.github.tophtab.lspstore.data.probe
 import io.ktor.client.HttpClient
 import io.ktor.client.request.header
 import io.ktor.client.request.prepareGet
-import io.ktor.client.statement.bodyAsBytes
+import io.ktor.client.statement.bodyAsChannel
 import io.ktor.http.HttpHeaders
 import io.ktor.http.contentLength
+import io.ktor.utils.io.ByteReadChannel
+import io.ktor.utils.io.readAvailable
 import java.io.File
 import java.util.zip.Inflater
 import kotlinx.coroutines.Dispatchers
@@ -21,6 +23,7 @@ import io.github.tophtab.lspstore.domain.model.ReleaseAsset
 import io.github.tophtab.lspstore.domain.variant.ApkMeta
 import io.github.tophtab.lspstore.domain.variant.ApkProbe
 import io.github.tophtab.lspstore.data.device.ModuleMarker
+import kotlin.coroutines.cancellation.CancellationException
 
 /** A transport that can return an exact byte range, or the whole file from 0. */
 fun interface ByteRangeSource {
@@ -30,30 +33,65 @@ fun interface ByteRangeSource {
 private const val MAX_RESPONSE_BYTES = 8L * 1024 * 1024
 
 class HttpRangeSource(private val client: HttpClient) : ByteRangeSource {
-    override suspend fun read(url: String, start: Long, endInclusive: Long): ByteArray? =
-        runCatching {
+    override suspend fun read(url: String, start: Long, endInclusive: Long): ByteArray? {
+        if (start < 0 || endInclusive < start || endInclusive - start >= MAX_RESPONSE_BYTES) return null
+        val length = endInclusive - start + 1
+        return try {
             client.prepareGet(url) {
                 header(HttpHeaders.Range, "bytes=$start-$endInclusive")
                 header(HttpHeaders.Accept, "*/*")
+                header(HttpHeaders.AcceptEncoding, "identity")
             }.execute { response ->
-                when (response.status.value) {
-                    // Partial content: exactly what we asked for.
-                    206 -> response.bodyAsBytes()
-                    // Some CDNs ignore Range. Only accept that for a whole-file read.
+                val advertised = response.contentLength()
+                if (advertised != null && advertised != length) return@execute null
+                val encoding = response.headers[HttpHeaders.ContentEncoding]
+                if (encoding != null && !encoding.equals("identity", ignoreCase = true)) return@execute null
+                val valid = when (response.status.value) {
+                    206 -> validContentRange(response.headers[HttpHeaders.ContentRange], start, endInclusive)
+                    // An ignored Range is accepted only for the complete bounded file.
                     200 -> {
-                        val length = response.contentLength()
-                        if (start != 0L || length == null || length > MAX_RESPONSE_BYTES) {
-                            null
-                        } else {
-                            val body = response.bodyAsBytes()
-                            if (body.size.toLong() == length) body else null
-                        }
+                        start == 0L && advertised == length
                     }
-
-                    else -> null
+                    else -> false
                 }
+                if (!valid) null else readExactRange(response.bodyAsChannel(), length.toInt())
             }
-        }.getOrNull()
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    private fun validContentRange(header: String?, start: Long, end: Long): Boolean {
+        val match = CONTENT_RANGE.matchEntire(header?.trim().orEmpty()) ?: return false
+        val actualStart = match.groupValues[1].toLongOrNull() ?: return false
+        val actualEnd = match.groupValues[2].toLongOrNull() ?: return false
+        val total = match.groupValues[3]
+        return actualStart == start && actualEnd == end &&
+            (total == "*" || total.toLongOrNull()?.let { it > end } == true)
+    }
+
+    private suspend fun readExactRange(channel: ByteReadChannel, length: Int): ByteArray? {
+        try {
+            val bytes = ByteArray(length)
+            var offset = 0
+            while (offset < length) {
+                val read = channel.readAvailable(bytes, offset, length - offset)
+                if (read < 0) return null
+                offset += read
+            }
+            // Unknown/chunked lengths must reach EOF. Read at most one extra byte.
+            if (channel.readAvailable(ByteArray(1), 0, 1) >= 0) return null
+            return bytes
+        } finally {
+            channel.cancel(null)
+        }
+    }
+
+    private companion object {
+        val CONTENT_RANGE = Regex("bytes (\\d+)-(\\d+)/(\\d+|\\*)", RegexOption.IGNORE_CASE)
+    }
 }
 
 /**
@@ -77,15 +115,15 @@ class RangeProbe(
 
     private val mutex = Mutex()
     private val semaphore = Semaphore(MAX_CONCURRENCY)
-    private val failures = LinkedHashMap<String, Long>()
+    private val failures = ProbeFailureCache(clock)
     private var cache: LinkedHashMap<String, ApkMeta>? = null
 
-    private val inFlight = java.util.concurrent.ConcurrentHashMap<String, kotlinx.coroutines.sync.Mutex>()
+    private val inFlight = KeyedMutex<String>()
 
     override suspend fun cached(asset: ReleaseAsset): ApkMeta? = cacheGet(cacheKey(asset))
 
     override suspend fun fetch(asset: ReleaseAsset): ApkMeta? =
-        inFlight.computeIfAbsent(cacheKey(asset)) { kotlinx.coroutines.sync.Mutex() }.withLock { fetchOnce(asset) }
+        inFlight.withLock(cacheKey(asset)) { fetchOnce(asset) }
 
     private suspend fun fetchOnce(asset: ReleaseAsset): ApkMeta? {
         val key = cacheKey(asset)
@@ -93,11 +131,17 @@ class RangeProbe(
         if (failedRecently(key)) return null
         val meta = semaphore.withPermit {
             withTimeoutOrNull(TIMEOUT_MS) {
-                runCatching { probe(asset.downloadUrl, asset.size) }.getOrNull()
+                try {
+                    probe(asset.downloadUrl, asset.size)
+                } catch (cancellation: CancellationException) {
+                    throw cancellation
+                } catch (_: Exception) {
+                    null
+                }
             }
         }
         if (meta == null) {
-            mutex.withLock { failures[key] = clock() }
+            mutex.withLock { failures.record(key) }
         } else {
             cachePut(key, meta)
         }
@@ -144,7 +188,7 @@ class RangeProbe(
     private suspend fun fullProbe(url: String, size: Long): ApkMeta? {
         if (size <= 0L || size > MAX_FULL_BYTES) return null
         val bytes = source.read(url, 0, size - 1) ?: return null
-        if (bytes.size.toLong() > MAX_FULL_BYTES) return null
+        if (bytes.size.toLong() != size) return null
         val end = ZipDirectory.findEndRecord(bytes) ?: return null
         val start = end.directoryOffset.toInt()
         val finish = (end.directoryOffset + end.directorySize).toInt()
@@ -253,6 +297,7 @@ class RangeProbe(
 
     private suspend fun cachePut(key: String, meta: ApkMeta) {
         mutex.withLock {
+            failures.remove(key)
             val map = loadCache()
             map[key] = meta
             val iterator = map.keys.iterator()
@@ -295,13 +340,7 @@ class RangeProbe(
     }
 
     private suspend fun failedRecently(key: String): Boolean = mutex.withLock {
-        val at = failures[key] ?: return@withLock false
-        if (clock() - at > FAILURE_TTL_MS) {
-            failures.remove(key)
-            false
-        } else {
-            true
-        }
+        failures.contains(key)
     }
 
     private fun cacheKey(asset: ReleaseAsset): String =
@@ -331,7 +370,6 @@ class RangeProbe(
         const val MAX_CACHE_ENTRIES = 500
         const val MAX_CONCURRENCY = 3
         const val TIMEOUT_MS = 20_000L
-        const val FAILURE_TTL_MS = 10 * 60 * 1000L
     }
 }
 
