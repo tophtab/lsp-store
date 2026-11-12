@@ -13,6 +13,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import io.github.tophtab.lspstore.data.remote.LsposedRepoApi
+import io.github.tophtab.lspstore.data.cache.writeCacheAtomically
 import io.github.tophtab.lspstore.data.remote.dto.ModuleListItemDto
 import io.github.tophtab.lspstore.data.remote.toDetail
 import io.github.tophtab.lspstore.data.remote.toModule
@@ -34,16 +35,19 @@ interface ModuleRepository {
     fun hasFetchedIndexThisSession(): Boolean
 
     suspend fun getDetail(packageName: String): ModuleDetail
-    fun clearCache()
+    suspend fun clearCache()
     fun cacheSizeBytes(): Long
 }
 
-class ModuleRepositoryImpl(
-    context: Context,
+class ModuleRepositoryImpl internal constructor(
+    private val cacheFile: File,
     private val api: LsposedRepoApi,
     private val json: Json,
+    private val clock: () -> Long = System::currentTimeMillis,
 ) : ModuleRepository {
-    private val cacheFile = File(context.filesDir, "module_index.json")
+    constructor(context: Context, api: LsposedRepoApi, json: Json) : this(
+        File(context.filesDir, "module_index.json"), api, json,
+    )
 
     /** Serializes network refreshes; never held while the cache is read for first paint. */
     private val refreshMutex = Mutex()
@@ -51,62 +55,63 @@ class ModuleRepositoryImpl(
     /** Serializes the on-disk cache read/write. */
     private val cacheMutex = Mutex()
 
-    @Volatile
-    private var cached: List<Module>? = null
+    private data class CompletedRefresh(val epoch: Long, val revision: Long, val modules: List<Module>)
+    private data class CacheState(
+        val modules: List<Module>? = null,
+        val savedAt: Long = 0,
+        val epoch: Long = 0,
+        val revision: Long = 0,
+        val refreshedSource: Boolean? = null,
+        val completed: Map<Boolean, CompletedRefresh> = emptyMap(),
+    )
 
-    @Volatile
-    private var cachedAt: Long = 0
-
-    /**
-     * Process-session flag. The first screen that asks for a refresh fetches the
-     * repository; later screens reuse the refreshed in-memory index. Pull-to-refresh
-     * and the worker still force a fetch.
-     */
-    @Volatile
-    private var refreshedThisSession = false
+    /** One immutable snapshot for request tickets, cache clear and successful refreshes. */
+    @Volatile private var cacheState = CacheState()
 
     /**
      * Reads the last saved index without touching the network. Used by screens to
      * paint their cached content immediately, before a background refresh.
      */
     override suspend fun getCachedIndex(): List<Module>? {
-        cached?.let { return it }
+        cacheState.modules?.let { return it }
         return cacheMutex.withLock {
-            cached?.let { return@withLock it }
+            cacheState.modules?.let { return@withLock it }
             readCache()?.let { (dtos, savedAt) ->
-                val modules = dtos.map { it.toModule() }
-                cached = modules
-                cachedAt = savedAt
+                val modules = mapModules(dtos)
+                cacheState = cacheState.copy(modules = modules, savedAt = savedAt)
                 return@withLock modules
             }
             null
         }
     }
 
-    override suspend fun getIndex(force: Boolean): List<Module> = refreshMutex.withLock {
-        val now = System.currentTimeMillis()
-        cached?.let { if (!force && now - cachedAt < TTL_MILLIS) return@withLock it }
+    override suspend fun getIndex(force: Boolean): List<Module> {
+        val ticket = cacheState
+        val source = api.prefersFullIndex()
+        return refreshMutex.withLock {
+            completedSince(ticket, source)?.let { return@withLock it }
+            val now = clock()
+            val current = cacheState
+            current.modules?.let { if (!force && now - current.savedAt < TTL_MILLIS) return@withLock it }
 
-        var stale: List<Module>? = if (!force) cached else null
-        if (!force) {
-            cacheMutex.withLock { readCache() }?.let { (dtos, savedAt) ->
-                val modules = dtos.map { it.toModule() }
-                cached = modules
-                cachedAt = savedAt
-                if (now - savedAt < TTL_MILLIS) return@withLock modules
-                stale = modules
+            var stale: List<Module>? = if (!force) current.modules else null
+            if (!force) {
+                getCachedIndex()?.let { modules ->
+                    if (now - cacheState.savedAt < TTL_MILLIS) return@withLock modules
+                    stale = modules
+                }
             }
-        }
 
-        try {
-            fetchAndCache()
-        } catch (cancellation: CancellationException) {
-            throw cancellation
-        } catch (error: Throwable) {
-            // Offline / repository outage: keep browsing the last known index
-            // instead of failing the whole screen. A forced refresh (worker)
-            // still reports the failure so WorkManager can retry it.
-            stale ?: throw error
+            try {
+                fetchAndCache(source, ticket.epoch)
+            } catch (cancellation: CancellationException) {
+                throw cancellation
+            } catch (error: Throwable) {
+                // An ordinary read keeps stale content; forced refreshes report
+                // failures so the worker can retry. A stale fallback is never
+                // counted as a successful refresh for waiting callers.
+                stale ?: throw error
+            }
         }
     }
 
@@ -114,37 +119,67 @@ class ModuleRepositoryImpl(
      * Refreshes the index unless this process already refreshed it. Used after the
      * cached index has been painted, so the network never blocks first paint.
      */
-    override suspend fun refreshIndexIfNeeded(force: Boolean): List<Module> = refreshMutex.withLock {
-        if (!force && refreshedThisSession) {
-            cached?.let { return@withLock it }
+    override suspend fun refreshIndexIfNeeded(force: Boolean): List<Module> {
+        val ticket = cacheState
+        val source = api.prefersFullIndex()
+        return refreshMutex.withLock {
+            completedSince(ticket, source)?.let { return@withLock it }
+            if (!force && cacheState.refreshedSource == source) {
+                cacheState.modules?.let { return@withLock it }
+            }
+            fetchAndCache(source, ticket.epoch)
         }
-        fetchAndCache()
     }
 
-    override fun hasFetchedIndexThisSession(): Boolean = refreshedThisSession
+    override fun hasFetchedIndexThisSession(): Boolean = cacheState.refreshedSource == api.prefersFullIndex()
 
     override suspend fun getDetail(packageName: String): ModuleDetail =
         withContext(Dispatchers.IO) { api.moduleDetail(packageName).toDetail() }
 
-    override fun clearCache() {
-        cached = null
-        cachedAt = 0
-        refreshedThisSession = false
-        runCatching { cacheFile.delete() }
+    override suspend fun clearCache() = cacheMutex.withLock {
+        val current = cacheState
+        cacheState = CacheState(epoch = current.epoch + 1, revision = current.revision, completed = current.completed)
+        withContext(Dispatchers.IO) { runCatching { cacheFile.delete() } }
+        Unit
     }
 
     override fun cacheSizeBytes(): Long = runCatching { if (cacheFile.exists()) cacheFile.length() else 0L }.getOrDefault(0L)
 
     /** Caller must hold [refreshMutex]. */
-    private suspend fun fetchAndCache(): List<Module> {
-        val now = System.currentTimeMillis()
-        val dtos = fetchAll()
-        val modules = dtos.map { it.toModule() }.distinctBy { it.packageName }
-        cached = modules
-        cachedAt = now
-        refreshedThisSession = true
-        cacheMutex.withLock { writeCache(dtos, now) }
+    private suspend fun fetchAndCache(source: Boolean, epoch: Long): List<Module> {
+        val now = clock()
+        val dtos = fetchAll(source)
+        val modules = mapModules(dtos)
+        cacheMutex.withLock {
+            // A clear invalidates every request started before it, even one
+            // that was still waiting for the refresh mutex.
+            val valid = cacheState.epoch == epoch
+            if (valid) {
+                writeCache(dtos, now)
+            }
+            val current = cacheState
+            val revision = current.revision + 1
+            cacheState = current.copy(
+                modules = if (valid) modules else current.modules,
+                savedAt = if (valid) now else current.savedAt,
+                refreshedSource = if (valid) source else current.refreshedSource,
+                revision = revision,
+                completed = current.completed + (source to CompletedRefresh(epoch, revision, modules)),
+            )
+        }
         return modules
+    }
+
+    /** Only callers that started before this source completed can share that result. */
+    private fun completedSince(ticket: CacheState, source: Boolean): List<Module>? {
+        val current = cacheState
+        return current.completed[source]?.takeIf {
+            it.epoch == ticket.epoch && it.revision > ticket.revision
+        }?.modules
+    }
+
+    private suspend fun mapModules(dtos: List<ModuleListItemDto>): List<Module> = withContext(Dispatchers.Default) {
+        dtos.map { it.toModule() }.distinctBy { it.packageName }
     }
 
     /**
@@ -161,8 +196,8 @@ class ModuleRepositoryImpl(
      * The first page doubles as the cheap probe: when the paginated endpoint is
      * unreachable the failure costs one request, not one per page.
      */
-    private suspend fun fetchAll(): List<ModuleListItemDto> =
-        if (api.prefersFullIndex()) {
+    private suspend fun fetchAll(prefersFullIndex: Boolean): List<ModuleListItemDto> =
+        if (prefersFullIndex) {
             firstOf(::fetchFullIndex, ::fetchPaginated)
         } else {
             firstOf(::fetchPaginated, ::fetchFullIndex)
@@ -224,7 +259,7 @@ class ModuleRepositoryImpl(
         withContext(Dispatchers.IO) {
             runCatching {
                 val cache = IndexCache(savedAt = savedAt, modules = modules)
-                cacheFile.writeText(json.encodeToString(IndexCache.serializer(), cache))
+                writeCacheAtomically(cacheFile, json.encodeToString(IndexCache.serializer(), cache))
             }
         }
 

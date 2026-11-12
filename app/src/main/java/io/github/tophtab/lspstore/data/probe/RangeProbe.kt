@@ -21,6 +21,7 @@ import io.github.tophtab.lspstore.domain.model.ReleaseAsset
 import io.github.tophtab.lspstore.domain.variant.ApkMeta
 import io.github.tophtab.lspstore.domain.variant.ApkProbe
 import io.github.tophtab.lspstore.data.device.ModuleMarker
+import io.github.tophtab.lspstore.data.cache.writeCacheAtomically
 
 /** A transport that can return an exact byte range, or the whole file from 0. */
 fun interface ByteRangeSource {
@@ -287,7 +288,8 @@ class RangeProbe(
         withContext(Dispatchers.IO) {
             runCatching {
                 cacheFile.parentFile?.mkdirs()
-                cacheFile.writeText(
+                writeCacheAtomically(
+                    cacheFile,
                     json.encodeToString(ProbeCache.serializer(), ProbeCache(map.toMap())),
                 )
             }

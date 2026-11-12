@@ -12,6 +12,7 @@ import kotlinx.serialization.json.Json
 import io.github.tophtab.lspstore.data.device.ModuleMarker
 import io.github.tophtab.lspstore.data.device.ScannedPackage
 import io.github.tophtab.lspstore.domain.model.InstalledModule
+import io.github.tophtab.lspstore.data.cache.writeCacheAtomically
 import java.io.File
 
 interface InstalledModulesRepository {
@@ -151,7 +152,8 @@ class InstalledModulesRepositoryImpl(
 
     private suspend fun writeCache(modules: List<InstalledModule>) = withContext(Dispatchers.IO) {
         runCatching {
-            cacheFile.writeText(
+            writeCacheAtomically(
+                cacheFile,
                 json.encodeToString(InstalledCache.serializer(), InstalledCache(modules)),
             )
         }
