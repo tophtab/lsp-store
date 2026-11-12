@@ -61,8 +61,6 @@
     <string name="installed_finished_failures">失敗：%1$d</string>
     <string name="installed_all_updated">所有模組皆已成功更新</string>
     <string name="installer_no_handler">此裝置上沒有可安裝 APK 的應用程式</string>
-    <string name="installer_unknown_sources">請允許 LSP Store 安裝未知的應用程式後再試一次</string>
-    <string name="installer_apk_missing">找不到 APK 檔案：%1$s</string>
     <string name="installed_batch_installer_busy">安裝器仍處於開啟狀態，已略過 %1$d 個更新</string>
     <string name="installed_updated_one">已將 %1$s 更新到 %2$s</string>
     <string name="installed_batch_failure_download">下載 APK 失敗</string>
@@ -253,13 +251,11 @@
 
     <string name="variant_recommended">推薦</string>
     <string name="variant_reason_matches_device">與你的裝置相符（%1$s）</string>
-    <string name="variant_bundled_apps">此版本附帶的其他應用程式（%1$d）</string>
     <string name="variant_bundled_app">與模組一起發佈於同一版本</string>
     <string name="variant_incompatible_min_sdk">需要 Android %1$d+（你的是 %2$d）</string>
     <string name="variant_incompatible_abi">僅有 %1$s 版本，與此裝置不相容</string>
     <string name="variant_incompatible_api">需要 LSPosed API %1$d</string>
     <string name="variant_remembered">已記住你的選擇，後續更新將自動使用</string>
-    <string name="variant_debug_badge">debug 版本</string>
     <string name="variant_not_module">此 APK 不是 Xposed 模組</string>
     <string name="installed_finished_skipped">%1$d 個模組需要選擇變體，請開啟它們進行更新</string>
     <string name="installed_finished_cancelled">已取消: %1$d</string>
@@ -340,7 +336,6 @@
     <string name="detail_all">全部</string>
     <string name="detail_logs">安裝日誌</string>
     <string name="variant_field_choose">選擇 APK（%1$d 個）</string>
-    <string name="variant_incompatible_group">與此裝置不相容（%1$d 個）</string>
 
     <!-- Background update check -->
     <string name="updates_channel_name">模組更新</string>

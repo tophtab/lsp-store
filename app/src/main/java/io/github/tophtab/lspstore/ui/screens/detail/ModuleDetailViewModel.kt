@@ -23,7 +23,6 @@ import io.github.tophtab.lspstore.data.translation.translationLanguage
 import io.github.tophtab.lspstore.di.AppContainer
 import io.github.tophtab.lspstore.domain.usecase.UpdateChecker
 import io.github.tophtab.lspstore.ui.toUserMessage
-import io.github.tophtab.lspstore.ui.variant.variantReasonText
 import io.github.tophtab.lspstore.domain.model.InstalledModule
 import io.github.tophtab.lspstore.domain.model.ModuleDetail
 import io.github.tophtab.lspstore.domain.model.ModuleVersion
@@ -37,8 +36,8 @@ import io.github.tophtab.lspstore.domain.variant.ApkMeta
 import io.github.tophtab.lspstore.domain.variant.InstalledVariantHint
 import io.github.tophtab.lspstore.domain.variant.ModuleVariantState
 import io.github.tophtab.lspstore.domain.variant.VariantSignature
+import io.github.tophtab.lspstore.domain.model.installedCopyForRepo
 import io.github.tophtab.lspstore.domain.variant.onUserPicked
-import io.github.tophtab.lspstore.domain.variant.parseTraits
 import kotlin.coroutines.cancellation.CancellationException
 
 data class ModuleDetailUiState(
@@ -197,8 +196,10 @@ class ModuleDetailViewModel(
         }
         viewModelScope.launch {
             libraryRepository.variantStates.collect { value ->
+                val previousPackage = variantStates[packageName]?.signature?.packageName
                 variantStates = value
                 _state.update { it.copy(variantState = stateForModule(value, it.installed)) }
+                if (value[packageName]?.signature?.packageName != previousPackage) resolveInstalled()
             }
         }
         viewModelScope.launch {
@@ -716,7 +717,7 @@ class ModuleDetailViewModel(
         ?.firstOrNull()
 
     private fun signatureOf(asset: ReleaseAsset): VariantSignature =
-        VariantSignature.of(parseTraits(asset.name))
+        VariantSignature.ofAsset(asset.name)
 
     /** Variant state is keyed by repository package, with the installed package as fallback. */
     private fun stateForModule(
@@ -731,8 +732,8 @@ class ModuleDetailViewModel(
         // Detail is the screen that reacts to an install finishing, so it must
         // not read the 30 s scan cache used by browsing screens.
         val all = installedRepository.getInstalledModules(force = true)
-        return all.firstOrNull { it.packageName == packageName }
-            ?: all.firstOrNull { activeLinks[it.packageName] == packageName }
+        val activePackage = variantStates[packageName]?.signature?.packageName
+        return installedCopyForRepo(packageName, all, activeLinks, activePackage)
     }
 
     companion object {

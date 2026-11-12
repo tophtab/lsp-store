@@ -1,7 +1,6 @@
 package io.github.tophtab.lspstore
 
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
 import org.junit.Test
 import io.github.tophtab.lspstore.domain.model.ReleaseAsset
 import io.github.tophtab.lspstore.domain.variant.Reason
@@ -48,22 +47,22 @@ class AssetSelectionTest {
     }
 
     @Test
-    fun blockedManualPickFallsBackToDefault() {
+    fun legacyBlockedMetadataCannotOverrideManualPick() {
         val blocked = Reason(Reason.Kind.PACKAGE_MISMATCH)
         val candidates = listOf(candidate("a.apk", blocked), candidate("b.apk"))
 
         assertEquals(
-            "b.apk",
+            "a.apk",
             selectInstallAsset(candidates, default = asset("b.apk"), userPickedName = "a.apk")?.name,
         )
     }
 
     @Test
-    fun blockedDefaultIsNeverSelected() {
+    fun legacyBlockedMetadataCannotDisableDefault() {
         val blocked = Reason(Reason.Kind.PACKAGE_MISMATCH)
         val candidates = listOf(candidate("a.apk", blocked), candidate("b.apk"))
 
-        assertNull(selectInstallAsset(candidates, default = asset("a.apk"), userPickedName = ""))
+        assertEquals("a.apk", selectInstallAsset(candidates, default = asset("a.apk"), userPickedName = "")?.name)
     }
 
     @Test

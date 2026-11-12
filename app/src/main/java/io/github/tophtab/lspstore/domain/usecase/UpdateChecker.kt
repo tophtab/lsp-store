@@ -7,12 +7,12 @@ import io.github.tophtab.lspstore.domain.model.ModuleVersion
 import io.github.tophtab.lspstore.domain.model.SkippedVersion
 import io.github.tophtab.lspstore.domain.model.UpdateInfo
 import io.github.tophtab.lspstore.domain.model.tracksPreReleases
+import io.github.tophtab.lspstore.domain.model.installedCopyForRepo
 import io.github.tophtab.lspstore.domain.variant.ModuleVariantState
 
 object UpdateChecker {
 
     // Remembered variants affect asset selection, never update visibility.
-    @Suppress("UNUSED_PARAMETER")
     fun findUpdates(
         installed: List<InstalledModule>,
         index: List<Module>,
@@ -23,12 +23,20 @@ object UpdateChecker {
         variantStates: Map<String, ModuleVariantState> = emptyMap(),
     ): List<UpdateInfo> {
         val byPackage = index.associateBy { it.packageName }
+        val chosenPackages = variantStates.values.mapNotNull { it.signature?.packageName }.toSet()
         return installed.asSequence()
-            .filter { it.isXposedModule }
+            .filter { it.isXposedModule || it.packageName in links || it.packageName in chosenPackages }
             .mapNotNull { installedModule ->
                 val module = byPackage[installedModule.packageName]
                     ?: links[installedModule.packageName]?.let { byPackage[it] }
                     ?: return@mapNotNull null
+                // A confirmed replacement becomes the copy we follow. If it was
+                // uninstalled, the remaining old package can receive updates again.
+                val activePackage = (variantStates[module.packageName]
+                    ?: variantStates[installedModule.packageName])?.signature?.packageName
+                if (installedCopyForRepo(module.packageName, installed, links, activePackage)
+                        ?.packageName != installedModule.packageName
+                ) return@mapNotNull null
                 // Skipped/ignored lists may be keyed by either the installed package
                 // or the linked repository package. Honour both.
                 if (installedModule.packageName in ignored || module.packageName in ignored) {

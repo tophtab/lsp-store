@@ -14,7 +14,7 @@ import java.util.zip.ZipFile
  * nothing and cannot miss a variant.
  */
 object ModuleMarker {
-    private val MARKERS = listOf(
+    val MODERN_MARKERS = setOf(
         "META-INF/xposed/java_init.list",
         "META-INF/xposed/native_init.list",
         "META-INF/xposed/module.prop",
@@ -36,7 +36,9 @@ object ModuleMarker {
     fun hasAnyMarker(apkPath: String): Boolean {
         if (!File(apkPath).isFile) return false
         return runCatching {
-            ZipFile(apkPath).use { zip -> MARKERS.any { zip.getEntry(it) != null } }
+            ZipFile(apkPath).use { zip ->
+                (MODERN_MARKERS + "assets/xposed_init").any { zip.getEntry(it) != null }
+            }
         }.getOrDefault(false)
     }
 }

@@ -4,8 +4,8 @@ import kotlinx.serialization.Serializable
 import io.github.tophtab.lspstore.domain.model.InstalledModule
 
 /**
- * Semantic memory of the variant a user picked (or installed). Deliberately not
- * the asset file name: names carry the app version and change every release.
+ * Memory of a chosen variant: semantic traits and an asset family that survives
+ * release version changes. The confirmed package is used for update bookkeeping.
  */
 @Serializable
 data class VariantSignature(
@@ -16,6 +16,10 @@ data class VariantSignature(
     val os: String? = null,
     val edition: List<String> = emptyList(),
     val flavor: List<String> = emptyList(),
+    /** Asset name without its release version; distinguishes arbitrary author flavours. */
+    val assetFamily: String? = null,
+    /** Package confirmed installed from this repository entry. */
+    val packageName: String? = null,
 ) {
     /**
      * True when every dimension recorded in the signature also holds for
@@ -43,10 +47,30 @@ data class VariantSignature(
         return true
     }
 
+    fun matches(assetName: String, traits: VariantTraits): Boolean =
+        matches(traits) && (assetFamily == null || assetFamily == familyOf(assetName))
+
     companion object {
         const val UNIVERSAL = "universal"
         const val API_LIBXPOSED = "libxposed"
         const val API_LEGACY = "legacy"
+
+        fun ofAsset(assetName: String, packageName: String? = null): VariantSignature =
+            of(parseTraits(assetName)).copy(assetFamily = familyOf(assetName), packageName = packageName)
+
+        fun familyOf(assetName: String): String? = assetName
+            .substringAfterLast('/').substringAfterLast('\\')
+            .lowercase().removeSuffix(".apk")
+            .replace(RELEASE_NUMBER) { it.groupValues[1] }
+            .replace(SEPARATORS, "-")
+            .trim('-')
+            .takeIf { it.isNotBlank() }
+
+        private val RELEASE_NUMBER = Regex(
+            "(?<![a-z0-9])(?<!api[-_])(?<!x86[-_])(?<!android[-_])(?<!minsdk[-_])" +
+                "v?\\d+(?:[._-]\\d+)*(?:[-_.]?(alpha|beta|rc)\\d*)?(?![a-z0-9])",
+        )
+        private val SEPARATORS = Regex("[\\s_.-]+")
 
         fun of(traits: VariantTraits, meta: ApkMeta? = null): VariantSignature = VariantSignature(
             abi = traits.abis.minByOrNull(::abiRank) ?: UNIVERSAL.takeIf { traits.universal },

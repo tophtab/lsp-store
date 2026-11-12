@@ -153,17 +153,23 @@ class MainActivity : ComponentActivity() {
      */
     private fun consumeOpenInstalled(intent: Intent?): Boolean {
         val requested = intent?.getBooleanExtra(UpdateNotifier.EXTRA_OPEN_INSTALLED, false) == true
-        if (requested) intent?.removeExtra(UpdateNotifier.EXTRA_OPEN_INSTALLED)
+        if (requested) intent.removeExtra(UpdateNotifier.EXTRA_OPEN_INSTALLED)
         return requested
     }
 
     override fun onResume() {
         super.onResume()
+        (application as LspStoreApp).container.installer.foregroundState.setResumed(true)
         // A delegated install hands the screen to another app. Returning here
         // means that installer closed: release its slot (a cancelled dialog
         // sends no broadcast) and settle what actually landed.
         val container = (application as LspStoreApp).container
         lifecycleScope.launch { container.reconcileAfterInstallerReturn() }
+    }
+
+    override fun onPause() {
+        (application as LspStoreApp).container.installer.foregroundState.setResumed(false)
+        super.onPause()
     }
 }
 

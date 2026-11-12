@@ -231,13 +231,20 @@ data class ModuleDetail(
     }
 
     /**
-     * The exact version the user chose to update to. A newer release may appear
-     * between the index check and this detail request; the requested build is
-     * still valid when it is in the release list. A stale mirror missing that
-     * build must never substitute an older APK.
+     * Prefer the version the update check selected. If its APK is no longer
+     * available, a higher versionCode in the same release channel can satisfy
+     * the update. A stale mirror must never substitute an older APK.
      */
-    fun releaseForUpdate(version: ModuleVersion, includePreReleases: Boolean): Release? =
-        releasesFor(includePreReleases).firstOrNull { it.matchesVersion(version) }
+    fun releaseForUpdate(version: ModuleVersion, includePreReleases: Boolean): Release? {
+        val candidates = releasesFor(includePreReleases)
+        val requested = candidates.firstOrNull { it.matchesVersion(version) }
+        return requested?.takeIf { it.apkAssets.isNotEmpty() }
+            ?: candidates.firstOrNull {
+                (it.version?.versionCode ?: Long.MIN_VALUE) > version.versionCode &&
+                    it.apkAssets.isNotEmpty()
+            }
+            ?: requested
+    }
 }
 
 data class Release(
@@ -316,4 +323,5 @@ data class PendingInstall(
     val versionName: String = "",
     val assetName: String = "",
     val createdAt: Long = 0L,
+    val downloadKey: String? = null,
 )

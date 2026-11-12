@@ -68,7 +68,7 @@ fun ModuleVariantState.onUserPicked(
     now: Long = System.currentTimeMillis(),
 ): ModuleVariantState = copy(
     status = ModuleVariantState.Status.TRUSTED,
-    signature = signature,
+    signature = signature.copy(packageName = signature.packageName ?: this.signature?.packageName),
     failures = 0,
     reason = null,
     updatedAt = now,

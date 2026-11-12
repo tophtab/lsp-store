@@ -238,13 +238,11 @@
     <string name="variant_picker_subtitle">এই রিলিজটি একাধিক APK পাঠায়।</string>
     <string name="variant_recommended">প্রস্তাবিত</string>
     <string name="variant_reason_matches_device">আপনার ডিভাইসের সাথে মেলে (%1$s)</string>
-    <string name="variant_bundled_apps">এই প্রকাশের অন্যান্য অ্যাপ (%1$d)</string>
     <string name="variant_bundled_app">একই রিলিজে মডিউলের পাশাপাশি পাঠানো হয়েছে</string>
     <string name="variant_incompatible_min_sdk">অ্যান্ড্রয়েড প্রয়োজন %1$d+ (আপনার আছে %2$d)</string>
     <string name="variant_incompatible_abi">শুধুমাত্র %1$s বিল্ড - এই ডিভাইসের সাথে সামঞ্জস্যপূর্ণ নয়</string>
     <string name="variant_incompatible_api">LSPosed API প্রয়োজন %1$d</string>
     <string name="variant_remembered">ভবিষ্যতের আপডেটের জন্য আপনার পছন্দ মনে রাখা</string>
-    <string name="variant_debug_badge">ডিবাগ বিল্ড</string>
     <string name="variant_not_module">এই APK একটি Xposed মডিউল নয়</string>
     <string name="installed_finished_skipped">%1$d মডিউলগুলির একটি বৈকল্পিক পছন্দ প্রয়োজন - আপডেট করতে সেগুলি খুলুন</string>
     <string name="installed_finished_cancelled">বাতিল: %1$d</string>
@@ -282,8 +280,6 @@
     <string name="installer_launch_failed">ইনস্টলার চালু করতে অক্ষম৷</string>
     <string name="installer_uninstall_launch_failed">আনইনস্টলার খোলা যায়নি</string>
     <string name="installer_no_handler">এই ডিভাইসে কোনো অ্যাপ APK ইনস্টল করতে পারবে না</string>
-    <string name="installer_unknown_sources">LSP Store-এর জন্য \\"অজানা অ্যাপ ইনস্টল করুন\\" এর অনুমতি দিন এবং আবার চেষ্টা করুন</string>
-    <string name="installer_apk_missing">APK ফাইল অনুপস্থিত: %1$s</string>
     <string name="verifier_package_mismatch">APK প্যাকেজ %1$s প্রত্যাশিত %2$s এর সাথে মেলে না</string>
     <string name="download_channel_name">ডাউনলোড</string>
     <string name="download_channel_desc">APK ডাউনলোডের অগ্রগতি</string>
@@ -301,7 +297,6 @@
     <string name="detail_all">সব</string>
     <string name="detail_logs">লগ ইনস্টল করুন</string>
     <string name="variant_field_choose">একটি APK চয়ন করুন (%1$d)</string>
-    <string name="variant_incompatible_group">এই ডিভাইসের সাথে সামঞ্জস্যপূর্ণ নয় (%1$d)</string>
     <string name="installed_update_skipped">%1$s-এর এই সংস্করণটি উপেক্ষা করা হয়েছে</string>
     <string name="installed_uninstalled">%1$s আনইনস্টল করা হয়েছে</string>
     <string name="installed_uninstall_confirm_message">%1$s আনইনস্টল করবেন? এটি ফেরানো যাবে না।</string>

@@ -289,7 +289,7 @@ class VariantResolverTest {
         val pick = decision as VariantDecision.Pick
         assertEquals("app-debug.apk", pick.asset.name)
         assertEquals(VariantDecision.Confidence.HIGH, pick.confidence)
-        assertTrue(pick.reasons.any { it.kind == Reason.Kind.DEBUG_BUILD })
+        assertTrue(pick.reasons.none { it.kind == Reason.Kind.DEBUG_BUILD })
     }
 
     @Test
@@ -318,7 +318,7 @@ class VariantResolverTest {
     }
 
     @Test
-    fun trustedStateResolveForUpdateDoesNotTouchProbes() {
+    fun cachedProbesDoNotOverrideRememberedVariant() {
         val release = latestRelease("com.sevtinge.hyperceiler")
         val probes = CountingProbes(
             release.apkAssets.associate { it.name to ApkMeta(debuggable = true) },
@@ -333,7 +333,7 @@ class VariantResolverTest {
             "OS2_HyperCeiler-2.10.166-20260402-release.apk",
             (decision as VariantDecision.Pick).asset.name,
         )
-        assertEquals(0, probes.reads)
+        assertTrue(probes.reads > 0)
     }
 
     @Test
@@ -534,7 +534,7 @@ class VariantResolverTest {
     }
 
     @Test
-    fun probePackageMismatchWithoutDeclarationFoldsTheCompanionApp() {
+    fun foreignPackageWithoutDeclarationStaysSelectable() {
         val release = releaseOf("module.apk", "companion.apk")
         val probes = mapOf(
             "companion.apk" to ApkMeta(packageName = "com.other", hasXposedDeclaration = false),
@@ -552,7 +552,7 @@ class VariantResolverTest {
             probes = probes,
             expectedPackage = "com.example.module",
         ).first { it.asset.name == "companion.apk" }
-        assertEquals(Reason.Kind.PACKAGE_MISMATCH, folded.blocked?.kind)
+        assertNull(folded.blocked)
     }
 
     @Test

@@ -287,8 +287,54 @@ class ResolveVariantUseCaseTest {
         assertTrue(
             VariantResolver(device).candidates(
                 release, probes = resolution.probes, expectedPackage = "com.example.module",
-            ).all { it.blocked == null && it.warning == null },
+            ).all { it.blocked == null },
         )
+    }
+
+    @Test
+    fun forceProbeIncludesEveryApkOfTrustedMixedRelease() = runBlocking {
+        val release = releaseOf("MiCTS_2.7.apk", "VISTrigger_2.7.apk")
+        val probe = FakeProbe(release.apkAssets.associate {
+            it.name to ApkMeta(packageName = "com.example.module", hasXposedDeclaration = false)
+        })
+        val resolution = ResolveVariantUseCase(probe).resolve(
+            release,
+            ModuleVariantState(status = ModuleVariantState.Status.TRUSTED,
+                signature = VariantSignature.ofAsset("VISTrigger_2.6.apk")),
+            device, expectedPackage = "com.example.module", forceProbe = true,
+        )
+        assertEquals(2, probe.calls)
+        assertEquals(release.apkAssets.map { it.name }.toSet(), resolution.probes.keys)
+        assertEquals("VISTrigger_2.7.apk", (resolution.decision as VariantDecision.Pick).asset.name)
+    }
+
+    @Test
+    fun manualFlavourSurvivesUpgradeAndFailedInstallWithUnavailableProbes() = runBlocking {
+        val release = releaseOf("MiCTS_2.7.apk", "VISTrigger_2.7.apk")
+        for (status in listOf(ModuleVariantState.Status.TRUSTED, ModuleVariantState.Status.SUSPECT)) {
+            val result = ResolveVariantUseCase(FakeProbe(emptyMap())).resolve(
+                release,
+                ModuleVariantState(status = status, signature = VariantSignature.ofAsset("VISTrigger_2.6.apk")),
+                device, expectedPackage = "com.example.module",
+            )
+            assertEquals("VISTrigger_2.7.apk", (result.decision as VariantDecision.Pick).asset.name)
+        }
+    }
+
+    @Test
+    fun partiallySeededTrustDoesNotSkipProbesNeededToFollowInstalledPackage() = runBlocking {
+        val release = releaseOf("app-release.apk", "module.apk")
+        val probe = FakeProbe(mapOf(
+            "app-release.apk" to ApkMeta(packageName = "com.other", hasXposedDeclaration = true),
+            "module.apk" to ApkMeta(packageName = "com.example.module", hasXposedDeclaration = true),
+        ))
+        val result = ResolveVariantUseCase(probe).resolve(
+            release, ModuleVariantState(status = ModuleVariantState.Status.TRUSTED, signature = VariantSignature()),
+            device, expectedPackage = "com.example.module",
+            installed = InstalledVariantHint(packageName = "com.example.module"),
+        )
+        assertEquals(2, probe.calls)
+        assertEquals("module.apk", (result.decision as VariantDecision.Pick).asset.name)
     }
 
     private class FakeProbe(private val metas: Map<String, ApkMeta>) : ApkProbe {

@@ -21,6 +21,7 @@ import io.github.tophtab.lspstore.data.install.ModuleInstallCoordinator
 import io.github.tophtab.lspstore.data.install.SystemInstallSerializer
 import io.github.tophtab.lspstore.data.install.UninstallOutcome
 import io.github.tophtab.lspstore.data.probe.RangeProbe
+import io.github.tophtab.lspstore.R
 import io.github.tophtab.lspstore.data.remote.LsposedRepoApi
 import io.github.tophtab.lspstore.data.remote.MirrorState
 import io.github.tophtab.lspstore.data.remote.MirrorTester
@@ -53,7 +54,6 @@ import io.github.tophtab.lspstore.domain.model.PendingInstall
 import io.github.tophtab.lspstore.domain.variant.ApkProbe
 import io.github.tophtab.lspstore.domain.variant.DeviceProfile
 import io.github.tophtab.lspstore.domain.variant.VariantSignature
-import io.github.tophtab.lspstore.domain.variant.parseTraits
 
 class AppContainer(context: Context) {
     val appContext: Context = context.applicationContext
@@ -124,7 +124,7 @@ class AppContainer(context: Context) {
         }
     }
 
-    /** Download → gate → installer chain shared by every module page. */
+    /** Download → installer chain shared by every module page. */
     val moduleInstallCoordinator: ModuleInstallCoordinator = ModuleInstallCoordinator(
         context = appContext,
         scope = installScope,
@@ -135,7 +135,6 @@ class AppContainer(context: Context) {
         libraryRepository = libraryRepository,
         pendingRepository = pendingInstallRepository,
         systemInstallSerializer = systemInstallSerializer,
-        deviceProfile = { deviceProfile },
     )
 
     private val translationHttpClient: HttpClient = createTranslationHttpClient()
@@ -153,15 +152,14 @@ class AppContainer(context: Context) {
         context = appContext,
     )
 
-    /** Gate + global install slot + outcome bookkeeping for one downloaded APK. */
+    /** Global install slot + outcome bookkeeping for one downloaded APK. */
     val installPreparedApkUseCase: InstallPreparedApkUseCase = InstallPreparedApkUseCase(
         installer = installer,
         settingsRepository = settingsRepository,
         libraryRepository = libraryRepository,
         pendingRepository = pendingInstallRepository,
         systemInstallSerializer = systemInstallSerializer,
-        deviceProfile = { deviceProfile },
-        context = appContext,
+        failureMessage = { it.message ?: appContext.getString(R.string.error_install_failed) },
     )
 
     /** "Update all": concurrent downloads, serialized installs. */
@@ -179,8 +177,7 @@ class AppContainer(context: Context) {
         libraryRepository = libraryRepository,
         pendingRepository = pendingInstallRepository,
         systemInstallSerializer = systemInstallSerializer,
-        deviceProfile = { deviceProfile },
-        context = appContext,
+        failureMessage = { it.message ?: appContext.getString(R.string.error_install_failed) },
         allowUi = false,
     )
 
@@ -233,6 +230,8 @@ class AppContainer(context: Context) {
      * variant memory is not marked as a successful install.
      */
     suspend fun cancelPendingInstall(packageName: String) {
+        val pending = pendingInstallRepository.pending.first()[packageName]
+        pending?.downloadKey?.let { downloadManager.invalidate(it) }
         pendingInstallRepository.clear(packageName)
         systemInstallSerializer.markCompleted(packageName)
     }
@@ -304,12 +303,15 @@ class AppContainer(context: Context) {
      */
     suspend fun recordPendingInstallResult(pending: PendingInstall) {
         val packageName = pending.repoPackageName ?: pending.packageName
+        if (pending.packageName != packageName) {
+            libraryRepository.linkModule(pending.packageName, packageName)
+        }
         libraryRepository.recordInstallResult(
             packageName,
             ok = true,
             signature = pending.assetName
                 .takeIf { it.isNotBlank() }
-                ?.let { VariantSignature.of(parseTraits(it)) },
+                ?.let { VariantSignature.ofAsset(it, pending.packageName) },
         )
     }
 

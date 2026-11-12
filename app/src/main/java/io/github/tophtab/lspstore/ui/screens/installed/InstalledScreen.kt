@@ -90,7 +90,6 @@ import io.github.tophtab.lspstore.R
 import io.github.tophtab.lspstore.domain.model.InstalledModule
 import io.github.tophtab.lspstore.domain.model.UpdateInfo
 import io.github.tophtab.lspstore.domain.variant.VariantResolver
-import io.github.tophtab.lspstore.ui.variant.variantReasonText
 import io.github.tophtab.lspstore.ui.variant.variantTags
 import io.github.tophtab.lspstore.ui.LocalAppContainer
 import io.github.tophtab.lspstore.ui.components.EmptyBox
@@ -1007,8 +1006,7 @@ private fun VariantPickerDialog(
                 )
 
                 else -> {
-                    val eligible = picker.candidates.filter { it.blocked == null }
-                    val blocked = picker.candidates.filter { it.blocked != null }
+                    val eligible = picker.candidates
                     val current = picker.selectedAssetName
                         ?.takeIf { name -> eligible.any { it.asset.name == name } }
                     LazyColumn(
@@ -1039,7 +1037,6 @@ private fun VariantPickerDialog(
                                 Formatter.formatShortFileSize(context, candidate.asset.size),
                                 tags.takeIf { it.isNotEmpty() }?.joinToString(" · "),
                                 reason,
-                                candidate.warning?.let { context.variantReasonText(it) },
                             ).joinToString(" - ")
                             VariantChoiceRow(
                                 label = candidate.asset.name,
@@ -1048,38 +1045,12 @@ private fun VariantPickerDialog(
                                 badge = when {
                                     candidate.recommended ->
                                         stringResource(R.string.variant_recommended)
-                                    candidate.debug ->
-                                        stringResource(R.string.variant_debug_badge)
                                     else -> null
                                 },
                                 onClick = { onSelect(candidate.asset.name) },
                             )
                         }
-                        if (blocked.isNotEmpty()) {
-                            item {
-                                KomiText(
-                                    text = stringResource(
-                                        R.string.variant_bundled_apps,
-                                        blocked.size,
-                                    ),
-                                    role = KomiTextRole.Label,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    fontSize = 11.sp,
-                                    modifier = Modifier.padding(top = 8.dp),
-                                )
-                            }
-                            items(blocked, key = { "blocked:${it.asset.name}" }) { candidate ->
-                                VariantChoiceRow(
-                                    label = candidate.asset.name,
-                                    subtitle = candidate.blocked?.let {
-                                        context.variantReasonText(it)
-                                    },
-                                    selected = false,
-                                    enabled = false,
-                                    onClick = {},
-                                )
-                            }
-                        }
+
                     }
                 }
             }
