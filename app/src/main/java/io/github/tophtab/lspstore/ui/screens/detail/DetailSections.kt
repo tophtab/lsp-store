@@ -389,7 +389,6 @@ internal fun InstallControls(
     state: ModuleDetailUiState,
     targetVersion: ModuleVersion?,
     target: ResolvedInstallTarget?,
-    resolvingSelection: Boolean,
     showUpdateHint: Boolean,
     installEnabled: Boolean,
     notApplicableReason: String?,
@@ -421,6 +420,8 @@ internal fun InstallControls(
             )
         }
 
+        // Stage labels belong to active install tasks. Background APK
+        // recommendations leave the selected action available on entry.
         val buttonLabel = when {
             pending -> stringResource(R.string.pending_install)
             run?.stage == InstallStage.PREPARING -> stringResource(R.string.installed_state_preparing)
@@ -428,7 +429,6 @@ internal fun InstallControls(
             queued != null -> stringResource(R.string.detail_queued)
             downloading != null -> stringResource(R.string.detail_downloading)
             installing -> stringResource(R.string.detail_installing)
-            resolvingSelection -> stringResource(R.string.installed_state_preparing)
             target == null -> stringResource(R.string.detail_no_release)
             else -> {
                 val versionName = target.apkVersionName ?: targetVersion?.versionName ?: target.asset.name

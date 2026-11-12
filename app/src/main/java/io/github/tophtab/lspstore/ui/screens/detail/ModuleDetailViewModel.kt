@@ -142,6 +142,7 @@ class ModuleDetailViewModel(
     private var readmeTranslationJob: Job? = null
     private var loadJob: Job? = null
     internal val readmeDocument = ReadmeDocument()
+    private var probeJob: Job? = null
     private val probeRequests = ReleaseProbeRequests()
     private val notesTranslationJobs = mutableMapOf<String, Job>()
 
@@ -286,6 +287,8 @@ class ModuleDetailViewModel(
 
     fun load() {
         probeRequests.invalidate()
+        probeJob?.cancel()
+        probeJob = null
         cancelTranslations()
         // A second refresh replaces the first one: two loads writing `detail`
         // and the translation state would otherwise race each other.
@@ -295,6 +298,7 @@ class ModuleDetailViewModel(
                 it.copy(
                     isLoading = it.detail == null,
                     isRefreshing = it.detail != null,
+                    isProbing = false,
                     error = null,
                     translatedSummary = null,
                     translatedReadmeHtml = null,
@@ -418,11 +422,26 @@ class ModuleDetailViewModel(
         }
     }
 
-    /** Explicit user action: fill the picker/sheet with probed metadata when allowed. */
+    /** Supplements recommendations and picker information when several APKs exist. */
     fun probeRelease(release: Release, forceProbe: Boolean = false) {
+        probeRequests.invalidate()
+        probeJob?.cancel()
+        probeJob = null
+        if (release.apkAssets.size <= 1) {
+            _state.update {
+                it.copy(
+                    isProbing = false,
+                    probes = emptyMap(),
+                    probedTag = null,
+                    probedRelease = null,
+                    variantResolution = null,
+                )
+            }
+            return
+        }
         val request = probeRequests.begin(release)
         val state = stateForModule(variantStates, _state.value.installed)
-        viewModelScope.launch {
+        probeJob = viewModelScope.launch {
             _state.update { it.copy(isProbing = true, probes = emptyMap(), probedTag = release.tagName, probedRelease = release, variantResolution = null) }
             val resolution = container.resolveVariantUseCase.resolve(
                 release = release,

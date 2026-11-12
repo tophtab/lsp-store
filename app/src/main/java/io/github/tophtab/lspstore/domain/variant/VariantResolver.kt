@@ -21,7 +21,7 @@ import io.github.tophtab.lspstore.domain.model.ReleaseAsset
  *
  * Inputs, in increasing order of cost:
  *  - file-name traits ([VariantTraits]) — always available;
- *  - P2 probe results ([ApkMeta]) — only for UNKNOWN / ambiguous / SUSPECT;
+ *  - probe results ([ApkMeta]) — supplement unresolved multi-APK choices;
  *  - device profile ([DeviceProfile]) — vendor OS and LSPosed API from P1.
  *
  * A remembered [VariantSignature] takes priority over ranking. Probe results

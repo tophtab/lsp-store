@@ -4,9 +4,12 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import io.github.tophtab.lspstore.domain.model.ConfirmedInstallRecord
+import io.github.tophtab.lspstore.domain.model.InstalledModule
 import io.github.tophtab.lspstore.domain.model.ModuleVersion
 import io.github.tophtab.lspstore.domain.model.Release
 import io.github.tophtab.lspstore.domain.model.ReleaseAsset
+import io.github.tophtab.lspstore.domain.model.ResolvedInstallTarget
 import io.github.tophtab.lspstore.domain.usecase.ResolveVariantUseCase
 import io.github.tophtab.lspstore.domain.variant.ApkMeta
 import io.github.tophtab.lspstore.domain.variant.ApkProbe
@@ -55,28 +58,40 @@ class ResolveVariantUseCaseTest {
     }
 
     @Test
-    fun firstInstallProbesAndOnlyWarnsAboutAForeignRealAbi() = runBlocking {
-        val release = releaseOf("app.apk")
-        val probe = FakeProbe(
-            mapOf(
-                "app.apk" to ApkMeta(
-                    packageName = "com.example.module",
-                    abis = setOf("riscv64"),
-                    hasXposedDeclaration = true,
-                ),
-            ),
-        )
-        val resolution = ResolveVariantUseCase(probe)
-            .resolve(release, ModuleVariantState(), device, expectedPackage = "com.example.module")
+    fun singleApkBypassesProbeAndCacheForEveryStatusAndPickerRequest() = runBlocking {
+        val single = releaseOf("app.apk")
+        val release = single.copy(assets = single.assets + single.assets.single().copy(name = "sources.zip"))
+        val probe = object : ApkProbe {
+            override suspend fun cached(asset: ReleaseAsset): ApkMeta? =
+                error("A single APK must not read the probe cache")
+            override suspend fun fetch(asset: ReleaseAsset): ApkMeta? =
+                error("A single APK must not be probed")
+        }
+        val useCase = ResolveVariantUseCase(probe)
+        for (status in ModuleVariantState.Status.entries) {
+            for (forceProbe in listOf(false, true)) {
+                val resolution = useCase.resolve(
+                    release, ModuleVariantState(status = status), device,
+                    expectedPackage = "com.example.module", forceProbe = forceProbe,
+                    installed = InstalledVariantHint(packageName = "com.example.module"),
+                )
+                assertEquals("app.apk", (resolution.decision as VariantDecision.Pick).asset.name)
+                assertTrue(resolution.probes.isEmpty())
+            }
+        }
+    }
 
-        // The native library directory is advisory; the installer decides.
-        assertTrue(resolution.decision is VariantDecision.Pick)
-        val candidate = VariantResolver(device)
-            .candidates(release, probes = resolution.probes)
-            .single()
-        assertEquals(Reason.Kind.ABI_INCOMPATIBLE, candidate.warning?.kind)
-        assertEquals(1, probe.calls)
-        assertEquals(1, resolution.probes.size)
+    @Test
+    fun clearDeviceChoiceDoesNotProbeJustBecauseItIsNewOrPreviouslyFailed() = runBlocking {
+        val release = releaseOf("app-arm64-v8a.apk", "app-armeabi-v7a.apk")
+        val probe = FakeProbe(emptyMap())
+        for (status in ModuleVariantState.Status.entries) {
+            val resolution = ResolveVariantUseCase(probe).resolve(
+                release, ModuleVariantState(status = status), device,
+            )
+            assertEquals("app-arm64-v8a.apk", (resolution.decision as VariantDecision.Pick).asset.name)
+        }
+        assertEquals(0, probe.calls)
     }
 
     @Test
@@ -147,7 +162,7 @@ class ResolveVariantUseCaseTest {
     }
 
     @Test
-    fun suspectModulesProbeAgain() = runBlocking {
+    fun uniquelyRememberedTypeIsReusedAfterAFailedAttempt() = runBlocking {
         val release = releaseOf("app-arm64-v8a.apk", "app-armeabi-v7a.apk")
         val probe = FakeProbe(
             mapOf(
@@ -167,7 +182,84 @@ class ResolveVariantUseCaseTest {
 
         assertTrue(resolution.decision is VariantDecision.Pick)
         assertEquals("app-arm64-v8a.apk", (resolution.decision as VariantDecision.Pick).asset.name)
-        assertEquals(1, probe.calls)
+        assertEquals(0, probe.calls)
+    }
+
+    @Test
+    fun confirmedInstallationAndExplicitPreferenceCarryTheirTypeAcrossVersionsWithoutProbing() = runBlocking {
+        val installed = InstalledModule(
+            "com.example.module", 1, "1.0", "Module", true, null, lastUpdateTime = 100L,
+        )
+        val previous = releaseOf("Module-full-v1.0.apk", "Module-lite-v1.0.apk")
+        val target = ResolvedInstallTarget.of(previous, previous.assets.first())
+        val confirmed = ConfirmedInstallRecord(
+            target, installed.packageName, installed.versionCode, installed.versionName, installed.lastUpdateTime,
+        )
+        val next = releaseOf("Module-full-v2.0.apk", "Module-lite-v2.0.apk").let {
+            it.copy(assets = it.assets.map { asset ->
+                asset.copy(downloadCount = if ("lite" in asset.name) 1000 else 0)
+            })
+        }
+        val probe = object : ApkProbe {
+            override suspend fun cached(asset: ReleaseAsset): ApkMeta? =
+                error("A known asset family must be reused directly")
+            override suspend fun fetch(asset: ReleaseAsset): ApkMeta? =
+                error("A known asset family must not be probed")
+        }
+        val state = ModuleVariantState(
+            status = ModuleVariantState.Status.SUSPECT,
+            confirmedInstall = confirmed,
+            preferenceMigrated = true,
+        )
+        val useCase = ResolveVariantUseCase(probe)
+        val followed = useCase.resolve(
+            next, state.forInstalled(installed), device,
+            installed = InstalledVariantHint.of(installed), expectedPackage = installed.packageName,
+        )
+        assertEquals("Module-full-v2.0.apk", (followed.decision as VariantDecision.Pick).asset.name)
+
+        val preferred = useCase.resolve(
+            next, state.copy(explicitPreference = VariantSignature.ofAsset("Module-lite-v1.0.apk"))
+                .forInstalled(installed), device,
+            installed = InstalledVariantHint.of(installed), expectedPackage = installed.packageName,
+        )
+        assertEquals("Module-lite-v2.0.apk", (preferred.decision as VariantDecision.Pick).asset.name)
+    }
+
+    @Test
+    fun updateWithUnclearHistoryProbesEvenWhenTheDeviceHasAClearDefault() = runBlocking {
+        val release = releaseOf("app-arm64-v8a.apk", "app-universal.apk")
+        val probe = FakeProbe(mapOf(
+            "app-arm64-v8a.apk" to ApkMeta(packageName = "com.other.module", hasXposedDeclaration = true),
+            "app-universal.apk" to ApkMeta(packageName = "com.example.module", hasXposedDeclaration = true),
+        ))
+        val resolution = ResolveVariantUseCase(probe).resolve(
+            release, ModuleVariantState(), device,
+            expectedPackage = "com.example.module",
+            installed = InstalledVariantHint(packageName = "com.example.module"),
+        )
+        assertEquals(2, probe.calls)
+        assertEquals("app-universal.apk", (resolution.decision as VariantDecision.Pick).asset.name)
+    }
+
+    @Test
+    fun cachedInstalledIdentityResolvesAnUpdateWithoutNetworkRequests() = runBlocking {
+        val release = releaseOf("app-arm64-v8a.apk", "app-universal.apk")
+        val probe = object : ApkProbe {
+            override suspend fun cached(asset: ReleaseAsset): ApkMeta? = ApkMeta(
+                packageName = if ("universal" in asset.name) "com.example.module" else "com.other.module",
+                hasXposedDeclaration = true,
+            )
+            override suspend fun fetch(asset: ReleaseAsset): ApkMeta? =
+                error("The cached installed-package match is already sufficient")
+        }
+        val resolution = ResolveVariantUseCase(probe).resolve(
+            release, ModuleVariantState(), device,
+            expectedPackage = "com.example.module",
+            installed = InstalledVariantHint(packageName = "com.example.module"),
+        )
+        assertEquals("app-universal.apk", (resolution.decision as VariantDecision.Pick).asset.name)
+        assertEquals(2, resolution.probes.size)
     }
 
     @Test
@@ -207,14 +299,15 @@ class ResolveVariantUseCaseTest {
 
     @Test
     fun probeFailureKeepsTheNameLayerDecision() = runBlocking {
-        val release = releaseOf("app.apk")
+        val release = releaseOf("app-full.apk", "app-lite.apk")
         val probe = FakeProbe(emptyMap())
+        val expected = VariantResolver(device).resolve(release).defaultAsset()
         val resolution = ResolveVariantUseCase(probe)
             .resolve(release, ModuleVariantState(), device, expectedPackage = "com.example.module")
 
         assertTrue(resolution.decision is VariantDecision.Pick)
-        assertEquals("app.apk", (resolution.decision as VariantDecision.Pick).asset.name)
-        assertEquals(1, probe.calls)
+        assertEquals(expected, (resolution.decision as VariantDecision.Pick).asset)
+        assertEquals(2, probe.calls)
         assertTrue(resolution.probes.isEmpty())
     }
 
@@ -327,12 +420,14 @@ class ResolveVariantUseCaseTest {
     fun manualFlavourSurvivesUpgradeAndFailedInstallWithUnavailableProbes() = runBlocking {
         val release = releaseOf("MiCTS_2.7.apk", "VISTrigger_2.7.apk")
         for (status in listOf(ModuleVariantState.Status.TRUSTED, ModuleVariantState.Status.SUSPECT)) {
-            val result = ResolveVariantUseCase(FakeProbe(emptyMap())).resolve(
+            val probe = FakeProbe(emptyMap())
+            val result = ResolveVariantUseCase(probe).resolve(
                 release,
                 ModuleVariantState(status = status, signature = VariantSignature.ofAsset("VISTrigger_2.6.apk")),
                 device, expectedPackage = "com.example.module",
             )
             assertEquals("VISTrigger_2.7.apk", (result.decision as VariantDecision.Pick).asset.name)
+            assertEquals(0, probe.calls)
         }
     }
 

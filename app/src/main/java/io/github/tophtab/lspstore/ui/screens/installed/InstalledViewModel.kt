@@ -710,8 +710,8 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
                     }
                     val resolver = VariantResolver(container.deviceProfile)
                     val state = (variantStates[repoPackageName] ?: ModuleVariantState()).forInstalled(installedModule)
-                    // The user explicitly opened the picker: probing is allowed
-                    // even when the module is currently NOT_APPLICABLE.
+                    // An explicit picker request supplements multi-APK choices;
+                    // the shared resolver uses a single APK without probing.
                     val installedHint = installedModule?.let(InstalledVariantHint::of)
                     val expectedPackageName = expectedPackage(
                         installedPackage = installedModule?.packageName,
@@ -734,7 +734,9 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
                             expectedPackage = expectedPackageName,
                             installed = installedHint,
                         ),
-                    ).map { it.copy(recommended = it.asset.name == recommendedName) }.sortedByDescending { it.recommended }
+                    ).map {
+                        it.copy(recommended = release.apkAssets.size > 1 && it.asset.name == recommendedName)
+                    }.sortedByDescending { it.recommended }
                     val selectedName = state.migrated().explicitPreference?.let { signature ->
                         candidates.firstOrNull {
                             signature.matches(it.asset.name, it.traits)
