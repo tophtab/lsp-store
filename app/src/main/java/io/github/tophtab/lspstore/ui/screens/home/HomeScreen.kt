@@ -2,6 +2,8 @@
 
 package io.github.tophtab.lspstore.ui.screens.home
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -45,8 +47,12 @@ import io.github.tophtab.lspstore.ui.LocalAppContainer
 import io.github.tophtab.lspstore.ui.components.EmptyBox
 import io.github.tophtab.lspstore.ui.components.ErrorBox
 import io.github.tophtab.lspstore.ui.components.LoadingBox
+import io.github.tophtab.lspstore.ui.components.MODULE_ITEM_FADE_MILLIS
+import io.github.tophtab.lspstore.ui.components.MODULE_ITEM_PLACEMENT_MILLIS
 import io.github.tophtab.lspstore.ui.components.ModuleCard
+import io.github.tophtab.lspstore.ui.components.ModuleListExit
 import io.github.tophtab.lspstore.ui.components.PullToRefreshBox
+import io.github.tophtab.lspstore.ui.components.rememberModuleListExitState
 import io.github.tophtab.lspstore.ui.design.KomiConstrainedContent
 import io.github.tophtab.lspstore.ui.design.KomiSegment
 import io.github.tophtab.lspstore.ui.design.KomiSegmented
@@ -138,6 +144,19 @@ fun HomeScreen(
     }
 
     val searching = state.searchQuery.isNotBlank()
+    val searchResults = if (resolvedTab == 1) {
+        // The "Most starred" tab also controls search ordering.
+        state.searchResults.sortedByDescending { it.stars }
+    } else {
+        // HomeViewModel already sorts by last update.
+        state.searchResults
+    }
+    val feedExit = rememberModuleListExitState(tabs[resolvedTab].modules, key = resolvedTab)
+    val searchExit = rememberModuleListExitState(
+        searchResults,
+        key = state.searchQuery to resolvedTab,
+    )
+    val activeListHasContent = if (searching) searchExit.hasContent else feedExit.hasContent
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -147,7 +166,7 @@ fun HomeScreen(
             state.isLoading -> LoadingBox(Modifier.padding(innerPadding))
             state.error != null ->
                 ErrorBox(state.error!!, viewModel::refresh, Modifier.padding(innerPadding))
-            state.recentlyUpdated.isEmpty() -> EmptyBox(
+            state.recentlyUpdated.isEmpty() && !activeListHasContent -> EmptyBox(
                 message = stringResource(R.string.home_no_modules),
                 modifier = Modifier.padding(innerPadding),
                 actionLabel = stringResource(R.string.action_refresh),
@@ -201,21 +220,14 @@ fun HomeScreen(
                     // indicator appears between the capsules and the list and only a
                     // pull on the list refreshes. Pulling on the header does not.
                     if (searching) {
-                        val searchResults = if (resolvedTab == 1) {
-                            // The "Most starred" tab also controls search ordering.
-                            state.searchResults.sortedByDescending { it.stars }
-                        } else {
-                            // HomeViewModel already sorts by last update.
-                            state.searchResults
-                        }
-                        if (searchResults.isEmpty()) {
+                        if (!searchExit.hasContent) {
                             EmptyBox(
                                 message = stringResource(R.string.search_empty),
                                 modifier = Modifier.weight(1f),
                             )
                         } else {
                             KomiText(
-                                text = pluralStringResource(R.plurals.search_count, searchResults.size, searchResults.size),
+                                text = pluralStringResource(R.plurals.search_count, searchExit.items.size, searchExit.items.size),
                                 role = KomiTextRole.Label,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(horizontal = 14.dp, vertical = 4.dp),
@@ -228,25 +240,32 @@ fun HomeScreen(
                                     .fillMaxWidth()
                                     .weight(1f),
                             ) {
-                                LazyVerticalStaggeredGrid(
-                                    state = searchListState,
-                                    columns = StaggeredGridCells.Adaptive(minSize = 320.dp),
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentPadding = PaddingValues(
-                                        start = 12.dp,
-                                        end = 12.dp,
-                                        bottom = 32.dp,
-                                    ),
-                                    verticalItemSpacing = 10.dp,
-                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                                ) {
-                                    items(searchResults, key = { it.packageName }) { module ->
-                                        ModuleCard(
-                                            module = module,
-                                            installed = module.packageName in state.installedPackages,
-                                            onOpen = { onOpenModule(module.packageName) },
-                                            onIgnore = { viewModel.ignoreModule(module.packageName) },
-                                        )
+                                ModuleListExit(searchExit, Modifier.fillMaxSize()) { displayed ->
+                                    LazyVerticalStaggeredGrid(
+                                        state = searchListState,
+                                        columns = StaggeredGridCells.Adaptive(minSize = 320.dp),
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentPadding = PaddingValues(
+                                            start = 12.dp,
+                                            end = 12.dp,
+                                            bottom = 32.dp,
+                                        ),
+                                        verticalItemSpacing = 10.dp,
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                    ) {
+                                        items(displayed, key = { it.packageName }) { module ->
+                                            ModuleCard(
+                                                module = module,
+                                                installed = module.packageName in state.installedPackages,
+                                                onOpen = { onOpenModule(module.packageName) },
+                                                onIgnore = { viewModel.ignoreModule(module.packageName) },
+                                                modifier = Modifier.animateItem(
+                                                    fadeInSpec = null,
+                                                    placementSpec = tween(MODULE_ITEM_PLACEMENT_MILLIS, easing = FastOutSlowInEasing),
+                                                    fadeOutSpec = tween(MODULE_ITEM_FADE_MILLIS, easing = FastOutSlowInEasing),
+                                                ),
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -259,25 +278,32 @@ fun HomeScreen(
                                 .fillMaxWidth()
                                 .weight(1f),
                         ) {
-                            LazyVerticalStaggeredGrid(
-                                state = listState,
-                                columns = StaggeredGridCells.Adaptive(minSize = 320.dp),
-                                modifier = Modifier.fillMaxSize(),
-                                contentPadding = PaddingValues(
-                                    start = 12.dp,
-                                    end = 12.dp,
-                                    bottom = 32.dp,
-                                ),
-                                verticalItemSpacing = 10.dp,
-                                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                            ) {
-                                items(tabs[resolvedTab].modules, key = { it.packageName }) { module ->
-                                    ModuleCard(
-                                        module = module,
-                                        installed = module.packageName in state.installedPackages,
-                                        onOpen = { onOpenModule(module.packageName) },
-                                        onIgnore = { viewModel.ignoreModule(module.packageName) },
-                                    )
+                            ModuleListExit(feedExit, Modifier.fillMaxSize()) { displayed ->
+                                LazyVerticalStaggeredGrid(
+                                    state = listState,
+                                    columns = StaggeredGridCells.Adaptive(minSize = 320.dp),
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentPadding = PaddingValues(
+                                        start = 12.dp,
+                                        end = 12.dp,
+                                        bottom = 32.dp,
+                                    ),
+                                    verticalItemSpacing = 10.dp,
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                ) {
+                                    items(displayed, key = { it.packageName }) { module ->
+                                        ModuleCard(
+                                            module = module,
+                                            installed = module.packageName in state.installedPackages,
+                                            onOpen = { onOpenModule(module.packageName) },
+                                            onIgnore = { viewModel.ignoreModule(module.packageName) },
+                                            modifier = Modifier.animateItem(
+                                                fadeInSpec = null,
+                                                placementSpec = tween(MODULE_ITEM_PLACEMENT_MILLIS, easing = FastOutSlowInEasing),
+                                                fadeOutSpec = tween(MODULE_ITEM_FADE_MILLIS, easing = FastOutSlowInEasing),
+                                            ),
+                                        )
+                                    }
                                 }
                             }
                         }

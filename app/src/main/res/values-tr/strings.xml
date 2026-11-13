@@ -22,6 +22,7 @@
     <string name="nav_installed">Yüklü</string>
     <string name="nav_settings">Ayarlar</string>
     <string name="module_updated_relative">Güncellendi %1$s</string>
+    <string name="module_ignore_ready">Bırak: yoksay · Dışarı çık: iptal</string>
     <string name="module_favourite">Favori</string>
     <string name="home_no_modules">Kullanılabilir modül yok</string>
     <string name="home_section_recently_updated">Yakın zamanda güncellendi</string>

@@ -22,6 +22,7 @@
     <string name="nav_installed">Instalado</string>
     <string name="nav_settings">Ajustes</string>
     <string name="module_updated_relative">Actualizado %1$s</string>
+    <string name="module_ignore_ready">Suelta: ignorar · Sal de la tarjeta: cancelar</string>
     <string name="module_favourite">Favorito</string>
     <string name="home_no_modules">No hay módulos disponibles</string>
     <string name="home_section_recently_updated">Actualizado recientemente</string>

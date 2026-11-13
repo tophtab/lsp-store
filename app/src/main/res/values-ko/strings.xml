@@ -22,6 +22,7 @@
     <string name="nav_installed">설치된 항목</string>
     <string name="nav_settings">설정</string>
     <string name="module_updated_relative">업데이트됨 %1$s</string>
+    <string name="module_ignore_ready">손을 떼면 무시 · 카드 밖으로 이동하면 취소</string>
     <string name="module_favourite">즐겨찾기</string>
     <string name="home_no_modules">사용 가능한 모듈이 없습니다.</string>
     <string name="home_section_recently_updated">최근 업데이트됨</string>

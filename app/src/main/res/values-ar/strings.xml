@@ -22,6 +22,7 @@
     <string name="nav_installed">المثبتة</string>
     <string name="nav_settings">الإعدادات</string>
     <string name="module_updated_relative">تم التحديث %1$s</string>
+    <string name="module_ignore_ready">ارفع إصبعك للتجاهل · حرّكه خارج البطاقة للإلغاء</string>
     <string name="module_favourite">المفضلة</string>
     <string name="home_no_modules">لا توجد وحدات متاحة</string>
     <string name="home_section_recently_updated">تم تحديثها مؤخرا</string>
