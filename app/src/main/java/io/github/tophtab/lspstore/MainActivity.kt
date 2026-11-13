@@ -76,6 +76,7 @@ import io.github.tophtab.lspstore.data.update.UpdateNotifier
 import io.github.tophtab.lspstore.di.AppContainer
 import io.github.tophtab.lspstore.domain.model.ThemeMode
 import io.github.tophtab.lspstore.ui.LocalAppContainer
+import io.github.tophtab.lspstore.ui.components.ModuleIgnoreGestureHost
 import io.github.tophtab.lspstore.ui.design.KomiNavItem
 import io.github.tophtab.lspstore.ui.design.KomiNavigationRail
 import io.github.tophtab.lspstore.ui.navigation.NavPlacement
@@ -132,7 +133,9 @@ class MainActivity : ComponentActivity() {
         setContent {
             AppTheme(container) {
                 CompositionLocalProvider(LocalAppContainer provides container) {
-                    AppRoot(openInstalled = openInstalledRequests)
+                    ModuleIgnoreGestureHost {
+                        AppRoot(openInstalled = openInstalledRequests)
+                    }
                 }
             }
         }
