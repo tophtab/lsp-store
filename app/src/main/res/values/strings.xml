@@ -33,6 +33,7 @@
 
     <!-- Module card -->
     <string name="module_updated_relative">Updated %1$s</string>
+    <string name="module_ignore_ready">Release to ignore · Move out to cancel</string>
     <string name="module_favourite">Favourite</string>
 
     <!-- Home -->

@@ -22,6 +22,7 @@
     <string name="nav_installed">Installati</string>
     <string name="nav_settings">Impostazioni</string>
     <string name="module_updated_relative">Aggiornato %1$s</string>
+    <string name="module_ignore_ready">Rilascia: ignora · Esci: annulla</string>
     <string name="module_favourite">Preferito</string>
     <string name="home_no_modules">Nessun modulo disponibile</string>
     <string name="home_section_recently_updated">Aggiornato di recente</string>

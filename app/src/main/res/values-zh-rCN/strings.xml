@@ -30,6 +30,7 @@
 
     <!-- Module card -->
     <string name="module_updated_relative">更新于 %1$s</string>
+    <string name="module_ignore_ready">松手忽略 · 移出取消</string>
     <string name="module_favourite">收藏</string>
 
     <!-- Home -->

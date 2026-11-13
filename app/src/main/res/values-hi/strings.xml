@@ -22,6 +22,7 @@
     <string name="nav_installed">इंस्टॉल किए गए</string>
     <string name="nav_settings">सेटिंग्स</string>
     <string name="module_updated_relative">अद्यतन किया गया %1$s</string>
+    <string name="module_ignore_ready">छोड़ें तो अनदेखा · बाहर ले जाएँ तो रद्द</string>
     <string name="module_favourite">पसंदीदा</string>
     <string name="home_no_modules">कोई मॉड्यूल उपलब्ध नहीं है</string>
     <string name="home_section_recently_updated">हाल ही में अद्यतन किया गया</string>

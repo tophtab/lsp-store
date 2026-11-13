@@ -22,6 +22,7 @@
     <string name="nav_installed">Установленные</string>
     <string name="nav_settings">Настройки</string>
     <string name="module_updated_relative">Обновлено %1$s</string>
+    <string name="module_ignore_ready">Отпустите: игнорировать · За край: отмена</string>
     <string name="module_favourite">Избранное</string>
     <string name="home_no_modules">Нет доступных модулей</string>
     <string name="home_section_recently_updated">Недавно обновлено</string>

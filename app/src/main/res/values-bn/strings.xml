@@ -22,6 +22,7 @@
     <string name="nav_installed">ইনস্টল করা</string>
     <string name="nav_settings">সেটিংস</string>
     <string name="module_updated_relative">আপডেট করা হয়েছে %1$s</string>
+    <string name="module_ignore_ready">ছেড়ে দিলে উপেক্ষা · বাইরে সরালে বাতিল</string>
     <string name="module_favourite">পছন্দের</string>
     <string name="home_no_modules">কোন মডিউল উপলব্ধ</string>
     <string name="home_section_recently_updated">সম্প্রতি আপডেট করা হয়েছে</string>
