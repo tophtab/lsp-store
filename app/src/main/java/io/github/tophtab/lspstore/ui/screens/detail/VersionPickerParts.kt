@@ -1,6 +1,7 @@
 @file:OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 package io.github.tophtab.lspstore.ui.screens.detail
 
+import io.github.tophtab.lspstore.domain.model.formatByteSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -517,7 +518,7 @@ internal fun AssetRow(
                 text = pluralStringResource(
                     R.plurals.detail_downloads,
                     asset.downloadCount,
-                    formatSize(asset.size),
+                    formatByteSize(asset.size),
                     asset.downloadCount,
                 ),
                 role = KomiTextRole.Body,

@@ -1,6 +1,7 @@
 @file:OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 package io.github.tophtab.lspstore.ui.screens.detail
 
+import io.github.tophtab.lspstore.domain.model.formatByteSize
 import io.github.tophtab.lspstore.domain.model.installAction
 import io.github.tophtab.lspstore.domain.model.InstallAction
 import io.github.tophtab.lspstore.domain.model.ResolvedInstallTarget
@@ -444,8 +445,8 @@ internal fun InstallControls(
         val buttonSubtitle = downloading?.let {
             stringResource(
                 R.string.download_progress,
-                formatSize(it.downloaded),
-                formatSize(it.total),
+                formatByteSize(it.downloaded),
+                formatByteSize(it.total),
             ) + " · " + stringResource(R.string.download_tap_to_cancel)
         }
 
@@ -665,10 +666,4 @@ internal fun WhatsNewCard(
             }
         }
     }
-}
-
-internal fun formatSize(bytes: Long): String {
-    if (bytes <= 0) return "?"
-    val mb = bytes / (1024.0 * 1024.0)
-    return if (mb >= 1) String.format(java.util.Locale.getDefault(), "%.1f MB", mb) else String.format(java.util.Locale.getDefault(), "%.0f KB", bytes / 1024.0)
 }

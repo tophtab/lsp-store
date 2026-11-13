@@ -1,5 +1,9 @@
 package io.github.tophtab.lspstore.ui.screens.installed
 
+import io.github.tophtab.lspstore.ui.reportUninstallOutcome
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.currentCoroutineContext
+import io.github.tophtab.lspstore.ui.CatalogLoader
 import io.github.tophtab.lspstore.domain.usecase.batchCompletion
 import io.github.tophtab.lspstore.domain.usecase.BatchCompletion
 import io.github.tophtab.lspstore.domain.model.Release
@@ -18,7 +22,6 @@ import io.github.tophtab.lspstore.R
 import io.github.tophtab.lspstore.data.install.InstallStage
 import io.github.tophtab.lspstore.data.install.ModuleInstallRequest
 import io.github.tophtab.lspstore.data.install.ModuleInstallRun
-import io.github.tophtab.lspstore.data.install.UninstallOutcome
 import io.github.tophtab.lspstore.data.repository.PendingInstallRepository
 import io.github.tophtab.lspstore.di.AppContainer
 import io.github.tophtab.lspstore.domain.model.InstalledModule
@@ -120,6 +123,7 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
 
     private val moduleRepository = container.moduleRepository
     private val installedRepository = container.installedRepository
+    private val catalogLoader = CatalogLoader(moduleRepository, installedRepository)
     private val settingsRepository = container.settingsRepository
     private val libraryRepository = container.libraryRepository
     private val pendingRepository: PendingInstallRepository = container.pendingInstallRepository
@@ -641,24 +645,12 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
      */
     fun uninstall(packageName: String, label: String) {
         viewModelScope.launch {
-            when (val outcome = container.uninstallModule(packageName)) {
-                UninstallOutcome.Completed -> {
-                    reloadInstalled()
-                    _state.update {
-                        it.copy(
-                            message = container.appContext.getString(
-                                R.string.installed_uninstalled,
-                                label,
-                            ),
-                        )
-                    }
-                }
-
-                UninstallOutcome.DelegatedToSystem -> Unit
-
-                is UninstallOutcome.Failure ->
-                    _state.update { it.copy(message = outcome.message) }
-            }
+            reportUninstallOutcome(
+                outcome = container.uninstallModule(packageName),
+                completedMessage = container.appContext.getString(R.string.installed_uninstalled, label),
+                onCompleted = ::reloadInstalled,
+                onMessage = { message -> _state.update { it.copy(message = message) } },
+            )
         }
     }
 
@@ -979,93 +971,49 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
 
     private fun load(force: Boolean) {
         loadJob?.cancel()
-        // The entry load is automatic, but it still hits the network on the
-        // first screen of the session, so it gets the same indicator as a
-        // manual refresh. A screen that reuses the in-memory index shows none.
-        val showRefresh = force || !moduleRepository.hasFetchedIndexThisSession()
         loadJob = viewModelScope.launch {
-            var paintedFromCache = false
-
-            // 1. Paint the repository index and installed list saved by a
-            // previous session immediately.
-            if (index.isEmpty()) {
-                val cachedIndex = moduleRepository.getCachedIndex()
-                if (cachedIndex != null) {
-                    index = cachedIndex
-                    installedRepository.getCachedInstalledModules()?.let { installed = it }
-                    paintedFromCache = true
-                    _state.update {
-                        it.copy(
-                            isLoading = false,
-                            isRefreshing = showRefresh,
-                            error = null,
-                        )
-                    }
+            catalogLoader.load(
+                hasIndex = index.isNotEmpty(),
+                forceRefresh = force,
+                forceScan = force,
+                onCache = { modules, cachedInstalled ->
+                    index = modules
+                    cachedInstalled?.let { installed = it }
                     recompute()
-                }
-            }
-
-            if (!paintedFromCache) {
-                _state.update {
-                    it.copy(
-                        isLoading = index.isEmpty(),
-                        isRefreshing = showRefresh && index.isNotEmpty(),
-                        error = null,
-                    )
-                }
-            }
-
-            // 2. Scan installed packages and refresh the repository in parallel.
-            // PackageManager is local, but scanning hundreds of packages can still
-            // take a while; the network should not wait behind it.
-            launch {
-                runCatching { installedRepository.getInstalledModules(force) }
-                    .onSuccess { installedModules ->
-                        container.prunePendingInstalls(installedModules)
-                        installed = installedModules
-                        recompute()
+                },
+                onLoading = { loading, refreshing ->
+                    _state.update {
+                        it.copy(isLoading = loading, isRefreshing = refreshing, error = null)
                     }
-            }
-
-            // 3. Refresh the repository in the background of the cached UI.
-            // The first screen of the session performs the fetch; later screens
-            // reuse the refreshed in-memory index. Pull-to-refresh forces it.
-            runCatching { moduleRepository.refreshIndexIfNeeded(force) }
-                .onSuccess { modules ->
+                },
+                onScanned = { modules ->
+                    container.prunePendingInstalls(modules)
+                    currentCoroutineContext().ensureActive()
+                    installed = modules
+                    recompute()
+                },
+                onRefreshed = { modules ->
                     index = modules
                     _state.update {
                         it.copy(
                             isLoading = false,
                             isRefreshing = false,
-                            // Clear a failure from an earlier attempt, so a
-                            // successful retry never leaves the error box up.
                             error = null,
                             refreshTick = it.refreshTick + 1,
                         )
                     }
                     recompute()
-                }
-                .onFailure { error ->
-                    // A cancelled load was replaced by the one that cancelled
-                    // it. Writing "failed" here would flash its indicator off
-                    // and could leave an error over data the new load fetches.
-                    if (error is CancellationException) return@onFailure
+                },
+                onFailure = { error ->
                     _state.update {
                         it.copy(
                             isLoading = false,
                             isRefreshing = false,
-                            // Keep showing cached content when the refresh fails.
-                            error = if (index.isEmpty()) {
-                                error.toUserMessage(
-                                    container.appContext,
-                                    R.string.installed_check_failed,
-                                )
-                            } else {
-                                null
-                            },
+                            error = error?.toUserMessage(container.appContext, R.string.installed_check_failed),
                         )
                     }
-                }
+                },
+            )
         }
     }
 

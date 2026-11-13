@@ -2,19 +2,19 @@
 
 package io.github.tophtab.lspstore.ui.screens.detail
 
+import io.github.tophtab.lspstore.ui.components.UninstallConfirmDialog
+import io.github.tophtab.lspstore.ui.components.ActionSheetRow
 import io.github.tophtab.lspstore.domain.model.ResolvedInstallTarget
 
 import android.content.Intent
 import android.provider.Settings
 import android.text.Html
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -62,7 +62,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
@@ -91,8 +90,6 @@ import io.github.tophtab.lspstore.ui.components.ErrorBox
 import io.github.tophtab.lspstore.ui.components.LoadingBox
 import io.github.tophtab.lspstore.ui.components.PullToRefreshBox
 import io.github.tophtab.lspstore.ui.components.SnackbarMessageEffect
-import io.github.tophtab.lspstore.ui.design.KomiButtonVariant
-import io.github.tophtab.lspstore.ui.design.KomiDialog
 import io.github.tophtab.lspstore.ui.design.KomiText
 import io.github.tophtab.lspstore.ui.design.KomiTopBar
 import io.github.tophtab.lspstore.ui.theme.KomiTextRole
@@ -288,12 +285,14 @@ fun ModuleDetailScreen(packageName: String, onBack: () -> Unit, onOpenAuthor: (S
                     },
                 )
                 if (state.hiddenByKeywords.isNotEmpty()) {
-                    ActionSheetInfoRow(
+                    ActionSheetRow(
                         icon = Icons.Filled.Block,
                         label = stringResource(
                             R.string.detail_hidden_by_keyword,
                             state.hiddenByKeywords.joinToString(", "),
                         ),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 2,
                     )
                 }
                 ActionSheetRow(
@@ -345,85 +344,16 @@ fun ModuleDetailScreen(packageName: String, onBack: () -> Unit, onOpenAuthor: (S
     }
 
     if (uninstallConfirm) {
-        KomiDialog(
-            onDismissRequest = { uninstallConfirm = false },
-            title = uninstallLabel,
-            confirmLabel = stringResource(R.string.detail_uninstall),
-            confirmVariant = KomiButtonVariant.Destructive,
+        UninstallConfirmDialog(
+            label = uninstallLabel,
             onConfirm = {
                 uninstallConfirm = false
                 viewModel.uninstall()
             },
-            dismissLabel = stringResource(R.string.action_cancel),
             onDismiss = { uninstallConfirm = false },
-        ) {
-            KomiText(
-                text = stringResource(R.string.installed_uninstall_confirm_message, uninstallLabel),
-                role = KomiTextRole.Body,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontSize = 13.sp,
-            )
-        }
+        )
     }
-}
 
-/** Read-only action-sheet row for state this sheet cannot change. */
-@Composable
-private fun ActionSheetInfoRow(icon: ImageVector, label: String) {
-    val colors = MaterialTheme.colorScheme
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 14.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(14.dp),
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = colors.onSurfaceVariant,
-            modifier = Modifier.size(22.dp),
-        )
-        KomiText(
-            text = label,
-            role = KomiTextRole.Body,
-            color = colors.onSurfaceVariant,
-            maxLines = 2,
-        )
-    }
-}
-
-/** Overflow action row for the top-bar sheet, mirroring komi's action sheet. */
-@Composable
-private fun ActionSheetRow(
-    icon: ImageVector,
-    label: String,
-    onClick: () -> Unit,
-    tint: Color = Color.Unspecified,
-) {
-    val colors = MaterialTheme.colorScheme
-    val contentColor = if (tint == Color.Unspecified) colors.onSurface else tint
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(14.dp),
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = contentColor,
-            modifier = Modifier.size(22.dp),
-        )
-        KomiText(
-            text = label,
-            role = KomiTextRole.Body,
-            color = contentColor,
-            maxLines = 1,
-        )
-    }
 }
 
 /**

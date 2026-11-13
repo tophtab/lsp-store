@@ -2,6 +2,8 @@
 
 package io.github.tophtab.lspstore.ui.screens.installed
 
+import io.github.tophtab.lspstore.ui.components.UninstallConfirmDialog
+import io.github.tophtab.lspstore.ui.components.ActionSheetRow
 import android.text.format.Formatter
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -489,25 +491,14 @@ fun InstalledScreen(
     }
 
     uninstallConfirm?.let { (packageName, label) ->
-        KomiDialog(
-            onDismissRequest = { uninstallConfirm = null },
-            title = label,
-            confirmLabel = stringResource(R.string.detail_uninstall),
-            confirmVariant = KomiButtonVariant.Destructive,
+        UninstallConfirmDialog(
+            label = label,
             onConfirm = {
                 uninstallConfirm = null
                 viewModel.uninstall(packageName, label)
             },
-            dismissLabel = stringResource(R.string.action_cancel),
             onDismiss = { uninstallConfirm = null },
-        ) {
-            KomiText(
-                text = stringResource(R.string.installed_uninstall_confirm_message, label),
-                role = KomiTextRole.Body,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontSize = 13.sp,
-            )
-        }
+        )
     }
 
 }
@@ -1127,39 +1118,13 @@ private fun InstalledActionRow(
     checked: Boolean = false,
     onClick: () -> Unit,
 ) {
-    val contentColor = if (tint == Color.Unspecified) {
-        MaterialTheme.colorScheme.onSurface
-    } else {
-        tint
-    }
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = 20.dp, vertical = 14.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(14.dp),
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = contentColor,
-            modifier = Modifier.size(22.dp),
-        )
-        KomiText(
-            text = label,
-            role = KomiTextRole.Body,
-            color = contentColor,
-            maxLines = 1,
-            modifier = Modifier.weight(1f),
-        )
-        if (checked) {
-            Icon(
-                Icons.Filled.Check,
-                contentDescription = null,
-                tint = contentColor,
-                modifier = Modifier.size(20.dp),
-            )
-        }
-    }
+    ActionSheetRow(
+        icon = icon,
+        label = label,
+        tint = tint,
+        checked = checked,
+        horizontalPadding = 20.dp,
+        fillLabel = true,
+        onClick = onClick,
+    )
 }

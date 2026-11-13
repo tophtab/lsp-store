@@ -1,5 +1,6 @@
 package io.github.tophtab.lspstore.ui.screens.home
 
+import io.github.tophtab.lspstore.ui.CatalogLoader
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
@@ -17,7 +18,6 @@ import io.github.tophtab.lspstore.domain.model.HiddenModules
 import io.github.tophtab.lspstore.domain.model.InstalledModule
 import io.github.tophtab.lspstore.domain.model.Module
 import io.github.tophtab.lspstore.domain.model.repoPackagesOf
-import kotlin.coroutines.cancellation.CancellationException
 
 data class HomeUiState(
     val isLoading: Boolean = true,
@@ -52,6 +52,7 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
     private val moduleRepository = container.moduleRepository
     private val installedRepository = container.installedRepository
     private val libraryRepository = container.libraryRepository
+    private val catalogLoader = CatalogLoader(moduleRepository, installedRepository)
 
     private val _state = MutableStateFlow(HomeUiState())
     val state = _state.asStateFlow()
@@ -131,87 +132,46 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
 
     private fun load(force: Boolean) {
         loadJob?.cancel()
-        // The entry load is automatic, but it still hits the network on the
-        // first screen of the session, so it gets the same indicator as a
-        // manual refresh. A screen that reuses the in-memory index shows none.
-        val showRefresh = force || !moduleRepository.hasFetchedIndexThisSession()
         loadJob = viewModelScope.launch {
-            var paintedFromCache = false
-
-            // 1. Paint the index saved by a previous session immediately.
-            if (index.isEmpty()) {
-                val cachedIndex = moduleRepository.getCachedIndex()
-                if (cachedIndex != null) {
-                    updateIndex(cachedIndex)
-                    installedRepository.getCachedInstalledModules()?.let { installed = it }
-                    paintedFromCache = true
-                    _state.update {
-                        it.copy(
-                            isLoading = false,
-                            isRefreshing = showRefresh,
-                            error = null,
-                        )
-                    }
+            catalogLoader.load(
+                hasIndex = index.isNotEmpty(),
+                forceRefresh = force,
+                forceScan = false,
+                onCache = { modules, cachedInstalled ->
+                    updateIndex(modules)
+                    cachedInstalled?.let { installed = it }
                     rebuildInstalledBadges()
-                }
-            }
-
-            if (!paintedFromCache) {
-                _state.update {
-                    it.copy(
-                        isLoading = index.isEmpty(),
-                        isRefreshing = showRefresh && index.isNotEmpty(),
-                        error = null,
-                    )
-                }
-            }
-
-            // 2. Scan installed packages and refresh the repository in parallel.
-            // PackageManager is local, but scanning hundreds of packages can still
-            // take a while; the network should not wait behind it.
-            launch {
-                runCatching { installedRepository.getInstalledModules() }
-                    .onSuccess { installedModules ->
-                        installed = installedModules
-                        rebuildInstalledBadges()
+                },
+                onLoading = { loading, refreshing ->
+                    _state.update {
+                        it.copy(isLoading = loading, isRefreshing = refreshing, error = null)
                     }
-            }
-
-            // 3. Refresh the repository in the background of the cached UI.
-            // The first screen of the session performs the fetch; later screens
-            // reuse the refreshed in-memory index. Pull-to-refresh forces it.
-            runCatching { moduleRepository.refreshIndexIfNeeded(force) }
-                .onSuccess { modules ->
+                },
+                onScanned = { modules ->
+                    installed = modules
+                    rebuildInstalledBadges()
+                },
+                onRefreshed = { modules ->
                     updateIndex(modules)
                     _state.update {
                         it.copy(
                             isLoading = false,
                             isRefreshing = false,
-                            // Clear a failure from an earlier attempt, so a
-                            // successful retry never leaves the error box up.
                             error = null,
                             refreshTick = it.refreshTick + 1,
                         )
                     }
-                }
-                .onFailure { error ->
-                    // A cancelled load was replaced by the one that cancelled
-                    // it. Writing "failed" here would flash its indicator off
-                    // and could leave an error over data the new load fetches.
-                    if (error is CancellationException) return@onFailure
+                },
+                onFailure = { error ->
                     _state.update {
                         it.copy(
                             isLoading = false,
                             isRefreshing = false,
-                            // Keep showing cached content when the refresh fails.
-                            error = if (index.isEmpty()) {
-                                error.toUserMessage(container.appContext, R.string.home_load_failed)
-                            } else {
-                                null
-                            },
+                            error = error?.toUserMessage(container.appContext, R.string.home_load_failed),
                         )
                     }
-                }
+                },
+            )
         }
     }
 

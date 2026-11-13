@@ -1,5 +1,6 @@
 package io.github.tophtab.lspstore.ui.screens.detail
 
+import io.github.tophtab.lspstore.ui.reportUninstallOutcome
 import io.github.tophtab.lspstore.domain.usecase.ReleaseProbeRequests
 import io.github.tophtab.lspstore.domain.model.ResolvedInstallTarget
 import androidx.lifecycle.ViewModel
@@ -15,7 +16,6 @@ import kotlinx.coroutines.launch
 import io.github.tophtab.lspstore.R
 import io.github.tophtab.lspstore.data.install.ModuleInstallRequest
 import io.github.tophtab.lspstore.data.install.ModuleInstallRun
-import io.github.tophtab.lspstore.data.install.UninstallOutcome
 import io.github.tophtab.lspstore.data.repository.InstalledModulesRepository
 import io.github.tophtab.lspstore.data.repository.LibraryRepository
 import io.github.tophtab.lspstore.data.repository.ModuleRepository
@@ -493,24 +493,12 @@ class ModuleDetailViewModel(
     fun uninstall() {
         val installed = _state.value.installed ?: return
         viewModelScope.launch {
-            when (val outcome = container.uninstallModule(installed.packageName)) {
-                UninstallOutcome.Completed -> {
-                    resolveInstalled()
-                    _state.update {
-                        it.copy(
-                            message = container.appContext.getString(
-                                R.string.installed_uninstalled,
-                                installed.label,
-                            ),
-                        )
-                    }
-                }
-
-                UninstallOutcome.DelegatedToSystem -> Unit
-
-                is UninstallOutcome.Failure ->
-                    _state.update { it.copy(message = outcome.message) }
-            }
+            reportUninstallOutcome(
+                outcome = container.uninstallModule(installed.packageName),
+                completedMessage = container.appContext.getString(R.string.installed_uninstalled, installed.label),
+                onCompleted = ::resolveInstalled,
+                onMessage = { message -> _state.update { it.copy(message = message) } },
+            )
         }
     }
 

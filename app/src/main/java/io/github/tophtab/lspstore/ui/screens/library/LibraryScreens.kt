@@ -2,6 +2,7 @@
 
 package io.github.tophtab.lspstore.ui.screens.library
 
+import io.github.tophtab.lspstore.ui.components.LibraryModuleHeading
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -144,23 +145,11 @@ private fun LibraryRow(
                 )
                 Spacer(Modifier.width(12.dp))
             }
-            Column(modifier = Modifier.weight(1f)) {
-                KomiText(
-                    text = module.title,
-                    role = KomiTextRole.Title,
-                    fontSize = 15.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                KomiText(
-                    text = module.packageName,
-                    role = KomiTextRole.Body,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = 11.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(top = 2.dp),
-                )
+            LibraryModuleHeading(
+                title = module.title,
+                packageName = module.packageName,
+                modifier = Modifier.weight(1f),
+            ) {
                 Row(
                     modifier = Modifier.padding(top = 6.dp),
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -295,24 +284,11 @@ fun IgnoredModulesScreen(onBack: () -> Unit, onOpenModule: (String) -> Unit) {
                                     contentPadding = PaddingValues(14.dp),
                                 ) {
                                     Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            KomiText(
-                                                text = item.title,
-                                                role = KomiTextRole.Title,
-                                                fontSize = 15.sp,
-                                                maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis,
-                                            )
-                                            KomiText(
-                                                text = item.packageName,
-                                                role = KomiTextRole.Body,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                fontSize = 11.sp,
-                                                maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis,
-                                                modifier = Modifier.padding(top = 2.dp),
-                                            )
-                                        }
+                                        LibraryModuleHeading(
+                                            title = item.title,
+                                            packageName = item.packageName,
+                                            modifier = Modifier.weight(1f),
+                                        )
                                         KomiButton(
                                             onClick = { viewModel.restore(item.packageName) },
                                             label = stringResource(R.string.action_unskip),
@@ -484,23 +460,11 @@ fun SkippedUpdatesScreen(onBack: () -> Unit) {
                             contentPadding = PaddingValues(14.dp),
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    KomiText(
-                                        text = item.title,
-                                        role = KomiTextRole.Title,
-                                        fontSize = 15.sp,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                    )
-                                    KomiText(
-                                        text = item.packageName,
-                                        role = KomiTextRole.Body,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        fontSize = 11.sp,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                        modifier = Modifier.padding(top = 2.dp),
-                                    )
+                                LibraryModuleHeading(
+                                    title = item.title,
+                                    packageName = item.packageName,
+                                    modifier = Modifier.weight(1f),
+                                ) {
                                     KomiText(
                                         text = if (item.isModuleIgnored) {
                                             stringResource(R.string.library_ignored_module)

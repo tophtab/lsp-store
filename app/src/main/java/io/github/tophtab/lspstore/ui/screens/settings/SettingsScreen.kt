@@ -2,6 +2,7 @@
 
 package io.github.tophtab.lspstore.ui.screens.settings
 
+import io.github.tophtab.lspstore.domain.model.formatByteSize
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
@@ -493,7 +494,7 @@ fun SettingsScreen(
                     KomiSettingsRow(
                         title = stringResource(
                             R.string.settings_downloaded,
-                            formatBytes(state.downloadsSize),
+                            formatByteSize(state.downloadsSize, emptyValue = "0 MB"),
                         ),
                         subtitle = stringResource(R.string.settings_clear_apks),
                         trailing = {
@@ -507,7 +508,7 @@ fun SettingsScreen(
                     )
                     KomiSettingsRow(
                         title = stringResource(R.string.diagnostics_index_cache) + ": " +
-                            formatBytes(state.indexCacheSize),
+                            formatByteSize(state.indexCacheSize, emptyValue = "0 MB"),
                         subtitle = stringResource(R.string.settings_clear_index),
                         trailing = {
                             KomiButton(
@@ -660,15 +661,5 @@ fun SettingsScreen(
                 fontSize = 13.sp,
             )
         }
-    }
-}
-
-private fun formatBytes(bytes: Long): String {
-    if (bytes <= 0) return "0 MB"
-    val mb = bytes / (1024.0 * 1024.0)
-    return if (mb >= 1) {
-        String.format(java.util.Locale.getDefault(), "%.1f MB", mb)
-    } else {
-        String.format(java.util.Locale.getDefault(), "%.0f KB", bytes / 1024.0)
     }
 }
