@@ -172,14 +172,21 @@ internal class IgnoreHoldGesture(
     }
 }
 
-private suspend fun PointerInputScope.detectIgnoreHold(gesture: IgnoreHoldGesture) {
+private suspend fun PointerInputScope.detectIgnoreHold(
+    gesture: IgnoreHoldGesture,
+    coordinator: IgnoreHoldCoordinator?,
+) {
     try {
         awaitEachGesture {
             // The detector sits outside graphicsLayer: size and positions refer
             // to the original card rectangle, rather than the enlarged visual.
             val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
             gesture.press(down.uptimeMillis)
-            if (down.isConsumed || down.isOutOfBounds(size, Size.Zero)) gesture.cancel()
+            if (down.isConsumed || down.isOutOfBounds(size, Size.Zero) ||
+                coordinator?.claim(gesture, down.id.value) == false
+            ) {
+                gesture.cancel()
+            }
 
             try {
                 while (true) {
@@ -204,7 +211,11 @@ private suspend fun PointerInputScope.detectIgnoreHold(gesture: IgnoreHoldGestur
                         hasOtherPointers = event.changes.any {
                             it.id != down.id && (it.pressed || it.previousPressed)
                         },
-                        interrupted = primary == null || event.changes.any { it.isConsumed },
+                        // The ancestor consumes our captured stream before it
+                        // reaches this card. That is our own capture, rather
+                        // than an external detector interrupting the hold.
+                        interrupted = primary == null || (event.changes.any { it.isConsumed } &&
+                            !(coordinator?.owns(gesture) == true && coordinator.captured)),
                     )
                     if (!gesture.captured && primary != null &&
                         (primary.position - down.position).getDistance() > viewConfiguration.touchSlop
@@ -239,12 +250,14 @@ private suspend fun PointerInputScope.detectIgnoreHold(gesture: IgnoreHoldGestur
                 }
             } finally {
                 gesture.cancel()
+                coordinator?.detach(gesture)
                 gesture.finish()
             }
         }
     } finally {
         // Pointer interruption, a package-key change and disposal all get here.
         gesture.cancel()
+        coordinator?.detach(gesture)
         gesture.finish()
     }
 }
@@ -268,6 +281,7 @@ fun ModuleCard(
     val haptics = LocalHapticFeedback.current
     val viewConfiguration = LocalViewConfiguration.current
     val interactionsEnabled = LocalModuleCardInteractionsEnabled.current
+    val coordinator = LocalIgnoreHoldCoordinator.current
     val currentOnOpen by rememberUpdatedState(onOpen)
     val currentOnIgnore by rememberUpdatedState(onIgnore)
     val currentHaptics by rememberUpdatedState(haptics)
@@ -291,8 +305,11 @@ fun ModuleCard(
             scale.animateTo(1f, tween(IGNORE_CANCEL_MILLIS))
         }
     }
-    DisposableEffect(gesture, interactionsEnabled) {
-        onDispose { gesture.cancel() }
+    DisposableEffect(gesture, interactionsEnabled, coordinator) {
+        onDispose {
+            gesture.cancel()
+            coordinator?.detach(gesture)
+        }
     }
     val ready = gesture.isReady && interactionsEnabled
     KomiSurface(
@@ -300,7 +317,9 @@ fun ModuleCard(
             .fillMaxWidth()
             .then(
                 if (interactionsEnabled) {
-                    Modifier.pointerInput(module.packageName, gesture) { detectIgnoreHold(gesture) }
+                    Modifier.pointerInput(module.packageName, gesture, coordinator) {
+                        detectIgnoreHold(gesture, coordinator)
+                    }
                 } else {
                     Modifier.clearAndSetSemantics { }
                 },
