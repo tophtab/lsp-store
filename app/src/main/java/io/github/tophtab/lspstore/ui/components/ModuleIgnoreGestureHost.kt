@@ -57,6 +57,9 @@ internal class IgnoreHoldCoordinator {
 
     fun owns(gesture: IgnoreHoldGesture): Boolean = owner === gesture
 
+    fun consumesAtHost(pointerId: Long): Boolean =
+        captured && (owner == null || pointerId != primaryPointerId)
+
     fun detach(gesture: IgnoreHoldGesture) {
         if (owner !== gesture) return
         retainedCapture = captured
@@ -90,9 +93,14 @@ private suspend fun PointerInputScope.observeIgnoreHolds(coordinator: IgnoreHold
                             .filter { it.pressed || it.previousPressed }
                             .map { it.id.value }.toSet(),
                     )
-                    // Initial reaches the ancestor before every card, scroll
-                    // detector and navigation control, including other hit paths.
-                    if (coordinator.captured) event.changes.forEach { it.consume() }
+                    // The active card drains its own pointer in Initial. Leave
+                    // that change untouched here: Compose's synthetic CANCEL
+                    // is already consumed, and the card must distinguish it
+                    // from a real release. The ancestor drains other hit paths,
+                    // and every pointer once the owning card has detached.
+                    event.changes.forEach {
+                        if (coordinator.consumesAtHost(it.id.value)) it.consume()
+                    }
                     val allUp = event.changes.none { it.pressed }
                     awaitPointerEvent(PointerEventPass.Final)
                     if (allUp) break

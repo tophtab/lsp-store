@@ -129,6 +129,7 @@ class IgnoreHoldCoordinatorTest {
 
         assertFalse(first.gesture.captured)
         assertTrue(coordinator.captured)
+        assertTrue(coordinator.consumesAtHost(2L))
         next.press(coordinator, 2L, 3_000L)
         next.release(5_000L)
         assertEquals(0, first.ignored)
@@ -139,6 +140,8 @@ class IgnoreHoldCoordinatorTest {
         // releases ownership, so the last up cannot click another control.
         coordinator.observePointers(emptySet(), setOf(2L))
         assertTrue(coordinator.captured)
+        assertTrue(coordinator.consumesAtHost(1L))
+        assertTrue(coordinator.consumesAtHost(2L))
         coordinator.finish()
         assertFalse(coordinator.captured)
     }
@@ -211,6 +214,7 @@ class IgnoreHoldCoordinatorTest {
         coordinator.observePointers(emptySet(), setOf(1L))
         assertTrue(coordinator.owns(card.gesture))
         assertTrue(coordinator.captured)
+        assertFalse(coordinator.consumesAtHost(1L))
         card.release()
         card.release(2_001L)
 
@@ -221,6 +225,31 @@ class IgnoreHoldCoordinatorTest {
         card.gesture.open()
         assertEquals(1, card.opened)
         assertFalse(coordinator.captured)
+    }
+
+    @Test
+    fun `a consumed synthetic cancel on the owner pointer cancels instead of committing`() {
+        val coordinator = IgnoreHoldCoordinator()
+        val card = Card()
+        coordinator.observePointers(setOf(1L), setOf(1L))
+        card.press(coordinator, 1L)
+        card.gesture.advance(IGNORE_HOLD_MILLIS)
+
+        // Compose sends a consumed synthetic up to the card on ACTION_CANCEL.
+        // The host leaves the owner's change alone, so the card can treat that
+        // consumption as interruption before processing the apparent release.
+        assertFalse(coordinator.consumesAtHost(1L))
+        card.gesture.updatePointer(1_800L, insideCard = true, interrupted = true)
+        card.release(1_800L)
+
+        assertEquals(0, card.ignored)
+        assertEquals(0, card.opened)
+        assertTrue(coordinator.captured)
+        coordinator.detach(card.gesture)
+        card.gesture.finish()
+        assertTrue(coordinator.consumesAtHost(1L))
+        coordinator.finish()
+        assertFalse(coordinator.consumesAtHost(1L))
     }
 
     @Test

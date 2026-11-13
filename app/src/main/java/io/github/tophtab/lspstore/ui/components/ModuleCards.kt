@@ -211,11 +211,7 @@ private suspend fun PointerInputScope.detectIgnoreHold(
                         hasOtherPointers = event.changes.any {
                             it.id != down.id && (it.pressed || it.previousPressed)
                         },
-                        // The ancestor consumes our captured stream before it
-                        // reaches this card. That is our own capture, rather
-                        // than an external detector interrupting the hold.
-                        interrupted = primary == null || (event.changes.any { it.isConsumed } &&
-                            !(coordinator?.owns(gesture) == true && coordinator.captured)),
+                        interrupted = primary == null || event.changes.any { it.isConsumed },
                     )
                     if (!gesture.captured && primary != null &&
                         (primary.position - down.position).getDistance() > viewConfiguration.touchSlop
