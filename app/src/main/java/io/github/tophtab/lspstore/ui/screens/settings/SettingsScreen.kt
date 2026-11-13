@@ -1,8 +1,5 @@
-@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
-
 package io.github.tophtab.lspstore.ui.screens.settings
 
-import io.github.tophtab.lspstore.domain.model.formatByteSize
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
@@ -10,19 +7,14 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -32,50 +24,24 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.tophtab.lspstore.R
-import io.github.tophtab.lspstore.data.backup.LibraryRestoreMode
-import io.github.tophtab.lspstore.data.install.DownloadSlots
 import io.github.tophtab.lspstore.data.update.UpdateScheduler
-import io.github.tophtab.lspstore.domain.model.ThemeMode
-import io.github.tophtab.lspstore.domain.model.TranslationProvider
 import io.github.tophtab.lspstore.ui.LocalAppContainer
 import io.github.tophtab.lspstore.ui.components.SnackbarMessageEffect
-import io.github.tophtab.lspstore.ui.design.KomiButton
-import io.github.tophtab.lspstore.ui.design.KomiButtonSize
-import io.github.tophtab.lspstore.ui.design.KomiButtonVariant
-import io.github.tophtab.lspstore.ui.design.KomiCompactSegmented
-import io.github.tophtab.lspstore.ui.design.KomiDialog
-import io.github.tophtab.lspstore.ui.design.KomiFilterChip
-import io.github.tophtab.lspstore.ui.design.KomiSegment
-import io.github.tophtab.lspstore.ui.design.KomiSettingsExpandableRow
-import io.github.tophtab.lspstore.ui.design.KomiSettingsGroup
-import io.github.tophtab.lspstore.ui.design.KomiSettingsRow
-import io.github.tophtab.lspstore.ui.design.KomiSettingsSectionHead
-import io.github.tophtab.lspstore.ui.design.KomiSettingsSwitchRow
-import io.github.tophtab.lspstore.ui.design.KomiText
-import io.github.tophtab.lspstore.ui.design.KomiTextField
 import io.github.tophtab.lspstore.ui.design.rootContentWindowInsets
-import io.github.tophtab.lspstore.ui.labelRes
 import kotlinx.coroutines.launch
-import io.github.tophtab.lspstore.ui.theme.KomiTextRole
-
-private val ThemeModeOrder = listOf(ThemeMode.LIGHT, ThemeMode.DARK, ThemeMode.SYSTEM)
 
 @Composable
 fun SettingsScreen(
@@ -187,479 +153,77 @@ fun SettingsScreen(
                     .padding(top = 12.dp, bottom = 28.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                KomiSettingsSectionHead(stringResource(R.string.settings_appearance))
-                KomiSettingsGroup {
-                    KomiSettingsRow(
-                        title = stringResource(R.string.settings_theme),
-                        trailing = {
-                            KomiCompactSegmented(
-                                segments = ThemeModeOrder.map {
-                                    KomiSegment(stringResource(it.labelRes()))
-                                },
-                                selectedIndex = ThemeModeOrder.indexOf(state.themeMode),
-                                onSelect = { viewModel.setThemeMode(ThemeModeOrder[it]) },
-                            )
-                        },
-                    )
-                    KomiSettingsSwitchRow(
-                        title = stringResource(R.string.settings_amoled),
-                        subtitle = stringResource(R.string.settings_amoled_desc),
-                        checked = state.amoled,
-                        onCheckedChange = viewModel::setAmoled,
-                    )
-                    KomiSettingsSwitchRow(
-                        title = stringResource(R.string.settings_dynamic),
-                        subtitle = stringResource(R.string.settings_dynamic_desc),
-                        checked = state.dynamicColor,
-                        onCheckedChange = viewModel::setDynamicColor,
-                    )
-                    KomiSettingsSwitchRow(
-                        title = stringResource(R.string.settings_hide_icon),
-                        subtitle = stringResource(R.string.settings_hide_icon_desc),
-                        checked = state.hideLauncherIcon,
-                        onCheckedChange = { checked ->
-                            // Hiding removes the only obvious way back in, so it
-                            // is confirmed first; restoring needs no ceremony.
-                            if (checked) hideIconConfirm = true
-                            else viewModel.setHideLauncherIcon(false)
-                        },
-                        last = true,
-                    )
-                }
-
-                KomiSettingsSectionHead(stringResource(R.string.settings_translation))
-                KomiSettingsGroup {
-                    KomiSettingsExpandableRow(
-                        title = stringResource(R.string.settings_translation_provider),
-                        subtitle = stringResource(state.translation.provider.labelRes()),
-                        expanded = translationExpanded,
-                        onToggle = { translationExpanded = !translationExpanded },
-                    ) {
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(10.dp),
-                        ) {
-                            FlowRow(
-                                horizontalArrangement = Arrangement.spacedBy(7.dp),
-                                verticalArrangement = Arrangement.spacedBy(6.dp),
-                            ) {
-                                TranslationProvider.entries.forEach { entry ->
-                                    KomiFilterChip(
-                                        label = stringResource(entry.labelRes()),
-                                        selected = state.translation.provider == entry,
-                                        onClick = {
-                                            viewModel.updateTranslation { it.copy(provider = entry) }
-                                        },
-                                    )
-                                }
-                            }
-                            when (state.translation.provider) {
-                                TranslationProvider.GOOGLE -> KomiText(
-                                    text = stringResource(R.string.settings_translation_note),
-                                    role = KomiTextRole.Label,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    fontSize = 12.sp,
-                                )
-
-                                TranslationProvider.DEEPL -> KomiTextField(
-                                    value = state.translation.deeplKey,
-                                    onValueChange = { value ->
-                                        viewModel.updateTranslation { it.copy(deeplKey = value) }
-                                    },
-                                    label = stringResource(R.string.settings_translation_deepl_key),
-                                    singleLine = true,
-                                    modifier = Modifier.fillMaxWidth(),
-                                )
-
-                                TranslationProvider.LIBRE_TRANSLATE -> {
-                                    KomiTextField(
-                                        value = state.translation.libreUrl,
-                                        onValueChange = { value ->
-                                            viewModel.updateTranslation { it.copy(libreUrl = value) }
-                                        },
-                                        label = stringResource(R.string.settings_translation_libre_url),
-                                        singleLine = true,
-                                        modifier = Modifier.fillMaxWidth(),
-                                    )
-                                    KomiText(
-                                        text = stringResource(R.string.settings_translation_https_note),
-                                        role = KomiTextRole.Label,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        fontSize = 12.sp,
-                                    )
-                                    KomiTextField(
-                                        value = state.translation.libreKey,
-                                        onValueChange = { value ->
-                                            viewModel.updateTranslation { it.copy(libreKey = value) }
-                                        },
-                                        label = stringResource(R.string.settings_translation_libre_key),
-                                        singleLine = true,
-                                        modifier = Modifier.fillMaxWidth(),
-                                    )
-                                }
-
-                                TranslationProvider.MICROSOFT -> {
-                                    KomiTextField(
-                                        value = state.translation.microsoftKey,
-                                        onValueChange = { value ->
-                                            viewModel.updateTranslation { it.copy(microsoftKey = value) }
-                                        },
-                                        label = stringResource(R.string.settings_translation_ms_key),
-                                        singleLine = true,
-                                        modifier = Modifier.fillMaxWidth(),
-                                    )
-                                    KomiTextField(
-                                        value = state.translation.microsoftRegion,
-                                        onValueChange = { value ->
-                                            viewModel.updateTranslation { it.copy(microsoftRegion = value) }
-                                        },
-                                        label = stringResource(R.string.settings_translation_ms_region),
-                                        singleLine = true,
-                                        modifier = Modifier.fillMaxWidth(),
-                                    )
-                                }
-                            }
-                        }
-                    }
-                    // The target follows the app language, so there is no target
-                    // field; the only translation choice left is whether a module
-                    // page translates itself.
-                    KomiSettingsSwitchRow(
-                        title = stringResource(R.string.settings_translation_auto),
-                        subtitle = stringResource(R.string.settings_translation_auto_desc),
-                        checked = state.translation.autoTranslate,
-                        onCheckedChange = { checked ->
-                            viewModel.updateTranslation { it.copy(autoTranslate = checked) }
-                        },
-                        last = true,
-                    )
-                }
-
-                KomiSettingsSectionHead(stringResource(R.string.settings_downloads))
-                KomiSettingsGroup {
-                    KomiSettingsRow(
-                        title = stringResource(R.string.settings_download_location),
-                        subtitle = if (state.downloadLocation.isBlank()) {
-                            stringResource(R.string.settings_download_location_default)
-                        } else {
-                            stringResource(
-                                R.string.settings_download_location_picked,
-                                state.downloadLocationLabel ?: state.downloadLocation,
-                            )
-                        },
-                        onClick = {
-                            downloadLocationPicker.launch(
-                                state.downloadLocation
-                                    .takeIf { it.isNotBlank() }
-                                    ?.toUri(),
-                            )
-                        },
-                        trailing = if (state.downloadLocation.isNotBlank()) {
-                            {
-                                KomiButton(
-                                    onClick = viewModel::resetDownloadLocation,
-                                    label = stringResource(R.string.action_reset),
-                                    variant = KomiButtonVariant.Text,
-                                    size = KomiButtonSize.Small,
-                                )
-                            }
-                        } else {
-                            null
-                        },
-                    )
-                    KomiSettingsRow(
-                        title = stringResource(R.string.settings_max_downloads),
-                        trailing = {
-                            KomiCompactSegmented(
-                                segments = (1..DownloadSlots.MAX_LIMIT).map {
-                                    KomiSegment(it.toString())
-                                },
-                                selectedIndex = (state.maxConcurrentDownloads - 1)
-                                    .coerceIn(0, DownloadSlots.MAX_LIMIT - 1),
-                                onSelect = { viewModel.setMaxConcurrentDownloads(it + 1) },
-                            )
-                        },
-                        last = true,
-                    )
-                }
-
-                KomiSettingsSectionHead(stringResource(R.string.settings_root_section))
-                KomiSettingsGroup {
-                    KomiSettingsSwitchRow(
-                        title = stringResource(R.string.settings_root),
-                        subtitle = when (state.rootAvailable) {
-                            true -> stringResource(R.string.settings_root_detected)
-                            false -> stringResource(R.string.settings_root_unavailable)
-                            null -> stringResource(R.string.settings_root_desc)
-                        },
-                        checked = state.rootInstall,
-                        onCheckedChange = viewModel::setRootInstall,
-                        last = true,
-                    )
-                }
-
-                KomiSettingsSectionHead(stringResource(R.string.settings_updates_section))
-                KomiSettingsGroup {
-                    KomiSettingsSwitchRow(
-                        title = stringResource(R.string.settings_background_check),
-                        subtitle = stringResource(R.string.settings_background_check_desc),
-                        checked = state.backgroundCheck,
-                        onCheckedChange = { checked ->
-                            if (checked) requestNotificationPermission()
-                            viewModel.setBackgroundCheck(checked)
-                        },
-                        last = !state.backgroundCheck,
-                    )
-                    if (state.backgroundCheck) {
-                        KomiSettingsRow(
-                            title = stringResource(R.string.settings_check_interval),
-                            subtitle = state.checkIntervalHours
-                                .takeIf { it !in UpdateScheduler.INTERVAL_OPTIONS }
-                                ?.let {
-                                    stringResource(
-                                        R.string.settings_check_interval_custom_current,
-                                        it,
-                                    )
-                                }
-                                ?: stringResource(R.string.settings_check_interval_desc),
-                            trailing = {
-                                KomiCompactSegmented(
-                                    segments = UpdateScheduler.INTERVAL_OPTIONS.map {
-                                        KomiSegment(stringResource(R.string.settings_interval_days, it / 24))
-                                    },
-                                    selectedIndex = UpdateScheduler.INTERVAL_OPTIONS
-                                        .indexOf(state.checkIntervalHours),
-                                    onSelect = { index ->
-                                        UpdateScheduler.INTERVAL_OPTIONS.getOrNull(index)
-                                            ?.let(viewModel::setCheckIntervalHours)
-                                            ?: openCustomInterval()
-                                    },
-                                    onLongSelect = { index ->
-                                        // Editing an existing custom value keeps
-                                        // it; a long-press on a preset starts
-                                        // from that preset's hours.
-                                        val initial =
-                                            state.checkIntervalHours.takeIf {
-                                                it !in UpdateScheduler.INTERVAL_OPTIONS
-                                            } ?: UpdateScheduler.INTERVAL_OPTIONS[index]
-                                        openCustomInterval(initial)
-                                    },
-                                )
-                            },
-                        )
-                        KomiSettingsSwitchRow(
-                            title = stringResource(R.string.settings_wifi_only),
-                            subtitle = stringResource(R.string.settings_wifi_only_desc),
-                            checked = state.wifiOnly,
-                            onCheckedChange = viewModel::setWifiOnly,
-                        )
-                    }
-                    KomiSettingsSwitchRow(
-                        title = stringResource(R.string.settings_auto_update),
-                        subtitle = if (state.rootInstall) {
-                            stringResource(R.string.settings_auto_update_desc)
-                        } else {
-                            stringResource(R.string.settings_auto_update_needs_root)
-                        },
-                        checked = state.autoUpdateRoot,
-                        onCheckedChange = viewModel::setAutoUpdateRoot,
-                        enabled = state.rootInstall,
-                        last = true,
-                    )
-                }
-
-                KomiSettingsSectionHead(stringResource(R.string.settings_library))
-                KomiSettingsGroup {
-                    KomiSettingsRow(
-                        title = stringResource(R.string.library_favourites),
-                        onClick = onOpenFavourites,
-                    )
-                    KomiSettingsRow(
-                        title = stringResource(R.string.library_recently_viewed),
-                        onClick = onOpenRecentlyViewed,
-                    )
-                    KomiSettingsRow(
-                        title = stringResource(R.string.library_ignored_modules),
-                        onClick = onOpenIgnoredModules,
-                    )
-                    KomiSettingsRow(
-                        title = stringResource(R.string.library_skipped),
-                        onClick = onOpenSkipped,
-                        last = true,
-                    )
-                }
-
-                KomiSettingsSectionHead(stringResource(R.string.settings_storage))
-                KomiSettingsGroup {
-                    KomiSettingsRow(
-                        title = stringResource(
-                            R.string.settings_downloaded,
-                            formatByteSize(state.downloadsSize, emptyValue = "0 MB"),
-                        ),
-                        subtitle = stringResource(R.string.settings_clear_apks),
-                        trailing = {
-                            KomiButton(
-                                onClick = viewModel::clearDownloadedApks,
-                                label = stringResource(R.string.action_clear),
-                                variant = KomiButtonVariant.Text,
-                                size = KomiButtonSize.Small,
-                            )
-                        },
-                    )
-                    KomiSettingsRow(
-                        title = stringResource(R.string.diagnostics_index_cache) + ": " +
-                            formatByteSize(state.indexCacheSize, emptyValue = "0 MB"),
-                        subtitle = stringResource(R.string.settings_clear_index),
-                        trailing = {
-                            KomiButton(
-                                onClick = viewModel::clearIndexCache,
-                                label = stringResource(R.string.action_clear),
-                                variant = KomiButtonVariant.Text,
-                                size = KomiButtonSize.Small,
-                            )
-                        },
-                        last = true,
-                    )
-                }
-
-                KomiSettingsSectionHead(stringResource(R.string.settings_backup))
-                KomiSettingsGroup {
-                    KomiSettingsRow(
-                        title = stringResource(R.string.backup_export),
-                        subtitle = stringResource(R.string.backup_export_desc),
-                        onClick = { backupExport.launch(viewModel.backupFileName()) },
-                    )
-                    KomiSettingsRow(
-                        title = stringResource(R.string.backup_import),
-                        subtitle = stringResource(R.string.backup_import_desc),
-                        onClick = {
-                            backupImport.launch(
-                                arrayOf(
-                                    "application/json",
-                                    "text/plain",
-                                    "application/octet-stream",
-                                ),
-                            )
-                        },
-                        last = true,
-                    )
-                }
-
-                KomiSettingsSectionHead(stringResource(R.string.settings_advanced))
-                KomiSettingsGroup {
-                    KomiSettingsRow(
-                        title = stringResource(R.string.mirror_title),
-                        onClick = onOpenMirrors,
-                    )
-                    KomiSettingsRow(
-                        title = stringResource(R.string.settings_about),
-                        onClick = onOpenAbout,
-                        last = true,
-                    )
-                }
+                AppearanceSettingsGroup(
+                    state = state,
+                    onThemeModeChange = viewModel::setThemeMode,
+                    onAmoledChange = viewModel::setAmoled,
+                    onDynamicColorChange = viewModel::setDynamicColor,
+                    onHideIconChange = { checked ->
+                        if (checked) hideIconConfirm = true
+                        else viewModel.setHideLauncherIcon(false)
+                    },
+                )
+                TranslationSettingsGroup(
+                    settings = state.translation,
+                    expanded = translationExpanded,
+                    onToggle = { translationExpanded = !translationExpanded },
+                    onUpdate = viewModel::updateTranslation,
+                )
+                DownloadSettingsGroup(
+                    state = state,
+                    onPickLocation = {
+                        downloadLocationPicker.launch(state.downloadLocation.takeIf { it.isNotBlank() }?.toUri())
+                    },
+                    onResetLocation = viewModel::resetDownloadLocation,
+                    onMaxDownloadsChange = viewModel::setMaxConcurrentDownloads,
+                )
+                RootSettingsGroup(state, viewModel::setRootInstall)
+                UpdateSettingsGroup(
+                    state = state,
+                    onBackgroundCheckChange = { checked ->
+                        if (checked) requestNotificationPermission()
+                        viewModel.setBackgroundCheck(checked)
+                    },
+                    onIntervalChange = viewModel::setCheckIntervalHours,
+                    onCustomInterval = ::openCustomInterval,
+                    onWifiOnlyChange = viewModel::setWifiOnly,
+                    onAutoUpdateChange = viewModel::setAutoUpdateRoot,
+                )
+                LibrarySettingsGroup(onOpenFavourites, onOpenRecentlyViewed, onOpenIgnoredModules, onOpenSkipped)
+                StorageSettingsGroup(state, viewModel::clearDownloadedApks, viewModel::clearIndexCache)
+                BackupSettingsGroup(
+                    onExport = { backupExport.launch(viewModel.backupFileName()) },
+                    onImport = { backupImport.launch(arrayOf("application/json", "text/plain", "application/octet-stream")) },
+                )
+                AdvancedSettingsGroup(onOpenMirrors, onOpenAbout)
             }
         }
     }
 
     if (customIntervalOpen) {
-        KomiDialog(
-            onDismissRequest = { customIntervalOpen = false },
-            title = stringResource(R.string.settings_check_interval_custom_title),
-            confirmLabel = stringResource(R.string.action_save),
-            onConfirm = { submitCustomInterval() },
-            dismissLabel = stringResource(R.string.action_cancel),
+        CustomIntervalDialog(
+            input = customIntervalInput,
+            invalid = customIntervalInvalid,
+            onInputChange = { value ->
+                customIntervalInput = value.filter(Char::isDigit).take(3)
+                customIntervalInvalid = false
+            },
+            onConfirm = ::submitCustomInterval,
             onDismiss = { customIntervalOpen = false },
-        ) {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                KomiText(
-                    text = stringResource(R.string.settings_check_interval_custom_desc),
-                    role = KomiTextRole.Body,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = 13.sp,
-                )
-                KomiTextField(
-                    value = customIntervalInput,
-                    onValueChange = { value ->
-                        customIntervalInput = value.filter(Char::isDigit).take(3)
-                        customIntervalInvalid = false
-                    },
-                    label = stringResource(R.string.settings_check_interval_hours_label),
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Number,
-                        imeAction = ImeAction.Done,
-                    ),
-                    keyboardActions = KeyboardActions(onDone = { submitCustomInterval() }),
-                )
-                if (customIntervalInvalid) {
-                    KomiText(
-                        text = stringResource(R.string.settings_check_interval_custom_invalid),
-                        role = KomiTextRole.Body,
-                        color = MaterialTheme.colorScheme.error,
-                        fontSize = 13.sp,
-                    )
-                }
-            }
-        }
+        )
     }
 
     state.pendingImport?.let { backup ->
-        KomiDialog(
-            onDismissRequest = viewModel::dismissImport,
-            title = stringResource(R.string.backup_import_title),
-            dismissLabel = stringResource(R.string.action_cancel),
-            onDismiss = viewModel::dismissImport,
-        ) {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                KomiText(
-                    text = stringResource(
-                        R.string.backup_import_summary,
-                        pluralStringResource(R.plurals.backup_favourites_count, backup.favourites.size, backup.favourites.size),
-                        pluralStringResource(R.plurals.backup_ignored_modules_count, backup.ignoredModules.size, backup.ignoredModules.size),
-                        pluralStringResource(R.plurals.backup_skipped_versions_count, backup.skippedUpdates.size, backup.skippedUpdates.size),
-                    ),
-                    role = KomiTextRole.Body,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = 13.sp,
-                )
-                KomiText(
-                    text = stringResource(R.string.backup_import_note),
-                    role = KomiTextRole.Label,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = 12.sp,
-                )
-                KomiButton(
-                    onClick = { viewModel.applyImport(LibraryRestoreMode.MERGE) },
-                    label = stringResource(R.string.backup_import_merge),
-                    fullWidth = true,
-                )
-                KomiButton(
-                    onClick = { viewModel.applyImport(LibraryRestoreMode.REPLACE) },
-                    label = stringResource(R.string.backup_import_replace),
-                    variant = KomiButtonVariant.Destructive,
-                    fullWidth = true,
-                )
-            }
-        }
+        LibraryImportDialog(backup, viewModel::applyImport, viewModel::dismissImport)
     }
 
     if (hideIconConfirm) {
-        KomiDialog(
-            onDismissRequest = { hideIconConfirm = false },
-            title = stringResource(R.string.settings_hide_icon_confirm_title),
-            confirmLabel = stringResource(R.string.settings_hide_icon_confirm_action),
+        HideLauncherIconDialog(
             onConfirm = {
                 hideIconConfirm = false
                 viewModel.setHideLauncherIcon(true)
             },
-            dismissLabel = stringResource(R.string.action_cancel),
             onDismiss = { hideIconConfirm = false },
-        ) {
-            KomiText(
-                text = stringResource(R.string.settings_hide_icon_confirm_message),
-                role = KomiTextRole.Body,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontSize = 13.sp,
-            )
-        }
+        )
     }
 }
