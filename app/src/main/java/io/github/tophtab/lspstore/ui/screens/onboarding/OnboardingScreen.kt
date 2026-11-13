@@ -17,7 +17,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -30,7 +29,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Extension
 import androidx.compose.material.icons.outlined.Apps
 import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.outlined.Notifications
@@ -73,7 +71,6 @@ import io.github.tophtab.lspstore.ui.design.KomiFilterChip
 import io.github.tophtab.lspstore.ui.design.KomiSettingsGroup
 import io.github.tophtab.lspstore.ui.design.KomiSettingsRow
 import io.github.tophtab.lspstore.ui.design.KomiSettingsSwitchRow
-import io.github.tophtab.lspstore.ui.design.KomiSurface
 import io.github.tophtab.lspstore.ui.design.KomiText
 import io.github.tophtab.lspstore.ui.labelRes
 import io.github.tophtab.lspstore.ui.theme.KomiTextRole

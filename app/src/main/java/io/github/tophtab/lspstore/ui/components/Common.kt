@@ -1,17 +1,13 @@
-@file:OptIn(ExperimentalMaterial3Api::class)
-
 package io.github.tophtab.lspstore.ui.components
 
 import android.text.format.DateUtils
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Extension
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -20,7 +16,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -63,24 +58,6 @@ fun EmptyBox(
         actionLabel = actionLabel,
         onAction = onAction,
     )
-}
-
-@Composable
-fun VersionChip(text: String, container: Color, content: Color) {
-    Surface(
-        color = container,
-        contentColor = content,
-        shape = RoundedCornerShape(8.dp),
-    ) {
-        KomiText(
-            text = text,
-            role = KomiTextRole.Label,
-            color = content,
-            fontSize = 11.sp,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-            maxLines = 1,
-        )
-    }
 }
 
 @Composable
@@ -168,24 +145,6 @@ private fun MonogramTile(
                     maxLines = 1,
                 )
             }
-        }
-    }
-}
-
-@Composable
-fun ExtensionAvatar(size: Int = 44) {
-    Surface(
-        modifier = Modifier.size(size.dp),
-        shape = RoundedCornerShape(14.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant,
-    ) {
-        Box(contentAlignment = Alignment.Center) {
-            Icon(
-                Icons.Filled.Extension,
-                contentDescription = null,
-                modifier = Modifier.size((size * 0.46f).dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
         }
     }
 }

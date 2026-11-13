@@ -2,7 +2,6 @@
 
 package io.github.tophtab.lspstore.ui.screens.installed
 
-import android.app.Activity
 import android.text.format.Formatter
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween

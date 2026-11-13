@@ -1,13 +1,10 @@
 package io.github.tophtab.lspstore.ui.design
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -88,41 +85,4 @@ fun KomiFilterChip(
             }
         },
     )
-}
-
-@Composable
-fun KomiInputChip(
-    label: String,
-    onRemove: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    AssistChip(
-        onClick = onRemove,
-        label = {
-            KomiText(
-                text = label,
-                role = KomiTextRole.Label,
-                fontSize = 12.sp,
-                maxLines = 1,
-            )
-        },
-        modifier = modifier,
-        trailingIcon = {
-            Icon(Icons.Filled.Close, contentDescription = null, modifier = Modifier.size(16.dp))
-        },
-    )
-}
-
-@Composable
-fun KomiChipRow(
-    modifier: Modifier = Modifier,
-    content: @Composable () -> Unit,
-) {
-    Row(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(7.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        content()
-    }
 }

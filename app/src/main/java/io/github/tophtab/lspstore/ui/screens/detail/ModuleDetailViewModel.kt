@@ -30,14 +30,12 @@ import io.github.tophtab.lspstore.domain.model.ModuleDetail
 import io.github.tophtab.lspstore.domain.model.ModuleVersion
 import io.github.tophtab.lspstore.domain.model.PendingInstall
 import io.github.tophtab.lspstore.domain.model.Release
-import io.github.tophtab.lspstore.domain.model.ReleaseAsset
 import io.github.tophtab.lspstore.domain.model.ReleaseChannel
 import io.github.tophtab.lspstore.domain.model.expectedPackage
 import io.github.tophtab.lspstore.domain.model.tracksPreReleases
 import io.github.tophtab.lspstore.domain.variant.ApkMeta
 import io.github.tophtab.lspstore.domain.variant.InstalledVariantHint
 import io.github.tophtab.lspstore.domain.variant.ModuleVariantState
-import io.github.tophtab.lspstore.domain.variant.VariantSignature
 import io.github.tophtab.lspstore.data.repository.findInstalledCopy
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -467,6 +465,7 @@ class ModuleDetailViewModel(
         }
     }
 
+    /** Hands the picked asset to the app-scoped coordinator so it survives leaving this page. */
     fun installAsset(target: ResolvedInstallTarget) {
         val current = _state.value
         if (current.activeInstall != null || current.pendingInstall != null) return
@@ -690,12 +689,6 @@ class ModuleDetailViewModel(
     }
 
     /**
-     * Hands the picked asset to the app-scoped [ModuleInstallCoordinator].
-     *
-     * The chain deliberately does not run in `viewModelScope`: leaving the page
-     * must not abort an install that is already downloading (komi keeps it too).
-     */
-    /**
      * Mirrors the coordinator run into UI state. A run that disappeared while this
      * page was showing it has finished, so the installed copy is rescanned.
      */
@@ -742,19 +735,6 @@ class ModuleDetailViewModel(
             ?: pendingInstalls[target] ?: pendingInstalls[packageName]
         _state.update { it.copy(pendingInstall = pending) }
     }
-
-    /** Version of the release that [asset] belongs to, when it can be resolved. */
-    private fun versionFor(asset: ReleaseAsset): ModuleVersion? = _state.value.detail
-        ?.let { detail ->
-            detail.releases + detail.betaReleases + detail.snapshotReleases
-        }
-        ?.asSequence()
-        ?.filter { release -> release.assets.any { it == asset } }
-        ?.mapNotNull { it.version }
-        ?.firstOrNull()
-
-    private fun signatureOf(asset: ReleaseAsset): VariantSignature =
-        VariantSignature.ofAsset(asset.name)
 
     /** Variant state is keyed by repository package, with the installed package as fallback. */
     private fun stateForModule(

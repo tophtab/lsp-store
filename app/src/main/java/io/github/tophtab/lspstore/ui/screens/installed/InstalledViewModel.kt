@@ -321,10 +321,7 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
         startSingleRun(info)
     }
 
-    /**
-     * One module is just a one-target run, so the row pill, cancellation and
-     * failure handling have a single implementation.
-     */
+    /** Starts a batch for the available updates whose packages are not already busy. */
     fun updateAll() {
         // A module page install, an in-flight single update or a busy batch row
         // already owns its package; starting a second chain for it here would
