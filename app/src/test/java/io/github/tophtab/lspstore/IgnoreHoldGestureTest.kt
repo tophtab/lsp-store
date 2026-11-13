@@ -102,7 +102,7 @@ class IgnoreHoldGestureTest {
         val actions = Actions()
         actions.gesture.press(0L)
 
-        actions.release(IGNORE_HOLD_MILLIS - 1L)
+        actions.release(1_199L)
 
         assertEquals(0, actions.opened)
         assertEquals(0, actions.ignored)
@@ -110,11 +110,11 @@ class IgnoreHoldGestureTest {
     }
 
     @Test
-    fun `exactly 1700 milliseconds commits on release even before the timer runs`() {
+    fun `exactly 1200 milliseconds commits on release even before the timer runs`() {
         val actions = Actions()
         actions.gesture.press(42_000L)
 
-        actions.release(42_000L + IGNORE_HOLD_MILLIS)
+        actions.release(42_000L + 1_200L)
 
         assertEquals(1, actions.ignored)
         assertEquals(1, actions.readyFeedback)

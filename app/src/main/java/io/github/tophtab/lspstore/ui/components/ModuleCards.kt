@@ -69,7 +69,7 @@ import io.github.tophtab.lspstore.ui.design.KomiText
 import io.github.tophtab.lspstore.ui.theme.KomiTextRole
 
 /** Wall-clock hold time; independent of the system's animation duration scale. */
-internal const val IGNORE_HOLD_MILLIS = 1_700L
+internal const val IGNORE_HOLD_MILLIS = 1_200L
 private const val IGNORE_HOLD_SCALE = 1.025f
 private const val IGNORE_CANCEL_MILLIS = 150
 
@@ -262,7 +262,7 @@ private suspend fun PointerInputScope.detectIgnoreHold(
  * Full-width module card, modelled on komi's repo card: icon tile, title,
  * owner/package line, two-line summary, chips, then a divider and a stats row.
  *
- * Holding for 1.7 seconds arms [onIgnore]; releasing inside commits it. Moving
+ * Holding for 1.2 seconds arms [onIgnore]; releasing inside commits it. Moving
  * outside cancels permanently for this press. A normal short tap opens the
  * module, while an early release after long-press capture is swallowed.
  */
