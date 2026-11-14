@@ -25,7 +25,6 @@ import io.github.tophtab.lspstore.data.install.ModuleInstallCoordinator
 import io.github.tophtab.lspstore.data.install.SystemInstallSerializer
 import io.github.tophtab.lspstore.data.install.UninstallOutcome
 import io.github.tophtab.lspstore.data.probe.RangeProbe
-import io.github.tophtab.lspstore.R
 import io.github.tophtab.lspstore.data.remote.LsposedRepoApi
 import io.github.tophtab.lspstore.data.remote.MirrorState
 import io.github.tophtab.lspstore.data.remote.MirrorTester
@@ -59,7 +58,6 @@ import io.github.tophtab.lspstore.domain.model.PendingInstall
 import io.github.tophtab.lspstore.domain.variant.ApkProbe
 import io.github.tophtab.lspstore.domain.variant.DeviceProfile
 import io.github.tophtab.lspstore.domain.variant.ModuleVariantState
-import io.github.tophtab.lspstore.domain.variant.VariantSignature
 import kotlin.coroutines.cancellation.CancellationException
 
 class AppContainer(context: Context) {

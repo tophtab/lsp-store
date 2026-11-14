@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
+@file:OptIn(ExperimentalLayoutApi::class)
 
 package io.github.tophtab.lspstore.ui.components
 
@@ -15,17 +15,13 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.Schedule
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -59,7 +55,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.tophtab.lspstore.R
 import io.github.tophtab.lspstore.domain.model.Module
-import io.github.tophtab.lspstore.ui.design.KomiChipRow
 import io.github.tophtab.lspstore.ui.design.KomiDiamond
 import io.github.tophtab.lspstore.ui.design.KomiDivider
 import io.github.tophtab.lspstore.ui.design.KomiInfoChip
@@ -459,78 +454,4 @@ fun ModuleCard(
             }
         }
     }
-}
-
-/** Compact card kept for horizontal shelves. */
-@Composable
-fun ModuleCardCompact(
-    module: Module,
-    installed: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    KomiSurface(
-        modifier = modifier.width(196.dp),
-        onClick = onClick,
-        contentPadding = PaddingValues(13.dp),
-    ) {
-        Column {
-            ModuleAvatar(
-                module,
-                size = 40,
-            )
-            Spacer(Modifier.height(9.dp))
-            KomiText(
-                text = module.title,
-                role = KomiTextRole.Title,
-                fontSize = 15.sp,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            KomiText(
-                text = module.packageName,
-                role = KomiTextRole.Body,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontSize = 11.sp,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.padding(top = 2.dp),
-            )
-            FlowRow(
-                modifier = Modifier.padding(top = 9.dp),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                if (installed) {
-                    KomiInfoChip(stringResource(R.string.label_installed))
-                }
-                module.latestRelease?.let { KomiInfoChip(it.versionName) }
-            }
-            KomiDivider(
-                modifier = Modifier.padding(top = 9.dp),
-                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
-            )
-            Row(
-                modifier = Modifier.padding(top = 9.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                KomiStarValue(module.stars)
-                formatRelativeTime(module.lastPublishedAt).takeIf { it.isNotBlank() }?.let {
-                    KomiText(
-                        text = it,
-                        role = KomiTextRole.Label,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 11.sp,
-                        maxLines = 1,
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun KomiChipSpacer() {
-    Spacer(Modifier.width(6.dp))
 }

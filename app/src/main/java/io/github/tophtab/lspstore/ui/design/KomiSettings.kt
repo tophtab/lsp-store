@@ -215,18 +215,6 @@ fun KomiSettingsExpandableRow(
 }
 
 @Composable
-fun KomiSettingsValuePill(value: String) {
-    KomiText(
-        text = value,
-        role = KomiTextRole.Mono,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        fontSize = 11.sp,
-        modifier = Modifier.padding(start = 10.dp),
-        maxLines = 1,
-    )
-}
-
-@Composable
 fun KomiConstrainedContent(
     modifier: Modifier = Modifier,
     maxWidth: Dp = 640.dp,
@@ -237,18 +225,4 @@ fun KomiConstrainedContent(
             content()
         }
     }
-}
-
-@Composable
-fun KomiSettingsNote(
-    text: String,
-    modifier: Modifier = Modifier,
-) {
-    KomiText(
-        text = text,
-        role = KomiTextRole.Body,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        fontSize = 13.sp,
-        modifier = modifier.padding(horizontal = 14.dp, vertical = 12.dp),
-    )
 }

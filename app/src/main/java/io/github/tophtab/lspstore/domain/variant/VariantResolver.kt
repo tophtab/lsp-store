@@ -1,7 +1,6 @@
 package io.github.tophtab.lspstore.domain.variant
 
 import io.github.tophtab.lspstore.domain.model.Release
-import io.github.tophtab.lspstore.domain.model.ReleaseAsset
 
 /**
  * One name-layer resolver for every install path (detail page, installed page,

@@ -1,5 +1,6 @@
 package io.github.tophtab.lspstore.data.install
 
+import io.github.tophtab.lspstore.domain.model.formatByteSize
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -109,7 +110,7 @@ class DownloadService : Service() {
         val downloaded = tasks.sumOf { it.downloaded }
         val total = tasks.sumOf { it.total }
         val text = if (total > 0) {
-            getString(R.string.download_notification_text, formatSize(downloaded), formatSize(total))
+            getString(R.string.download_notification_text, formatByteSize(downloaded, emptyValue = "0 KB"), formatByteSize(total, emptyValue = "0 KB"))
         } else {
             getString(R.string.download_notification_unknown)
         }
@@ -148,16 +149,6 @@ class DownloadService : Service() {
                 setShowBadge(false)
             },
         )
-    }
-
-    private fun formatSize(bytes: Long): String {
-        if (bytes <= 0) return "0 KB"
-        val mb = bytes / (1024.0 * 1024.0)
-        return if (mb >= 1) {
-            String.format(java.util.Locale.getDefault(), "%.1f MB", mb)
-        } else {
-            String.format(java.util.Locale.getDefault(), "%.0f KB", bytes / 1024.0)
-        }
     }
 
     companion object {
