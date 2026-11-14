@@ -5,7 +5,6 @@ package io.github.tophtab.lspstore.ui.screens.detail
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -34,11 +33,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.UriHandler
@@ -47,7 +46,6 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -63,7 +61,7 @@ import io.github.tophtab.lspstore.ui.theme.KomiTextRole
  */
 @Composable
 internal fun rememberReadmeBlocks(html: String?, baseUrl: String?, document: ReadmeDocument): List<ReadmeBlock>? {
-    val dark = isSystemInDarkTheme()
+    val dark = MaterialTheme.colorScheme.background.luminance() < 0.5f
     val accent = MaterialTheme.colorScheme.onPrimaryContainer
     val inlineCode = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
     val key = remember(html, baseUrl, dark, accent, inlineCode) {
@@ -80,16 +78,23 @@ internal fun rememberReadmeBlocks(html: String?, baseUrl: String?, document: Rea
     return parsed.value
 }
 
-/** Renders a block list; nested lists (details) reuse it with a tighter rhythm. */
+internal val ReadmeExpandedPathsSaver = listSaver<Set<String>, String>(
+    save = { it.toList() }, restore = { it.toSet() },
+)
+
 @Composable
-internal fun ReadmeBlocks(
-    blocks: List<ReadmeBlock>,
-    bodyStyle: TextStyle,
-    modifier: Modifier = Modifier,
-    spacing: Dp = 12.dp,
-) {
-    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(spacing)) {
-        blocks.forEach { block -> ReadmeBlockView(block, bodyStyle) }
+internal fun ReadmeLazyItemView(item: ReadmeLazyItem, bodyStyle: TextStyle, onToggle: (String) -> Unit, modifier: Modifier = Modifier) {
+    val bottom = when (item) {
+        is ReadmeLazyItem.TableRow -> if (item.last) 12.dp else 0.dp
+        is ReadmeLazyItem.Details -> if (item.expanded) 8.dp else 12.dp
+        else -> 12.dp
+    }
+    Box(modifier.padding(start = (item.depth.coerceAtMost(6) * 12).dp, bottom = bottom)) {
+        when (item) {
+            is ReadmeLazyItem.Block -> ReadmeBlockView(item.block, bodyStyle)
+            is ReadmeLazyItem.Details -> ReadmeDetailsHeader(item.block, item.expanded) { onToggle(item.path) }
+            is ReadmeLazyItem.TableRow -> ReadmeTableRowPanel(item)
+        }
     }
 }
 
@@ -152,12 +157,14 @@ private fun ReadmeBlockBody(block: ReadmeBlock, bodyStyle: TextStyle) {
             marker = "\u2022",
             annotated = block.annotated,
             bodyStyle = bodyStyle,
+            depth = block.depth,
         )
 
         is ReadmeBlock.Ordered -> ReadmeListItem(
             marker = "${block.number}.",
             annotated = block.annotated,
             bodyStyle = bodyStyle,
+            depth = block.depth,
         )
 
         is ReadmeBlock.Quote -> Row(
@@ -203,11 +210,10 @@ private fun ReadmeBlockBody(block: ReadmeBlock, bodyStyle: TextStyle) {
             }
         }
 
-        is ReadmeBlock.Table -> ReadmeTableView(block)
+        // Container blocks become headers and rows in the page's lazy list.
+        is ReadmeBlock.Table, is ReadmeBlock.Details -> Unit
 
-        is ReadmeBlock.Details -> ReadmeDetailsView(block, bodyStyle)
-
-        ReadmeBlock.Divider -> KomiDivider(
+        is ReadmeBlock.Divider -> KomiDivider(
             color = MaterialTheme.colorScheme.outlineVariant,
             thickness = 1.dp,
         )
@@ -215,9 +221,9 @@ private fun ReadmeBlockBody(block: ReadmeBlock, bodyStyle: TextStyle) {
 }
 
 @Composable
-internal fun ReadmeListItem(marker: String, annotated: AnnotatedString, bodyStyle: TextStyle) {
+internal fun ReadmeListItem(marker: String, annotated: AnnotatedString, bodyStyle: TextStyle, depth: Int = 0) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().padding(start = (depth.coerceAtMost(6) * 12).dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Text(
@@ -235,28 +241,21 @@ internal fun ReadmeListItem(marker: String, annotated: AnnotatedString, bodyStyl
     }
 }
 
-/** Table block: bordered panel, a tinted header row and hairline row rules. */
+/** Adjacent lazy rows retain a single table panel's rounded ends. */
 @Composable
-internal fun ReadmeTableView(table: ReadmeBlock.Table) {
-    val shape = MaterialTheme.shapes.small
-    val outline = MaterialTheme.colorScheme.outline
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(shape)
-            .border(1.dp, outline, shape)
-            .background(MaterialTheme.colorScheme.surface),
-    ) {
-        table.header?.let { row ->
-            ReadmeTableRowView(row)
-            KomiDivider(color = outline, thickness = 1.dp)
-        }
-        table.rows.forEachIndexed { index, row ->
-            ReadmeTableRowView(row)
-            if (index != table.rows.lastIndex) {
-                KomiDivider(color = outline.copy(alpha = 0.35f), thickness = 0.5.dp)
-            }
-        }
+private fun ReadmeTableRowPanel(item: ReadmeLazyItem.TableRow) {
+    val corner = androidx.compose.foundation.shape.CornerSize(0.dp)
+    val shape = MaterialTheme.shapes.small.let {
+        it.copy(
+            topStart = if (item.first) it.topStart else corner,
+            topEnd = if (item.first) it.topEnd else corner,
+            bottomStart = if (item.last) it.bottomStart else corner,
+            bottomEnd = if (item.last) it.bottomEnd else corner,
+        )
+    }
+    Box(Modifier.fillMaxWidth().clip(shape).border(1.dp, MaterialTheme.colorScheme.outline, shape)
+        .background(if (item.row.isHeader) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface)) {
+        ReadmeTableRowView(item.row)
     }
 }
 
@@ -313,8 +312,7 @@ internal fun ReadmeTableRowView(row: ReadmeTableRow) {
 
 /** GitHub `<details>` block: collapsed by default, like komi's expandable fence. */
 @Composable
-internal fun ReadmeDetailsView(block: ReadmeBlock.Details, bodyStyle: TextStyle) {
-    var expanded by rememberSaveable(block.title) { mutableStateOf(false) }
+internal fun ReadmeDetailsHeader(block: ReadmeBlock.Details, expanded: Boolean, onToggle: () -> Unit) {
     val shape = MaterialTheme.shapes.small
     val outline = MaterialTheme.colorScheme.outlineVariant
     Column(
@@ -326,7 +324,7 @@ internal fun ReadmeDetailsView(block: ReadmeBlock.Details, bodyStyle: TextStyle)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { expanded = !expanded }
+                .clickable(onClick = onToggle)
                 .padding(horizontal = 12.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -346,14 +344,6 @@ internal fun ReadmeDetailsView(block: ReadmeBlock.Details, bodyStyle: TextStyle)
                 uppercase = false,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-            )
-        }
-        if (expanded && block.blocks.isNotEmpty()) {
-            ReadmeBlocks(
-                blocks = block.blocks,
-                bodyStyle = bodyStyle,
-                spacing = 8.dp,
-                modifier = Modifier.padding(start = 12.dp, end = 12.dp, bottom = 12.dp),
             )
         }
     }

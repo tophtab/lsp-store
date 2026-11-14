@@ -56,8 +56,8 @@ import io.github.tophtab.lspstore.ui.theme.KomiTextRole
 import io.github.tophtab.lspstore.ui.theme.LocalKomiType
 import io.github.tophtab.lspstore.ui.variant.variantReasonText
 
-/** Regular sections keep a 24 dp gap; README blocks use the list's 12 dp gap. */
-private fun LazyListScope.detailItem(key: String, bottomSpace: Dp = 12.dp, content: @Composable () -> Unit) {
+/** Regular sections keep a 24 dp gap; README items supply their own spacing. */
+private fun LazyListScope.detailItem(key: String, bottomSpace: Dp = 24.dp, content: @Composable () -> Unit) {
     item(key = key) { Box(Modifier.padding(bottom = bottomSpace)) { content() } }
 }
 
@@ -151,6 +151,11 @@ internal fun DetailContent(
     }
     val readme = if (state.showTranslation) state.translatedReadmeHtml ?: detail.readmeHtml else detail.readmeHtml
     val readmeBlocks = rememberReadmeBlocks(readme, detail.module.url, readmeDocument)
+    val documentId = remember(readme, detail.module.url) { readmeDocumentId(readme, detail.module.url) }
+    var expandedPaths by rememberSaveable(documentId, stateSaver = ReadmeExpandedPathsSaver) { mutableStateOf(emptySet<String>()) }
+    val readmeItems = remember(readmeBlocks, documentId, expandedPaths) {
+        readmeLazyItems(readmeBlocks.orEmpty(), documentId, expandedPaths)
+    }
     val readmeStyle = LocalKomiType.current.styleFor(KomiTextRole.Body).copy(fontSize = 14.sp)
     val afterReadme = if (state.installLogs.isEmpty()) 0.dp else 12.dp
     // The page knows which release is selected, so it asks for that release's
@@ -180,7 +185,7 @@ internal fun DetailContent(
         state = listState,
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(0.dp),
     ) {
         detailItem(key = "hero") {
             DetailHero(
@@ -269,12 +274,12 @@ internal fun DetailContent(
             SectionHeading(stringResource(R.string.detail_about))
         }
         when {
-            readmeBlocks == null -> detailItem(key = "about_loading", bottomSpace = afterReadme) {
+            readmeBlocks == null -> detailItem(key = "about_loading", bottomSpace = afterReadme + 12.dp) {
                 Box(Modifier.fillMaxWidth().height(30.dp), contentAlignment = Alignment.CenterStart) {
                     CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.dp)
                 }
             }
-            readmeBlocks.isEmpty() -> detailItem(key = "about", bottomSpace = afterReadme) {
+            readmeBlocks.isEmpty() -> detailItem(key = "about", bottomSpace = afterReadme + 12.dp) {
                 KomiText(
                     stringResource(R.string.detail_no_readme),
                     role = KomiTextRole.Body,
@@ -282,13 +287,19 @@ internal fun DetailContent(
                 )
             }
             else -> items(
-                count = readmeBlocks.size,
-                key = { "readme:$it" },
-                contentType = { readmeBlocks[it]::class },
-            ) { index ->
-                Box(Modifier.padding(bottom = if (index == readmeBlocks.lastIndex) afterReadme else 0.dp)) {
-                    ReadmeBlockView(readmeBlocks[index], readmeStyle)
-                }
+                items = readmeItems,
+                key = { it.key },
+                contentType = { when (it) {
+                    is ReadmeLazyItem.Block -> it.block::class
+                    is ReadmeLazyItem.Details -> ReadmeLazyItem.Details::class
+                    is ReadmeLazyItem.TableRow -> ReadmeLazyItem.TableRow::class
+                } },
+            ) { item ->
+                ReadmeLazyItemView(
+                    item, readmeStyle,
+                    onToggle = { path -> expandedPaths = if (path in expandedPaths) expandedPaths - path else expandedPaths + path },
+                    modifier = Modifier.padding(bottom = if (item.key == readmeItems.lastOrNull()?.key) afterReadme else 0.dp),
+                )
             }
         }
 
