@@ -38,6 +38,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.tophtab.lspstore.R
+import io.github.tophtab.lspstore.data.install.ModuleInstallRun
+import kotlinx.coroutines.flow.Flow
 import io.github.tophtab.lspstore.domain.model.ModuleDetail
 import io.github.tophtab.lspstore.domain.model.Release
 import io.github.tophtab.lspstore.domain.model.ReleaseChannel
@@ -47,7 +49,6 @@ import io.github.tophtab.lspstore.domain.model.selectedRelease
 import io.github.tophtab.lspstore.domain.variant.InstalledVariantHint
 import io.github.tophtab.lspstore.domain.variant.ModuleVariantState
 import io.github.tophtab.lspstore.domain.variant.VariantDecision
-import io.github.tophtab.lspstore.domain.variant.VariantResolver
 import io.github.tophtab.lspstore.domain.variant.selectInstallAsset
 import io.github.tophtab.lspstore.ui.LocalAppContainer
 import io.github.tophtab.lspstore.ui.design.KomiText
@@ -71,6 +72,7 @@ private fun LazyListScope.detailItem(key: String, bottomSpace: Dp = 12.dp, conte
 internal fun DetailContent(
     readmeDocument: ReadmeDocument,
     state: ModuleDetailUiState,
+    installProgress: Flow<ModuleInstallRun?>,
     detail: ModuleDetail,
     listState: LazyListState,
     onInstallAsset: (ResolvedInstallTarget) -> Unit,
@@ -93,7 +95,6 @@ internal fun DetailContent(
     val context = LocalContext.current
     val container = LocalAppContainer.current
     val device by container.deviceProfileFlow.collectAsStateWithLifecycle()
-    val resolver = remember(device) { VariantResolver(device) }
     val emptyVariantState = remember { ModuleVariantState() }
     val variantState = state.variantState ?: emptyVariantState
     val probes = remember(state.probedTag, state.probes, selectedRelease) {
@@ -106,42 +107,17 @@ internal fun DetailContent(
         installedPackage = state.installed?.packageName,
         repoPackage = detail.module.packageName,
     )
-    val fallbackDecision = remember(device, selectedRelease, variantState, probes, installedHint, expectedPackageName) {
+    val initialResolution = remember(device, selectedRelease, variantState, probes, installedHint, expectedPackageName) {
         selectedRelease?.let {
-            resolver.resolveForUpdate(
-                variantState,
-                it,
-                probes,
-                expectedPackage = expectedPackageName,
-                installed = installedHint,
-            )
+            container.resolveVariantUseCase.initial(it, variantState, device, expectedPackageName, installedHint, probes)
         }
     }
     val recommendationReady = state.probedRelease == selectedRelease && state.variantResolution != null && !state.isProbing
-    val decision = if (recommendationReady) state.variantResolution.decision else fallbackDecision
-    // Multi-APK recommendations can use background metadata. A single APK
-    // returns immediately; changing releases also cancels an obsolete request.
+    val resolution = if (recommendationReady) state.variantResolution else initialResolution
+    val decision = resolution?.decision
+    val candidates = resolution?.candidates.orEmpty()
     LaunchedEffect(selectedRelease, device, variantState, installedHint, state.probeGeneration) {
         selectedRelease?.let { onProbeAssets(it, false) }
-    }
-    val candidates = remember(device, selectedRelease, variantState, decision, probes, installedHint, expectedPackageName) {
-        val base = selectedRelease?.let {
-            // Same expected package, installed hint and probe policy as the
-            // decision above, so a row and the install button never disagree.
-            resolver.candidates(
-                it,
-                probes = probes,
-                allowProbes = true,
-                expectedPackage = expectedPackageName,
-                installed = installedHint,
-            )
-        } ?: emptyList()
-        val recommendedName = (decision as? VariantDecision.Pick)?.asset?.name
-        // Best fit first, so the default the install button uses is the first row
-        // of the resource sheet too.
-        resolver.ranked(base).map {
-            it.copy(recommended = base.size > 1 && it.asset.name == recommendedName)
-        }.sortedByDescending { it.recommended }
     }
     var userPickedAssetName by rememberSaveable(selectedRelease?.tagName) {
         mutableStateOf("")
@@ -208,8 +184,13 @@ internal fun DetailContent(
     ) {
         detailItem(key = "hero") {
             DetailHero(
-                state = state,
-                detail = detail,
+                module = detail.module,
+                summary = if (state.showTranslation) state.translatedSummary ?: detail.module.summary.orEmpty() else detail.module.summary.orEmpty(),
+                scope = detail.scope,
+                collaborators = detail.collaborators,
+                pending = state.pendingInstall != null,
+                updateAvailable = state.updateAvailable,
+                latestVersion = state.latestVersion,
                 onOpenAuthor = onOpenAuthor,
             )
         }
@@ -238,7 +219,9 @@ internal fun DetailContent(
         }
 
         detailItem(key = "install") {
+            val run by installProgress.collectAsStateWithLifecycle(initialValue = state.activeInstall)
             InstallControls(
+                run = run,
                 state = state,
                 targetVersion = selectedRelease?.version,
                 target = selectedTarget,

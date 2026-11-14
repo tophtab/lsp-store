@@ -5,6 +5,7 @@ import io.github.tophtab.lspstore.domain.model.PendingInstall
 import io.github.tophtab.lspstore.domain.model.Release
 import io.github.tophtab.lspstore.domain.model.UpdateInfo
 import io.github.tophtab.lspstore.domain.usecase.BatchInstallState
+import io.github.tophtab.lspstore.domain.usecase.InstalledListSnapshot
 import io.github.tophtab.lspstore.domain.variant.ModuleVariantState
 import io.github.tophtab.lspstore.domain.variant.ScoredAsset
 
@@ -52,4 +53,24 @@ data class InstalledUiState(
      * item instead of keeping an offset that belonged to the previous data.
      */
     val refreshTick: Int = 0,
+)
+
+/** Controllers retain byte counters; the page only observes structural changes. */
+internal fun InstalledUiState.withoutProgress(): InstalledUiState = copy(
+    rowStates = rowStates.mapValues { (_, state) -> state.copy(downloaded = 0, total = 0) },
+    detailRuns = detailRuns.mapValues { (_, state) -> state.copy(downloaded = 0, total = 0) },
+)
+
+internal fun InstalledUiState.withSnapshot(snapshot: InstalledListSnapshot): InstalledUiState = copy(
+    updates = snapshot.updates,
+    pendingInstalls = snapshot.pendingInstalls,
+    upToDate = snapshot.upToDate,
+    unknown = snapshot.unknown,
+    repoPackageByInstalled = snapshot.repoPackageByInstalled,
+    installedCount = snapshot.installedCount,
+    preReleases = snapshot.preReleases,
+    preReleaseCapable = snapshot.preReleaseCapable,
+    ignoredUpdates = snapshot.ignoredUpdates,
+    variantStates = snapshot.variantStates,
+    refreshTick = snapshot.refreshTick,
 )

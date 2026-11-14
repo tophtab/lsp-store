@@ -91,11 +91,15 @@ class VariantResolver(private val device: DeviceProfile) {
         allowProbes: Boolean = signature == null,
         expectedPackage: String? = null,
         installed: InstalledVariantHint? = null,
-    ): VariantDecision {
-        if (release.apkAssets.isEmpty()) {
+    ): VariantDecision = resolveCandidates(
+        candidates(release, probes, allowProbes, expectedPackage, installed), signature,
+    )
+
+    /** A resolution and its picker rows share the same scored evidence. */
+    internal fun resolveCandidates(scored: List<ScoredAsset>, signature: VariantSignature? = null): VariantDecision {
+        if (scored.isEmpty()) {
             return VariantDecision.NotApplicable(Reason(Reason.Kind.NO_APK))
         }
-        val scored = candidates(release, probes, allowProbes, expectedPackage, installed)
         val eligible = scored
 
         if (signature != null) {

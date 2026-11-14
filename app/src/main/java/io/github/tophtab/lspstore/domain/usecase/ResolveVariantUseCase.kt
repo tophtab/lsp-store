@@ -11,12 +11,14 @@ import io.github.tophtab.lspstore.domain.variant.DeviceProfile
 import io.github.tophtab.lspstore.domain.variant.InstalledVariantHint
 import io.github.tophtab.lspstore.domain.variant.ModuleVariantState
 import io.github.tophtab.lspstore.domain.variant.Reason
+import io.github.tophtab.lspstore.domain.variant.ScoredAsset
 import io.github.tophtab.lspstore.domain.variant.VariantDecision
 import io.github.tophtab.lspstore.domain.variant.VariantResolver
 
 data class VariantResolution(
     val decision: VariantDecision,
     val probes: Map<String, ApkMeta> = emptyMap(),
+    val candidates: List<ScoredAsset> = emptyList(),
 )
 
 /**
@@ -34,6 +36,36 @@ class ResolveVariantUseCase(
     private val probe: ApkProbe,
     private val maxProbes: Int = 5,
 ) {
+    /** Immediate name-layer result for a page or picker, without probe-cache I/O. */
+    fun initial(
+        release: Release,
+        state: ModuleVariantState,
+        device: DeviceProfile,
+        expectedPackage: String? = null,
+        installed: InstalledVariantHint? = null,
+        probes: Map<String, ApkMeta> = emptyMap(),
+    ): VariantResolution = resolution(VariantResolver(device), release, state, expectedPackage, installed, probes)
+
+    private fun resolution(
+        resolver: VariantResolver,
+        release: Release,
+        state: ModuleVariantState,
+        expectedPackage: String?,
+        installed: InstalledVariantHint?,
+        probes: Map<String, ApkMeta> = emptyMap(),
+    ): VariantResolution {
+        val candidates = resolver.candidates(release, probes, expectedPackage = expectedPackage, installed = installed)
+        val decision = resolver.resolveCandidates(candidates, state.recommendationSignature)
+        val recommended = (decision as? VariantDecision.Pick)?.asset?.name
+        return VariantResolution(
+            decision = decision,
+            probes = probes,
+            candidates = resolver.ranked(candidates).map {
+                it.copy(recommended = candidates.size > 1 && it.asset.name == recommended)
+            }.sortedByDescending { it.recommended },
+        )
+    }
+
     /**
      * @param installed the copy on the device, when there is one. Updates prefer
      *   the asset that matches it; a first install passes null and follows the
@@ -48,32 +80,24 @@ class ResolveVariantUseCase(
         installed: InstalledVariantHint? = null,
     ): VariantResolution {
         val resolver = VariantResolver(device)
-        val initialDecision = resolver.resolveForUpdate(
-            state, release, expectedPackage = expectedPackage, installed = installed,
-        )
+        val initial = resolution(resolver, release, state, expectedPackage, installed)
         // There is no choice to refine. This also applies to an explicit picker
         // request and avoids any probe-cache I/O on the single-APK path.
-        if (release.apkAssets.size <= 1) return VariantResolution(initialDecision)
+        if (initial.candidates.size <= 1) return initial
 
         // A recorded asset family identifies the user's choice or a confirmed
         // installation across release versions, even after a failed attempt.
         if (!forceProbe && state.recommendationSignature?.assetFamily != null &&
-            initialDecision.isRememberedChoice()
+            initial.decision.isRememberedChoice()
         ) {
-            return VariantResolution(initialDecision)
+            return initial
         }
 
         val cached = release.apkAssets.mapNotNull { asset -> probe.cached(asset)?.let { asset.name to it } }.toMap()
-        val nameDecision = resolver.resolve(
-            release,
-            signature = state.recommendationSignature,
-            probes = cached,
-            allowProbes = true,
-            expectedPackage = expectedPackage,
-            installed = installed,
-        )
+        val named = if (cached.isEmpty()) initial else resolution(resolver, release, state, expectedPackage, installed, cached)
+        val nameDecision = named.decision
         if (nameDecision is VariantDecision.NotApplicable) {
-            return VariantResolution(nameDecision, cached)
+            return named
         }
 
         val ambiguous = nameDecision is VariantDecision.Pick &&
@@ -87,36 +111,18 @@ class ResolveVariantUseCase(
                 cached[it.name]?.packageName != installed.packageName
             } == true
         val shouldProbe = forceProbe || ambiguous || needsInstalledIdentity
-        if (!shouldProbe) return VariantResolution(nameDecision, cached)
+        if (!shouldProbe) return named
 
-        val targets: List<ReleaseAsset> = resolver.ranked(
-            resolver.candidates(
-                release,
-                probes = cached,
-                expectedPackage = expectedPackage,
-                installed = installed,
-            ),
-        ).take(maxProbes).map { it.asset }
-        if (targets.isEmpty()) return VariantResolution(nameDecision, cached)
+        val targets: List<ReleaseAsset> = resolver.ranked(named.candidates).take(maxProbes).map { it.asset }
+        if (targets.isEmpty()) return named
 
         val probes = cached + coroutineScope {
             targets.filterNot { it.name in cached }.map { asset ->
                 async { probe.fetch(asset)?.let { asset.name to it } }
             }.awaitAll().filterNotNull().toMap()
         }
-        if (probes.isEmpty()) return VariantResolution(nameDecision, cached)
-
-        return VariantResolution(
-            decision = resolver.resolve(
-                release = release,
-                signature = state.recommendationSignature,
-                probes = probes,
-                allowProbes = true,
-                expectedPackage = expectedPackage,
-                installed = installed,
-            ),
-            probes = probes,
-        )
+        if (probes == cached) return named
+        return resolution(resolver, release, state, expectedPackage, installed, probes)
     }
 }
 

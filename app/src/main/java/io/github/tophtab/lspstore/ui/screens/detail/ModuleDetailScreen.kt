@@ -51,7 +51,7 @@ fun ModuleDetailScreen(packageName: String, onBack: () -> Unit, onOpenAuthor: (S
     val viewModel: ModuleDetailViewModel = viewModel(
         factory = ModuleDetailViewModel.factory(container, packageName),
     )
-    val state by viewModel.state.collectAsStateWithLifecycle()
+    val state by viewModel.pageState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val uriHandler = LocalUriHandler.current
     var menuOpen by remember { mutableStateOf(false) }
@@ -180,6 +180,7 @@ fun ModuleDetailScreen(packageName: String, onBack: () -> Unit, onOpenAuthor: (S
                 DetailContent(
                     readmeDocument = viewModel.readmeDocument,
                     state = state,
+                    installProgress = viewModel.installProgress,
                     detail = detail,
                     listState = listState,
                     onInstallAsset = viewModel::installAsset,

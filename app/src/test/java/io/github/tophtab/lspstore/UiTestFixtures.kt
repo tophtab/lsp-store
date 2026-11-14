@@ -25,13 +25,21 @@ internal fun uiModule(packageName: String = "module", summary: String? = null): 
     latestReleaseTime = null,
 )
 
-internal fun uiInstalled(packageName: String = "module"): InstalledModule = InstalledModule(
+internal fun uiInstalled(
+    packageName: String = "module",
+    label: String = packageName,
+    code: Long = 1,
+    name: String = "old",
+    xposed: Boolean = true,
+    updatedAt: Long = 0,
+): InstalledModule = InstalledModule(
     packageName = packageName,
-    versionCode = 1,
-    versionName = "old",
-    label = packageName,
-    isXposedModule = true,
+    versionCode = code,
+    versionName = name,
+    label = label,
+    isXposedModule = xposed,
     description = null,
+    lastUpdateTime = updatedAt,
 )
 
 internal fun uiRelease(tag: String = "2-new", names: List<String> = listOf("module.apk")): Release = Release(

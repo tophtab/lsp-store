@@ -83,3 +83,7 @@ data class ModuleDetailUiState(
             )
         }
 }
+
+internal fun ModuleDetailUiState.withoutProgress(): ModuleDetailUiState = copy(
+    activeInstall = activeInstall?.copy(downloaded = 0, total = 0),
+)

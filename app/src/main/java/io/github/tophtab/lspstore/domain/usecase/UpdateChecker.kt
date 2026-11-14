@@ -1,14 +1,16 @@
 package io.github.tophtab.lspstore.domain.usecase
 
 import io.github.tophtab.lspstore.domain.model.ConfirmedInstallRecord
+import io.github.tophtab.lspstore.domain.model.InstalledCatalog
+import io.github.tophtab.lspstore.domain.model.InstalledCopies
 import java.time.Instant
 import io.github.tophtab.lspstore.domain.model.InstalledModule
 import io.github.tophtab.lspstore.domain.model.Module
 import io.github.tophtab.lspstore.domain.model.ModuleVersion
+import io.github.tophtab.lspstore.domain.model.RepositoryIndex
 import io.github.tophtab.lspstore.domain.model.SkippedVersion
 import io.github.tophtab.lspstore.domain.model.UpdateInfo
 import io.github.tophtab.lspstore.domain.model.tracksPreReleases
-import io.github.tophtab.lspstore.domain.model.installedCopyForRepo
 import io.github.tophtab.lspstore.domain.variant.ModuleVariantState
 
 object UpdateChecker {
@@ -23,21 +25,21 @@ object UpdateChecker {
         ignored: Set<String> = emptySet(),
         variantStates: Map<String, ModuleVariantState> = emptyMap(),
     ): List<UpdateInfo> {
-        val byPackage = index.associateBy { it.packageName }
-        val chosenPackages = variantStates.values.mapNotNull { it.activePackage }.toSet()
-        return installed.asSequence()
-            .filter { it.isXposedModule || it.packageName in links || it.packageName in chosenPackages }
+        return findUpdates(
+            InstalledCatalog.build(RepositoryIndex.build(index), InstalledCopies.build(installed, links), variantStates),
+            preReleases, skipped, ignored,
+        )
+    }
+
+    /** Reuses the page's catalog and installed-copy grouping. */
+    fun findUpdates(
+        catalog: InstalledCatalog,
+        preReleases: Set<String> = emptySet(),
+        skipped: Map<String, SkippedVersion> = emptyMap(),
+        ignored: Set<String> = emptySet(),
+    ): List<UpdateInfo> = catalog.modules.asSequence()
             .mapNotNull { installedModule ->
-                val module = byPackage[installedModule.packageName]
-                    ?: links[installedModule.packageName]?.let { byPackage[it] }
-                    ?: return@mapNotNull null
-                // A confirmed replacement becomes the copy we follow. If it was
-                // uninstalled, the remaining old package can receive updates again.
-                val activePackage = (variantStates[module.packageName]
-                    ?: variantStates[installedModule.packageName])?.activePackage
-                if (installedCopyForRepo(module.packageName, installed, links, activePackage)
-                        ?.packageName != installedModule.packageName
-                ) return@mapNotNull null
+                val module = catalog.repoByInstalled[installedModule.packageName] ?: return@mapNotNull null
                 // Skipped/ignored lists may be keyed by either the installed package
                 // or the linked repository package. Honour both.
                 if (installedModule.packageName in ignored || module.packageName in ignored) {
@@ -52,7 +54,7 @@ object UpdateChecker {
                 val latest = module.latestFor(includePreReleases) ?: return@mapNotNull null
                 val skippedVersion = skipped[installedModule.packageName] ?: skipped[module.packageName]
                 if (skippedVersion?.matches(latest) == true) return@mapNotNull null
-                if (isUpdateAvailable(latest, installedModule, module.latestTimeFor(includePreReleases), (variantStates[module.packageName] ?: variantStates[installedModule.packageName])?.confirmedInstall)) {
+                if (isUpdateAvailable(latest, installedModule, module.latestTimeFor(includePreReleases), catalog.variantState(module)?.confirmedInstall)) {
                     UpdateInfo(module = module, installed = installedModule, latest = latest)
                 } else {
                     null
@@ -60,7 +62,6 @@ object UpdateChecker {
             }
             .sortedByDescending { it.latest.versionCode }
             .toList()
-    }
 
     /**
      * Whether [latest] is an update over the installed copy.
