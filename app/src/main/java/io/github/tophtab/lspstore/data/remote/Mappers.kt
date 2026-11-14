@@ -20,28 +20,34 @@ private fun parseInstant(raw: String?): Instant? =
  * Converts the single-file `/modules.json` payload into the same list DTO used by
  * the paginated index, so the cache format stays unchanged.
  */
-fun FullModuleIndexDto.toModuleListItem(): ModuleListItemDto {
-    val login = collaborators.firstOrNull()?.login?.takeIf { it.isNotBlank() }
-    val contributorName = collaborators.firstOrNull()?.name?.takeIf { it.isNotBlank() }
-    return ModuleListItemDto(
-        name = this.name,
-        description = this.description,
-        summary = summary,
-        url = url,
-        homepageUrl = homepageUrl,
-        sourceUrl = sourceUrl,
-        updatedAt = updatedAt,
-        stargazerCount = stargazerCount,
-        firstContributor = login ?: contributorName,
-        firstContributorAvatarUrl = login?.let { "https://github.com/$it.png?size=200" },
-        latestRelease = latestRelease,
-        latestBetaRelease = latestBetaRelease,
-        latestSnapshotRelease = latestSnapshotRelease,
-        latestReleaseTime = latestReleaseTime,
-        latestBetaReleaseTime = latestBetaReleaseTime,
-        latestSnapshotReleaseTime = latestSnapshotReleaseTime,
-    )
-}
+fun FullModuleIndexDto.toModuleListItem(): ModuleListItemDto = ModuleListItemDto(
+    name = this.name,
+    description = this.description,
+    summary = summary,
+    url = url,
+    homepageUrl = homepageUrl,
+    sourceUrl = sourceUrl,
+    updatedAt = updatedAt,
+    stargazerCount = stargazerCount,
+    firstContributor = collaborators.firstContributor(),
+    firstContributorAvatarUrl = collaborators.firstContributorAvatarUrl(),
+    latestRelease = latestRelease,
+    latestBetaRelease = latestBetaRelease,
+    latestSnapshotRelease = latestSnapshotRelease,
+    latestReleaseTime = latestReleaseTime,
+    latestBetaReleaseTime = latestBetaReleaseTime,
+    latestSnapshotReleaseTime = latestSnapshotReleaseTime,
+)
+
+/** The first collaborator's GitHub login, which is also what the avatar URL is built from. */
+private fun List<CollaboratorDto>.firstLogin(): String? =
+    firstOrNull()?.login?.takeIf { it.isNotBlank() }
+
+private fun List<CollaboratorDto>.firstContributor(): String? =
+    firstLogin() ?: firstOrNull()?.name?.takeIf { it.isNotBlank() }
+
+private fun List<CollaboratorDto>.firstContributorAvatarUrl(): String? =
+    firstLogin()?.let { "https://github.com/$it.png?size=200" }
 
 fun ModuleListItemDto.toModule(): Module = Module(
     packageName = name,
@@ -71,12 +77,8 @@ fun OnlineModuleDto.toModule(): Module = Module(
     sourceUrl = sourceUrl?.takeIf { it.isNotBlank() },
     updatedAt = parseInstant(updatedAt),
     stars = stargazerCount,
-    contributor = collaborators.firstOrNull()?.login?.takeIf { it.isNotBlank() }
-        ?: collaborators.firstOrNull()?.name?.takeIf { it.isNotBlank() },
-    contributorAvatarUrl = collaborators.firstOrNull()
-        ?.login
-        ?.takeIf { it.isNotBlank() }
-        ?.let { "https://github.com/$it.png?size=200" },
+    contributor = collaborators.firstContributor(),
+    contributorAvatarUrl = collaborators.firstContributorAvatarUrl(),
     latestRelease = ModuleVersion.parse(latestRelease),
     latestBetaRelease = ModuleVersion.parse(latestBetaRelease),
     latestSnapshotRelease = ModuleVersion.parse(latestSnapshotRelease),

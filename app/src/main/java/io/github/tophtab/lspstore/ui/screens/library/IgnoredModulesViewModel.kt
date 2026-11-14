@@ -90,7 +90,7 @@ class IgnoredModulesViewModel(private val container: AppContainer) : ViewModel()
             it.copy(
                 keywordDraft = draft,
                 keywordError = null,
-                keywordMatchCount = draft.trim().takeIf(String::isNotEmpty)?.let(::matchCount),
+                keywordMatchCount = draftMatchCount(draft),
             )
         }
     }
@@ -153,6 +153,10 @@ class IgnoredModulesViewModel(private val container: AppContainer) : ViewModel()
         return modules.count { it.matchesText(trimmed) }
     }
 
+    /** Preview count for the keyword being typed; null while it is blank or the index has not loaded. */
+    private fun draftMatchCount(draft: String): Int? =
+        draft.trim().takeIf(String::isNotEmpty)?.let(::matchCount)
+
     private fun load() {
         loadJob?.cancel()
         loadJob = viewModelScope.launch {
@@ -198,9 +202,7 @@ class IgnoredModulesViewModel(private val container: AppContainer) : ViewModel()
                 items = items,
                 keywords = keywordItems,
                 // The draft often still holds a value when the index arrives.
-                keywordMatchCount = it.keywordDraft.trim()
-                    .takeIf(String::isNotEmpty)
-                    ?.let(::matchCount),
+                keywordMatchCount = draftMatchCount(it.keywordDraft),
             )
         }
     }

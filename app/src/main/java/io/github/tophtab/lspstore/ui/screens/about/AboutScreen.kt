@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.tophtab.lspstore.R
+import io.github.tophtab.lspstore.domain.model.formatByteSize
 import io.github.tophtab.lspstore.ui.LocalAppContainer
 import io.github.tophtab.lspstore.ui.components.SnackbarMessageEffect
 import io.github.tophtab.lspstore.ui.design.KomiButton
@@ -204,11 +205,11 @@ private fun AboutDiagnostics(
         KomiSettingsGroup {
             InfoRow(
                 stringResource(R.string.diagnostics_index_cache),
-                formatBytes(state.indexCacheSize),
+                formatByteSize(state.indexCacheSize, emptyValue = "0 MB"),
             )
             InfoRow(
                 stringResource(R.string.diagnostics_downloads),
-                formatBytes(state.downloadsSize),
+                formatByteSize(state.downloadsSize, emptyValue = "0 MB"),
                 last = true,
             )
         }
@@ -290,15 +291,5 @@ private fun InfoRow(label: String, value: String, last: Boolean = false) {
                 color = MaterialTheme.colorScheme.outlineVariant,
             )
         }
-    }
-}
-
-private fun formatBytes(bytes: Long): String {
-    if (bytes <= 0) return "0 MB"
-    val mb = bytes / (1024.0 * 1024.0)
-    return if (mb >= 1) {
-        String.format(java.util.Locale.getDefault(), "%.1f MB", mb)
-    } else {
-        String.format(java.util.Locale.getDefault(), "%.0f KB", bytes / 1024.0)
     }
 }

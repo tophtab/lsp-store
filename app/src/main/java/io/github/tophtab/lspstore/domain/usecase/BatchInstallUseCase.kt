@@ -46,6 +46,14 @@ enum class BatchInstallPhase {
     CANCELLED,
 }
 
+/** True while the batch is still working on the module; every other phase is an outcome. */
+val BatchInstallPhase.isActive: Boolean
+    get() = this == BatchInstallPhase.QUEUED ||
+        this == BatchInstallPhase.PREPARING ||
+        this == BatchInstallPhase.DOWNLOADING ||
+        this == BatchInstallPhase.WAITING_TO_INSTALL ||
+        this == BatchInstallPhase.INSTALLING
+
 /** Why one module of a batch did not land. */
 enum class BatchFailureKind {
     /** No APK could be resolved or transferred. */
@@ -213,6 +221,8 @@ class BatchInstallUseCase(
                 detail = detail?.takeIf { it.isNotBlank() },
             )
         }
+        fun markCancelled(packageName: String) =
+            onItem(packageName) { it.copy(phase = BatchInstallPhase.CANCELLED) }
         val claims = ConcurrentHashMap<String, String>()
         val handedOff = ConcurrentHashMap.newKeySet<String>()
         val installQueue = Channel<PreparedInstall.Ready>(Channel.UNLIMITED)
@@ -235,9 +245,7 @@ class BatchInstallUseCase(
                         // A cancel can land after the download finished and the
                         // APK was queued: drop it instead of installing.
                         if (cancelled) {
-                            onItem(packageName) {
-                                it.copy(phase = BatchInstallPhase.CANCELLED)
-                            }
+                            markCancelled(packageName)
                             abandonDownload(prepared.asset)
                             prepared.taskId?.let(registry::release)
                             continue
@@ -251,7 +259,7 @@ class BatchInstallUseCase(
                         } catch (cancellation: CancellationException) {
                             currentCoroutineContext().ensureActive()
                             if (!control.isCancelled(packageName)) throw cancellation
-                            onItem(packageName) { it.copy(phase = BatchInstallPhase.CANCELLED) }
+                            markCancelled(packageName)
                             prepared.taskId?.let(registry::release)
                             abandonDownload(prepared.asset)
                             continue
@@ -303,9 +311,7 @@ class BatchInstallUseCase(
                         var preparedNormally = false
                         try {
                             if (control.isCancelled(packageName)) {
-                                onItem(packageName) {
-                                    it.copy(phase = BatchInstallPhase.CANCELLED)
-                                }
+                                markCancelled(packageName)
                                 return@launch
                             }
                             id = registry.claim(packageName, info.installed.packageName)
@@ -321,9 +327,7 @@ class BatchInstallUseCase(
                                 // A queued target may have been cancelled while
                                 // it waited for the slot; never start it then.
                                 if (control.isCancelled(packageName)) {
-                                    onItem(packageName) {
-                                        it.copy(phase = BatchInstallPhase.CANCELLED)
-                                    }
+                                    markCancelled(packageName)
                                     return@withSlot
                                 }
                                 onItem(packageName) {
@@ -355,9 +359,7 @@ class BatchInstallUseCase(
                                 // The cancel may have landed after the last
                                 // byte: do not queue an APK the user stopped.
                                 if (control.isCancelled(packageName)) {
-                                    onItem(packageName) {
-                                        it.copy(phase = BatchInstallPhase.CANCELLED)
-                                    }
+                                    markCancelled(packageName)
                                     return@withSlot
                                 }
                                 preparedNormally = true
@@ -376,9 +378,7 @@ class BatchInstallUseCase(
                                     is PreparedInstall.Failed -> {
                                         registry.release(taskId)
                                         if (control.isCancelled(packageName)) {
-                                            onItem(packageName) {
-                                                it.copy(phase = BatchInstallPhase.CANCELLED)
-                                            }
+                                            markCancelled(packageName)
                                         } else {
                                             recordFailure(
                                                 info,
@@ -399,16 +399,12 @@ class BatchInstallUseCase(
                             }
                         } catch (cancellation: CancellationException) {
                             if (control.isCancelled(packageName)) {
-                                onItem(packageName) {
-                                    it.copy(phase = BatchInstallPhase.CANCELLED)
-                                }
+                                markCancelled(packageName)
                             }
                             throw cancellation
                         } catch (error: Throwable) {
                             if (control.isCancelled(packageName)) {
-                                onItem(packageName) {
-                                    it.copy(phase = BatchInstallPhase.CANCELLED)
-                                }
+                                markCancelled(packageName)
                             } else {
                                 recordFailure(info, BatchFailureKind.DOWNLOAD, error.message)
                                 onItem(packageName) {

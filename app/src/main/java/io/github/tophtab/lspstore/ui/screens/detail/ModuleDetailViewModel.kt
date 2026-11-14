@@ -402,18 +402,7 @@ class ModuleDetailViewModel(
                 installLogs = run?.logs ?: it.installLogs,
             )
         }
-        if (hadRun && run == null) {
-            val installed = findInstalled()
-            _state.update {
-                val tracked = isPreReleaseTracked(installed)
-                it.copy(
-                    installed = installed,
-                    variantState = stateForModule(variantStates, installed),
-                    channel = if (channelChosen) it.channel else defaultChannel(it.detail, tracked),
-                )
-            }
-            updatePendingState()
-        }
+        if (hadRun && run == null) resolveInstalled()
     }
 
     private suspend fun resolveInstalled() {

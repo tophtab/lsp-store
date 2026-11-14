@@ -182,7 +182,8 @@ class LibraryRepositoryImpl(private val context: Context) : LibraryRepository {
     override suspend fun addRecentlyViewed(packageName: String) {
         context.libraryDataStore.edit { prefs ->
             val current = decodeList(prefs[Keys.RECENTLY_VIEWED])
-            val updated = (listOf(packageName) + current.filterNot { it == packageName }).take(MAX_RECENT)
+            val updated = (listOf(packageName) + current.filterNot { it == packageName })
+                .take(LibraryBackup.RECENT_LIMIT)
             prefs[Keys.RECENTLY_VIEWED] = encodeList(updated)
         }
     }
@@ -432,7 +433,7 @@ class LibraryRepositoryImpl(private val context: Context) : LibraryRepository {
      */
     private fun writeBackup(prefs: MutablePreferences, backup: LibraryBackup) {
         prefs[Keys.FAVOURITES] = encodeList(backup.favourites)
-        prefs[Keys.RECENTLY_VIEWED] = encodeList(backup.recentlyViewed.take(MAX_RECENT))
+        prefs[Keys.RECENTLY_VIEWED] = encodeList(backup.recentlyViewed.take(LibraryBackup.RECENT_LIMIT))
         prefs[Keys.SKIPPED] = backup.skippedUpdates.entries.joinToString("\n") {
             "${it.key}:${it.value}"
         }
@@ -440,7 +441,7 @@ class LibraryRepositoryImpl(private val context: Context) : LibraryRepository {
         prefs[Keys.IGNORED_MODULES] = encodeList(backup.ignoredModules)
         prefs[Keys.IGNORED_KEYWORDS] = encodeList(backup.ignoredKeywords)
         prefs[Keys.PRE_RELEASE_MODULES] = encodeList(backup.preReleaseModules)
-        prefs[Keys.SEARCH_HISTORY] = encodeList(backup.searchHistory.take(MAX_SEARCH_HISTORY))
+        prefs[Keys.SEARCH_HISTORY] = encodeList(backup.searchHistory.take(LibraryBackup.SEARCH_HISTORY_LIMIT))
         prefs[Keys.LINKS] = encodeLinks(backup.links)
         prefs[Keys.VARIANT_STATE] = encodeVariantStates(backup.variantStates)
     }
@@ -484,9 +485,4 @@ class LibraryRepositoryImpl(private val context: Context) : LibraryRepository {
 
     private fun encodeLinks(links: Map<String, String>): String =
         links.entries.joinToString("\n") { "${it.key}=${it.value}" }
-
-    private companion object {
-        const val MAX_RECENT = 30
-        const val MAX_SEARCH_HISTORY = 15
-    }
 }

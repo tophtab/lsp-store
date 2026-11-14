@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
@@ -44,6 +45,7 @@ import io.github.tophtab.lspstore.ui.components.MODULE_ITEM_FADE_MILLIS
 import io.github.tophtab.lspstore.ui.components.MODULE_ITEM_PLACEMENT_MILLIS
 import io.github.tophtab.lspstore.ui.components.ModuleCard
 import io.github.tophtab.lspstore.ui.components.ModuleListExit
+import io.github.tophtab.lspstore.ui.components.ModuleListExitState
 import io.github.tophtab.lspstore.ui.components.PullToRefreshBox
 import io.github.tophtab.lspstore.ui.components.rememberModuleListExitState
 import io.github.tophtab.lspstore.ui.design.KomiConstrainedContent
@@ -226,81 +228,81 @@ fun HomeScreen(
                                 modifier = Modifier.padding(horizontal = 14.dp, vertical = 4.dp),
                                 maxLines = 1,
                             )
-                            PullToRefreshBox(
+                            HomeModuleGrid(
+                                exit = searchExit,
+                                gridState = searchListState,
+                                installedPackages = state.installedPackages,
                                 isRefreshing = state.isRefreshing,
                                 onRefresh = viewModel::refresh,
+                                onOpenModule = onOpenModule,
+                                onIgnoreModule = viewModel::ignoreModule,
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .weight(1f),
-                            ) {
-                                ModuleListExit(searchExit, Modifier.fillMaxSize()) { displayed ->
-                                    LazyVerticalStaggeredGrid(
-                                        state = searchListState,
-                                        columns = StaggeredGridCells.Adaptive(minSize = 320.dp),
-                                        modifier = Modifier.fillMaxSize(),
-                                        contentPadding = PaddingValues(
-                                            start = 12.dp,
-                                            end = 12.dp,
-                                            bottom = 32.dp,
-                                        ),
-                                        verticalItemSpacing = 10.dp,
-                                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                                    ) {
-                                        items(displayed, key = { it.packageName }) { module ->
-                                            ModuleCard(
-                                                module = module,
-                                                installed = module.packageName in state.installedPackages,
-                                                onOpen = { onOpenModule(module.packageName) },
-                                                onIgnore = { viewModel.ignoreModule(module.packageName) },
-                                                modifier = Modifier.animateItem(
-                                                    fadeInSpec = null,
-                                                    placementSpec = tween(MODULE_ITEM_PLACEMENT_MILLIS, easing = FastOutSlowInEasing),
-                                                    fadeOutSpec = tween(MODULE_ITEM_FADE_MILLIS, easing = FastOutSlowInEasing),
-                                                ),
-                                            )
-                                        }
-                                    }
-                                }
-                            }
+                            )
                         }
                     } else {
-                        PullToRefreshBox(
+                        HomeModuleGrid(
+                            exit = feedExit,
+                            gridState = listState,
+                            installedPackages = state.installedPackages,
                             isRefreshing = state.isRefreshing,
                             onRefresh = viewModel::refresh,
+                            onOpenModule = onOpenModule,
+                            onIgnoreModule = viewModel::ignoreModule,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .weight(1f),
-                        ) {
-                            ModuleListExit(feedExit, Modifier.fillMaxSize()) { displayed ->
-                                LazyVerticalStaggeredGrid(
-                                    state = listState,
-                                    columns = StaggeredGridCells.Adaptive(minSize = 320.dp),
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentPadding = PaddingValues(
-                                        start = 12.dp,
-                                        end = 12.dp,
-                                        bottom = 32.dp,
-                                    ),
-                                    verticalItemSpacing = 10.dp,
-                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                                ) {
-                                    items(displayed, key = { it.packageName }) { module ->
-                                        ModuleCard(
-                                            module = module,
-                                            installed = module.packageName in state.installedPackages,
-                                            onOpen = { onOpenModule(module.packageName) },
-                                            onIgnore = { viewModel.ignoreModule(module.packageName) },
-                                            modifier = Modifier.animateItem(
-                                                fadeInSpec = null,
-                                                placementSpec = tween(MODULE_ITEM_PLACEMENT_MILLIS, easing = FastOutSlowInEasing),
-                                                fadeOutSpec = tween(MODULE_ITEM_FADE_MILLIS, easing = FastOutSlowInEasing),
-                                            ),
-                                        )
-                                    }
-                                }
-                            }
-                        }
+                        )
                     }
+                }
+            }
+        }
+    }
+}
+
+/** The refreshable module grid behind both the feed tabs and the search results. */
+@Composable
+private fun HomeModuleGrid(
+    exit: ModuleListExitState<Module>,
+    gridState: LazyStaggeredGridState,
+    installedPackages: Set<String>,
+    isRefreshing: Boolean,
+    onRefresh: () -> Unit,
+    onOpenModule: (String) -> Unit,
+    onIgnoreModule: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = onRefresh,
+        modifier = modifier,
+    ) {
+        ModuleListExit(exit, Modifier.fillMaxSize()) { displayed ->
+            LazyVerticalStaggeredGrid(
+                state = gridState,
+                columns = StaggeredGridCells.Adaptive(minSize = 320.dp),
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(
+                    start = 12.dp,
+                    end = 12.dp,
+                    bottom = 32.dp,
+                ),
+                verticalItemSpacing = 10.dp,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                items(displayed, key = { it.packageName }) { module ->
+                    ModuleCard(
+                        module = module,
+                        installed = module.packageName in installedPackages,
+                        onOpen = { onOpenModule(module.packageName) },
+                        onIgnore = { onIgnoreModule(module.packageName) },
+                        modifier = Modifier.animateItem(
+                            fadeInSpec = null,
+                            placementSpec = tween(MODULE_ITEM_PLACEMENT_MILLIS, easing = FastOutSlowInEasing),
+                            fadeOutSpec = tween(MODULE_ITEM_FADE_MILLIS, easing = FastOutSlowInEasing),
+                        ),
+                    )
                 }
             }
         }

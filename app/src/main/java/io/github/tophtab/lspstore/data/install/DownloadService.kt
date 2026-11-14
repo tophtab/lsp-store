@@ -65,9 +65,7 @@ class DownloadService : Service() {
             observing = true
             scope.launch {
                 manager.tasks.collect { tasks ->
-                    val active = tasks.values.filter {
-                        it.status == DownloadStatus.RUNNING || it.status == DownloadStatus.PAUSED
-                    }
+                    val active = tasks.values.filter { !it.status.isTerminal }
                     if (active.isEmpty()) {
                         Log.d(TAG, "all downloads finished, stopping")
                         stopSelf()
@@ -91,9 +89,7 @@ class DownloadService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     private fun activeTasks(): List<DownloadTask> =
-        manager.tasks.value.values.filter {
-            it.status == DownloadStatus.RUNNING || it.status == DownloadStatus.PAUSED
-        }
+        manager.tasks.value.values.filter { !it.status.isTerminal }
 
     private fun startForegroundCompat(notification: Notification) {
         runCatching {

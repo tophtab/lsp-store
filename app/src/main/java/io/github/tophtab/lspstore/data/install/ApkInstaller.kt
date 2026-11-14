@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit
 
 // komi-store's AndroidInstaller hands the APK to the device's installer of record
 // through a plain VIEW intent; nothing here targets a specific installer app.
-private const val APK_MIME_TYPE = "application/vnd.android.package-archive"
+internal const val APK_MIME_TYPE = "application/vnd.android.package-archive"
 
 /** Hidden UserHandle constant; uid = userId * range + appId. */
 private const val PER_USER_RANGE = 100_000
