@@ -20,7 +20,7 @@ class InstallTaskRegistry(initiallyReady: Boolean = true) {
         pending.forEach { entry ->
             val repo = entry.repoPackageName ?: entry.packageName
             val id = entry.taskId ?: legacyId(entry)
-            state.value = state.value + (repo to ModuleInstallRun(repo, entry.target?.asset, taskId = id, stage = InstallStage.PENDING_CONFIRMATION))
+            state.value = state.value + (repo to ModuleInstallRun(entry.target?.asset, taskId = id, stage = InstallStage.PENDING_CONFIRMATION))
             aliases[id] = setOf(repo, entry.packageName)
         }
         ready.complete(Unit)
@@ -37,7 +37,7 @@ class InstallTaskRegistry(initiallyReady: Boolean = true) {
         if (aliases.values.any { it.intersect(keys).isNotEmpty() }) return null
         val id = UUID.randomUUID().toString()
         aliases[id] = keys
-        state.value = state.value + (repo to ModuleInstallRun(repo, null, taskId = id))
+        state.value = state.value + (repo to ModuleInstallRun(asset = null, taskId = id))
         return id
     }
 

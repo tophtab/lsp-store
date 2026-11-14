@@ -26,7 +26,6 @@ sealed interface PreparedInstall {
         override val info: UpdateInfo,
         val file: File,
         val asset: ReleaseAsset,
-        val state: ModuleVariantState,
         val target: ResolvedInstallTarget? = null,
         val taskId: String? = null,
     ) : PreparedInstall
@@ -87,7 +86,7 @@ class PrepareModuleInstallUseCase(
                     val asset = decision.asset
                     onAssetResolved(asset)
                     val file = downloadManager.downloadBlocking(asset, onProgress)
-                    PreparedInstall.Ready(info, file, asset, state, ResolvedInstallTarget.of(release, asset))
+                    PreparedInstall.Ready(info, file, asset, ResolvedInstallTarget.of(release, asset))
                 }
 
                 is VariantDecision.NotApplicable -> {

@@ -25,7 +25,6 @@ enum class InstallStage { QUEUED, PREPARING, DOWNLOADING, WAITING_TO_INSTALL, IN
  * install button can fill up instead of a separate progress bar being shown.
  */
 data class ModuleInstallRun(
-    val repoPackageName: String,
     val asset: ReleaseAsset?,
     val taskId: String = "",
     val stage: InstallStage = InstallStage.QUEUED,

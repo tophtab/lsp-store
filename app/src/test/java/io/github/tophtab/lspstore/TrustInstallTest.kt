@@ -99,7 +99,7 @@ class TrustInstallTest {
     }
 
     private fun ready(file: File) = PreparedInstall.Ready(
-        UpdateInfo(module, installed(), module.latestRelease!!), file, asset, ModuleVariantState(),
+        UpdateInfo(module, installed(), module.latestRelease!!), file, asset,
     )
 
     @Test

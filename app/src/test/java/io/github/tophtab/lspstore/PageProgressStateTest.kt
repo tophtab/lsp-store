@@ -50,7 +50,7 @@ class PageProgressStateTest {
 
     @Test
     fun detailBytesLeaveTheBodyAloneWhileLogsStagesAndCompletionRemainVisible() = runTest {
-        val run = ModuleInstallRun("module", null, stage = InstallStage.DOWNLOADING, total = 1_000)
+        val run = ModuleInstallRun(asset = null, stage = InstallStage.DOWNLOADING, total = 1_000)
         val full = MutableStateFlow(ModuleDetailUiState(activeInstall = run))
         val pages = mutableListOf<ModuleDetailUiState>()
         val buttons = mutableListOf<ModuleInstallRun?>()

@@ -114,14 +114,12 @@ fun HomeScreen(
     val tabs = buildList {
         add(
             HomeTab(
-                kind = HomeTabKind.UPDATED,
                 label = stringResource(R.string.home_section_recently_updated),
                 modules = state.recentlyUpdated,
             ),
         )
         add(
             HomeTab(
-                kind = HomeTabKind.STARRED,
                 label = stringResource(R.string.home_section_most_starred),
                 modules = state.mostStarred,
             ),
@@ -313,10 +311,7 @@ fun HomeScreen(
     }
 }
 
-private enum class HomeTabKind { UPDATED, STARRED }
-
 private data class HomeTab(
-    val kind: HomeTabKind,
     val label: String,
     val modules: List<Module>,
 )

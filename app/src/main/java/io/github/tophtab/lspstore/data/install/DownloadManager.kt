@@ -31,7 +31,6 @@ internal val DownloadStatus.isTerminal: Boolean
 
 data class DownloadTask(
     val key: String,
-    val assetName: String,
     val downloaded: Long = 0,
     val total: Long = 0,
     val status: DownloadStatus = DownloadStatus.RUNNING,
@@ -172,7 +171,6 @@ class DownloadManager(
         val attempt = taskStore.begin(
             DownloadTask(
                 key = key,
-                assetName = asset.name,
                 downloaded = existingBytes,
                 total = if (complete) existingBytes else asset.size,
                 status = if (complete) DownloadStatus.COMPLETED else DownloadStatus.RUNNING,
