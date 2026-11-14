@@ -87,6 +87,7 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
     private val preReleases get() = preferences.value.preReleases
     private val ignoredUpdates get() = preferences.value.ignoredUpdates
     private val links get() = installedCopies.value.links
+    private var followedCopies: Map<String, InstalledModule> = emptyMap()
     private var loadJob: Job? = null
     private val refreshScrollGate = RefreshScrollGate()
 
@@ -125,7 +126,8 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
                 ?: repoPackage
         },
         installedFor = { repoPackage ->
-            installedCopies.value.forRepo(repoPackage, preferences.value.variantStates[repoPackage]?.activePackage)
+            followedCopies[repoPackage]
+                ?: installedCopies.value.forRepo(repoPackage, preferences.value.variantStates[repoPackage]?.activePackage)
         },
         resolveVariant = container.resolveVariantUseCase,
         device = container.deviceProfile,
@@ -151,6 +153,7 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
         }
         viewModelScope.launch {
             installedListSnapshots(repositoryIndex, installedCopies, preferences).collect { snapshot ->
+                followedCopies = snapshot.installedByRepo
                 _state.update { it.withSnapshot(snapshot) }
             }
         }

@@ -61,7 +61,8 @@ internal class InstalledVariantController(
                     updatePicker(generation, repoPackageName) { it.copy(isLoading = false, error = text.empty()) }
                     return@launch
                 }
-                val state = (readState().variantStates[repoPackageName] ?: ModuleVariantState()).forInstalled(installed)
+                val states = readState().variantStates
+                val state = (states[repoPackageName] ?: states[installed?.packageName] ?: ModuleVariantState()).forInstalled(installed)
                 val installedHint = installed?.let(InstalledVariantHint::of)
                 val expectedPackage = expectedPackage(installed?.packageName, repoPackageName)
                 val initial = resolveVariant.initial(release, state, device, expectedPackage, installedHint)

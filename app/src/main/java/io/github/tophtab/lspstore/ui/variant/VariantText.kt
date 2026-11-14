@@ -4,10 +4,25 @@ import android.content.Context
 import io.github.tophtab.lspstore.R
 import io.github.tophtab.lspstore.domain.variant.ApkMeta
 import io.github.tophtab.lspstore.domain.variant.Reason
+import io.github.tophtab.lspstore.domain.variant.ScoredAsset
+import io.github.tophtab.lspstore.domain.variant.VariantResolver
 import io.github.tophtab.lspstore.domain.variant.VariantTraits
 import io.github.tophtab.lspstore.domain.variant.VendorOs
 import io.github.tophtab.lspstore.domain.variant.androidVersionFromSdk
 import io.github.tophtab.lspstore.domain.variant.libXposedApiRequirement
+
+internal data class VariantCandidateText(val tags: String?, val recommendation: String?)
+
+/** Both pickers format tags and recommendation captions from the same evidence. */
+internal fun Context.variantCandidateText(candidate: ScoredAsset, resolver: VariantResolver): VariantCandidateText {
+    val labels = if (candidate.recommended) resolver.matchLabels(candidate.traits, candidate.meta) else emptyList()
+    return VariantCandidateText(
+        tags = variantTags(candidate.traits, candidate.meta).takeIf { it.isNotEmpty() }?.joinToString(" · "),
+        recommendation = labels.takeIf { it.isNotEmpty() }?.let {
+            variantReasonText(Reason(Reason.Kind.MATCHES_DEVICE, listOf(it.joinToString(", "))))
+        },
+    )
+}
 
 /** Turns a resolver [Reason] back into a localized, one-line explanation. */
 fun Context.variantReasonText(reason: Reason): String = when (reason.kind) {

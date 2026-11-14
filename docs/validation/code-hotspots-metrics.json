@@ -1,0 +1,430 @@
+{
+  "baseline_commit": "4426261",
+  "date": "2026-11-14",
+  "device": {
+    "avd": "temporary copy of lsp82-qa",
+    "android": "15",
+    "api": 35,
+    "abi": "x86_64",
+    "rendering": "software",
+    "display": "1080x2340 at 440 dpi",
+    "ram_mb": 1536
+  },
+  "fixture": {
+    "repository_modules": 400,
+    "known_installed_modules": 400,
+    "ordinary_installed_packages": 800,
+    "unknown_installed_modules": 40,
+    "readme_body_rows": 600,
+    "download_steps": 100,
+    "step_delay_ms": 80
+  },
+  "checks": {
+    "tests": {
+      "tests": 488,
+      "skipped": 4,
+      "failures": 0,
+      "errors": 0,
+      "passed": 484
+    },
+    "lint": {
+      "count": 22,
+      "matches_baseline": true,
+      "issue_counts": {
+        "OldTargetApi": 1,
+        "AndroidGradlePluginVersion": 2,
+        "GradleDependency": 8,
+        "NewerVersionAvailable": 8,
+        "NotShrinkingResources": 1,
+        "UseKtx": 2
+      }
+    }
+  },
+  "scenarios": {
+    "installed-progress": {
+      "baseline": {
+        "compositions": {
+          "filter:installed": 100,
+          "compose:InstalledScreen": 100,
+          "compose:UpdateRow:qa.module0000": 100,
+          "compose:UpdateRow:qa.module0001": 100
+        },
+        "calculations": {
+          "count": 0
+        },
+        "frames": {
+          "count": 120,
+          "p50_ms": 66.981,
+          "p90_ms": 74.608,
+          "p95_ms": 83.714
+        }
+      },
+      "candidate": {
+        "compositions": {
+          "compose:InstalledScreen": 2,
+          "compose:UpdateRow:qa.module0000": 101,
+          "compose:UpdateRow:qa.module0001": 101
+        },
+        "calculations": {
+          "count": 0
+        },
+        "frames": {
+          "count": 120,
+          "p50_ms": 67.138,
+          "p90_ms": 85.199,
+          "p95_ms": 100.315
+        }
+      }
+    },
+    "refresh": {
+      "baseline": {
+        "compositions": {
+          "filter:installed": 19,
+          "compose:InstalledScreen": 19
+        },
+        "calculations": {
+          "count": 12,
+          "p50_ms": 171.911,
+          "p90_ms": 195.936,
+          "p95_ms": 226.272
+        },
+        "frames": {
+          "count": 53,
+          "p50_ms": 67.146,
+          "p90_ms": 207.853,
+          "p95_ms": 261.604
+        }
+      },
+      "candidate": {
+        "compositions": {
+          "compose:InstalledScreen": 32
+        },
+        "calculations": {
+          "count": 8,
+          "p50_ms": 11.118,
+          "p90_ms": 13.428,
+          "p95_ms": 13.428
+        },
+        "frames": {
+          "count": 95,
+          "p50_ms": 67.159,
+          "p90_ms": 85.398,
+          "p95_ms": 94.667
+        }
+      }
+    },
+    "detail-progress": {
+      "baseline": {
+        "compositions": {
+          "compose:ModuleDetailScreen": 101,
+          "compose:DetailContent": 101,
+          "compose:DetailHero": 101,
+          "compose:InstallControls": 101
+        },
+        "calculations": {
+          "count": 0
+        },
+        "frames": {
+          "count": 119,
+          "p50_ms": 48.62,
+          "p90_ms": 50.572,
+          "p95_ms": 51.243
+        }
+      },
+      "candidate": {
+        "compositions": {
+          "compose:ModuleDetailScreen": 2,
+          "compose:DetailContent": 2,
+          "compose:InstallControls": 101
+        },
+        "calculations": {
+          "count": 0
+        },
+        "frames": {
+          "count": 120,
+          "p50_ms": 34.7,
+          "p90_ms": 50.389,
+          "p95_ms": 62.117
+        }
+      }
+    },
+    "readme-entry": {
+      "baseline": {
+        "compositions": {
+          "compose:ModuleDetailScreen": 5,
+          "compose:DetailContent": 4,
+          "compose:DetailHero": 3,
+          "compose:InstallControls": 4,
+          "compose:ReadmeTableRowView": 601
+        },
+        "calculations": {
+          "count": 0
+        },
+        "frames": {
+          "count": 86,
+          "p50_ms": 34.446,
+          "p90_ms": 267.018,
+          "p95_ms": 343.606
+        }
+      },
+      "candidate": {
+        "compositions": {
+          "compose:InstalledScreen": 1,
+          "compose:ModuleDetailScreen": 4,
+          "compose:DetailContent": 4,
+          "compose:DetailHero": 1,
+          "compose:InstallControls": 4,
+          "compose:ReadmeTableRowView": 19
+        },
+        "calculations": {
+          "count": 0
+        },
+        "frames": {
+          "count": 115,
+          "p50_ms": 21.022,
+          "p90_ms": 33.734,
+          "p95_ms": 126.876
+        }
+      }
+    }
+  },
+  "candidate_tree": "refactor/code-hotspots production sources, including root-page navigation layout",
+  "ui_regressions": [
+    {
+      "check": "installed-search-scroll-restoration",
+      "passed": true,
+      "query": "001",
+      "visible_rows_and_bounds": [
+        [
+          "QA Module 0014",
+          "[226,496][532,549]"
+        ],
+        [
+          "QA Module 0015",
+          "[226,734][534,787]"
+        ],
+        [
+          "QA Module 0016",
+          "[226,972][532,1025]"
+        ],
+        [
+          "QA Module 0017",
+          "[226,1210][528,1263]"
+        ],
+        [
+          "QA Module 0018",
+          "[226,1448][532,1501]"
+        ],
+        [
+          "QA Module 0019",
+          "[226,1686][532,1739]"
+        ]
+      ]
+    },
+    {
+      "check": "repository-search-scroll-restoration",
+      "passed": true,
+      "query": "001",
+      "visible_rows_and_bounds": [
+        [
+          "QA Module 0011",
+          "[74,519][472,583]"
+        ],
+        [
+          "QA Module 0012",
+          "[74,1103][487,1174]"
+        ],
+        [
+          "QA Module 0013",
+          "[74,1694][487,1765]"
+        ]
+      ]
+    },
+    {
+      "check": "readme-first-fold",
+      "passed": true,
+      "visible": [
+        "First body",
+        "QA Nested",
+        "After nested"
+      ],
+      "hidden": [
+        "Nested body",
+        "Second body"
+      ]
+    },
+    {
+      "check": "readme-nested-fold",
+      "passed": true,
+      "visible": [
+        "First body",
+        "Nested body",
+        "After nested"
+      ],
+      "hidden": [
+        "Second body"
+      ]
+    },
+    {
+      "check": "readme-collapsed-parent",
+      "passed": true,
+      "visible": [
+        "QA Fold"
+      ],
+      "hidden": [
+        "First body",
+        "QA Nested",
+        "Nested body",
+        "After nested",
+        "Second body"
+      ]
+    },
+    {
+      "check": "readme-duplicate-title-independent",
+      "passed": true,
+      "visible": [
+        "Second body"
+      ],
+      "hidden": [
+        "First body",
+        "Nested body"
+      ]
+    },
+    {
+      "check": "readme-reopened-parent",
+      "passed": true,
+      "visible": [
+        "First body",
+        "Nested body",
+        "After nested",
+        "Second body"
+      ],
+      "hidden": []
+    },
+    {
+      "check": "readme-dark-theme-restoration",
+      "passed": true,
+      "visible": [
+        "First body",
+        "Nested body",
+        "After nested",
+        "Second body"
+      ],
+      "hidden": []
+    },
+    {
+      "check": "readme-light-theme-restoration",
+      "passed": true,
+      "visible": [
+        "First body",
+        "Nested body",
+        "After nested",
+        "Second body"
+      ],
+      "hidden": []
+    },
+    {
+      "check": "detail-version-asset-selection",
+      "passed": true,
+      "visible": [
+        "1.9",
+        "module-arm64.apk",
+        "Update to 1.9"
+      ]
+    },
+    {
+      "check": "detail-author-navigation",
+      "passed": true,
+      "visible": [
+        "qa-author",
+        "QA Module 0000"
+      ]
+    },
+    {
+      "check": "detail-author-return-selection",
+      "passed": true,
+      "visible": [
+        "1.9",
+        "module-arm64.apk",
+        "Update to 1.9"
+      ]
+    },
+    {
+      "check": "detail-author-return-folds",
+      "passed": true,
+      "visible": [
+        "First body",
+        "Nested body",
+        "After nested",
+        "Second body"
+      ]
+    },
+    {
+      "check": "settings-theme-immediate-persistence",
+      "passed": true,
+      "system_night_mode": false,
+      "stored_theme_after_restart": "DARK"
+    },
+    {
+      "check": "settings-text-immediate-persistence",
+      "passed": true,
+      "provider": "Microsoft",
+      "region_after_restart": "qatest"
+    },
+    {
+      "check": "library-ignored-repository-module-restore",
+      "passed": true,
+      "package": "qa.module0000",
+      "restore_action": "Unignore",
+      "removed_from_ignored_library": true,
+      "visible_in_repository_after_restore": true
+    },
+    {
+      "check": "library-skipped-version-restore",
+      "passed": true,
+      "package": "qa.module0000",
+      "restore_action": "Unignore",
+      "card_labels": [
+        "QA Module 0000",
+        "qa.module0000",
+        "Ignored version 2.0, latest 2.0",
+        "Unignore",
+        "Ignored update modules",
+        "Clear"
+      ],
+      "removed_from_ignored_library": true,
+      "update_visible_after_restore": true
+    },
+    {
+      "check": "library-permanently-ignored-updates-restore",
+      "passed": true,
+      "package": "qa.module0000",
+      "restore_action": "Restore updates",
+      "card_labels": [
+        "QA Module 0000",
+        "qa.module0000",
+        "Update check disabled, latest 2.0",
+        "Restore updates",
+        "Ignored update modules",
+        "Clear"
+      ],
+      "removed_from_ignored_library": true,
+      "update_visible_after_restore": true
+    },
+    {
+      "check": "library-favourites-navigation-and-remove",
+      "passed": true,
+      "package": "qa.module0000",
+      "opened_detail": true,
+      "returned_to_list": true,
+      "removed_from_favourites": true
+    },
+    {
+      "check": "library-recently-viewed-navigation",
+      "passed": true,
+      "package": "qa.module0000",
+      "opened_detail": true,
+      "returned_to_list": true
+    }
+  ]
+}

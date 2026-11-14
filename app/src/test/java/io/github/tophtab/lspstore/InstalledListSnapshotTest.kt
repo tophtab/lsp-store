@@ -63,6 +63,7 @@ class InstalledListSnapshotTest {
         val updates = UpdateChecker.findUpdates(listOf(older, newer), modules, links = links, variantStates = preferences.variantStates)
         assertEquals(updates, result.updates)
         assertEquals("renamed", updates.single().installed.packageName)
+        assertEquals(older, result.installedByRepo["module"])
         assertEquals(updates.map { it.installed.packageName }.toSet(), result.repoPackageByInstalled.keys)
     }
 

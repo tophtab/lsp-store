@@ -8,6 +8,13 @@ import io.github.tophtab.lspstore.domain.model.Release
 import io.github.tophtab.lspstore.domain.model.ReleaseAsset
 import io.github.tophtab.lspstore.domain.model.UpdateInfo
 
+internal fun uiAsset(
+    name: String = "module.apk",
+    downloads: Int = 0,
+    size: Long = 1_024,
+    baseUrl: String = "https://example.test",
+): ReleaseAsset = ReleaseAsset(name, "$baseUrl/$name", null, size, downloads, null)
+
 internal fun uiModule(packageName: String = "module", summary: String? = null): Module = Module(
     packageName = packageName,
     title = packageName,
@@ -50,9 +57,7 @@ internal fun uiRelease(tag: String = "2-new", names: List<String> = listOf("modu
     publishedAt = null,
     descriptionHtml = "Release notes",
     version = ModuleVersion.parse(tag),
-    assets = names.map { name ->
-        ReleaseAsset(name, "https://example.test/$name", null, 1_024, 0, null)
-    },
+    assets = names.map { uiAsset(it) },
 )
 
 internal fun uiDetail(

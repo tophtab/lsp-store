@@ -3,6 +3,7 @@ package io.github.tophtab.lspstore.domain.usecase
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlin.coroutines.cancellation.CancellationException
 import io.github.tophtab.lspstore.domain.model.Release
 import io.github.tophtab.lspstore.domain.model.ReleaseAsset
 import io.github.tophtab.lspstore.domain.variant.ApkMeta
@@ -118,7 +119,16 @@ class ResolveVariantUseCase(
 
         val probes = cached + coroutineScope {
             targets.filterNot { it.name in cached }.map { asset ->
-                async { probe.fetch(asset)?.let { asset.name to it } }
+                async {
+                    val meta = try {
+                        probe.fetch(asset)
+                    } catch (cancellation: CancellationException) {
+                        throw cancellation
+                    } catch (_: Exception) {
+                        null
+                    }
+                    meta?.let { asset.name to it }
+                }
             }.awaitAll().filterNotNull().toMap()
         }
         if (probes == cached) return named

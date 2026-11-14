@@ -64,6 +64,7 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
         SettingsUiState(indexCacheSize = moduleRepository.cacheSizeBytes()),
     )
     val state = _state.asStateFlow()
+    private val settingsWriter = ImmediateSettingsWriter(viewModelScope)
 
     init {
         viewModelScope.launch {
@@ -140,36 +141,41 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
      * button: every tap and keystroke is the stored value.
      */
     fun updateTranslation(transform: (TranslationSettings) -> TranslationSettings) {
-        translationEdited = true
         val updated = transform(_state.value.translation)
+        if (updated == _state.value.translation) return
+        translationEdited = true
         _state.update { it.copy(translation = updated) }
-        viewModelScope.launch { settingsRepository.setTranslationSettings(updated) }
+        val stored = updated.copy(
+            deeplKey = updated.deeplKey.trim(), libreUrl = updated.libreUrl.trim(), libreKey = updated.libreKey.trim(),
+            microsoftKey = updated.microsoftKey.trim(), microsoftRegion = updated.microsoftRegion.trim(),
+        )
+        settingsWriter.save(settingsRepository.translationSettings, stored, settingsRepository::setTranslationSettings)
     }
 
     fun setThemeMode(mode: ThemeMode) {
-        viewModelScope.launch { settingsRepository.setThemeMode(mode) }
+        settingsWriter.save(settingsRepository.themeMode, mode, settingsRepository::setThemeMode)
     }
 
     fun setAmoled(enabled: Boolean) {
-        viewModelScope.launch { settingsRepository.setAmoled(enabled) }
+        settingsWriter.save(settingsRepository.amoled, enabled, settingsRepository::setAmoled)
     }
 
     fun setDynamicColor(enabled: Boolean) {
-        viewModelScope.launch { settingsRepository.setDynamicColor(enabled) }
+        settingsWriter.save(settingsRepository.dynamicColor, enabled, settingsRepository::setDynamicColor)
     }
 
     fun setMaxConcurrentDownloads(count: Int) {
-        viewModelScope.launch { settingsRepository.setMaxConcurrentDownloads(count) }
+        settingsWriter.save(settingsRepository.maxConcurrentDownloads, count.coerceIn(1, DownloadSlots.MAX_LIMIT), settingsRepository::setMaxConcurrentDownloads)
     }
 
     fun setRootInstall(enabled: Boolean) {
-        viewModelScope.launch {
+        settingsWriter.save(settingsRepository.rootInstall, enabled) {
             if (enabled) {
                 val available = installer.isRootAvailable()
                 _state.update { it.copy(rootAvailable = available) }
                 if (!available) {
                     _state.update { it.copy(message = appContext.getString(R.string.settings_root_unavailable_msg)) }
-                    return@launch
+                    return@save
                 }
             }
             settingsRepository.setRootInstall(enabled)
@@ -180,7 +186,7 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
     }
 
     fun setBackgroundCheck(enabled: Boolean) {
-        viewModelScope.launch {
+        settingsWriter.save(settingsRepository.backgroundCheck, enabled) {
             settingsRepository.setBackgroundCheck(enabled)
             UpdateScheduler.sync(
                 context = appContext,
@@ -193,13 +199,14 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
     }
 
     fun setCheckIntervalHours(hours: Int) {
-        viewModelScope.launch {
-            settingsRepository.setCheckIntervalHours(hours)
+        val interval = hours.coerceIn(UpdateScheduler.MIN_INTERVAL_HOURS, UpdateScheduler.MAX_INTERVAL_HOURS)
+        settingsWriter.save(settingsRepository.checkIntervalHours, interval) {
+            settingsRepository.setCheckIntervalHours(interval)
             if (_state.value.backgroundCheck) {
                 UpdateScheduler.sync(
                     context = appContext,
                     enabled = true,
-                    intervalHours = hours,
+                    intervalHours = interval,
                     wifiOnly = _state.value.wifiOnly,
                     reset = true,
                 )
@@ -208,7 +215,7 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
     }
 
     fun setWifiOnly(enabled: Boolean) {
-        viewModelScope.launch {
+        settingsWriter.save(settingsRepository.wifiOnly, enabled) {
             settingsRepository.setWifiOnly(enabled)
             if (_state.value.backgroundCheck) {
                 UpdateScheduler.sync(
@@ -223,12 +230,12 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
     }
 
     fun setAutoUpdateRoot(enabled: Boolean) {
-        viewModelScope.launch {
+        settingsWriter.save(settingsRepository.autoUpdateRoot, enabled) {
             if (enabled && !_state.value.rootInstall) {
                 _state.update {
                     it.copy(message = appContext.getString(R.string.settings_auto_update_needs_root))
                 }
-                return@launch
+                return@save
             }
             settingsRepository.setAutoUpdateRoot(enabled)
         }
@@ -239,9 +246,9 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
      * the component state changed, so the two cannot disagree after a restart.
      */
     fun setHideLauncherIcon(hidden: Boolean) {
-        viewModelScope.launch {
+        settingsWriter.save(settingsRepository.hideLauncherIcon, hidden) {
             val applied = runCatching { LauncherIcon.setHidden(appContext, hidden) }.isSuccess
-            if (!applied) return@launch
+            if (!applied) return@save
             settingsRepository.setHideLauncherIcon(hidden)
             _state.update {
                 it.copy(
@@ -302,27 +309,27 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
      * a provider that refuses is reported instead of stored.
      */
     fun setDownloadLocation(uri: Uri) {
-        val granted = runCatching {
-            appContext.contentResolver.takePersistableUriPermission(uri, GRANT_FLAGS)
-        }.isSuccess
-        if (!granted) {
-            _state.update {
-                it.copy(message = appContext.getString(R.string.settings_download_location_failed))
+        val value = uri.toString()
+        settingsWriter.save(settingsRepository.downloadLocation, value) {
+            val previous = settingsRepository.downloadLocation.first()
+            val granted = runCatching {
+                appContext.contentResolver.takePersistableUriPermission(uri, GRANT_FLAGS)
+            }.isSuccess
+            if (!granted) {
+                _state.update {
+                    it.copy(message = appContext.getString(R.string.settings_download_location_failed))
+                }
+                return@save
             }
-            return
-        }
-        val previous = _state.value.downloadLocation
-        viewModelScope.launch {
-            settingsRepository.setDownloadLocation(uri.toString())
-            if (previous != uri.toString()) releaseGrant(previous)
+            settingsRepository.setDownloadLocation(value)
+            releaseGrant(previous)
         }
     }
 
     /** Returns to `Download/LSP_Store` and drops the old folder's grant. */
     fun resetDownloadLocation() {
-        val previous = _state.value.downloadLocation
-        if (previous.isBlank()) return
-        viewModelScope.launch {
+        settingsWriter.save(settingsRepository.downloadLocation, "") {
+            val previous = settingsRepository.downloadLocation.first()
             settingsRepository.setDownloadLocation("")
             releaseGrant(previous)
             _state.update {

@@ -31,6 +31,7 @@ data class InstalledListSnapshot(
     val upToDate: List<InstalledModule>,
     val unknown: List<InstalledModule>,
     val repoPackageByInstalled: Map<String, String>,
+    val installedByRepo: Map<String, InstalledModule>,
     val installedCount: Int,
     val preReleases: Set<String>,
     val preReleaseCapable: Set<String>,
@@ -57,6 +58,9 @@ data class InstalledListSnapshot(
                 upToDate = upToDate.sortedByLabel(),
                 unknown = unknown.sortedByLabel(),
                 repoPackageByInstalled = catalog.repoByInstalled.mapValues { it.value.packageName },
+                installedByRepo = catalog.repoByInstalled.map { (installed, module) ->
+                    module.packageName to catalog.copies.byPackage.getValue(installed)
+                }.toMap(),
                 installedCount = catalog.modules.size,
                 preReleases = preferences.preReleases +
                     catalog.copies.links.filterKeys { it in preferences.preReleases }.values,

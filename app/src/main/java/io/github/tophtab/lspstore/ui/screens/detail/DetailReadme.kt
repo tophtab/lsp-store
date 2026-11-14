@@ -100,6 +100,11 @@ internal fun ReadmeLazyItemView(item: ReadmeLazyItem, bodyStyle: TextStyle, onTo
 
 @Composable
 internal fun ReadmeBlockView(block: ReadmeBlock, bodyStyle: TextStyle) {
+    GuardedReadmeLinks { ReadmeBlockBody(block, bodyStyle) }
+}
+
+@Composable
+private fun GuardedReadmeLinks(content: @Composable () -> Unit) {
     val uriHandler = LocalUriHandler.current
     val guarded = remember(uriHandler) {
         object : UriHandler {
@@ -111,7 +116,7 @@ internal fun ReadmeBlockView(block: ReadmeBlock, bodyStyle: TextStyle) {
         }
     }
     CompositionLocalProvider(LocalUriHandler provides guarded) {
-        ReadmeBlockBody(block, bodyStyle)
+        content()
     }
 }
 
@@ -255,7 +260,7 @@ private fun ReadmeTableRowPanel(item: ReadmeLazyItem.TableRow) {
     }
     Box(Modifier.fillMaxWidth().clip(shape).border(1.dp, MaterialTheme.colorScheme.outline, shape)
         .background(if (item.row.isHeader) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface)) {
-        ReadmeTableRowView(item.row)
+        GuardedReadmeLinks { ReadmeTableRowView(item.row) }
     }
 }
 

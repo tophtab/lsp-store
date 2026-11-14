@@ -75,6 +75,24 @@ class DetailProbeControllerTest {
         assertNull(state.value.variantResolution)
     }
 
+    @Test
+    fun anOldFailureCannotReplaceTheFreshReleasesResolution() = runTest {
+        val state = MutableStateFlow(ModuleDetailUiState())
+        val old = uiRelease(names = listOf("old-a.apk", "old-b.apk"))
+        val fresh = uiRelease(names = listOf("fresh-a.apk", "fresh-b.apk"))
+        val controller = controller(this, state, ApkProbe { asset ->
+            if (asset.name.startsWith("old")) withContext(NonCancellable) { delay(100); throw java.io.IOException("old failure") }
+            ApkMeta(packageName = asset.name)
+        })
+        controller.probeRelease(old, forceProbe = true)
+        runCurrent()
+        controller.probeRelease(fresh, forceProbe = true)
+        advanceUntilIdle()
+        assertEquals(fresh, state.value.probedRelease)
+        assertEquals(setOf("fresh-a.apk", "fresh-b.apk"), state.value.probes.keys)
+        assertFalse(state.value.isProbing)
+    }
+
     private fun controller(scope: TestScope, state: MutableStateFlow<ModuleDetailUiState>, probe: ApkProbe) =
         DetailProbeController(scope, { state.value }, { state.update(it) }, "module",
             ResolveVariantUseCase(probe), DeviceProfile(36, listOf("arm64-v8a")), { ModuleVariantState() })
