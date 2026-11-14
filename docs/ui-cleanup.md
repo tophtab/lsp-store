@@ -1,10 +1,12 @@
 # 前端代码清理与职责拆分
 
-本次重构以合入 #103 后的 `master`（`48bd869`）为基线，保留 `1.7.0` / `10700`。页面入口、导航回调、ViewModel 公开方法和 UI State 声明保持兼容；资源、安装规则、仓库 DTO、资料库备份和设置的持久化格式保持原样。
+本次重构以合入 #103 后的 `master`（`48bd869`）为基线，并随 `1.7.1` / `10701` 发布。页面入口、导航回调、ViewModel 公开方法和 UI State 声明保持兼容；资源、安装规则、仓库 DTO、资料库备份和设置的持久化格式保持原样。
 
 ## 实现边界
 
 三个提交依次完成残留清理、共享逻辑提取、页面与 ViewModel 职责拆分。
+
+发布提交另行更新版本号、更新说明和 Changelog，将已经合入的长按忽略优化一并交付。
 
 - 删除确认无引用的 `VersionChip`、`ExtensionAvatar`、`ModuleCardCompact`、`KomiChipSpacer`、`KomiInputChip`、`KomiChipRow`、`KomiIconButton`、`KomiSettingsValuePill`、`KomiSettingsNote`，以及无调用的 `versionFor()`、`signatureOf()` 和无用导入。
 - `CatalogLoader` 统一缓存首屏、并行扫描与索引刷新、加载指示和失败回退。首页沿用普通扫描，已安装页保留强制扫描参数与 pending 清理；两页仍各自持有 `loadJob`、数据集和 `refreshTick`。
@@ -60,6 +62,8 @@ README 解析另放在 300 行的 `ReadmeParser.kt` 中。
 ```
 
 完整构建成功。单元测试共 455 项，0 失败、0 错误，4 项可选联网测试按配置跳过。完整 lint 为 0 错误、22 个现存配置、依赖更新和 KTX 建议警告；警告位置均在未改动的构建配置或 `LspStoreApp.kt`。
+
+发布版本更新到 `1.7.1` / `10701` 后再次执行上述完整检查，结果一致；debug APK 的包信息也确认了对应版本号。
 
 新增 35 项行为测试，并复用原有安装、pending、变体和 README 测试：
 
