@@ -33,11 +33,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.tophtab.lspstore.R
 import io.github.tophtab.lspstore.ui.LocalAppContainer
-import io.github.tophtab.lspstore.ui.components.EmptyBox
-import io.github.tophtab.lspstore.ui.components.ErrorBox
-import io.github.tophtab.lspstore.ui.components.LoadingBox
 import io.github.tophtab.lspstore.ui.design.KomiConstrainedContent
 import io.github.tophtab.lspstore.ui.design.KomiDialog
+import io.github.tophtab.lspstore.ui.design.KomiEmpty
+import io.github.tophtab.lspstore.ui.design.KomiError
+import io.github.tophtab.lspstore.ui.design.KomiLoading
 import io.github.tophtab.lspstore.ui.design.KomiSurface
 import io.github.tophtab.lspstore.ui.design.KomiText
 import io.github.tophtab.lspstore.ui.design.KomiTextField
@@ -73,7 +73,7 @@ fun IgnoredModulesScreen(onBack: () -> Unit, onOpenModule: (String) -> Unit) {
         val nothingYet = !state.isLoading && state.error == null &&
             state.items.isEmpty() && state.keywords.isEmpty()
         if (nothingYet) {
-            EmptyBox(
+            KomiEmpty(
                 message = stringResource(R.string.library_empty_ignored_modules),
                 modifier = Modifier.padding(innerPadding),
                 actionLabel = stringResource(R.string.library_add_ignore_keyword),
@@ -113,12 +113,12 @@ fun IgnoredModulesScreen(onBack: () -> Unit, onOpenModule: (String) -> Unit) {
                         // index, so a failed index load must not take the whole
                         // screen (and the keyword editor) down with it.
                         state.isLoading -> item(span = StaggeredGridItemSpan.FullLine, key = "loading") {
-                            LoadingBox(Modifier.fillMaxWidth().height(160.dp))
+                            KomiLoading(Modifier.fillMaxWidth().height(160.dp))
                         }
 
                         state.error != null ->
                             item(span = StaggeredGridItemSpan.FullLine, key = "error") {
-                                ErrorBox(
+                                KomiError(
                                     message = state.error!!,
                                     onRetry = viewModel::refresh,
                                     modifier = Modifier.fillMaxWidth().height(200.dp),

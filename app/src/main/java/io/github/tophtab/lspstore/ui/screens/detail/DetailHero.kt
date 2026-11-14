@@ -145,7 +145,6 @@ internal fun DetailHero(
                         fontSize = 13.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.88f),
-                        uppercase = false,
                     )
                 }
             }
@@ -255,7 +254,6 @@ internal fun HeroStatusPill(
             fontWeight = FontWeight.SemiBold,
             fontSize = 12.sp,
             color = MaterialTheme.colorScheme.onPrimaryContainer,
-            uppercase = false,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )

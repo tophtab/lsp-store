@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalMaterial3Api::class)
-
 package io.github.tophtab.lspstore.ui.screens.home
 
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -21,7 +19,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -43,9 +40,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.tophtab.lspstore.R
 import io.github.tophtab.lspstore.domain.model.Module
 import io.github.tophtab.lspstore.ui.LocalAppContainer
-import io.github.tophtab.lspstore.ui.components.EmptyBox
-import io.github.tophtab.lspstore.ui.components.ErrorBox
-import io.github.tophtab.lspstore.ui.components.LoadingBox
 import io.github.tophtab.lspstore.ui.components.MODULE_ITEM_FADE_MILLIS
 import io.github.tophtab.lspstore.ui.components.MODULE_ITEM_PLACEMENT_MILLIS
 import io.github.tophtab.lspstore.ui.components.ModuleCard
@@ -53,6 +47,9 @@ import io.github.tophtab.lspstore.ui.components.ModuleListExit
 import io.github.tophtab.lspstore.ui.components.PullToRefreshBox
 import io.github.tophtab.lspstore.ui.components.rememberModuleListExitState
 import io.github.tophtab.lspstore.ui.design.KomiConstrainedContent
+import io.github.tophtab.lspstore.ui.design.KomiEmpty
+import io.github.tophtab.lspstore.ui.design.KomiError
+import io.github.tophtab.lspstore.ui.design.KomiLoading
 import io.github.tophtab.lspstore.ui.design.KomiSegment
 import io.github.tophtab.lspstore.ui.design.KomiSegmented
 import io.github.tophtab.lspstore.ui.design.KomiText
@@ -160,10 +157,10 @@ fun HomeScreen(
         contentWindowInsets = rootContentWindowInsets(),
     ) { innerPadding ->
         when {
-            state.isLoading -> LoadingBox(Modifier.padding(innerPadding))
+            state.isLoading -> KomiLoading(Modifier.padding(innerPadding))
             state.error != null ->
-                ErrorBox(state.error!!, viewModel::refresh, Modifier.padding(innerPadding))
-            state.recentlyUpdated.isEmpty() && !activeListHasContent -> EmptyBox(
+                KomiError(state.error!!, viewModel::refresh, Modifier.padding(innerPadding))
+            state.recentlyUpdated.isEmpty() && !activeListHasContent -> KomiEmpty(
                 message = stringResource(R.string.home_no_modules),
                 modifier = Modifier.padding(innerPadding),
                 actionLabel = stringResource(R.string.action_refresh),
@@ -189,7 +186,6 @@ fun HomeScreen(
                             .padding(start = 12.dp, top = 8.dp, end = 12.dp, bottom = 4.dp),
                         placeholder = stringResource(R.string.import_search_hint),
                         leadingIcon = Icons.Filled.Search,
-                        singleLine = true,
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                         keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
                         trailing = {
@@ -218,7 +214,7 @@ fun HomeScreen(
                     // pull on the list refreshes. Pulling on the header does not.
                     if (searching) {
                         if (!searchExit.hasContent) {
-                            EmptyBox(
+                            KomiEmpty(
                                 message = stringResource(R.string.search_empty),
                                 modifier = Modifier.weight(1f),
                             )

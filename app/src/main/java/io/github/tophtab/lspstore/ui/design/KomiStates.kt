@@ -18,7 +18,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import io.github.tophtab.lspstore.ui.theme.KomiTextRole
@@ -40,7 +39,6 @@ fun KomiError(
     message: String,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
-    retryLabel: String? = null,
 ) {
     Box(
         modifier = modifier.fillMaxSize().padding(24.dp),
@@ -64,7 +62,7 @@ fun KomiError(
                 Spacer(Modifier.height(16.dp))
                 KomiButton(
                     onClick = onRetry,
-                    label = retryLabel ?: androidx.compose.ui.res.stringResource(R.string.action_retry),
+                    label = androidx.compose.ui.res.stringResource(R.string.action_retry),
                     variant = KomiButtonVariant.Tonal,
                     size = KomiButtonSize.Small,
                 )
@@ -77,7 +75,6 @@ fun KomiError(
 fun KomiEmpty(
     message: String,
     modifier: Modifier = Modifier,
-    icon: ImageVector = Icons.Filled.Extension,
     actionLabel: String? = null,
     onAction: (() -> Unit)? = null,
 ) {
@@ -87,7 +84,7 @@ fun KomiEmpty(
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(
-                imageVector = icon,
+                imageVector = Icons.Filled.Extension,
                 contentDescription = null,
                 modifier = Modifier.size(40.dp),
                 tint = MaterialTheme.colorScheme.outline,
@@ -118,7 +115,6 @@ fun KomiSectionHeader(
     modifier: Modifier = Modifier,
     actionLabel: String? = null,
     onAction: (() -> Unit)? = null,
-    actionEnabled: Boolean = true,
 ) {
     Row(
         modifier = modifier.fillMaxWidth().padding(horizontal = 2.dp, vertical = 6.dp),
@@ -136,7 +132,6 @@ fun KomiSectionHeader(
                 label = actionLabel,
                 variant = KomiButtonVariant.Text,
                 size = KomiButtonSize.Small,
-                enabled = actionEnabled,
             )
         }
     }

@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
-import androidx.compose.material3.pulltorefresh.PullToRefreshState
 import androidx.compose.material3.pulltorefresh.pullToRefresh
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
@@ -33,18 +32,9 @@ fun PullToRefreshBox(
     isRefreshing: Boolean,
     onRefresh: () -> Unit,
     modifier: Modifier = Modifier,
-    state: PullToRefreshState = rememberPullToRefreshState(),
-    contentAlignment: Alignment = Alignment.TopStart,
-    indicator: @Composable BoxScope.() -> Unit = {
-        PullToRefreshDefaults.Indicator(
-            state = state,
-            isRefreshing = isRefreshing,
-            modifier = Modifier.align(Alignment.TopCenter),
-            maxDistance = RefreshPullThreshold,
-        )
-    },
     content: @Composable BoxScope.() -> Unit,
 ) {
+    val state = rememberPullToRefreshState()
     Box(
         modifier = modifier.pullToRefresh(
             isRefreshing = isRefreshing,
@@ -53,9 +43,13 @@ fun PullToRefreshBox(
             threshold = RefreshPullThreshold,
             onRefresh = onRefresh,
         ),
-        contentAlignment = contentAlignment,
     ) {
         content()
-        indicator()
+        PullToRefreshDefaults.Indicator(
+            state = state,
+            isRefreshing = isRefreshing,
+            modifier = Modifier.align(Alignment.TopCenter),
+            maxDistance = RefreshPullThreshold,
+        )
     }
 }

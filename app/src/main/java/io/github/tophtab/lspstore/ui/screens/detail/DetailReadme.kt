@@ -142,7 +142,6 @@ private fun ReadmeBlockBody(block: ReadmeBlock, bodyStyle: TextStyle) {
                 else -> 16.sp
             },
             color = MaterialTheme.colorScheme.onBackground,
-            uppercase = false,
         )
 
         is ReadmeBlock.Code -> KomiSurface(
@@ -346,7 +345,6 @@ internal fun ReadmeDetailsHeader(block: ReadmeBlock.Details, expanded: Boolean, 
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 13.sp,
                 color = MaterialTheme.colorScheme.onSurface,
-                uppercase = false,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )

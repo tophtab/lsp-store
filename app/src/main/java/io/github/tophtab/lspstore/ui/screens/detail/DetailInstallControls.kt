@@ -205,7 +205,6 @@ private fun InstallActionButton(
                     color = content,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    uppercase = false,
                 )
             }
             subtitle?.let {
@@ -216,7 +215,6 @@ private fun InstallActionButton(
                     fontSize = 11.sp,
                     color = content.copy(alpha = 0.8f),
                     maxLines = 1,
-                    uppercase = false,
                 )
             }
         }

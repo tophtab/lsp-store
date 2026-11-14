@@ -268,7 +268,6 @@ class AppContainer(context: Context) {
         // lookup is enough; a full installed scan here would run on every event
         // of an update-all.
         val packageInfo = runCatching {
-            @Suppress("DEPRECATION")
             appContext.packageManager.getPackageInfo(packageName, 0)
         }.getOrNull()
         if (

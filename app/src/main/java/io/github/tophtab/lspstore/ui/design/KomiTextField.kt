@@ -12,7 +12,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -23,19 +22,15 @@ fun KomiTextField(
     placeholder: String? = null,
     leadingIcon: ImageVector? = null,
     trailing: (@Composable () -> Unit)? = null,
-    singleLine: Boolean = true,
     label: String? = null,
-    enabled: Boolean = true,
     keyboardOptions: KeyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
     keyboardActions: KeyboardActions = KeyboardActions(),
-    visualTransformation: VisualTransformation = VisualTransformation.None,
 ) {
     TextField(
         value = value,
         onValueChange = onValueChange,
         modifier = modifier,
-        enabled = enabled,
-        singleLine = singleLine,
+        singleLine = true,
         label = label?.let { { Text(it) } },
         placeholder = placeholder?.let {
             {
@@ -53,7 +48,6 @@ fun KomiTextField(
         },
         trailingIcon = trailing,
         textStyle = MaterialTheme.typography.bodyMedium,
-        visualTransformation = visualTransformation,
         shape = MaterialTheme.shapes.small,
         keyboardOptions = keyboardOptions,
         keyboardActions = keyboardActions,

@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalMaterial3Api::class)
-
 package io.github.tophtab.lspstore.ui.screens.onboarding
 
 import android.Manifest
@@ -32,7 +30,6 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.outlined.Apps
 import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.outlined.Notifications
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface

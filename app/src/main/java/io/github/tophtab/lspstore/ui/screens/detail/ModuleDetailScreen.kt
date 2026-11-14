@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalMaterial3Api::class)
-
 package io.github.tophtab.lspstore.ui.screens.detail
 
 import androidx.compose.foundation.background
@@ -12,7 +10,6 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.OpenInBrowser
 import androidx.compose.material.icons.outlined.Translate
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
@@ -38,11 +35,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.tophtab.lspstore.R
 import io.github.tophtab.lspstore.ui.LocalAppContainer
-import io.github.tophtab.lspstore.ui.components.ErrorBox
-import io.github.tophtab.lspstore.ui.components.LoadingBox
 import io.github.tophtab.lspstore.ui.components.PullToRefreshBox
 import io.github.tophtab.lspstore.ui.components.SnackbarMessageEffect
 import io.github.tophtab.lspstore.ui.components.UninstallConfirmDialog
+import io.github.tophtab.lspstore.ui.design.KomiError
+import io.github.tophtab.lspstore.ui.design.KomiLoading
 import io.github.tophtab.lspstore.ui.design.KomiTopBar
 
 @Composable
@@ -170,8 +167,8 @@ fun ModuleDetailScreen(packageName: String, onBack: () -> Unit, onOpenAuthor: (S
     ) { innerPadding ->
         val detail = state.detail
         when {
-            state.isLoading -> LoadingBox(Modifier.padding(innerPadding))
-            state.error != null -> ErrorBox(state.error!!, viewModel::load, Modifier.padding(innerPadding))
+            state.isLoading -> KomiLoading(Modifier.padding(innerPadding))
+            state.error != null -> KomiError(state.error!!, viewModel::load, Modifier.padding(innerPadding))
             detail != null -> PullToRefreshBox(
                 isRefreshing = state.isRefreshing,
                 onRefresh = viewModel::load,

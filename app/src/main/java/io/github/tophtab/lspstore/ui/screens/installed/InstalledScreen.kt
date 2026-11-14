@@ -39,13 +39,13 @@ import io.github.tophtab.lspstore.R
 import io.github.tophtab.lspstore.domain.model.InstalledModule
 import io.github.tophtab.lspstore.domain.usecase.BatchInstallPhase
 import io.github.tophtab.lspstore.ui.LocalAppContainer
-import io.github.tophtab.lspstore.ui.components.EmptyBox
-import io.github.tophtab.lspstore.ui.components.ErrorBox
-import io.github.tophtab.lspstore.ui.components.LoadingBox
 import io.github.tophtab.lspstore.ui.components.SnackbarMessageEffect
 import io.github.tophtab.lspstore.ui.components.UninstallConfirmDialog
 import io.github.tophtab.lspstore.ui.design.KomiConstrainedContent
+import io.github.tophtab.lspstore.ui.design.KomiEmpty
+import io.github.tophtab.lspstore.ui.design.KomiError
 import io.github.tophtab.lspstore.ui.design.KomiExtendedFab
+import io.github.tophtab.lspstore.ui.design.KomiLoading
 import io.github.tophtab.lspstore.ui.design.KomiSegment
 import io.github.tophtab.lspstore.ui.design.KomiSegmented
 import io.github.tophtab.lspstore.ui.design.KomiTextField
@@ -235,16 +235,15 @@ fun InstalledScreen(
                         .padding(start = 12.dp, top = 8.dp, end = 12.dp, bottom = 4.dp),
                     placeholder = stringResource(R.string.installed_search_hint),
                     leadingIcon = Icons.Filled.Search,
-                    singleLine = true,
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                     keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
                 )
                 when {
-                    state.isLoading -> LoadingBox(Modifier.weight(1f))
+                    state.isLoading -> KomiLoading(Modifier.weight(1f))
                     state.error != null ->
-                        ErrorBox(state.error!!, viewModel::refresh, Modifier.weight(1f))
+                        KomiError(state.error!!, viewModel::refresh, Modifier.weight(1f))
 
-                    state.installedCount == 0 && state.pendingInstalls.isEmpty() -> EmptyBox(
+                    state.installedCount == 0 && state.pendingInstalls.isEmpty() -> KomiEmpty(
                         message = stringResource(R.string.installed_empty),
                         modifier = Modifier.weight(1f),
                         actionLabel = stringResource(R.string.action_refresh),
@@ -253,7 +252,7 @@ fun InstalledScreen(
 
                     segments.isEmpty() -> {
                         val searching = query.isNotBlank()
-                        EmptyBox(
+                        KomiEmpty(
                             message = stringResource(
                                 if (searching) R.string.search_empty else R.string.installed_empty,
                             ),

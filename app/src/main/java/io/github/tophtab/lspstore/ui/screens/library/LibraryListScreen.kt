@@ -29,16 +29,16 @@ import io.github.tophtab.lspstore.R
 import io.github.tophtab.lspstore.domain.model.InstalledModule
 import io.github.tophtab.lspstore.domain.model.Module
 import io.github.tophtab.lspstore.ui.LocalAppContainer
-import io.github.tophtab.lspstore.ui.components.EmptyBox
-import io.github.tophtab.lspstore.ui.components.ErrorBox
 import io.github.tophtab.lspstore.ui.components.LibraryModuleHeading
-import io.github.tophtab.lspstore.ui.components.LoadingBox
 import io.github.tophtab.lspstore.ui.components.ModuleAvatar
 import io.github.tophtab.lspstore.ui.design.KomiButton
 import io.github.tophtab.lspstore.ui.design.KomiButtonSize
 import io.github.tophtab.lspstore.ui.design.KomiButtonVariant
 import io.github.tophtab.lspstore.ui.design.KomiConstrainedContent
+import io.github.tophtab.lspstore.ui.design.KomiEmpty
+import io.github.tophtab.lspstore.ui.design.KomiError
 import io.github.tophtab.lspstore.ui.design.KomiInfoChip
+import io.github.tophtab.lspstore.ui.design.KomiLoading
 import io.github.tophtab.lspstore.ui.design.KomiSurface
 import io.github.tophtab.lspstore.ui.design.KomiTopBar
 
@@ -76,11 +76,11 @@ fun LibraryListScreen(
         },
     ) { innerPadding ->
         when {
-            state.isLoading -> LoadingBox(Modifier.padding(innerPadding))
+            state.isLoading -> KomiLoading(Modifier.padding(innerPadding))
             state.error != null ->
-                ErrorBox(state.error!!, viewModel::refresh, Modifier.padding(innerPadding))
+                KomiError(state.error!!, viewModel::refresh, Modifier.padding(innerPadding))
             state.modules.isEmpty() ->
-                EmptyBox(stringResource(kind.emptyRes), Modifier.padding(innerPadding))
+                KomiEmpty(stringResource(kind.emptyRes), Modifier.padding(innerPadding))
             else -> KomiConstrainedContent(
                 modifier = Modifier.fillMaxSize().padding(innerPadding),
                 maxWidth = 1120.dp,

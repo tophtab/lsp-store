@@ -25,9 +25,7 @@ fun KomiStat(
     icon: ImageVector,
     value: String,
     modifier: Modifier = Modifier,
-    hero: Boolean = false,
     tint: Color = MaterialTheme.colorScheme.onSurface,
-    iconTint: Color = if (hero) MaterialTheme.colorScheme.onPrimaryContainer else tint,
 ) {
     Row(
         modifier = modifier,
@@ -38,7 +36,7 @@ fun KomiStat(
             imageVector = icon,
             contentDescription = null,
             modifier = Modifier.size(15.dp),
-            tint = iconTint,
+            tint = tint,
         )
         KomiText(
             text = value,
@@ -52,15 +50,12 @@ fun KomiStat(
 }
 
 @Composable
-fun KomiDiamond(
-    modifier: Modifier = Modifier,
-    color: Color = MaterialTheme.colorScheme.onSurfaceVariant,
-) {
+fun KomiDiamond(modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .size(4.dp)
             .rotate(45f)
-            .background(color),
+            .background(MaterialTheme.colorScheme.onSurfaceVariant),
     )
 }
 

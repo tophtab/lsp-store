@@ -62,7 +62,6 @@ internal fun AssetSheetContent(
             fontSize = 20.sp,
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.padding(vertical = 6.dp),
-            uppercase = false,
         )
         Spacer(Modifier.height(8.dp))
         if (candidates.isEmpty()) {
@@ -102,10 +101,9 @@ internal fun AssetRow(
     candidate: ScoredAsset,
     resolver: VariantResolver,
     isSelected: Boolean,
-    onClick: (() -> Unit)?,
+    onClick: () -> Unit,
 ) {
     val asset = candidate.asset
-    val enabled = onClick != null
     val context = LocalContext.current
     val configuration = LocalConfiguration.current
     val text = remember(candidate, resolver, configuration) { context.variantCandidateText(candidate, resolver) }
@@ -114,7 +112,7 @@ internal fun AssetRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(enabled = enabled, onClick = onClick ?: {})
+            .clickable(onClick = onClick)
             .padding(horizontal = 4.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
@@ -136,7 +134,6 @@ internal fun AssetRow(
                 else MaterialTheme.colorScheme.onSurface,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
-                uppercase = false,
                 modifier = Modifier.fillMaxWidth(),
             )
             KomiText(

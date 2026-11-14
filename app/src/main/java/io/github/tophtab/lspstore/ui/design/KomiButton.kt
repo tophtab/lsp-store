@@ -30,7 +30,7 @@ import io.github.tophtab.lspstore.ui.theme.KomiTextRole
 
 enum class KomiButtonVariant { Primary, Tonal, Outline, Text, Destructive }
 
-enum class KomiButtonSize { Small, Medium, Large }
+enum class KomiButtonSize { Small, Medium }
 
 private data class ButtonMetrics(
     val height: Dp,
@@ -43,7 +43,6 @@ private data class ButtonMetrics(
 private fun metricsFor(size: KomiButtonSize): ButtonMetrics = when (size) {
     KomiButtonSize.Small -> ButtonMetrics(34.dp, 14.dp, 12.sp, 15.dp, 7.dp)
     KomiButtonSize.Medium -> ButtonMetrics(44.dp, 20.dp, 13.5.sp, 18.dp, 9.dp)
-    KomiButtonSize.Large -> ButtonMetrics(54.dp, 26.dp, 16.sp, 22.dp, 10.dp)
 }
 
 @Composable
@@ -57,7 +56,6 @@ fun KomiButton(
     loading: Boolean = false,
     fullWidth: Boolean = false,
     leadingIcon: ImageVector? = null,
-    trailingIcon: ImageVector? = null,
 ) {
     val metrics = metricsFor(size)
     val active = enabled && !loading
@@ -73,7 +71,6 @@ fun KomiButton(
             metrics = metrics,
             loading = loading,
             leadingIcon = leadingIcon,
-            trailingIcon = trailingIcon,
         )
     }
 
@@ -177,7 +174,6 @@ private fun RowScope.ButtonContent(
     metrics: ButtonMetrics,
     loading: Boolean,
     leadingIcon: ImageVector?,
-    trailingIcon: ImageVector?,
 ) {
     CompositionLocalProvider(LocalContentColor provides contentColor) {
         if (loading) {
@@ -198,9 +194,5 @@ private fun RowScope.ButtonContent(
             fontSize = metrics.font,
             maxLines = 1,
         )
-        if (trailingIcon != null && !loading) {
-            Spacer(Modifier.width(metrics.gap))
-            Icon(trailingIcon, contentDescription = null, modifier = Modifier.size(metrics.icon))
-        }
     }
 }

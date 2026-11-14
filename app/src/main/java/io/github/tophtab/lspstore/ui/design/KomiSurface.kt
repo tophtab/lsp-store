@@ -22,7 +22,6 @@ fun KomiSurface(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
     color: Color = MaterialTheme.colorScheme.surfaceContainerLow,
-    contentColor: Color = MaterialTheme.colorScheme.onSurface,
     elevation: Dp = 1.dp,
     contentPadding: PaddingValues = PaddingValues(0.dp),
     content: @Composable () -> Unit,
@@ -34,7 +33,7 @@ fun KomiSurface(
             modifier = modifier,
             shape = MaterialTheme.shapes.medium,
             color = color,
-            contentColor = contentColor,
+            contentColor = MaterialTheme.colorScheme.onSurface,
             border = border,
             shadowElevation = elevation,
         ) {
@@ -45,7 +44,7 @@ fun KomiSurface(
             modifier = modifier,
             shape = MaterialTheme.shapes.medium,
             color = color,
-            contentColor = contentColor,
+            contentColor = MaterialTheme.colorScheme.onSurface,
             border = border,
             shadowElevation = elevation,
         ) {
