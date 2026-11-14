@@ -13,7 +13,7 @@ data class ModuleVariantState(
     val status: Status = Status.UNKNOWN,
     val signature: VariantSignature? = null,
     val failures: Int = 0,
-    /** Storage key of a [Reason]; the UI turns it back into a localized string. */
+    /** Storage key of a [Reason] written by older builds. Still decoded, no longer read. */
     val reason: String? = null,
     val updatedAt: Long = 0L,
     val explicitPreference: VariantSignature? = null,
@@ -42,9 +42,6 @@ data class ModuleVariantState(
 
     val activePackage: String?
         get() = confirmedInstall?.packageName ?: signature?.packageName
-
-    val isTrusted: Boolean
-        get() = status == Status.TRUSTED
 
     val isNotApplicable: Boolean
         get() = status == Status.NOT_APPLICABLE

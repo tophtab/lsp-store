@@ -15,9 +15,6 @@
     <string name="theme_system">النظام</string>
     <string name="theme_light">فاتح</string>
     <string name="theme_dark">داكن</string>
-    <string name="sort_updated">تم تحديثها مؤخرا</string>
-    <string name="sort_stars">الأكثر تألقًا</string>
-    <string name="sort_name">الاسم</string>
     <string name="nav_repository">مستودع</string>
     <string name="nav_installed">المثبتة</string>
     <string name="nav_settings">الإعدادات</string>

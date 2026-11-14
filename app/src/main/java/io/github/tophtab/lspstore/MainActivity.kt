@@ -68,7 +68,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import io.github.tophtab.lspstore.R
 import io.github.tophtab.lspstore.data.install.DownloadStatus
 import io.github.tophtab.lspstore.data.update.UpdateNotifier
 import io.github.tophtab.lspstore.di.AppContainer

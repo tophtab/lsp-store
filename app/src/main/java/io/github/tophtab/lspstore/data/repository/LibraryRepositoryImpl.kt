@@ -52,7 +52,6 @@ interface LibraryRepository {
 
     /** Repository package names whose update checks also follow pre-releases. */
     val preReleaseModules: Flow<Set<String>>
-    val searchHistory: Flow<List<String>>
     val links: Flow<Map<String, String>>
     val variantStates: Flow<Map<String, ModuleVariantState>>
 
@@ -68,34 +67,24 @@ interface LibraryRepository {
     suspend fun removeIgnoredKeyword(keyword: String)
     suspend fun setPreReleasesEnabled(packageName: String, enabled: Boolean)
     suspend fun clearIgnoredUpdates()
-    suspend fun addSearchQuery(query: String)
-    suspend fun clearSearchHistory()
     suspend fun linkModule(installedPackage: String, repoPackage: String)
     suspend fun unlinkModule(installedPackage: String)
     suspend fun setVariantState(packageName: String, state: ModuleVariantState)
     suspend fun clearVariantState(packageName: String)
-    suspend fun setExplicitPreference(packageName: String, signature: VariantSignature) {
-        val current = variantStates.first()[packageName] ?: ModuleVariantState()
-        setVariantState(packageName, current.migrated().onUserPicked(signature))
-    }
-    suspend fun seedVariantState(packageName: String, state: ModuleVariantState) {
-        if (packageName !in variantStates.first()) setVariantState(packageName, state)
-    }
+    suspend fun setExplicitPreference(packageName: String, signature: VariantSignature)
+
+    /** Stores [state] only when the package has no variant state yet. */
+    suspend fun seedVariantState(packageName: String, state: ModuleVariantState)
     suspend fun recordInstallResult(
         packageName: String,
         ok: Boolean,
         signature: VariantSignature? = null,
     )
 
-    suspend fun recordConfirmedInstall(packageName: String, record: ConfirmedInstallRecord) {
-        val state = variantStates.first()[packageName] ?: ModuleVariantState()
-        setVariantState(packageName, state.onInstallSucceeded(record.target.signature.copy(packageName = record.packageName)).copy(confirmedInstall = record, preferenceMigrated = true))
-    }
+    suspend fun recordConfirmedInstall(packageName: String, record: ConfirmedInstallRecord)
 
-    suspend fun invalidateConfirmedInstall(packageName: String, expected: ConfirmedInstallRecord) {
-        val current = variantStates.first()[packageName] ?: return
-        if (current.confirmedInstall == expected) setVariantState(packageName, current.copy(confirmedInstall = null, signature = null))
-    }
+    /** Drops the confirmed install only while it still equals [expected]. */
+    suspend fun invalidateConfirmedInstall(packageName: String, expected: ConfirmedInstallRecord)
 
     /** Idempotent one-off migration of the legacy asset-name preferences. */
     suspend fun migratePreferredVariants()
@@ -170,9 +159,6 @@ class LibraryRepositoryImpl(private val context: Context) : LibraryRepository {
     /** Repository package names that opted into pre-release tracking. */
     override val preReleaseModules: Flow<Set<String>> = context.libraryDataStore.data
         .decodedField(Keys.PRE_RELEASE_MODULES) { decodeList(it).toSet() }
-
-    override val searchHistory: Flow<List<String>> = context.libraryDataStore.data
-        .decodedField(Keys.SEARCH_HISTORY, ::decodeList)
 
     /** installed package name -> repository module package name */
     override val links: Flow<Map<String, String>> = context.libraryDataStore.data
@@ -276,21 +262,6 @@ class LibraryRepositoryImpl(private val context: Context) : LibraryRepository {
                 current.filterNot { it.equals(keyword, ignoreCase = true) },
             )
         }
-    }
-
-    override suspend fun addSearchQuery(query: String) {
-        val trimmed = query.trim()
-        if (trimmed.length < 2) return
-        context.libraryDataStore.edit { prefs ->
-            val current = decodeList(prefs[Keys.SEARCH_HISTORY])
-            val updated = (listOf(trimmed) + current.filterNot { it.equals(trimmed, ignoreCase = true) })
-                .take(MAX_SEARCH_HISTORY)
-            prefs[Keys.SEARCH_HISTORY] = encodeList(updated)
-        }
-    }
-
-    override suspend fun clearSearchHistory() {
-        context.libraryDataStore.edit { it[Keys.SEARCH_HISTORY] = "" }
     }
 
     override suspend fun linkModule(installedPackage: String, repoPackage: String) {

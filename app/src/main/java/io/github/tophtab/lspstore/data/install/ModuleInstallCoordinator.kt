@@ -82,9 +82,6 @@ class ModuleInstallCoordinator(
 
     private val jobs = ConcurrentHashMap<String, Job>()
 
-    /** Whether a chain already owns this package, synchronously for callers. */
-    fun isRunning(repoPackageName: String): Boolean = registry.isRunning(repoPackageName)
-
     /** Packages currently owned by a chain, for "update all" selection. */
     fun runningPackages(): Set<String> = registry.runningPackages()
 

@@ -82,11 +82,6 @@ class ApkInstaller(
      */
     val packageChanges = MutableSharedFlow<String>(extraBufferCapacity = 8)
 
-    suspend fun download(
-        asset: ReleaseAsset,
-        onProgress: (downloaded: Long, total: Long) -> Unit = { _, _ -> },
-    ): File = downloadManager.downloadBlocking(asset, onProgress)
-
     suspend fun isRootAvailable(timeoutMs: Long = 15_000L): Boolean = withContext(Dispatchers.IO) {
         runCatching {
             val process = ProcessBuilder("su", "-c", "id")

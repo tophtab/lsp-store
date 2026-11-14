@@ -354,12 +354,6 @@ class ModuleDetailViewModel(
         ))
     }
 
-    /** Discards a delegated install that never produced a package event. */
-    fun dismissPending() {
-        val target = _state.value.pendingInstall?.packageName ?: return
-        viewModelScope.launch { container.cancelPendingInstall(target) }
-    }
-
     /**
      * Uninstalls the copy this page found. With the root switch on, su removes
      * it in-process, the page rescans the device and the snackbar confirms;

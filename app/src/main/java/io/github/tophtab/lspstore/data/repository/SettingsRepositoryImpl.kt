@@ -10,7 +10,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import io.github.tophtab.lspstore.data.install.DownloadSlots
 import io.github.tophtab.lspstore.data.update.UpdateScheduler
-import io.github.tophtab.lspstore.domain.model.SortOrder
 import io.github.tophtab.lspstore.domain.model.ThemeMode
 import io.github.tophtab.lspstore.domain.model.TranslationProvider
 import io.github.tophtab.lspstore.domain.model.TranslationSettings
@@ -18,7 +17,6 @@ import io.github.tophtab.lspstore.domain.model.TranslationSettings
 private val Context.settingsDataStore by preferencesDataStore(name = "settings")
 
 interface SettingsRepository {
-    val sortOrder: Flow<SortOrder>
     val rootInstall: Flow<Boolean>
     val themeMode: Flow<ThemeMode>
     val amoled: Flow<Boolean>
@@ -57,7 +55,6 @@ interface SettingsRepository {
     /** Notification dedup state: update set already announced. Not user-facing. */
     val notifiedUpdateSignature: Flow<String>
 
-    suspend fun setSortOrder(order: SortOrder)
     suspend fun setRootInstall(enabled: Boolean)
     suspend fun setThemeMode(mode: ThemeMode)
     suspend fun setAmoled(enabled: Boolean)
@@ -78,7 +75,6 @@ interface SettingsRepository {
 class SettingsRepositoryImpl(private val context: Context) : SettingsRepository {
 
     private object Keys {
-        val SORT = stringPreferencesKey("sort_order")
         val ROOT_INSTALL = booleanPreferencesKey("root_install")
         val THEME_MODE = stringPreferencesKey("theme_mode")
         val AMOLED = booleanPreferencesKey("amoled")
@@ -101,9 +97,6 @@ class SettingsRepositoryImpl(private val context: Context) : SettingsRepository 
         val DOWNLOAD_LOCATION = stringPreferencesKey("download_location")
         val NOTIFIED_UPDATE_SIGNATURE = stringPreferencesKey("notified_update_signature")
     }
-
-    override val sortOrder: Flow<SortOrder> = context.settingsDataStore.data
-        .map { raw -> SortOrder.entries.firstOrNull { it.name == raw[Keys.SORT] } ?: SortOrder.UPDATED }
 
     override val rootInstall: Flow<Boolean> = context.settingsDataStore.data
         .map { it[Keys.ROOT_INSTALL] ?: false }
@@ -165,10 +158,6 @@ class SettingsRepositoryImpl(private val context: Context) : SettingsRepository 
             microsoftKey = prefs[Keys.MICROSOFT_KEY] ?: "",
             microsoftRegion = prefs[Keys.MICROSOFT_REGION] ?: "",
         )
-    }
-
-    override suspend fun setSortOrder(order: SortOrder) {
-        context.settingsDataStore.edit { it[Keys.SORT] = order.name }
     }
 
     override suspend fun setRootInstall(enabled: Boolean) {

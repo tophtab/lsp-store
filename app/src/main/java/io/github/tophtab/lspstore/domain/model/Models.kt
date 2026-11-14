@@ -3,12 +3,6 @@ package io.github.tophtab.lspstore.domain.model
 import java.time.Instant
 import kotlinx.serialization.Serializable
 
-enum class SortOrder {
-    UPDATED,
-    STARS,
-    NAME,
-}
-
 enum class ThemeMode {
     SYSTEM,
     LIGHT,
@@ -215,14 +209,6 @@ data class ModuleDetail(
     val sourceUrl: String?,
     val homepageUrl: String?,
 ) {
-    /**
-     * Releases to list, newest first. With pre-releases enabled both streams are
-     * merged (de-duplicated by tag) so the beta builds show up in the version
-     * picker; otherwise only the stable stream is offered.
-     */
-    fun releasesFor(includePreReleases: Boolean): List<Release> =
-        releasesFor(if (includePreReleases) ReleaseChannel.PRE_RELEASE else ReleaseChannel.STABLE)
-
     /** Releases offered by [channel], newest first, merged and de-duplicated by tag. */
     fun releasesFor(channel: ReleaseChannel): List<Release> {
         val streams = when (channel) {

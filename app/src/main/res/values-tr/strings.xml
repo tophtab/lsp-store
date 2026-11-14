@@ -15,9 +15,6 @@
     <string name="theme_system">Sistem</string>
     <string name="theme_light">Açık</string>
     <string name="theme_dark">Koyu</string>
-    <string name="sort_updated">Yakın zamanda güncellendi</string>
-    <string name="sort_stars">En çok yıldızlı</string>
-    <string name="sort_name">Ad</string>
     <string name="nav_repository">Depo</string>
     <string name="nav_installed">Yüklü</string>
     <string name="nav_settings">Ayarlar</string>

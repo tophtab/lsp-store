@@ -37,15 +37,12 @@ data class DownloadTask(
     val status: DownloadStatus = DownloadStatus.RUNNING,
     val file: File? = null,
     val error: String? = null,
-) {
-    val progress: Float
-        get() = if (total > 0) (downloaded.toFloat() / total).coerceIn(0f, 1f) else 0f
-}
+)
 
 /**
- * Resumable APK downloader. Uses HTTP Range so a paused download can continue
- * when the server supports it (assets.lsposed.org and GitHub both do usually);
- * otherwise it restarts from zero.
+ * Resumable APK downloader. Uses HTTP Range so an interrupted download can
+ * continue when the server supports it (assets.lsposed.org and GitHub both do
+ * usually); otherwise it restarts from zero.
  *
  * Partial files are never discarded just because a transfer failed: a dropped
  * connection, a mirror switch or even process death leaves the bytes on disk,
@@ -72,8 +69,6 @@ class DownloadManager(
     val tasks = taskStore.tasks
 
     fun keyOf(asset: ReleaseAsset): String = assetCacheKey(asset)
-
-    fun taskFor(asset: ReleaseAsset): DownloadTask? = tasks.value[keyOf(asset)]
 
     /** An unsuccessful installer attempt must be able to fetch a fresh copy. */
     suspend fun invalidate(key: String) = withContext(Dispatchers.IO) {
@@ -117,20 +112,6 @@ class DownloadManager(
     }
 
     @Synchronized
-    fun pause(key: String) {
-        if (taskStore.pause(key) == null) return
-        jobs[key]?.cancel()
-    }
-
-    @Synchronized
-    fun resume(asset: ReleaseAsset) {
-        val key = keyOf(asset)
-        if (tasks.value[key]?.status == DownloadStatus.PAUSED) {
-            launchDownload(key, asset)
-        }
-    }
-
-    @Synchronized
     fun cancel(key: String) {
         val task = tasks.value[key] ?: return
         // A finished transfer is shared by whoever asked for it; cancelling one
@@ -142,8 +123,6 @@ class DownloadManager(
         // behind. A later attempt simply starts from zero.
         runCatching { task.file?.delete() }
     }
-
-    fun clearFinished() = taskStore.clearFinished()
 
     suspend fun downloadBlocking(
         asset: ReleaseAsset,
@@ -181,7 +160,7 @@ class DownloadManager(
 
     private fun launchDownload(key: String, asset: ReleaseAsset) {
         // Keep the cancelled writer reachable until it has closed the file. A
-        // quick pause/resume must not open a second writer on the same partial.
+        // restart right after a cancel must not open a second writer on it.
         val previousJob = jobs[key]
         val target = targetFile(key, asset)
         val existingBytes = if (target.exists()) target.length() else 0L
@@ -209,7 +188,7 @@ class DownloadManager(
         DownloadService.start(context)
 
         // Register before starting so a fast completion cannot leave a finished
-        // job in the map, and pause/cancel can always find the new transfer.
+        // job in the map, and cancel can always find the new transfer.
         val job = scope.launch(start = CoroutineStart.LAZY) {
             try {
                 previousJob?.join()
@@ -254,7 +233,8 @@ class DownloadManager(
                 throw lastError ?: IOException("No download URL available")
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) {
-                    // Paused or cancelled: keep the partial file for resume.
+                    // Cancelled: the caller that cancelled decides whether the
+                    // partial file stays for a later attempt.
                     return@launch
                 }
                 taskStore.fail(attempt, t.message ?: "Download failed")

@@ -15,9 +15,6 @@
     <string name="theme_system">সিস্টেম</string>
     <string name="theme_light">লাইট</string>
     <string name="theme_dark">ডার্ক</string>
-    <string name="sort_updated">সম্প্রতি আপডেট করা হয়েছে</string>
-    <string name="sort_stars">সর্বাধিক তারকাখচিত</string>
-    <string name="sort_name">নাম</string>
     <string name="nav_repository">ভান্ডার</string>
     <string name="nav_installed">ইনস্টল করা</string>
     <string name="nav_settings">সেটিংস</string>

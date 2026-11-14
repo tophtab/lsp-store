@@ -28,13 +28,6 @@ data class Reason(
 
     companion object {
         private const val SEPARATOR = "\u001f"
-
-        fun fromStorage(raw: String?): Reason? {
-            if (raw.isNullOrBlank()) return null
-            val parts = raw.split(SEPARATOR)
-            val kind = Kind.entries.firstOrNull { it.name == parts.first() } ?: return null
-            return Reason(kind, parts.drop(1))
-        }
     }
 }
 

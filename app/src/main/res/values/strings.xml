@@ -22,9 +22,6 @@
     <string name="theme_system">System</string>
     <string name="theme_light">Light</string>
     <string name="theme_dark">Dark</string>
-    <string name="sort_updated">Recently updated</string>
-    <string name="sort_stars">Most starred</string>
-    <string name="sort_name">Name</string>
 
     <!-- Navigation -->
     <string name="nav_repository">Repository</string>
