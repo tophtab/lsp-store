@@ -43,6 +43,19 @@ class IgnoreHoldGestureTest {
     }
 
     @Test
+    fun `a release at 399 milliseconds before animation starts remains a normal tap`() {
+        val actions = Actions()
+        actions.gesture.press(0L)
+
+        actions.release(399L)
+
+        assertEquals(1, actions.opened)
+        assertEquals(0, actions.ignored)
+        assertEquals(0, actions.readyFeedback)
+        assertFalse(actions.gesture.captured)
+    }
+
+    @Test
     fun `a click without a pointer press still supports accessibility`() {
         val actions = Actions()
 
@@ -54,9 +67,9 @@ class IgnoreHoldGestureTest {
 
     @Test
     fun `keyboard and accessibility clicks work again after the up finishes dispatching`() {
-        val actions = Actions()
+        val actions = Actions(platformLongPressMillis = 250L)
         actions.gesture.press(0L)
-        actions.release(700L)
+        actions.release(400L)
         assertEquals(0, actions.opened)
 
         actions.gesture.finish()
@@ -69,40 +82,41 @@ class IgnoreHoldGestureTest {
 
     @Test
     fun `capture starts at the platform long press threshold`() {
-        val actions = Actions()
+        val actions = Actions(platformLongPressMillis = 250L)
         actions.gesture.press(0L)
-        actions.gesture.advance(499L)
+        actions.gesture.advance(249L)
         assertFalse(actions.gesture.captured)
 
-        actions.gesture.advance(500L)
+        actions.gesture.advance(250L)
 
         assertTrue(actions.gesture.captured)
         assertFalse(actions.gesture.isReady)
-        actions.release(501L)
+        actions.release(251L)
         assertEquals(0, actions.opened)
         assertEquals(0, actions.ignored)
     }
 
     @Test
-    fun `capture never waits longer than the ignore hold`() {
+    fun `capture never waits beyond the animation start even with a longer platform timeout`() {
         val actions = Actions(platformLongPressMillis = 3_000L)
         actions.gesture.press(0L)
-        actions.gesture.advance(IGNORE_HOLD_MILLIS - 1L)
+        actions.gesture.advance(399L)
         assertFalse(actions.gesture.captured)
 
-        actions.gesture.advance(IGNORE_HOLD_MILLIS)
+        actions.gesture.advance(400L)
 
         assertTrue(actions.gesture.captured)
-        assertTrue(actions.gesture.isReady)
+        assertFalse(actions.gesture.isReady)
+        assertEquals(0, actions.readyFeedback)
         assertEquals(0, actions.ignored)
     }
 
     @Test
-    fun `an early release after capture cancels and swallows the click`() {
+    fun `release on the animation start cancels even before the capture timer runs`() {
         val actions = Actions()
-        actions.gesture.press(0L)
+        actions.gesture.press(42_000L)
 
-        actions.release(IGNORE_HOLD_MILLIS - 1L)
+        actions.release(42_000L + 400L)
 
         assertEquals(0, actions.opened)
         assertEquals(0, actions.ignored)
@@ -110,11 +124,23 @@ class IgnoreHoldGestureTest {
     }
 
     @Test
-    fun `exactly 1700 milliseconds commits on release even before the timer runs`() {
+    fun `an early release after capture cancels and swallows the click`() {
+        val actions = Actions()
+        actions.gesture.press(0L)
+
+        actions.release(499L)
+
+        assertEquals(0, actions.opened)
+        assertEquals(0, actions.ignored)
+        assertEquals(0, actions.readyFeedback)
+    }
+
+    @Test
+    fun `exactly 500 milliseconds commits on release even before the timer runs`() {
         val actions = Actions()
         actions.gesture.press(42_000L)
 
-        actions.release(42_000L + IGNORE_HOLD_MILLIS)
+        actions.release(42_000L + 500L)
 
         assertEquals(1, actions.ignored)
         assertEquals(1, actions.readyFeedback)
@@ -173,11 +199,11 @@ class IgnoreHoldGestureTest {
 
     @Test
     fun `moving outside before ready permanently cancels without reject feedback`() {
-        val actions = Actions()
+        val actions = Actions(platformLongPressMillis = 250L)
         actions.gesture.press(0L)
-        actions.gesture.advance(500L)
+        actions.gesture.advance(250L)
 
-        actions.gesture.updatePointer(800L, insideCard = false)
+        actions.gesture.updatePointer(400L, insideCard = false)
         actions.gesture.updatePointer(1_800L, insideCard = true)
         actions.release(2_000L)
 

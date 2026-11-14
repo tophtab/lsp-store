@@ -33,6 +33,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -67,10 +68,14 @@ import io.github.tophtab.lspstore.ui.design.KomiStat
 import io.github.tophtab.lspstore.ui.design.KomiSurface
 import io.github.tophtab.lspstore.ui.design.KomiText
 import io.github.tophtab.lspstore.ui.theme.KomiTextRole
+import kotlinx.coroutines.delay
 
+private const val IGNORE_HOLD_START_DELAY_MILLIS = 400L
+private const val IGNORE_HOLD_ANIMATION_MILLIS = 100
 /** Wall-clock hold time; independent of the system's animation duration scale. */
-internal const val IGNORE_HOLD_MILLIS = 1_700L
-private const val IGNORE_HOLD_SCALE = 1.025f
+internal const val IGNORE_HOLD_MILLIS = IGNORE_HOLD_START_DELAY_MILLIS + IGNORE_HOLD_ANIMATION_MILLIS
+private const val IGNORE_HOLD_SCALE = 0.90f
+private const val IGNORE_HOLD_ALPHA = 0.80f
 private const val IGNORE_CANCEL_MILLIS = 150
 
 /** Exit snapshots display the card without allowing another gesture or action. */
@@ -92,9 +97,11 @@ internal class IgnoreHoldGesture(
     private enum class Phase { Idle, Pressed, Holding, Ready, Cancelled }
 
     private var phase by mutableStateOf(Phase.Idle)
-    private var startedAtMillis = 0L
+    var startedAtMillis by mutableLongStateOf(0L)
+        private set
     private var suppressClick = false
-    private val captureMillis = platformLongPressMillis.coerceIn(0L, IGNORE_HOLD_MILLIS)
+    // Once the hold animation starts, releasing cancels rather than opening details.
+    private val captureMillis = platformLongPressMillis.coerceIn(0L, IGNORE_HOLD_START_DELAY_MILLIS)
 
     var captured = false
         private set
@@ -179,7 +186,7 @@ private suspend fun PointerInputScope.detectIgnoreHold(
     try {
         awaitEachGesture {
             // The detector sits outside graphicsLayer: size and positions refer
-            // to the original card rectangle, rather than the enlarged visual.
+            // to the original card rectangle, rather than the animated visual.
             val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
             gesture.press(down.uptimeMillis)
             if (down.isConsumed || down.isOutOfBounds(size, Size.Zero) ||
@@ -262,7 +269,8 @@ private suspend fun PointerInputScope.detectIgnoreHold(
  * Full-width module card, modelled on komi's repo card: icon tile, title,
  * owner/package line, two-line summary, chips, then a divider and a stats row.
  *
- * Holding for 1.7 seconds arms [onIgnore]; releasing inside commits it. Moving
+ * After a 0.4-second grace period, the card shrinks and fades over 0.1 seconds.
+ * Holding for 0.5 seconds arms [onIgnore]; releasing inside commits it. Moving
  * outside cancels permanently for this press. A normal short tap opens the
  * module, while an early release after long-press capture is swallowed.
  */
@@ -290,15 +298,20 @@ fun ModuleCard(
             onReject = { currentHaptics.performHapticFeedback(HapticFeedbackType.Reject) },
         )
     }
-    val scale = remember(module.packageName) { Animatable(1f) }
-    LaunchedEffect(gesture, gesture.isPressed, interactionsEnabled) {
+    val holdProgress = remember(module.packageName) { Animatable(0f) }
+    LaunchedEffect(gesture, gesture.startedAtMillis, gesture.isPressed, interactionsEnabled) {
         if (gesture.isPressed && interactionsEnabled) {
-            scale.animateTo(
-                IGNORE_HOLD_SCALE,
-                tween(IGNORE_HOLD_MILLIS.toInt(), easing = LinearEasing),
+            // Restart each press from rest, including during cancellation recovery.
+            // Anchor the grace period to the down event instead of recomposition.
+            holdProgress.snapTo(0f)
+            val animationStartsAt = gesture.startedAtMillis + IGNORE_HOLD_START_DELAY_MILLIS
+            delay((animationStartsAt - SystemClock.uptimeMillis()).coerceAtLeast(0L))
+            holdProgress.animateTo(
+                1f,
+                tween(IGNORE_HOLD_ANIMATION_MILLIS, easing = LinearEasing),
             )
         } else {
-            scale.animateTo(1f, tween(IGNORE_CANCEL_MILLIS))
+            holdProgress.animateTo(0f, tween(IGNORE_CANCEL_MILLIS))
         }
     }
     DisposableEffect(gesture, interactionsEnabled, coordinator) {
@@ -321,8 +334,10 @@ fun ModuleCard(
                 },
             )
             .graphicsLayer {
-                scaleX = scale.value
-                scaleY = scale.value
+                val scale = 1f + (IGNORE_HOLD_SCALE - 1f) * holdProgress.value
+                scaleX = scale
+                scaleY = scale
+                alpha = 1f + (IGNORE_HOLD_ALPHA - 1f) * holdProgress.value
             },
         onClick = if (interactionsEnabled) gesture::open else null,
         contentPadding = PaddingValues(15.dp),

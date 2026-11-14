@@ -9,12 +9,12 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class IgnoreHoldCoordinatorTest {
-    private class Card {
+    private class Card(platformLongPressMillis: Long = 500L) {
         var ignored = 0
         var opened = 0
         var readyFeedback = 0
         val gesture = IgnoreHoldGesture(
-            platformLongPressMillis = 500L,
+            platformLongPressMillis = platformLongPressMillis,
             onOpen = { opened++ },
             onIgnore = { ignored++ },
             onReady = { readyFeedback++ },
@@ -76,10 +76,10 @@ class IgnoreHoldCoordinatorTest {
     @Test
     fun `a finger on navigation after capture cancels before the ready deadline`() {
         val coordinator = IgnoreHoldCoordinator()
-        val card = Card()
+        val card = Card(platformLongPressMillis = 250L)
         coordinator.observePointers(setOf(1L), setOf(1L))
         card.press(coordinator, 1L)
-        card.gesture.advance(500L)
+        card.gesture.advance(250L)
 
         coordinator.observePointers(setOf(1L, 2L), setOf(1L, 2L))
         card.gesture.advance(IGNORE_HOLD_MILLIS)
