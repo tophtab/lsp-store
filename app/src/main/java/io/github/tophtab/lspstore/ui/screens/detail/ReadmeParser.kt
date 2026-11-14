@@ -1,8 +1,6 @@
 package io.github.tophtab.lspstore.ui.screens.detail
 
 import android.text.Html
-import androidx.compose.foundation.background
-import androidx.compose.material3.Text
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.LinkInteractionListener
@@ -11,225 +9,185 @@ import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.fromHtml
 
-internal val SCRIPT_TAG = Regex("<script[\\s\\S]*?</script>", RegexOption.IGNORE_CASE)
-internal val AD_ASIDE = Regex("<aside class=\"ad-slot[\\s\\S]*?</aside>", RegexOption.IGNORE_CASE)
-
 internal sealed interface ReadmeBlock {
-    data class Text(val annotated: AnnotatedString) : ReadmeBlock
-    data class Heading(val level: Int, val annotated: AnnotatedString) : ReadmeBlock
-    data class Code(val text: String) : ReadmeBlock
-    data class Bullet(val annotated: AnnotatedString) : ReadmeBlock
-    data class Ordered(val number: Int, val annotated: AnnotatedString) : ReadmeBlock
-    data class Quote(val annotated: AnnotatedString) : ReadmeBlock
-    data class Image(val url: String) : ReadmeBlock
-    data class Badges(val urls: List<String>) : ReadmeBlock
-    data class Table(val header: ReadmeTableRow?, val rows: List<ReadmeTableRow>) : ReadmeBlock
-    data class Details(val title: String, val blocks: List<ReadmeBlock>) : ReadmeBlock
-    data object Divider : ReadmeBlock
+    val path: String
+    data class Text(val annotated: AnnotatedString, override val path: String = "") : ReadmeBlock
+    data class Heading(val level: Int, val annotated: AnnotatedString, override val path: String = "") : ReadmeBlock
+    data class Code(val text: String, override val path: String = "") : ReadmeBlock
+    data class Bullet(val annotated: AnnotatedString, override val path: String = "", val depth: Int = 0) : ReadmeBlock
+    data class Ordered(val number: Int, val annotated: AnnotatedString, override val path: String = "", val depth: Int = 0) : ReadmeBlock
+    data class Quote(val annotated: AnnotatedString, override val path: String = "") : ReadmeBlock
+    data class Image(val url: String, override val path: String = "") : ReadmeBlock
+    data class Badges(val urls: List<String>, override val path: String = "") : ReadmeBlock
+    data class Table(val header: ReadmeTableRow?, val rows: List<ReadmeTableRow>, override val path: String = "") : ReadmeBlock
+    data class Details(val title: String, val blocks: List<ReadmeBlock>, override val path: String = "") : ReadmeBlock
+    data class Divider(override val path: String = "") : ReadmeBlock
 }
 
-internal data class ReadmeTableCell(
-    val annotated: AnnotatedString,
-    val imageUrl: String? = null,
-    val isHeader: Boolean = false,
-)
+internal data class ReadmeTableCell(val annotated: AnnotatedString, val imageUrl: String? = null, val isHeader: Boolean = false)
 
-/**
- * `AnnotatedString.fromHtml` turns every `<img>` into U+FFFC (the object
- * replacement character), which Text renders as an `OBJ` box. Table images are
- * drawn with AsyncImage instead, so their captions must not keep that marker.
- */
+/** Images render separately, so captions cannot retain HTML's OBJ placeholder. */
 internal val ReadmeTableCell.captionText: String
     get() = annotated.text.filterNot { it == '\uFFFC' }.trim()
 
-internal data class ReadmeTableRow(
-    val cells: List<ReadmeTableCell>,
-    val isHeader: Boolean,
-)
+internal data class ReadmeTableRow(val cells: List<ReadmeTableCell>, val isHeader: Boolean, val path: String = "")
 
-internal val SVG_TAG = Regex("<svg[\\s\\S]*?</svg>", RegexOption.IGNORE_CASE)
-internal val HTML_COMMENT = Regex("<!--[\\s\\S]*?-->", RegexOption.IGNORE_CASE)
+internal class ReadmeLinks(val styles: TextLinkStyles, val listener: LinkInteractionListener?, val inlineCodeBackground: Color)
 
-/** Drops the repository's injected ad slots, scripts, SVGs and comments. */
-internal fun sanitizeReadme(html: String): String {
-    var out = SCRIPT_TAG.replace(html, "")
-    out = AD_ASIDE.replace(out, "")
-    out = SVG_TAG.replace(out, "")
-    out = HTML_COMMENT.replace(out, "")
-    return out
-}
+internal fun parseReadme(html: String, baseUrl: String?, links: ReadmeLinks?, dark: Boolean): List<ReadmeBlock> =
+    parseReadme(scanReadmeStructure(html), baseUrl, links, dark)
 
-internal val IMG_TAG = Regex("<img\\b[^>]*>", RegexOption.IGNORE_CASE)
-internal val SRC_ATTR = Regex("(?<![\\w-])src\\s*=\\s*[\"']([^\"']+)[\"']", RegexOption.IGNORE_CASE)
-internal val PRE_BLOCK = Regex("<pre\\b[^>]*>([\\s\\S]*?)</pre>", RegexOption.IGNORE_CASE)
-internal val HEADING = Regex("<h([1-6])\\b[^>]*>([\\s\\S]*?)</h\\1>", RegexOption.IGNORE_CASE)
-internal val QUOTE_BLOCK = Regex("<blockquote\\b[^>]*>([\\s\\S]*?)</blockquote>", RegexOption.IGNORE_CASE)
-internal val LIST_ITEM = Regex("<li\\b[^>]*>([\\s\\S]*?)</li>", RegexOption.IGNORE_CASE)
-internal val ORDERED_LIST = Regex("<ol\\b[^>]*>([\\s\\S]*?)</ol>", RegexOption.IGNORE_CASE)
-internal val TABLE_BLOCK = Regex("<table\\b[^>]*>([\\s\\S]*?)</table>", RegexOption.IGNORE_CASE)
-internal val TABLE_ROW = Regex("<tr\\b[^>]*>([\\s\\S]*?)</tr>", RegexOption.IGNORE_CASE)
-internal val TABLE_CELL = Regex("<t([hd])\\b[^>]*>([\\s\\S]*?)</t\\1>", RegexOption.IGNORE_CASE)
-internal val DETAILS_BLOCK = Regex("<details\\b[^>]*>([\\s\\S]*?)</details>", RegexOption.IGNORE_CASE)
-internal val SUMMARY_TAG = Regex("<summary\\b[^>]*>([\\s\\S]*?)</summary>", RegexOption.IGNORE_CASE)
-internal val HR_TAG = Regex("<hr\\b[^>]*>", RegexOption.IGNORE_CASE)
-
-internal class ReadmeLinks(
-    val styles: TextLinkStyles,
-    val listener: LinkInteractionListener?,
-    val inlineCodeBackground: Color,
-)
-
-internal enum class ReadmeKind { Image, Code, Heading, Quote, Bullet, Ordered, Table, Details, Divider }
-
-internal class ReadmeMatch(
-    val kind: ReadmeKind,
-    val match: MatchResult,
-) {
-    val range get() = match.range
-}
-
+/** Android styling is an adapter; structure and ordering are testable with JVM text renderers. */
 internal fun parseReadme(
-    html: String,
+    structure: ReadmeStructure,
     baseUrl: String?,
     links: ReadmeLinks?,
     dark: Boolean,
+    annotate: (String) -> AnnotatedString = { htmlToAnnotated(it, links) },
+    plain: (String) -> String = ::plainText,
 ): List<ReadmeBlock> {
-    val sanitized = sanitizeReadme(html)
-    val blocks = mutableListOf<ReadmeBlock>()
-    var cursor = 0
-    while (cursor < sanitized.length) {
-        val candidates = buildList {
-            IMG_TAG.find(sanitized, cursor)?.let { add(ReadmeMatch(ReadmeKind.Image, it)) }
-            PRE_BLOCK.find(sanitized, cursor)?.let { add(ReadmeMatch(ReadmeKind.Code, it)) }
-            HEADING.find(sanitized, cursor)?.let { add(ReadmeMatch(ReadmeKind.Heading, it)) }
-            QUOTE_BLOCK.find(sanitized, cursor)?.let { add(ReadmeMatch(ReadmeKind.Quote, it)) }
-            TABLE_BLOCK.find(sanitized, cursor)?.let { add(ReadmeMatch(ReadmeKind.Table, it)) }
-            DETAILS_BLOCK.find(sanitized, cursor)?.let { add(ReadmeMatch(ReadmeKind.Details, it)) }
-            ORDERED_LIST.find(sanitized, cursor)?.let { add(ReadmeMatch(ReadmeKind.Ordered, it)) }
-            LIST_ITEM.find(sanitized, cursor)?.let { add(ReadmeMatch(ReadmeKind.Bullet, it)) }
-            HR_TAG.find(sanitized, cursor)?.let { add(ReadmeMatch(ReadmeKind.Divider, it)) }
+    fun inline(nodes: List<ReadmeHtmlNode>): String = nodes.joinToString("") { node ->
+        inlineReadmeHtml(node, baseUrl, dark)
+    }
+    fun table(node: ReadmeHtmlNode): ReadmeBlock.Table {
+        val rows = node.descendants(setOf("table")).filter { it.tag == "tr" }.map { row ->
+            val cells = row.children.filter { it.tag == "td" || it.tag == "th" }.map { cell ->
+                val image = cell.descendants().filter { it.tag == "img" }.firstNotNullOfOrNull {
+                    it.attributes["src"]?.let { src -> resolveReadmeUrl(src, baseUrl, dark) }
+                }
+                ReadmeTableCell(annotate(inline(cell.children)), image, cell.tag == "th")
+            }
+            ReadmeTableRow(cells, cells.any { it.isHeader }, row.path)
+        }.toList()
+        val header = rows.firstOrNull { it.isHeader }
+        return ReadmeBlock.Table(header, if (header == null) rows else rows.filterNot { it.isHeader }, node.path)
+    }
+    fun blocks(nodes: List<ReadmeHtmlNode>, listDepth: Int = 0): List<ReadmeBlock> {
+        val output = mutableListOf<ReadmeBlock>()
+        val text = StringBuilder()
+        var textPath = ""
+        fun flush() {
+            if (text.isNotEmpty()) {
+                val value = annotate(text.toString())
+                if (value.text.isNotBlank()) output += ReadmeBlock.Text(value, textPath)
+                text.clear()
+            }
         }
-        val next = candidates.minByOrNull { it.range.first } ?: break
-
-        val before = htmlToAnnotated(sanitized.substring(cursor, next.range.first), links)
-        if (before.text.isNotBlank()) blocks += ReadmeBlock.Text(before)
-
-        when (next.kind) {
-            ReadmeKind.Image -> {
-                val src = SRC_ATTR.find(next.match.value)?.groupValues?.get(1)
-                val resolved = src?.let { resolveReadmeUrl(it, baseUrl, dark) }
-                if (resolved != null) blocks += ReadmeBlock.Image(resolved)
+        fun append(node: ReadmeHtmlNode) {
+            if (text.isEmpty()) textPath = node.path
+            text.append(inlineReadmeHtml(node, baseUrl, dark))
+        }
+        fun listItem(node: ReadmeHtmlNode, number: Int?) {
+            val nested = node.children.filter { it.hasBlocks }
+            val value = annotate(inline(node.children.filterNot { it in nested }))
+            if (value.text.isNotBlank()) {
+                output += if (number == null) ReadmeBlock.Bullet(value, node.path, listDepth)
+                else ReadmeBlock.Ordered(number, value, node.path, listDepth)
             }
-
-            ReadmeKind.Code -> {
-                val text = plainText(next.match.groupValues[1])
-                if (text.isNotBlank()) blocks += ReadmeBlock.Code(text)
-            }
-
-            ReadmeKind.Heading -> {
-                val level = next.match.groupValues[1].toIntOrNull() ?: 2
-                val annotated = htmlToAnnotated(next.match.groupValues[2], links)
-                if (annotated.text.isNotBlank()) blocks += ReadmeBlock.Heading(level, annotated)
-            }
-
-            ReadmeKind.Quote -> {
-                val annotated = htmlToAnnotated(next.match.groupValues[1], links)
-                if (annotated.text.isNotBlank()) blocks += ReadmeBlock.Quote(annotated)
-            }
-
-            ReadmeKind.Table -> blocks += parseTable(next.match.groupValues[1], baseUrl, links, dark)
-
-            ReadmeKind.Details -> {
-                blocks += parseDetails(next.match.groupValues[1], baseUrl, links, dark)
-            }
-
-            ReadmeKind.Ordered -> {
-                var number = 1
-                LIST_ITEM.findAll(next.match.groupValues[1]).forEach { item ->
-                    val annotated = htmlToAnnotated(item.groupValues[1], links)
-                    if (annotated.text.isNotBlank()) {
-                        blocks += ReadmeBlock.Ordered(number, annotated)
-                        number++
+            output += blocks(nested, listDepth + 1)
+        }
+        for (node in nodes) {
+            when {
+                node.tag in setOf("script", "style", "svg") -> flush()
+                node.tag == "aside" && node.attributes["class"].orEmpty().split(' ').any { it.startsWith("ad-slot") } -> flush()
+                node.tag == "img" -> {
+                    flush()
+                    node.attributes["src"]?.let { resolveReadmeUrl(it, baseUrl, dark) }?.let { output += ReadmeBlock.Image(it, node.path) }
+                }
+                node.tag == "pre" -> {
+                    flush()
+                    val code = node.innerHtml.trim().let { inner ->
+                        if (inner.startsWith("<code", ignoreCase = true) && inner.endsWith("</code>", ignoreCase = true)) {
+                            inner.substring(inner.indexOf('>') + 1, inner.length - 7)
+                        } else inner
+                    }
+                    val value = plain(code.replace("<", "&lt;").replace(">", "&gt;"))
+                    if (value.isNotBlank()) output += ReadmeBlock.Code(value, node.path)
+                }
+                node.tag in setOf("h1", "h2", "h3", "h4", "h5", "h6") -> {
+                    flush()
+                    val value = annotate(inline(node.children))
+                    if (value.text.isNotBlank()) output += ReadmeBlock.Heading(node.tag.last().digitToInt(), value, node.path)
+                }
+                node.tag == "blockquote" -> {
+                    flush()
+                    val value = annotate(inline(node.children))
+                    if (value.text.isNotBlank()) output += ReadmeBlock.Quote(value, node.path)
+                }
+                node.tag == "table" -> { flush(); output += table(node) }
+                node.tag == "details" -> {
+                    flush()
+                    val summary = node.summary
+                    val title = summary?.let { annotate(inline(it.children)).text.trim() }.orEmpty()
+                    output += ReadmeBlock.Details(title, blocks(node.children.filterNot { it === summary }, listDepth), node.path)
+                }
+                node.tag == "ul" || node.tag == "ol" -> {
+                    flush()
+                    var number = node.attributes["start"]?.toIntOrNull() ?: 1
+                    for (child in node.children) {
+                        if (child.tag == "li") {
+                            val current = child.attributes["value"]?.toIntOrNull() ?: number
+                            listItem(child, if (node.tag == "ol") current else null)
+                            number = current + 1
+                        } else output += blocks(listOf(child), listDepth)
                     }
                 }
+                node.tag == "li" -> { flush(); listItem(node, null) }
+                node.tag == "hr" -> { flush(); output += ReadmeBlock.Divider(node.path) }
+                node.tag in setOf("p", "div", "section", "article") || node.hasBlocks -> {
+                    flush()
+                    output += blocks(node.children, listDepth)
+                }
+                else -> append(node)
             }
-
-            ReadmeKind.Bullet -> {
-                val annotated = htmlToAnnotated(next.match.groupValues[1], links)
-                if (annotated.text.isNotBlank()) blocks += ReadmeBlock.Bullet(annotated)
-            }
-
-            ReadmeKind.Divider -> blocks += ReadmeBlock.Divider
         }
-        cursor = next.range.last + 1
+        flush()
+        return groupBadges(output)
     }
-    val tail = htmlToAnnotated(sanitized.substring(cursor.coerceAtMost(sanitized.length)), links)
-    if (tail.text.isNotBlank()) blocks += ReadmeBlock.Text(tail)
-    return groupBadges(blocks)
+    return blocks(structure.nodes)
 }
 
-internal fun parseTable(
-    inner: String,
-    baseUrl: String?,
-    links: ReadmeLinks?,
-    dark: Boolean,
-): ReadmeBlock.Table {
-    val rows = TABLE_ROW.findAll(inner).map { row ->
-        val cells = TABLE_CELL.findAll(row.groupValues[1]).map { cell ->
-            val isHeader = cell.groupValues[1].equals("h", ignoreCase = true)
-            val cellHtml = cell.groupValues[2]
-            val imageSrc = IMG_TAG.find(cellHtml)?.let { img ->
-                SRC_ATTR.find(img.value)?.groupValues?.get(1)
-            }
-            val resolved = imageSrc?.let { resolveReadmeUrl(it, baseUrl, dark) }
-            val text = htmlToAnnotated(cellHtml, links)
-            ReadmeTableCell(annotated = text, imageUrl = resolved, isHeader = isHeader)
-        }.toList()
-        ReadmeTableRow(cells = cells, isHeader = cells.any { it.isHeader })
-    }.toList()
-    val header = rows.firstOrNull { it.isHeader }
-    val body = if (header != null) rows.filterNot { it.isHeader } else rows
-    return ReadmeBlock.Table(header = header, rows = body)
+/** Link attributes are rewritten from scanned nodes, without scanning the HTML again. */
+private fun inlineReadmeHtml(node: ReadmeHtmlNode, baseUrl: String?, dark: Boolean): String {
+    if (node.tag in setOf("script", "style", "svg")) return ""
+    if (node.children.isEmpty()) return node.html
+    val inner = node.children.joinToString("") { inlineReadmeHtml(it, baseUrl, dark) }
+    if (node.tag == "a") {
+        val href = node.attributes["href"]?.let { resolveReadmeLink(it, baseUrl) }
+        return if (href == null) inner else "<a href=\"${href.replace("&", "&amp;").replace("\"", "&quot;")}\">$inner</a>"
+    }
+    return node.openingHtml + inner + node.closingHtml
 }
 
-internal fun parseDetails(
-    inner: String,
-    baseUrl: String?,
-    links: ReadmeLinks?,
-    dark: Boolean,
-): ReadmeBlock.Details {
-    val summary = SUMMARY_TAG.find(inner)
-        ?.let { htmlToAnnotated(it.groupValues[1], links).text.trim() }
-        .orEmpty()
-    val body = if (summary.isEmpty()) inner else SUMMARY_TAG.replace(inner, "")
-    return ReadmeBlock.Details(
-        title = summary,
-        blocks = parseReadme(body, baseUrl, links, dark),
-    )
+internal fun resolveReadmeLink(href: String, baseUrl: String?): String? {
+    val value = decodeHtmlEntities(href).trim()
+    if (value.startsWith("mailto:", ignoreCase = true)) return value
+    val uri = runCatching { java.net.URI(value) }.getOrNull() ?: return null
+    val resolved = if (uri.isAbsolute) uri else baseUrl?.takeIf { it.isNotBlank() }?.let {
+        runCatching { java.net.URI(it.trimEnd('/') + "/").resolve(uri) }.getOrNull()
+    } ?: return null
+    return resolved.toString().takeIf { resolved.scheme in setOf("http", "https") }
 }
 
 internal fun plainText(html: String): String =
-    runCatching { Html.fromHtml(html, Html.FROM_HTML_MODE_LEGACY).toString() }
-        .getOrDefault("")
-        .trim()
+    runCatching { Html.fromHtml(html, Html.FROM_HTML_MODE_LEGACY).toString() }.getOrDefault("").trim()
 
-/** Runs of consecutive badge images flow on one line, like the reference app. */
+/** Runs of consecutive badge images share a row. */
 internal fun groupBadges(blocks: List<ReadmeBlock>): List<ReadmeBlock> {
     val grouped = mutableListOf<ReadmeBlock>()
     val pending = mutableListOf<String>()
+    var path = ""
     fun flush() {
         if (pending.isNotEmpty()) {
-            grouped += ReadmeBlock.Badges(pending.toList())
+            grouped += ReadmeBlock.Badges(pending.toList(), path)
             pending.clear()
         }
     }
     blocks.forEach { block ->
         if (block is ReadmeBlock.Image && isBadgeUrl(block.url)) {
+            if (pending.isEmpty()) path = block.path
             pending += block.url
-        } else {
-            flush()
-            grouped += block
-        }
+        } else { flush(); grouped += block }
     }
     flush()
     return grouped
@@ -292,9 +250,15 @@ internal fun resolveReadmeUrl(src: String, baseUrl: String?, dark: Boolean): Str
 
 /** Image src attributes arrive HTML-escaped, e.g. `?sign=..&amp;t=..`. */
 internal fun decodeHtmlEntities(value: String): String = value
+    .let { text -> NUMERIC_ENTITY.replace(text) { match ->
+        val code = match.groupValues[1].toIntOrNull() ?: match.groupValues[2].toIntOrNull(16)
+        if (code != null && Character.isValidCodePoint(code)) String(Character.toChars(code)) else match.value
+    } }
     .replace("&quot;", "\"")
     .replace("&#39;", "'")
     .replace("&apos;", "'")
     .replace("&lt;", "<")
     .replace("&gt;", ">")
     .replace("&amp;", "&")
+
+private val NUMERIC_ENTITY = Regex("&#(?:([0-9]+)|[xX]([0-9a-fA-F]+));")

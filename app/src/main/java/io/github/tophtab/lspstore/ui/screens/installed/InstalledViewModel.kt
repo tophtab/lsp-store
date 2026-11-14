@@ -9,22 +9,27 @@ import io.github.tophtab.lspstore.data.repository.PendingInstallRepository
 import io.github.tophtab.lspstore.di.AppContainer
 import io.github.tophtab.lspstore.domain.model.InstalledModule
 import io.github.tophtab.lspstore.domain.model.Module
-import io.github.tophtab.lspstore.domain.model.PendingInstall
-import io.github.tophtab.lspstore.domain.model.SkippedVersion
 import io.github.tophtab.lspstore.domain.model.UpdateInfo
-import io.github.tophtab.lspstore.domain.model.expectedPackage
-import io.github.tophtab.lspstore.domain.model.installedCopyForRepo
-import io.github.tophtab.lspstore.domain.model.repoModuleFor
-import io.github.tophtab.lspstore.domain.model.sortedByLabel
 import io.github.tophtab.lspstore.domain.model.tracksPreReleases
-import io.github.tophtab.lspstore.domain.usecase.UpdateChecker
 import io.github.tophtab.lspstore.domain.variant.InstalledVariantHint
-import io.github.tophtab.lspstore.domain.variant.ModuleVariantState
 import io.github.tophtab.lspstore.ui.CatalogLoader
 import io.github.tophtab.lspstore.ui.RefreshScrollGate
 import io.github.tophtab.lspstore.ui.reportUninstallOutcome
 import io.github.tophtab.lspstore.ui.toUserMessage
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.stateIn
+import io.github.tophtab.lspstore.domain.model.InstalledCopies
+import io.github.tophtab.lspstore.domain.model.RepositoryIndex
+import io.github.tophtab.lspstore.domain.usecase.InstalledListPreferences
+import io.github.tophtab.lspstore.domain.usecase.installedListSnapshots
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
@@ -36,6 +41,9 @@ import kotlinx.coroutines.launch
 /** How often a visible screen re-checks pending installs that never landed. */
 private const val PENDING_RECONCILE_MS = 30_000L
 
+private data class InstalledIndexInput(val modules: List<Module> = emptyList(), val refreshTick: Int = 0)
+
+@OptIn(ExperimentalCoroutinesApi::class)
 class InstalledViewModel(private val container: AppContainer) : ViewModel() {
 
     private val moduleRepository = container.moduleRepository
@@ -50,15 +58,36 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
 
     private val _state = MutableStateFlow(InstalledUiState())
     val state = _state.asStateFlow()
+    val pageState = state.map(InstalledUiState::withoutProgress).distinctUntilChanged()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, InstalledUiState())
 
-    private var index: List<Module> = emptyList()
-    private var installed: List<InstalledModule> = emptyList()
-    private var skipped: Map<String, SkippedVersion> = emptyMap()
-    private var ignoredUpdates: Set<String> = emptySet()
-    private var links: Map<String, String> = emptyMap()
-    private var variantStates: Map<String, ModuleVariantState> = emptyMap()
-    private var preReleases: Set<String> = emptySet()
-    private var pending: Map<String, PendingInstall> = emptyMap()
+    fun rowState(packageName: String) = state.map {
+        it.rowStates[packageName] ?: it.detailRuns[packageName]
+    }.distinctUntilChanged()
+
+    private val indexInput = MutableStateFlow(InstalledIndexInput())
+    private val installedInput = MutableStateFlow<List<InstalledModule>>(emptyList())
+    private val repositoryIndex = indexInput.mapLatest { input ->
+        withContext(Dispatchers.Default) { RepositoryIndex.build(input.modules, input.refreshTick) }
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, RepositoryIndex.build(emptyList()))
+    private val installedCopies = combine(installedInput, libraryRepository.links) { modules, links ->
+        modules to links
+    }.mapLatest { (modules, links) ->
+        withContext(Dispatchers.Default) { InstalledCopies.build(modules, links) }
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, InstalledCopies.build(emptyList(), emptyMap()))
+    private val preferences = combine(
+        libraryRepository.skippedUpdates,
+        libraryRepository.preReleaseModules,
+        libraryRepository.ignoredUpdates,
+        libraryRepository.variantStates,
+        pendingRepository.pending,
+    ) { skipped, preReleases, ignored, variants, pending ->
+        InstalledListPreferences(skipped, preReleases, ignored, variants, pending)
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, InstalledListPreferences())
+    private val preReleases get() = preferences.value.preReleases
+    private val ignoredUpdates get() = preferences.value.ignoredUpdates
+    private val links get() = installedCopies.value.links
+    private var followedCopies: Map<String, InstalledModule> = emptyMap()
     private var loadJob: Job? = null
     private val refreshScrollGate = RefreshScrollGate()
 
@@ -92,12 +121,13 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
         updateState = { transform -> _state.update(transform) },
         getDetail = moduleRepository::getDetail,
         titleFor = { repoPackage ->
-            index.firstOrNull { it.packageName == repoPackage }?.title
-                ?: installed.firstOrNull { it.packageName == repoPackage }?.label
+            repositoryIndex.value.byPackage[repoPackage]?.title
+                ?: installedCopies.value.byPackage[repoPackage]?.label
                 ?: repoPackage
         },
         installedFor = { repoPackage ->
-            installedCopyForRepo(repoPackage, installed, links, variantStates[repoPackage]?.activePackage)
+            followedCopies[repoPackage]
+                ?: installedCopies.value.forRepo(repoPackage, preferences.value.variantStates[repoPackage]?.activePackage)
         },
         resolveVariant = container.resolveVariantUseCase,
         device = container.deviceProfile,
@@ -122,32 +152,9 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
             }
         }
         viewModelScope.launch {
-            libraryRepository.skippedUpdates.collect { value -> skipped = value; recompute() }
-        }
-        viewModelScope.launch {
-            libraryRepository.preReleaseModules.collect { value -> preReleases = value; recompute() }
-        }
-        viewModelScope.launch {
-            libraryRepository.ignoredUpdates.collect { value ->
-                ignoredUpdates = value
-                recompute()
-            }
-        }
-        viewModelScope.launch {
-            libraryRepository.links.collect { value -> links = value; recompute() }
-        }
-        viewModelScope.launch {
-            libraryRepository.variantStates.collect { value ->
-                variantStates = value
-                recompute()
-            }
-        }
-        viewModelScope.launch {
-            // Persisted delegated installs, mirroring komi-store's
-            // isPendingInstall flag on installed-app records.
-            pendingRepository.pending.collect { value ->
-                pending = value
-                recompute()
+            installedListSnapshots(repositoryIndex, installedCopies, preferences).collect { snapshot ->
+                followedCopies = snapshot.installedByRepo
+                _state.update { it.withSnapshot(snapshot) }
             }
         }
         viewModelScope.launch {
@@ -198,7 +205,7 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
             // keep the row's Update button hidden until the app is restarted.
             while (true) {
                 delay(PENDING_RECONCILE_MS)
-                if (pending.isEmpty()) continue
+                if (preferences.value.pending.isEmpty()) continue
                 val current = _state.value
                 // A batch may still be waiting for its own hand-off; abandoning
                 // the pending entry now would release the install slot too early.
@@ -247,8 +254,7 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
             installedRepository.getInstalledModules(force = true)
         }.getOrNull() ?: return
         container.prunePendingInstalls(modules)
-        installed = modules
-        recompute()
+        installedInput.value = modules
     }
 
     fun dismissPending(packageName: String) {
@@ -305,8 +311,8 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
      * still wins, so tracking pre-releases never hides a stable update.
      */
     fun togglePreReleases(repoPackageName: String) {
-        val module = index.firstOrNull { it.packageName == repoPackageName } ?: return
-        val installedPackage = installed.firstOrNull { it.packageName == repoPackageName }?.packageName
+        val module = repositoryIndex.value.byPackage[repoPackageName] ?: return
+        val installedPackage = installedCopies.value.byPackage[repoPackageName]?.packageName
             ?: links.entries.firstOrNull { it.value == repoPackageName }?.key
         val enabled = !preReleases.tracksPreReleases(installedPackage, repoPackageName)
         viewModelScope.launch {
@@ -337,8 +343,8 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
      * are left out of the updates list until the user restores them.
      */
     fun toggleIgnoreUpdate(repoPackageName: String) {
-        val module = index.firstOrNull { it.packageName == repoPackageName } ?: return
-        val installedPackage = installed.firstOrNull { it.packageName == repoPackageName }?.packageName
+        val module = repositoryIndex.value.byPackage[repoPackageName] ?: return
+        val installedPackage = installedCopies.value.byPackage[repoPackageName]?.packageName
             ?: links.entries.firstOrNull { it.value == repoPackageName }?.key
             ?: repoPackageName
         val ignored = installedPackage in ignoredUpdates || repoPackageName in ignoredUpdates
@@ -347,14 +353,14 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
             if (repoPackageName != installedPackage) {
                 libraryRepository.setUpdateCheckEnabled(repoPackageName, enabled = ignored)
             }
-            ignoredUpdates = if (ignored) {
+            val nextIgnored = if (ignored) {
                 ignoredUpdates - installedPackage - repoPackageName
             } else {
                 ignoredUpdates + installedPackage
             }
             _state.update {
                 it.copy(
-                    ignoredUpdates = ignoredUpdates,
+                    ignoredUpdates = nextIgnored,
                     message = container.appContext.getString(
                         if (ignored) {
                             R.string.installed_update_unignored
@@ -365,70 +371,6 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
                     ),
                 )
             }
-            recompute()
-        }
-    }
-
-    private fun recompute() {
-        if (index.isEmpty() && installed.isEmpty() && pending.isEmpty()) return
-        val byPackage = index.associateBy { it.packageName }
-        val chosenPackages = variantStates.values.mapNotNull { it.activePackage }.toSet()
-        val xposed = installed.filter {
-            it.isXposedModule || it.packageName in links || it.packageName in chosenPackages
-        }.filter { module ->
-            val repo = repoModuleFor(module.packageName, byPackage, links)
-            repo == null || installedCopyForRepo(
-                repo.packageName, installed, links, variantStates[repo.packageName]?.activePackage,
-            )?.packageName == module.packageName
-        }
-        val pendingPackages = pending.keys
-        val repoPackageByInstalled = xposed.mapNotNull { module ->
-            repoModuleFor(module.packageName, byPackage, links)
-                ?.let { module.packageName to it.packageName }
-        }.toMap()
-        // Pending installs move out of updates/idle, as in komi-store's apps list.
-        val updates = UpdateChecker
-            .findUpdates(
-                installed = installed,
-                index = index,
-                preReleases = preReleases,
-                skipped = skipped,
-                links = links,
-                ignored = ignoredUpdates,
-                variantStates = variantStates,
-            )
-            .filterNot { it.installed.packageName in pendingPackages }
-        val updating = updates.map { it.module.packageName }.toSet()
-
-        val upToDate = xposed.filter { module ->
-            val repoPackage = repoPackageByInstalled[module.packageName] ?: return@filter false
-            repoPackage !in updating
-        }.sortedByLabel()
-        val unknown = xposed.filter {
-            it.packageName !in repoPackageByInstalled
-        }.sortedByLabel()
-        val pendingInstalls = pending.values
-            .sortedByDescending { it.createdAt }
-
-        // The UI keys rows by repository package. A legacy preference stored
-        // under the installed package must still light the toggle, so project
-        // those entries onto their linked repository module.
-        val effectivePreReleases = preReleases +
-            links.filterKeys { it in preReleases }.values
-
-        _state.update {
-            it.copy(
-                preReleases = effectivePreReleases,
-                preReleaseCapable = index.filter { it.hasPreReleases }.map { it.packageName }.toSet(),
-                updates = updates,
-                pendingInstalls = pendingInstalls,
-                upToDate = upToDate,
-                unknown = unknown,
-                repoPackageByInstalled = repoPackageByInstalled,
-                installedCount = xposed.size,
-                ignoredUpdates = ignoredUpdates,
-                variantStates = variantStates,
-            )
         }
     }
 
@@ -436,13 +378,12 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
         loadJob?.cancel()
         loadJob = viewModelScope.launch {
             catalogLoader.load(
-                hasIndex = index.isNotEmpty(),
+                hasIndex = indexInput.value.modules.isNotEmpty(),
                 forceRefresh = force,
                 forceScan = force,
                 onCache = { modules, cachedInstalled ->
-                    index = modules
-                    cachedInstalled?.let { installed = it }
-                    recompute()
+                    indexInput.update { it.copy(modules = modules) }
+                    cachedInstalled?.let { installedInput.value = it }
                 },
                 onLoading = { loading, refreshing ->
                     _state.update {
@@ -452,20 +393,17 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
                 onScanned = { modules ->
                     container.prunePendingInstalls(modules)
                     currentCoroutineContext().ensureActive()
-                    installed = modules
-                    recompute()
+                    installedInput.value = modules
                 },
                 onRefreshed = { modules ->
-                    index = modules
+                    indexInput.update { it.copy(modules = modules, refreshTick = it.refreshTick + 1) }
                     _state.update {
                         it.copy(
                             isLoading = false,
                             isRefreshing = false,
                             error = null,
-                            refreshTick = it.refreshTick + 1,
                         )
                     }
-                    recompute()
                 },
                 onFailure = { error ->
                     _state.update {

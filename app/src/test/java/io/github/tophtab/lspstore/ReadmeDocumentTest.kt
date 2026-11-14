@@ -57,4 +57,21 @@ class ReadmeDocumentTest {
         loading.cancelAndJoin()
         assertNull(document.cached(key()))
     }
+
+    @Test
+    fun `an older parse cannot replace the cache after a new document finishes`() = runBlocking {
+        val entered = CompletableDeferred<Unit>()
+        val finishOld = CompletableDeferred<Unit>()
+        val document = ReadmeDocument { request ->
+            if (request.html == "old") { entered.complete(Unit); finishOld.await() }
+            listOf(ReadmeBlock.Text(AnnotatedString(request.html)))
+        }
+        val old = async { document.load(key("old")) }
+        entered.await()
+        val fresh = document.load(key("fresh"))
+        finishOld.complete(Unit)
+        old.await()
+        assertSame(fresh, document.cached(key("fresh")))
+        assertNull(document.cached(key("old")))
+    }
 }

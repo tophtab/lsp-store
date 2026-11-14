@@ -38,7 +38,8 @@ import io.github.tophtab.lspstore.ui.LocalAppContainer
 import io.github.tophtab.lspstore.ui.design.KomiDialog
 import io.github.tophtab.lspstore.ui.design.KomiText
 import io.github.tophtab.lspstore.ui.theme.KomiTextRole
-import io.github.tophtab.lspstore.ui.variant.variantTags
+import io.github.tophtab.lspstore.ui.variant.variantCandidateText
+import androidx.compose.ui.platform.LocalConfiguration
 
 @Composable
 internal fun VariantPickerDialog(
@@ -47,6 +48,7 @@ internal fun VariantPickerDialog(
     onDismiss: () -> Unit,
 ) {
     val context = LocalContext.current
+    val configuration = LocalConfiguration.current
     val container = LocalAppContainer.current
     val device by container.deviceProfileFlow.collectAsStateWithLifecycle()
     val resolver = remember(device) { VariantResolver(device) }
@@ -108,22 +110,11 @@ internal fun VariantPickerDialog(
                             )
                         }
                         items(eligible, key = { it.asset.name }) { candidate ->
-                            val labels = if (candidate.recommended) {
-                                resolver.matchLabels(candidate.traits, candidate.meta)
-                            } else {
-                                emptyList()
-                            }
-                            val reason = labels.takeIf { it.isNotEmpty() }?.let {
-                                stringResource(
-                                    R.string.variant_reason_matches_device,
-                                    it.joinToString(", "),
-                                )
-                            }
-                            val tags = variantTags(candidate.traits, candidate.meta)
+                            val text = remember(candidate, resolver, configuration) { context.variantCandidateText(candidate, resolver) }
                             val subtitle = listOfNotNull(
                                 Formatter.formatShortFileSize(context, candidate.asset.size),
-                                tags.takeIf { it.isNotEmpty() }?.joinToString(" · "),
-                                reason,
+                                text.tags,
+                                text.recommendation,
                             ).joinToString(" - ")
                             VariantChoiceRow(
                                 label = candidate.asset.name,

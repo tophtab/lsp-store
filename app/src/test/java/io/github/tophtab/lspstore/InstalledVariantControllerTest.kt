@@ -86,6 +86,39 @@ class InstalledVariantControllerTest {
         assertTrue(fixture.preferences.isEmpty())
     }
 
+    @Test
+    fun switchingModulesRejectsThePreviousPickersResponse() = runTest {
+        val fixture = Fixture(this)
+        fixture.detail = { pkg ->
+            if (pkg == "module") withContext(NonCancellable) { delay(100) }
+            uiDetail(module = uiModule(pkg), releases = listOf(uiRelease(names = listOf("$pkg.apk"))))
+        }
+        fixture.controller.openVariantPicker("module")
+        runCurrent()
+        fixture.controller.dismissVariantPicker()
+        fixture.controller.openVariantPicker("next")
+        advanceUntilIdle()
+        assertEquals("next", fixture.state.value.variantPicker?.repoPackageName)
+        assertEquals("next.apk", fixture.state.value.variantPicker?.selectedAssetName)
+    }
+
+    @Test
+    fun aLateFailureDoesNotOverwriteTheReopenedPickersSuccess() = runTest {
+        val fixture = Fixture(this)
+        var calls = 0
+        fixture.detail = {
+            if (++calls == 1) withContext(NonCancellable) { delay(100); throw IOException("old failure") }
+            uiDetail()
+        }
+        fixture.controller.openVariantPicker("module")
+        runCurrent()
+        fixture.controller.dismissVariantPicker()
+        fixture.controller.openVariantPicker("module")
+        advanceUntilIdle()
+        assertEquals("module.apk", fixture.state.value.variantPicker?.selectedAssetName)
+        assertNull(fixture.state.value.variantPicker?.error)
+    }
+
     private class Fixture(scope: TestScope) {
         val state = MutableStateFlow(InstalledUiState())
         val preferences = mutableListOf<Pair<String, VariantSignature>>()

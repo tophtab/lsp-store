@@ -37,9 +37,7 @@ import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteItem
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
-import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffoldValue
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
-import androidx.compose.material3.adaptive.navigationsuite.rememberNavigationSuiteScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -335,39 +333,30 @@ private fun MainContent(openInstalled: StateFlow<Int>) {
         } else {
             NavigationSuiteType.ShortNavigationBarMedium
         }
-        // Phones keep the old behaviour: the bottom bar steps aside on detail
-        // pages, where it would only eat height.
-        val keepNavigation = currentRoute in rootRoutes
-        val navigationSuiteState = rememberNavigationSuiteScaffoldState(
-            initialValue = NavigationSuiteScaffoldValue.Hidden,
-        )
-        LaunchedEffect(keepNavigation) {
-            if (keepNavigation) navigationSuiteState.show() else navigationSuiteState.hide()
-        }
-        NavigationSuiteScaffold(
-            state = navigationSuiteState,
-            navigationSuiteType = navigationSuiteType,
-            navigationItems = {
-                navItems.forEach { item ->
-                    NavigationSuiteItem(
-                        selected = item.route == selectedRootRoute,
-                        onClick = { onNavigate(item.route) },
-                        // The label is always visible, so it carries the name; a
-                        // content description here would make TalkBack say it twice.
-                        icon = { Icon(imageVector = item.icon, contentDescription = null) },
-                        label = { Text(text = stringResource(item.labelRes), maxLines = 1) },
-                        colors = navigationItemColors,
-                    )
-                }
+        AppNavHost(
+            navController = navController,
+            reselectRoute = reselectRoute,
+            reselectTick = reselectTick,
+            modifier = Modifier.fillMaxSize(),
+            rootPage = { route, content ->
+                // The bar and root page enter together, so saved list anchors
+                // are measured with their final viewport on the first layout.
+                NavigationSuiteScaffold(
+                    navigationSuiteType = navigationSuiteType,
+                    navigationItems = {
+                        navItems.forEach { item ->
+                            NavigationSuiteItem(
+                                selected = item.route == route,
+                                onClick = { onNavigate(item.route) },
+                                icon = { Icon(imageVector = item.icon, contentDescription = null) },
+                                label = { Text(text = stringResource(item.labelRes), maxLines = 1) },
+                                colors = navigationItemColors,
+                            )
+                        }
+                    },
+                ) { content() }
             },
-        ) {
-            AppNavHost(
-                navController = navController,
-                reselectRoute = reselectRoute,
-                reselectTick = reselectTick,
-                modifier = Modifier.fillMaxSize(),
-            )
-        }
+        )
     }
 }
 
@@ -377,6 +366,7 @@ private fun AppNavHost(
     reselectRoute: String?,
     reselectTick: Int,
     modifier: Modifier = Modifier,
+    rootPage: @Composable (String, @Composable () -> Unit) -> Unit = { _, content -> content() },
 ) {
     NavHost(
         navController = navController,
@@ -393,28 +383,34 @@ private fun AppNavHost(
         sizeTransform = null,
     ) {
         composable(Routes.HOME) {
-            HomeScreen(
-                onOpenModule = { navController.navigate(Routes.detail(it)) },
-                reselectTick = if (reselectRoute == Routes.HOME) reselectTick else 0,
-            )
+            rootPage(Routes.HOME) {
+                HomeScreen(
+                    onOpenModule = { navController.navigate(Routes.detail(it)) },
+                    reselectTick = if (reselectRoute == Routes.HOME) reselectTick else 0,
+                )
+            }
         }
         composable(Routes.INSTALLED) {
-            InstalledScreen(
-                onOpenModule = { navController.navigate(Routes.detail(it)) },
-                onOpenImports = { navController.navigate(Routes.IMPORTS) },
-                reselectTick = if (reselectRoute == Routes.INSTALLED) reselectTick else 0,
-            )
+            rootPage(Routes.INSTALLED) {
+                InstalledScreen(
+                    onOpenModule = { navController.navigate(Routes.detail(it)) },
+                    onOpenImports = { navController.navigate(Routes.IMPORTS) },
+                    reselectTick = if (reselectRoute == Routes.INSTALLED) reselectTick else 0,
+                )
+            }
         }
         composable(Routes.SETTINGS) {
-            SettingsScreen(
-                onOpenFavourites = { navController.navigate(Routes.FAVOURITES) },
-                onOpenRecentlyViewed = { navController.navigate(Routes.RECENTLY_VIEWED) },
-                onOpenSkipped = { navController.navigate(Routes.SKIPPED) },
-                onOpenIgnoredModules = { navController.navigate(Routes.IGNORED_MODULES) },
-                onOpenAbout = { navController.navigate(Routes.ABOUT) },
-                onOpenMirrors = { navController.navigate(Routes.MIRRORS) },
-                reselectTick = if (reselectRoute == Routes.SETTINGS) reselectTick else 0,
-            )
+            rootPage(Routes.SETTINGS) {
+                SettingsScreen(
+                    onOpenFavourites = { navController.navigate(Routes.FAVOURITES) },
+                    onOpenRecentlyViewed = { navController.navigate(Routes.RECENTLY_VIEWED) },
+                    onOpenSkipped = { navController.navigate(Routes.SKIPPED) },
+                    onOpenIgnoredModules = { navController.navigate(Routes.IGNORED_MODULES) },
+                    onOpenAbout = { navController.navigate(Routes.ABOUT) },
+                    onOpenMirrors = { navController.navigate(Routes.MIRRORS) },
+                    reselectTick = if (reselectRoute == Routes.SETTINGS) reselectTick else 0,
+                )
+            }
         }
         composable(Routes.MIRRORS) {
             MirrorPickerScreen(onBack = { navController.popBackStack() })

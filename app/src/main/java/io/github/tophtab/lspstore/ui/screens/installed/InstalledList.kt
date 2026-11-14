@@ -8,12 +8,17 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import io.github.tophtab.lspstore.R
 import io.github.tophtab.lspstore.domain.model.InstalledModule
 import io.github.tophtab.lspstore.domain.model.UpdateInfo
+import io.github.tophtab.lspstore.domain.usecase.BatchInstallState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.flow.Flow
 import io.github.tophtab.lspstore.ui.components.PullToRefreshBox
 import io.github.tophtab.lspstore.ui.design.KomiSectionHeader
 
@@ -32,6 +37,7 @@ internal data class InstalledListActions(
 @Composable
 internal fun InstalledList(
     state: InstalledUiState,
+    progressFor: (String) -> Flow<BatchInstallState?>,
     updates: List<UpdateInfo>,
     upToDate: List<InstalledModule>,
     unknown: List<InstalledModule>,
@@ -71,10 +77,13 @@ internal fun InstalledList(
             when {
                 showRepository -> {
                     items(updates, key = { "u:${it.module.packageName}" }) { info ->
+                        val progress = remember(progressFor, info.module.packageName) { progressFor(info.module.packageName) }
+                        val install by progress.collectAsStateWithLifecycle(
+                            initialValue = state.rowStates[info.module.packageName] ?: state.detailRuns[info.module.packageName],
+                        )
                         UpdateRow(
                             info = info,
-                            install = state.rowStates[info.module.packageName]
-                                ?: state.detailRuns[info.module.packageName],
+                            install = install,
                             isUpdateIgnored = isUpdateIgnored(
                                 info.installed.packageName,
                                 info.module.packageName,

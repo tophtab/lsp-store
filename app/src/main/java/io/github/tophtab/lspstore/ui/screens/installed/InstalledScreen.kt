@@ -60,7 +60,8 @@ fun InstalledScreen(
 ) {
     val container = LocalAppContainer.current
     val viewModel: InstalledViewModel = viewModel(factory = InstalledViewModel.factory(container))
-    val state by viewModel.state.collectAsStateWithLifecycle()
+    val state by viewModel.pageState.collectAsStateWithLifecycle()
+    val progressFor = remember(viewModel) { viewModel::rowState }
     val snackbarHostState = remember { SnackbarHostState() }
     val listState = rememberLazyListState()
     val focusManager = LocalFocusManager.current
@@ -90,12 +91,6 @@ fun InstalledScreen(
             listState.scrollToItem(0)
         }
     }
-    fun InstalledModule.matches() = query.isBlank() ||
-        label.contains(query, ignoreCase = true) || packageName.contains(query, ignoreCase = true)
-    fun matchUpdate(info: UpdateInfo) = query.isBlank() ||
-        info.module.title.contains(query, ignoreCase = true) ||
-        info.module.packageName.contains(query, ignoreCase = true)
-
 
     // A silent (root) uninstall would delete without any system prompt, so the
     // row menu asks here first. Without root the system confirmation page is
@@ -109,18 +104,18 @@ fun InstalledScreen(
         }
     }
 
-    val updates = state.updates
-        .filter(::matchUpdate)
-        .filterNot { info ->
-            // A finished row keeps its check for a moment, then leaves the
-            // updates list without waiting for the rest of the batch.
-            val row = state.rowStates[info.module.packageName]
-            row != null &&
-                row.phase == BatchInstallPhase.COMPLETED &&
-                !row.noticeVisible
+    val completed = remember(state.rowStates) {
+        state.rowStates.filterValues { it.phase == BatchInstallPhase.COMPLETED && !it.noticeVisible }.keys
+    }
+    val updates = remember(state.updates, query, completed) {
+        state.updates.filter { info ->
+            info.module.packageName !in completed && (query.isBlank() ||
+                info.module.title.contains(query, ignoreCase = true) ||
+                info.module.packageName.contains(query, ignoreCase = true))
         }
-    val upToDate = state.upToDate.filter { it.matches() }
-    val unknown = state.unknown.filter { it.matches() }
+    }
+    val upToDate = remember(state.upToDate, query) { state.upToDate.matching(query) }
+    val unknown = remember(state.unknown, query) { state.unknown.matching(query) }
 
     val repositoryCount = updates.size + upToDate.size
     val segments = buildList {
@@ -288,6 +283,7 @@ fun InstalledScreen(
                         // a pull on the list refreshes.
                         InstalledList(
                             state = state,
+                            progressFor = progressFor,
                             updates = updates,
                             upToDate = upToDate,
                             unknown = unknown,
@@ -334,3 +330,8 @@ fun InstalledScreen(
     }
 
 }
+
+private fun List<InstalledModule>.matching(query: String): List<InstalledModule> =
+    if (query.isBlank()) this else filter {
+        it.label.contains(query, ignoreCase = true) || it.packageName.contains(query, ignoreCase = true)
+    }

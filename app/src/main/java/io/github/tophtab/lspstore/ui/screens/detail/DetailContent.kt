@@ -38,6 +38,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.tophtab.lspstore.R
+import io.github.tophtab.lspstore.data.install.ModuleInstallRun
+import kotlinx.coroutines.flow.Flow
 import io.github.tophtab.lspstore.domain.model.ModuleDetail
 import io.github.tophtab.lspstore.domain.model.Release
 import io.github.tophtab.lspstore.domain.model.ReleaseChannel
@@ -47,7 +49,6 @@ import io.github.tophtab.lspstore.domain.model.selectedRelease
 import io.github.tophtab.lspstore.domain.variant.InstalledVariantHint
 import io.github.tophtab.lspstore.domain.variant.ModuleVariantState
 import io.github.tophtab.lspstore.domain.variant.VariantDecision
-import io.github.tophtab.lspstore.domain.variant.VariantResolver
 import io.github.tophtab.lspstore.domain.variant.selectInstallAsset
 import io.github.tophtab.lspstore.ui.LocalAppContainer
 import io.github.tophtab.lspstore.ui.design.KomiText
@@ -55,8 +56,8 @@ import io.github.tophtab.lspstore.ui.theme.KomiTextRole
 import io.github.tophtab.lspstore.ui.theme.LocalKomiType
 import io.github.tophtab.lspstore.ui.variant.variantReasonText
 
-/** Regular sections keep a 24 dp gap; README blocks use the list's 12 dp gap. */
-private fun LazyListScope.detailItem(key: String, bottomSpace: Dp = 12.dp, content: @Composable () -> Unit) {
+/** Regular sections keep a 24 dp gap; README items supply their own spacing. */
+private fun LazyListScope.detailItem(key: String, bottomSpace: Dp = 24.dp, content: @Composable () -> Unit) {
     item(key = key) { Box(Modifier.padding(bottom = bottomSpace)) { content() } }
 }
 
@@ -71,6 +72,7 @@ private fun LazyListScope.detailItem(key: String, bottomSpace: Dp = 12.dp, conte
 internal fun DetailContent(
     readmeDocument: ReadmeDocument,
     state: ModuleDetailUiState,
+    installProgress: Flow<ModuleInstallRun?>,
     detail: ModuleDetail,
     listState: LazyListState,
     onInstallAsset: (ResolvedInstallTarget) -> Unit,
@@ -93,7 +95,6 @@ internal fun DetailContent(
     val context = LocalContext.current
     val container = LocalAppContainer.current
     val device by container.deviceProfileFlow.collectAsStateWithLifecycle()
-    val resolver = remember(device) { VariantResolver(device) }
     val emptyVariantState = remember { ModuleVariantState() }
     val variantState = state.variantState ?: emptyVariantState
     val probes = remember(state.probedTag, state.probes, selectedRelease) {
@@ -106,42 +107,17 @@ internal fun DetailContent(
         installedPackage = state.installed?.packageName,
         repoPackage = detail.module.packageName,
     )
-    val fallbackDecision = remember(device, selectedRelease, variantState, probes, installedHint, expectedPackageName) {
+    val initialResolution = remember(device, selectedRelease, variantState, probes, installedHint, expectedPackageName) {
         selectedRelease?.let {
-            resolver.resolveForUpdate(
-                variantState,
-                it,
-                probes,
-                expectedPackage = expectedPackageName,
-                installed = installedHint,
-            )
+            container.resolveVariantUseCase.initial(it, variantState, device, expectedPackageName, installedHint, probes)
         }
     }
     val recommendationReady = state.probedRelease == selectedRelease && state.variantResolution != null && !state.isProbing
-    val decision = if (recommendationReady) state.variantResolution.decision else fallbackDecision
-    // Multi-APK recommendations can use background metadata. A single APK
-    // returns immediately; changing releases also cancels an obsolete request.
+    val resolution = if (recommendationReady) state.variantResolution else initialResolution
+    val decision = resolution?.decision
+    val candidates = resolution?.candidates.orEmpty()
     LaunchedEffect(selectedRelease, device, variantState, installedHint, state.probeGeneration) {
         selectedRelease?.let { onProbeAssets(it, false) }
-    }
-    val candidates = remember(device, selectedRelease, variantState, decision, probes, installedHint, expectedPackageName) {
-        val base = selectedRelease?.let {
-            // Same expected package, installed hint and probe policy as the
-            // decision above, so a row and the install button never disagree.
-            resolver.candidates(
-                it,
-                probes = probes,
-                allowProbes = true,
-                expectedPackage = expectedPackageName,
-                installed = installedHint,
-            )
-        } ?: emptyList()
-        val recommendedName = (decision as? VariantDecision.Pick)?.asset?.name
-        // Best fit first, so the default the install button uses is the first row
-        // of the resource sheet too.
-        resolver.ranked(base).map {
-            it.copy(recommended = base.size > 1 && it.asset.name == recommendedName)
-        }.sortedByDescending { it.recommended }
     }
     var userPickedAssetName by rememberSaveable(selectedRelease?.tagName) {
         mutableStateOf("")
@@ -175,6 +151,11 @@ internal fun DetailContent(
     }
     val readme = if (state.showTranslation) state.translatedReadmeHtml ?: detail.readmeHtml else detail.readmeHtml
     val readmeBlocks = rememberReadmeBlocks(readme, detail.module.url, readmeDocument)
+    val documentId = remember(readme, detail.module.url) { readmeDocumentId(readme, detail.module.url) }
+    var expandedPaths by rememberSaveable(documentId, stateSaver = ReadmeExpandedPathsSaver) { mutableStateOf(emptySet<String>()) }
+    val readmeItems = remember(readmeBlocks, documentId, expandedPaths) {
+        readmeLazyItems(readmeBlocks.orEmpty(), documentId, expandedPaths)
+    }
     val readmeStyle = LocalKomiType.current.styleFor(KomiTextRole.Body).copy(fontSize = 14.sp)
     val afterReadme = if (state.installLogs.isEmpty()) 0.dp else 12.dp
     // The page knows which release is selected, so it asks for that release's
@@ -204,12 +185,17 @@ internal fun DetailContent(
         state = listState,
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(0.dp),
     ) {
         detailItem(key = "hero") {
             DetailHero(
-                state = state,
-                detail = detail,
+                module = detail.module,
+                summary = if (state.showTranslation) state.translatedSummary ?: detail.module.summary.orEmpty() else detail.module.summary.orEmpty(),
+                scope = detail.scope,
+                collaborators = detail.collaborators,
+                pending = state.pendingInstall != null,
+                updateAvailable = state.updateAvailable,
+                latestVersion = state.latestVersion,
                 onOpenAuthor = onOpenAuthor,
             )
         }
@@ -238,7 +224,9 @@ internal fun DetailContent(
         }
 
         detailItem(key = "install") {
+            val run by installProgress.collectAsStateWithLifecycle(initialValue = state.activeInstall)
             InstallControls(
+                run = run,
                 state = state,
                 targetVersion = selectedRelease?.version,
                 target = selectedTarget,
@@ -286,12 +274,12 @@ internal fun DetailContent(
             SectionHeading(stringResource(R.string.detail_about))
         }
         when {
-            readmeBlocks == null -> detailItem(key = "about_loading", bottomSpace = afterReadme) {
+            readmeBlocks == null -> detailItem(key = "about_loading", bottomSpace = afterReadme + 12.dp) {
                 Box(Modifier.fillMaxWidth().height(30.dp), contentAlignment = Alignment.CenterStart) {
                     CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.dp)
                 }
             }
-            readmeBlocks.isEmpty() -> detailItem(key = "about", bottomSpace = afterReadme) {
+            readmeBlocks.isEmpty() -> detailItem(key = "about", bottomSpace = afterReadme + 12.dp) {
                 KomiText(
                     stringResource(R.string.detail_no_readme),
                     role = KomiTextRole.Body,
@@ -299,13 +287,19 @@ internal fun DetailContent(
                 )
             }
             else -> items(
-                count = readmeBlocks.size,
-                key = { "readme:$it" },
-                contentType = { readmeBlocks[it]::class },
-            ) { index ->
-                Box(Modifier.padding(bottom = if (index == readmeBlocks.lastIndex) afterReadme else 0.dp)) {
-                    ReadmeBlockView(readmeBlocks[index], readmeStyle)
-                }
+                items = readmeItems,
+                key = { it.key },
+                contentType = { when (it) {
+                    is ReadmeLazyItem.Block -> it.block::class
+                    is ReadmeLazyItem.Details -> ReadmeLazyItem.Details::class
+                    is ReadmeLazyItem.TableRow -> ReadmeLazyItem.TableRow::class
+                } },
+            ) { item ->
+                ReadmeLazyItemView(
+                    item, readmeStyle,
+                    onToggle = { path -> expandedPaths = if (path in expandedPaths) expandedPaths - path else expandedPaths + path },
+                    modifier = Modifier.padding(bottom = if (item.key == readmeItems.lastOrNull()?.key) afterReadme else 0.dp),
+                )
             }
         }
 

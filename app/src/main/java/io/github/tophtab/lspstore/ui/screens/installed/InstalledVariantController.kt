@@ -12,7 +12,6 @@ import io.github.tophtab.lspstore.domain.variant.DeviceProfile
 import io.github.tophtab.lspstore.domain.variant.InstalledVariantHint
 import io.github.tophtab.lspstore.domain.variant.ModuleVariantState
 import io.github.tophtab.lspstore.domain.variant.VariantDecision
-import io.github.tophtab.lspstore.domain.variant.VariantResolver
 import io.github.tophtab.lspstore.domain.variant.VariantSignature
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -62,24 +61,21 @@ internal class InstalledVariantController(
                     updatePicker(generation, repoPackageName) { it.copy(isLoading = false, error = text.empty()) }
                     return@launch
                 }
-                val state = (readState().variantStates[repoPackageName] ?: ModuleVariantState()).forInstalled(installed)
+                val states = readState().variantStates
+                val state = (states[repoPackageName] ?: states[installed?.packageName] ?: ModuleVariantState()).forInstalled(installed)
                 val installedHint = installed?.let(InstalledVariantHint::of)
                 val expectedPackage = expectedPackage(installed?.packageName, repoPackageName)
+                val initial = resolveVariant.initial(release, state, device, expectedPackage, installedHint)
+                updatePicker(generation, repoPackageName) {
+                    it.copy(candidates = initial.candidates, release = release)
+                }
                 val resolution = resolveVariant.resolve(
                     release, state, device, expectedPackage,
                     forceProbe = true, installed = installedHint,
                 )
                 currentCoroutineContext().ensureActive()
-                val resolver = VariantResolver(device)
                 val recommended = (resolution.decision as? VariantDecision.Pick)?.asset?.name
-                val candidates = resolver.ranked(
-                    resolver.candidates(
-                        release, probes = resolution.probes,
-                        expectedPackage = expectedPackage, installed = installedHint,
-                    ),
-                ).map {
-                    it.copy(recommended = release.apkAssets.size > 1 && it.asset.name == recommended)
-                }.sortedByDescending { it.recommended }
+                val candidates = resolution.candidates
                 val selected = state.migrated().explicitPreference?.let { signature ->
                     candidates.firstOrNull { signature.matches(it.asset.name, it.traits) }?.asset?.name
                 } ?: recommended

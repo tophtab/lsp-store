@@ -30,6 +30,10 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -49,6 +53,9 @@ class ModuleDetailViewModel(
 
     private val _state = MutableStateFlow(ModuleDetailUiState())
     val state = _state.asStateFlow()
+    val pageState = state.map(ModuleDetailUiState::withoutProgress).distinctUntilChanged()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, ModuleDetailUiState())
+    val installProgress = state.map { it.activeInstall }.distinctUntilChanged()
 
     /** The user picked a channel; stop mirroring the persisted pre-release flag. */
     private var channelChosen = false
