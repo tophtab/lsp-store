@@ -15,6 +15,7 @@ import io.github.tophtab.lspstore.domain.usecase.BatchInstallPhase
 import io.github.tophtab.lspstore.domain.usecase.BatchInstallState
 import io.github.tophtab.lspstore.domain.usecase.BatchInstallUseCase
 import io.github.tophtab.lspstore.domain.usecase.VariantResolution
+import io.github.tophtab.lspstore.domain.usecase.isActive
 import io.github.tophtab.lspstore.domain.variant.ModuleVariantState
 import io.github.tophtab.lspstore.domain.variant.VariantDecision
 import kotlin.coroutines.cancellation.CancellationException
@@ -29,13 +30,6 @@ import kotlinx.coroutines.launch
 /** Terminal row notices use the same durations as before the extraction. */
 private const val COMPLETED_NOTICE_MS = 1_200L
 private const val FAILED_NOTICE_MS = 3_000L
-private val ACTIVE_PHASES = setOf(
-    BatchInstallPhase.QUEUED,
-    BatchInstallPhase.PREPARING,
-    BatchInstallPhase.DOWNLOADING,
-    BatchInstallPhase.WAITING_TO_INSTALL,
-    BatchInstallPhase.INSTALLING,
-)
 
 /** Owns update runs and their notices; installation still belongs to the app coordinator. */
 internal class InstalledUpdateController(
@@ -75,7 +69,7 @@ internal class InstalledUpdateController(
         // A busy row of a running batch keeps its pill; retrying a row that
         // already reached a terminal phase (failed, skipped, cancelled) is fine.
         val row = readState().rowStates[packageName]
-        if (row != null && row.phase in ACTIVE_PHASES) return
+        if (row != null && row.phase.isActive) return
         startSingleRun(info)
     }
 
@@ -85,7 +79,7 @@ internal class InstalledUpdateController(
         // already owns its package; starting a second chain for it here would
         // download and install it twice.
         val busy = readState().detailRuns.keys +
-            readState().rowStates.filterValues { it.phase in ACTIVE_PHASES }.keys +
+            readState().rowStates.filterValues { it.phase.isActive }.keys +
             registry.runningPackages() +
             startingUpdates
         val targets = readState().updates.filterNot {

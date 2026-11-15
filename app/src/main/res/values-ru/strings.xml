@@ -15,9 +15,6 @@
     <string name="theme_system">Системная</string>
     <string name="theme_light">Светлая</string>
     <string name="theme_dark">Тёмная</string>
-    <string name="sort_updated">Недавно обновлено</string>
-    <string name="sort_stars">Самые популярные</string>
-    <string name="sort_name">Название</string>
     <string name="nav_repository">Репозиторий</string>
     <string name="nav_installed">Установленные</string>
     <string name="nav_settings">Настройки</string>

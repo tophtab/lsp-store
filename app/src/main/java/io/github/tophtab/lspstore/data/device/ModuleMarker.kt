@@ -45,8 +45,6 @@ object ModuleMarker {
         return if (unreadable) null else false
     }
 
-    fun hasAnyMarker(apkPath: String): Boolean = readMarker(apkPath) == true
-
     private fun readMarker(apkPath: String): Boolean? {
         if (!File(apkPath).isFile) return null
         return runCatching {

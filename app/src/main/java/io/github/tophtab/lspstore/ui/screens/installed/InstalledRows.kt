@@ -32,6 +32,7 @@ import io.github.tophtab.lspstore.domain.model.InstalledModule
 import io.github.tophtab.lspstore.domain.model.UpdateInfo
 import io.github.tophtab.lspstore.domain.usecase.BatchInstallPhase
 import io.github.tophtab.lspstore.domain.usecase.BatchInstallState
+import io.github.tophtab.lspstore.domain.usecase.isActive
 import io.github.tophtab.lspstore.ui.components.ModuleAvatar
 import io.github.tophtab.lspstore.ui.components.PackageAvatar
 import io.github.tophtab.lspstore.ui.design.KomiButton
@@ -58,13 +59,7 @@ internal fun UpdateRow(
     onUninstall: () -> Unit,
 ) {
     var actionsOpen by remember { mutableStateOf(false) }
-    val active = install?.takeIf {
-        it.phase == BatchInstallPhase.QUEUED ||
-            it.phase == BatchInstallPhase.PREPARING ||
-            it.phase == BatchInstallPhase.DOWNLOADING ||
-            it.phase == BatchInstallPhase.WAITING_TO_INSTALL ||
-            it.phase == BatchInstallPhase.INSTALLING
-    }
+    val active = install?.takeIf { it.phase.isActive }
     KomiSurface(
         modifier = Modifier.fillMaxWidth(),
         onClick = onOpen,

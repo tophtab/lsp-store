@@ -2,7 +2,6 @@ package io.github.tophtab.lspstore.ui.theme
 
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
-import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 
 /**
@@ -114,28 +113,3 @@ val CyanAmoledScheme = IconCyanDark.copy(
 
 val CyanLightScheme = IconCyanLight
 val CyanDarkScheme = IconCyanDark
-
-/** GitHub-style semantic status colours, matching komi-store's palette. */
-@Immutable
-data class StatusColors(
-    val success: Color,
-    val warning: Color,
-    val info: Color,
-    val danger: Color,
-)
-
-private val LightStatus = StatusColors(
-    success = Color(0xFF1A7F37),
-    warning = Color(0xFF9A6700),
-    info = Color(0xFF0969DA),
-    danger = Color(0xFFCF222E),
-)
-
-private val DarkStatus = StatusColors(
-    success = Color(0xFF3FB950),
-    warning = Color(0xFFD29922),
-    info = Color(0xFF58A6FF),
-    danger = Color(0xFFF85149),
-)
-
-fun statusColors(dark: Boolean): StatusColors = if (dark) DarkStatus else LightStatus

@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalMaterial3Api::class)
-
 package io.github.tophtab.lspstore.ui.screens.author
 
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -13,7 +11,6 @@ import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -26,14 +23,14 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.tophtab.lspstore.R
 import io.github.tophtab.lspstore.ui.LocalAppContainer
-import io.github.tophtab.lspstore.ui.components.EmptyBox
-import io.github.tophtab.lspstore.ui.components.ErrorBox
-import io.github.tophtab.lspstore.ui.components.LoadingBox
 import io.github.tophtab.lspstore.ui.components.MODULE_ITEM_FADE_MILLIS
 import io.github.tophtab.lspstore.ui.components.MODULE_ITEM_PLACEMENT_MILLIS
 import io.github.tophtab.lspstore.ui.components.ModuleCard
 import io.github.tophtab.lspstore.ui.components.ModuleListExit
 import io.github.tophtab.lspstore.ui.components.rememberModuleListExitState
+import io.github.tophtab.lspstore.ui.design.KomiEmpty
+import io.github.tophtab.lspstore.ui.design.KomiError
+import io.github.tophtab.lspstore.ui.design.KomiLoading
 import io.github.tophtab.lspstore.ui.design.KomiSectionHeader
 import io.github.tophtab.lspstore.ui.design.KomiTopBar
 
@@ -59,11 +56,11 @@ fun AuthorScreen(author: String, onBack: () -> Unit, onOpenModule: (String) -> U
         },
     ) { innerPadding ->
         when {
-            state.isLoading -> LoadingBox(Modifier.padding(innerPadding))
+            state.isLoading -> KomiLoading(Modifier.padding(innerPadding))
             state.error != null ->
-                ErrorBox(state.error!!, viewModel::refresh, Modifier.padding(innerPadding))
+                KomiError(state.error!!, viewModel::refresh, Modifier.padding(innerPadding))
             state.modules.isEmpty() && !listExit.hasContent ->
-                EmptyBox(stringResource(R.string.author_no_modules), Modifier.padding(innerPadding))
+                KomiEmpty(stringResource(R.string.author_no_modules), Modifier.padding(innerPadding))
             else -> ModuleListExit(listExit, Modifier.fillMaxSize().padding(innerPadding)) { displayed ->
                 LazyVerticalStaggeredGrid(
                     state = listState,

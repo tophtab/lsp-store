@@ -17,7 +17,7 @@ import org.junit.rules.TemporaryFolder
 @OptIn(ExperimentalCoroutinesApi::class)
 class DownloadProgressTest {
     @get:Rule val directory = TemporaryFolder()
-    private fun task(key: String = "apk", bytes: Long = 0) = DownloadTask(key, "app.apk", bytes, 1000)
+    private fun task(key: String = "apk", bytes: Long = 0) = DownloadTask(key, bytes, 1000)
 
     @Test
     fun `frequent reads publish at most every 100 ms`() = runTest {

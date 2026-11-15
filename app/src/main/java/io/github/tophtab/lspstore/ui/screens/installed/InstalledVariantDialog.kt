@@ -143,13 +143,11 @@ private fun VariantChoiceRow(
     selected: Boolean,
     onClick: () -> Unit,
     badge: String? = null,
-    enabled: Boolean = true,
 ) {
-    val contentAlpha = if (enabled) 1f else 0.45f
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(enabled = enabled, onClick = onClick)
+            .clickable(onClick = onClick)
             .padding(vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -157,8 +155,8 @@ private fun VariantChoiceRow(
         Icon(
             imageVector = if (selected) Icons.Filled.RadioButtonChecked else Icons.Filled.RadioButtonUnchecked,
             contentDescription = null,
-            tint = (if (selected) MaterialTheme.colorScheme.onPrimaryContainer
-            else MaterialTheme.colorScheme.onSurfaceVariant).copy(alpha = contentAlpha),
+            tint = if (selected) MaterialTheme.colorScheme.onPrimaryContainer
+            else MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(20.dp),
         )
         Column(modifier = Modifier.weight(1f)) {
@@ -178,13 +176,13 @@ private fun VariantChoiceRow(
                 fontSize = 13.5.sp,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = contentAlpha),
+                color = MaterialTheme.colorScheme.onSurface,
             )
             subtitle?.let {
                 KomiText(
                     text = it,
                     role = KomiTextRole.Label,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = contentAlpha),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 11.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,

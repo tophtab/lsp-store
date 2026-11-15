@@ -10,11 +10,8 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-
-val LocalStatusColors = staticCompositionLocalOf { statusColors(dark = false) }
 
 /** 16dp panels, 10dp controls — the classic komi geometry. */
 val Shapes = Shapes(
@@ -66,10 +63,7 @@ fun LspStoreTheme(
         baseScheme
     }
 
-    CompositionLocalProvider(
-        LocalStatusColors provides statusColors(darkTheme),
-        LocalKomiType provides ClassicType,
-    ) {
+    CompositionLocalProvider(LocalKomiType provides ClassicType) {
         MaterialTheme(
             colorScheme = colorScheme,
             typography = Typography,

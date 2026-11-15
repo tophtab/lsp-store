@@ -257,10 +257,6 @@ class InstalledViewModel(private val container: AppContainer) : ViewModel() {
         installedInput.value = modules
     }
 
-    fun dismissPending(packageName: String) {
-        viewModelScope.launch { container.cancelPendingInstall(packageName) }
-    }
-
     /**
      * Uninstalls [packageName] from a row's menu. With the root switch on, su
      * removes the package in-process and the list refreshes without leaving the

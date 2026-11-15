@@ -188,13 +188,7 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
     fun setBackgroundCheck(enabled: Boolean) {
         settingsWriter.save(settingsRepository.backgroundCheck, enabled) {
             settingsRepository.setBackgroundCheck(enabled)
-            UpdateScheduler.sync(
-                context = appContext,
-                enabled = enabled,
-                intervalHours = _state.value.checkIntervalHours,
-                wifiOnly = _state.value.wifiOnly,
-                reset = true,
-            )
+            syncBackgroundCheck(enabled = enabled)
         }
     }
 
@@ -202,32 +196,33 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
         val interval = hours.coerceIn(UpdateScheduler.MIN_INTERVAL_HOURS, UpdateScheduler.MAX_INTERVAL_HOURS)
         settingsWriter.save(settingsRepository.checkIntervalHours, interval) {
             settingsRepository.setCheckIntervalHours(interval)
-            if (_state.value.backgroundCheck) {
-                UpdateScheduler.sync(
-                    context = appContext,
-                    enabled = true,
-                    intervalHours = interval,
-                    wifiOnly = _state.value.wifiOnly,
-                    reset = true,
-                )
-            }
+            if (_state.value.backgroundCheck) syncBackgroundCheck(intervalHours = interval)
         }
     }
 
     fun setWifiOnly(enabled: Boolean) {
         settingsWriter.save(settingsRepository.wifiOnly, enabled) {
             settingsRepository.setWifiOnly(enabled)
-            if (_state.value.backgroundCheck) {
-                UpdateScheduler.sync(
-                    context = appContext,
-                    enabled = true,
-                    intervalHours = _state.value.checkIntervalHours,
-                    wifiOnly = enabled,
-                    reset = true,
-                )
-            }
+            if (_state.value.backgroundCheck) syncBackgroundCheck(wifiOnly = enabled)
         }
     }
+
+    /**
+     * Applies the background-check settings to the scheduler. A setter passes
+     * the value it has just written, because [_state] only catches up once the
+     * repository flow emits it.
+     */
+    private fun syncBackgroundCheck(
+        enabled: Boolean = true,
+        intervalHours: Int = _state.value.checkIntervalHours,
+        wifiOnly: Boolean = _state.value.wifiOnly,
+    ) = UpdateScheduler.sync(
+        context = appContext,
+        enabled = enabled,
+        intervalHours = intervalHours,
+        wifiOnly = wifiOnly,
+        reset = true,
+    )
 
     fun setAutoUpdateRoot(enabled: Boolean) {
         settingsWriter.save(settingsRepository.autoUpdateRoot, enabled) {

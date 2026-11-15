@@ -26,20 +26,15 @@ fun KomiText(
     maxLines: Int = Int.MAX_VALUE,
     overflow: TextOverflow = TextOverflow.Clip,
     textAlign: TextAlign? = null,
-    uppercase: Boolean? = null,
     fontSize: TextUnit = TextUnit.Unspecified,
     fontWeight: FontWeight? = null,
-    letterSpacing: TextUnit = TextUnit.Unspecified,
-    lineHeight: TextUnit = TextUnit.Unspecified,
 ) {
     val type = LocalKomiType.current
     var style = type.styleFor(role)
     if (fontSize.isSpecified) style = style.copy(fontSize = fontSize)
     if (fontWeight != null) style = style.copy(fontWeight = fontWeight)
-    if (letterSpacing.isSpecified) style = style.copy(letterSpacing = letterSpacing)
-    if (lineHeight.isSpecified) style = style.copy(lineHeight = lineHeight)
     Text(
-        text = if (uppercase == true) text.uppercase() else text,
+        text = text,
         modifier = modifier,
         color = if (color != Color.Unspecified) color else MaterialTheme.colorScheme.onSurface,
         maxLines = maxLines,

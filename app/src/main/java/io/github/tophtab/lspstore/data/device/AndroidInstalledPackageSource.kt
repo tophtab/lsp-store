@@ -7,7 +7,6 @@ import android.content.pm.PackageManager
 import android.os.Build
 import io.github.tophtab.lspstore.domain.model.InstalledModule
 
-@Suppress("DEPRECATION")
 internal class AndroidInstalledPackageSource(private val context: Context) : InstalledPackageSource {
     override val environmentKey: String
         get() = "${Build.VERSION.SDK_INT}:${context.resources.configuration.locales.toLanguageTags()}"
@@ -74,9 +73,7 @@ internal class AndroidInstalledPackageSource(private val context: Context) : Ins
         val module = ScannedPackage(
             packageName = pkg.packageName,
             label = label.getOrDefault(pkg.packageName),
-            apiLevel = Build.VERSION.SDK_INT,
-            longVersionCode = pkg.longVersionCode,
-            legacyVersionCode = pkg.versionCode,
+            versionCode = pkg.longVersionCode,
             versionName = pkg.versionName,
             hasLegacyXposedMeta = legacy,
             hasLibXposedProvider = provider,

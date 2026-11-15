@@ -47,7 +47,7 @@ class InstallTargetStateTest {
                 prepares++
                 entered.complete(Unit)
                 resume.await()
-                return PreparedInstall.Ready(info, java.io.File("unused.apk"), asset(), state, target())
+                return PreparedInstall.Ready(info, java.io.File("unused.apk"), asset(), target())
             }
         }
         val installer = object : ModuleInstaller {
@@ -79,7 +79,7 @@ class InstallTargetStateTest {
         val wait = kotlinx.coroutines.CompletableDeferred<Unit>()
         val phases = mutableMapOf<String, BatchInstallPhase>()
         val preparer = object : ModuleInstallPreparer {
-            override suspend fun prepare(info: UpdateInfo, includePreReleases: Boolean, state: ModuleVariantState, onAssetResolved: (ReleaseAsset) -> Unit, onProgress: (Long, Long) -> Unit) = PreparedInstall.Ready(info, java.io.File("unused.apk"), asset(), state, target())
+            override suspend fun prepare(info: UpdateInfo, includePreReleases: Boolean, state: ModuleVariantState, onAssetResolved: (ReleaseAsset) -> Unit, onProgress: (Long, Long) -> Unit) = PreparedInstall.Ready(info, java.io.File("unused.apk"), asset(), target())
         }
         val installer = object : ModuleInstaller {
             override suspend fun install(prepared: PreparedInstall.Ready): io.github.tophtab.lspstore.data.install.InstallOutcome {

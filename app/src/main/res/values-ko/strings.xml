@@ -15,9 +15,6 @@
     <string name="theme_system">시스템</string>
     <string name="theme_light">라이트</string>
     <string name="theme_dark">다크</string>
-    <string name="sort_updated">최근 업데이트됨</string>
-    <string name="sort_stars">가장 많이 출연한</string>
-    <string name="sort_name">이름</string>
     <string name="nav_repository">저장소</string>
     <string name="nav_installed">설치된 항목</string>
     <string name="nav_settings">설정</string>

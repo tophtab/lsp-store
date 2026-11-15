@@ -3,7 +3,6 @@
 package io.github.tophtab.lspstore.ui.design
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material.icons.Icons
@@ -36,32 +35,16 @@ fun KomiTopBar(
     onBack: (() -> Unit)? = null,
     backContentDescription: String? = null,
     actions: (@Composable RowScope.() -> Unit)? = null,
-    /**
-     * Optional content laid out to the right of the title, in the title slot
-     * itself rather than in [actions]. Used for inline progress that belongs
-     * next to the page name.
-     */
-    titleTrailing: (@Composable () -> Unit)? = null,
 ) {
     TopAppBar(
         modifier = modifier,
         title = {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                KomiText(
-                    text = title,
-                    role = KomiTextRole.Title,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                if (titleTrailing != null) {
-                    Box(
-                        modifier = Modifier.weight(1f),
-                        contentAlignment = Alignment.CenterStart,
-                    ) {
-                        titleTrailing()
-                    }
-                }
-            }
+            KomiText(
+                text = title,
+                role = KomiTextRole.Title,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
         },
         navigationIcon = {
             if (onBack != null) {

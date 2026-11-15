@@ -7,18 +7,14 @@ import io.github.tophtab.lspstore.domain.model.InstalledModule
  * package is an Xposed module and how it is shown.
  *
  * Reading them from the framework needs `PackageManager`; everything after that —
- * module detection, ABI fallback, version-code compatibility — is pure and lives
- * in [toInstalledModule] so it can be tested on the JVM.
+ * module detection and the ABI fallback — is pure and lives in
+ * [toInstalledModule] so it can be tested on the JVM.
  */
 data class ScannedPackage(
     val packageName: String,
     val label: String,
-    /** `Build.VERSION.SDK_INT` of the device that produced this scan. */
-    val apiLevel: Int,
-    /** `PackageInfo.longVersionCode`, null below API 28 where it does not exist. */
-    val longVersionCode: Long?,
-    /** `PackageInfo.versionCode` (deprecated but still the only value below 28). */
-    val legacyVersionCode: Int,
+    /** `PackageInfo.longVersionCode`. */
+    val versionCode: Long,
     val versionName: String?,
     /** Legacy `xposedmodule` / `xposedminversion` meta-data. */
     val hasLegacyXposedMeta: Boolean,
@@ -42,13 +38,6 @@ data class ScannedPackage(
 
     val isXposedModule: Boolean
         get() = hasLegacyXposedMeta || hasLibXposedProvider || hasModernMarker
-
-    val versionCode: Long
-        get() = if (apiLevel >= 28) {
-            longVersionCode ?: legacyVersionCode.toLong()
-        } else {
-            legacyVersionCode.toLong()
-        }
 
     /**
      * `primaryCpuAbi` is not part of the public SDK, so it is read reflectively

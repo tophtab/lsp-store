@@ -9,8 +9,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import io.ktor.client.HttpClient
@@ -87,7 +85,6 @@ class AppContainer(context: Context) {
      * read it without suspending at every acquire.
      */
     private val _maxConcurrentDownloads = MutableStateFlow(DownloadSlots.DEFAULT_LIMIT)
-    val maxConcurrentDownloads: StateFlow<Int> = _maxConcurrentDownloads.asStateFlow()
 
     /**
      * Latest "download location" value, mirrored for [ApkExportStore] so an
@@ -271,7 +268,6 @@ class AppContainer(context: Context) {
         // lookup is enough; a full installed scan here would run on every event
         // of an update-all.
         val packageInfo = runCatching {
-            @Suppress("DEPRECATION")
             appContext.packageManager.getPackageInfo(packageName, 0)
         }.getOrNull()
         if (
@@ -298,11 +294,6 @@ class AppContainer(context: Context) {
         // The broadcast is the installer's own proof that it closed, so the slot
         // is free even when PackageManager has not caught up yet.
         systemInstallSerializer.markCompleted(packageName, InstallTaskRegistry.idOf(pending))
-    }
-
-    /** Re-checks a persisted hand-off through the shared confirmation path. */
-    suspend fun recordPendingInstallResult(pending: PendingInstall) {
-        completePendingInstall(pending.packageName, pending)
     }
 
     suspend fun prunePendingInstalls(installed: List<InstalledModule>): List<PendingInstall> {

@@ -31,21 +31,17 @@ internal val DownloadStatus.isTerminal: Boolean
 
 data class DownloadTask(
     val key: String,
-    val assetName: String,
     val downloaded: Long = 0,
     val total: Long = 0,
     val status: DownloadStatus = DownloadStatus.RUNNING,
     val file: File? = null,
     val error: String? = null,
-) {
-    val progress: Float
-        get() = if (total > 0) (downloaded.toFloat() / total).coerceIn(0f, 1f) else 0f
-}
+)
 
 /**
- * Resumable APK downloader. Uses HTTP Range so a paused download can continue
- * when the server supports it (assets.lsposed.org and GitHub both do usually);
- * otherwise it restarts from zero.
+ * Resumable APK downloader. Uses HTTP Range so an interrupted download can
+ * continue when the server supports it (assets.lsposed.org and GitHub both do
+ * usually); otherwise it restarts from zero.
  *
  * Partial files are never discarded just because a transfer failed: a dropped
  * connection, a mirror switch or even process death leaves the bytes on disk,
@@ -71,22 +67,23 @@ class DownloadManager(
     private val taskStore = DownloadTaskStore()
     val tasks = taskStore.tasks
 
-    fun keyOf(asset: ReleaseAsset): String = assetCacheKey(asset)
+    /** Private working copies of the APKs; the exported ones live in the download folder. */
+    private val workingDir: File
+        get() = File(context.cacheDir, "apk")
 
-    fun taskFor(asset: ReleaseAsset): DownloadTask? = tasks.value[keyOf(asset)]
+    fun keyOf(asset: ReleaseAsset): String = assetCacheKey(asset)
 
     /** An unsuccessful installer attempt must be able to fetch a fresh copy. */
     suspend fun invalidate(key: String) = withContext(Dispatchers.IO) {
-        if (!key.matches(Regex("[0-9a-f]{16}"))) return@withContext
+        if (!isAssetCacheKey(key)) return@withContext
         val exporting = exports[key]
         exporting?.cancel()
         exporting?.join()
         val removed = synchronized(this@DownloadManager) {
-            val status = tasks.value[key]?.status
-            if (status == DownloadStatus.RUNNING || status == DownloadStatus.PAUSED) {
+            if (tasks.value[key]?.status?.isTerminal == false) {
                 false
             } else {
-                invalidateCachedDownload(File(context.cacheDir, "apk"), key)
+                invalidateCachedDownload(workingDir, key)
                 taskStore.remove(key)
                 true
             }
@@ -117,20 +114,6 @@ class DownloadManager(
     }
 
     @Synchronized
-    fun pause(key: String) {
-        if (taskStore.pause(key) == null) return
-        jobs[key]?.cancel()
-    }
-
-    @Synchronized
-    fun resume(asset: ReleaseAsset) {
-        val key = keyOf(asset)
-        if (tasks.value[key]?.status == DownloadStatus.PAUSED) {
-            launchDownload(key, asset)
-        }
-    }
-
-    @Synchronized
     fun cancel(key: String) {
         val task = tasks.value[key] ?: return
         // A finished transfer is shared by whoever asked for it; cancelling one
@@ -142,8 +125,6 @@ class DownloadManager(
         // behind. A later attempt simply starts from zero.
         runCatching { task.file?.delete() }
     }
-
-    fun clearFinished() = taskStore.clearFinished()
 
     suspend fun downloadBlocking(
         asset: ReleaseAsset,
@@ -181,7 +162,7 @@ class DownloadManager(
 
     private fun launchDownload(key: String, asset: ReleaseAsset) {
         // Keep the cancelled writer reachable until it has closed the file. A
-        // quick pause/resume must not open a second writer on the same partial.
+        // restart right after a cancel must not open a second writer on it.
         val previousJob = jobs[key]
         val target = targetFile(key, asset)
         val existingBytes = if (target.exists()) target.length() else 0L
@@ -193,7 +174,6 @@ class DownloadManager(
         val attempt = taskStore.begin(
             DownloadTask(
                 key = key,
-                assetName = asset.name,
                 downloaded = existingBytes,
                 total = if (complete) existingBytes else asset.size,
                 status = if (complete) DownloadStatus.COMPLETED else DownloadStatus.RUNNING,
@@ -209,7 +189,7 @@ class DownloadManager(
         DownloadService.start(context)
 
         // Register before starting so a fast completion cannot leave a finished
-        // job in the map, and pause/cancel can always find the new transfer.
+        // job in the map, and cancel can always find the new transfer.
         val job = scope.launch(start = CoroutineStart.LAZY) {
             try {
                 previousJob?.join()
@@ -254,7 +234,8 @@ class DownloadManager(
                 throw lastError ?: IOException("No download URL available")
             } catch (t: Throwable) {
                 if (t is kotlinx.coroutines.CancellationException) {
-                    // Paused or cancelled: keep the partial file for resume.
+                    // Cancelled: the caller that cancelled decides whether the
+                    // partial file stays for a later attempt.
                     return@launch
                 }
                 taskStore.fail(attempt, t.message ?: "Download failed")
@@ -268,7 +249,7 @@ class DownloadManager(
     }
 
     private fun targetFile(key: String, asset: ReleaseAsset): File {
-        val dir = File(context.cacheDir, "apk").apply { mkdirs() }
+        val dir = workingDir.apply { mkdirs() }
         val safeName = asset.name
             .substringAfterLast('/')
             .substringAfterLast('\\')
@@ -302,7 +283,7 @@ class DownloadManager(
      * APKs in the download folder. The Settings entry clears both.
      */
     suspend fun downloadedBytes(): Long = withContext(Dispatchers.IO) {
-        val dir = File(context.cacheDir, "apk")
+        val dir = workingDir
         val working = if (dir.exists()) {
             dir.walkBottomUp().filter { it.isFile }.sumOf { it.length() }
         } else {
@@ -311,12 +292,12 @@ class DownloadManager(
         working + exporter.exportedBytes()
     }
 
-    /** Cancels every running/paused download, keeping the tasks list for history. */
+    /** Cancels every download still in flight, keeping the tasks list for history. */
     @Synchronized
     fun cancelAllActive() {
         tasks.value.keys.toList().forEach { key ->
             val task = tasks.value[key] ?: return@forEach
-            if (task.status == DownloadStatus.RUNNING || task.status == DownloadStatus.PAUSED) {
+            if (!task.status.isTerminal) {
                 jobs[key]?.cancel()
                 taskStore.cancel(key)
             }
@@ -340,7 +321,7 @@ class DownloadManager(
         runningExports.forEach { it.join() }
         exports.clear()
         taskStore.clear()
-        runCatching { File(context.cacheDir, "apk").deleteRecursively() }
+        runCatching { workingDir.deleteRecursively() }
         exporter.deleteAll()
     }
 }
@@ -366,9 +347,17 @@ internal fun assetCacheKey(asset: ReleaseAsset): String {
         .joinToString("") { "%02x".format(it.toInt() and 0xff) }
 }
 
+private val ASSET_CACHE_KEY = Regex("[0-9a-f]{16}")
+
+/**
+ * Whether [key] has the shape [assetCacheKey] produces. Deletions match file
+ * names by the key, so anything else is refused before a file is touched.
+ */
+internal fun isAssetCacheKey(key: String): Boolean = ASSET_CACHE_KEY.matches(key)
+
 /** Also works after process death, when there is no in-memory task. */
 internal fun invalidateCachedDownload(directory: File, key: String) {
-    if (!key.matches(Regex("[0-9a-f]{16}"))) return
+    if (!isAssetCacheKey(key)) return
     directory.listFiles()?.filter { it.isFile && it.name.startsWith("$key-") }
         ?.forEach { it.delete() }
 }

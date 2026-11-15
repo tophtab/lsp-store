@@ -194,7 +194,6 @@ internal fun PickerField(
                     color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    uppercase = false,
                 )
                 subtitle?.let {
                     KomiText(

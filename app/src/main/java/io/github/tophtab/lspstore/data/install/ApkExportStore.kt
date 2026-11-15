@@ -71,7 +71,7 @@ class ApkExportStore(
     }
 
     suspend fun delete(key: String) {
-        if (!key.matches(Regex("[0-9a-f]{16}"))) return
+        if (!isAssetCacheKey(key)) return
         deleteMatching { OWN_NAME.containsMatchIn(it) && it.substringBeforeLast('.').endsWith("-$key") }
     }
 
@@ -280,7 +280,6 @@ class ApkExportStore(
 
     private companion object {
         const val TAG = "ApkExportStore"
-        const val APK_MIME_TYPE = "application/vnd.android.package-archive"
         const val RELATIVE_DIR = "Download/LSP_Store"
 
         /** Matches the `-<identity hash>` suffix [exportedApkName] appends. */

@@ -23,10 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.tophtab.lspstore.ui.theme.KomiTextRole
 
-data class KomiSegment(
-    val label: String,
-    val count: Int? = null,
-)
+data class KomiSegment(val label: String)
 
 /**
  * Segmented tab row matching komi's chart tabs: 10dp corners and an accent fill
@@ -80,16 +77,6 @@ fun KomiSegmented(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                segment.count?.let {
-                    KomiText(
-                        text = it.toString(),
-                        role = KomiTextRole.Mono,
-                        color = if (selected) foreground.copy(alpha = 0.85f)
-                        else MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 10.sp,
-                        maxLines = 1,
-                    )
-                }
             }
         }
     }

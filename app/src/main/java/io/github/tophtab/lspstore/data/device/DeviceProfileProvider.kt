@@ -67,7 +67,6 @@ class DeviceProfileProvider(private val context: Context) {
         // can load the most modules is the one to compare against.
         .maxOrNull()
 
-    @Suppress("DEPRECATION")
     private fun managerVersionName(context: Context, packageName: String): String? = runCatching {
         context.packageManager.getPackageInfo(packageName, 0).versionName
     }.getOrNull()

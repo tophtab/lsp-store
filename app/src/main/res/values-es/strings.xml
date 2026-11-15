@@ -15,9 +15,6 @@
     <string name="theme_system">Sistema</string>
     <string name="theme_light">Claro</string>
     <string name="theme_dark">Oscuro</string>
-    <string name="sort_updated">Actualizado recientemente</string>
-    <string name="sort_stars">Más destacados</string>
-    <string name="sort_name">Nombre</string>
     <string name="nav_repository">Repositorio</string>
     <string name="nav_installed">Instalado</string>
     <string name="nav_settings">Ajustes</string>

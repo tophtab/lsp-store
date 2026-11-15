@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalMaterial3Api::class)
-
 package io.github.tophtab.lspstore.ui.screens.imports
 
 import androidx.compose.foundation.layout.Arrangement
@@ -19,7 +17,6 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -42,15 +39,15 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.tophtab.lspstore.R
 import io.github.tophtab.lspstore.domain.model.Module
 import io.github.tophtab.lspstore.ui.LocalAppContainer
-import io.github.tophtab.lspstore.ui.components.EmptyBox
-import io.github.tophtab.lspstore.ui.components.ErrorBox
-import io.github.tophtab.lspstore.ui.components.LoadingBox
 import io.github.tophtab.lspstore.ui.components.ModuleAvatar
 import io.github.tophtab.lspstore.ui.components.SnackbarMessageEffect
 import io.github.tophtab.lspstore.ui.design.KomiButton
 import io.github.tophtab.lspstore.ui.design.KomiButtonSize
 import io.github.tophtab.lspstore.ui.design.KomiButtonVariant
+import io.github.tophtab.lspstore.ui.design.KomiEmpty
+import io.github.tophtab.lspstore.ui.design.KomiError
 import io.github.tophtab.lspstore.ui.design.KomiInfoChip
+import io.github.tophtab.lspstore.ui.design.KomiLoading
 import io.github.tophtab.lspstore.ui.design.KomiSurface
 import io.github.tophtab.lspstore.ui.design.KomiText
 import io.github.tophtab.lspstore.ui.design.KomiTextField
@@ -82,9 +79,9 @@ fun ExternalImportScreen(onBack: () -> Unit, onOpenModule: (String) -> Unit) {
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { innerPadding ->
         when {
-            state.isLoading -> LoadingBox(Modifier.padding(innerPadding))
+            state.isLoading -> KomiLoading(Modifier.padding(innerPadding))
             state.error != null ->
-                ErrorBox(state.error!!, viewModel::refresh, Modifier.padding(innerPadding))
+                KomiError(state.error!!, viewModel::refresh, Modifier.padding(innerPadding))
             else -> Column(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
                 KomiText(
                     text = stringResource(R.string.import_desc),
@@ -94,7 +91,7 @@ fun ExternalImportScreen(onBack: () -> Unit, onOpenModule: (String) -> Unit) {
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                 )
                 if (state.unknown.isEmpty()) {
-                    EmptyBox(stringResource(R.string.import_empty))
+                    KomiEmpty(stringResource(R.string.import_empty))
                 } else {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
@@ -232,7 +229,6 @@ private fun ModulePickerDialog(
                     onValueChange = onQueryChange,
                     placeholder = stringResource(R.string.import_search_hint),
                     leadingIcon = Icons.Filled.Search,
-                    singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                     keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),

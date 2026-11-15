@@ -32,7 +32,6 @@ data class LibraryUiState(
     val isLoading: Boolean = true,
     val error: String? = null,
     val modules: List<Module> = emptyList(),
-    val installedPackages: Set<String> = emptySet(),
     val installedCopies: Map<String, InstalledModule> = emptyMap(),
 )
 
@@ -143,7 +142,7 @@ class LibraryListViewModel(
             }
             .groupBy({ it.first }, { it.second })
             .mapValues { (repo, copies) -> installedCopyForRepo(repo, copies, links)!! }
-        _state.update { it.copy(installedPackages = resolved.keys, installedCopies = resolved) }
+        _state.update { it.copy(installedCopies = resolved) }
     }
 
     companion object {

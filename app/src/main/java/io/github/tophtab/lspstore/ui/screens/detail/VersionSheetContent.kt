@@ -69,7 +69,6 @@ internal fun VersionSheetContent(
             fontSize = 20.sp,
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.padding(vertical = 6.dp),
-            uppercase = false,
         )
         Spacer(Modifier.height(8.dp))
         if (lines.size > 1) {
@@ -157,7 +156,6 @@ internal fun VersionRow(
                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold,
                     color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer
                     else MaterialTheme.colorScheme.onSurface,
-                    uppercase = false,
                     maxLines = 1,
                 )
                 if (isLatest) {
@@ -183,7 +181,6 @@ internal fun VersionRow(
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                uppercase = false,
             )
         }
         if (isSelected) {
@@ -207,7 +204,6 @@ internal fun VersionBadge(text: String) {
         fontWeight = FontWeight.Bold,
         fontSize = 10.sp,
         color = MaterialTheme.colorScheme.onPrimaryContainer,
-        uppercase = false,
         modifier = Modifier
             .clip(shape)
             .border(1.dp, MaterialTheme.colorScheme.onPrimaryContainer, shape)

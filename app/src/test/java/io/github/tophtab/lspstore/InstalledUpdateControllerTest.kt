@@ -260,6 +260,6 @@ class InstalledUpdateControllerTest {
             scope.backgroundScope.launch { registry.runs.collect(controller::onRunsChanged) }
         }
 
-        fun ready(info: UpdateInfo) = PreparedInstall.Ready(info, File("unused.apk"), asset, ModuleVariantState())
+        fun ready(info: UpdateInfo) = PreparedInstall.Ready(info, File("unused.apk"), asset)
     }
 }

@@ -52,7 +52,6 @@ interface LibraryRepository {
 
     /** Repository package names whose update checks also follow pre-releases. */
     val preReleaseModules: Flow<Set<String>>
-    val searchHistory: Flow<List<String>>
     val links: Flow<Map<String, String>>
     val variantStates: Flow<Map<String, ModuleVariantState>>
 
@@ -68,34 +67,24 @@ interface LibraryRepository {
     suspend fun removeIgnoredKeyword(keyword: String)
     suspend fun setPreReleasesEnabled(packageName: String, enabled: Boolean)
     suspend fun clearIgnoredUpdates()
-    suspend fun addSearchQuery(query: String)
-    suspend fun clearSearchHistory()
     suspend fun linkModule(installedPackage: String, repoPackage: String)
     suspend fun unlinkModule(installedPackage: String)
     suspend fun setVariantState(packageName: String, state: ModuleVariantState)
     suspend fun clearVariantState(packageName: String)
-    suspend fun setExplicitPreference(packageName: String, signature: VariantSignature) {
-        val current = variantStates.first()[packageName] ?: ModuleVariantState()
-        setVariantState(packageName, current.migrated().onUserPicked(signature))
-    }
-    suspend fun seedVariantState(packageName: String, state: ModuleVariantState) {
-        if (packageName !in variantStates.first()) setVariantState(packageName, state)
-    }
+    suspend fun setExplicitPreference(packageName: String, signature: VariantSignature)
+
+    /** Stores [state] only when the package has no variant state yet. */
+    suspend fun seedVariantState(packageName: String, state: ModuleVariantState)
     suspend fun recordInstallResult(
         packageName: String,
         ok: Boolean,
         signature: VariantSignature? = null,
     )
 
-    suspend fun recordConfirmedInstall(packageName: String, record: ConfirmedInstallRecord) {
-        val state = variantStates.first()[packageName] ?: ModuleVariantState()
-        setVariantState(packageName, state.onInstallSucceeded(record.target.signature.copy(packageName = record.packageName)).copy(confirmedInstall = record, preferenceMigrated = true))
-    }
+    suspend fun recordConfirmedInstall(packageName: String, record: ConfirmedInstallRecord)
 
-    suspend fun invalidateConfirmedInstall(packageName: String, expected: ConfirmedInstallRecord) {
-        val current = variantStates.first()[packageName] ?: return
-        if (current.confirmedInstall == expected) setVariantState(packageName, current.copy(confirmedInstall = null, signature = null))
-    }
+    /** Drops the confirmed install only while it still equals [expected]. */
+    suspend fun invalidateConfirmedInstall(packageName: String, expected: ConfirmedInstallRecord)
 
     /** Idempotent one-off migration of the legacy asset-name preferences. */
     suspend fun migratePreferredVariants()
@@ -171,9 +160,6 @@ class LibraryRepositoryImpl(private val context: Context) : LibraryRepository {
     override val preReleaseModules: Flow<Set<String>> = context.libraryDataStore.data
         .decodedField(Keys.PRE_RELEASE_MODULES) { decodeList(it).toSet() }
 
-    override val searchHistory: Flow<List<String>> = context.libraryDataStore.data
-        .decodedField(Keys.SEARCH_HISTORY, ::decodeList)
-
     /** installed package name -> repository module package name */
     override val links: Flow<Map<String, String>> = context.libraryDataStore.data
         .decodedField(Keys.LINKS, ::decodeLinks)
@@ -196,7 +182,8 @@ class LibraryRepositoryImpl(private val context: Context) : LibraryRepository {
     override suspend fun addRecentlyViewed(packageName: String) {
         context.libraryDataStore.edit { prefs ->
             val current = decodeList(prefs[Keys.RECENTLY_VIEWED])
-            val updated = (listOf(packageName) + current.filterNot { it == packageName }).take(MAX_RECENT)
+            val updated = (listOf(packageName) + current.filterNot { it == packageName })
+                .take(LibraryBackup.RECENT_LIMIT)
             prefs[Keys.RECENTLY_VIEWED] = encodeList(updated)
         }
     }
@@ -276,21 +263,6 @@ class LibraryRepositoryImpl(private val context: Context) : LibraryRepository {
                 current.filterNot { it.equals(keyword, ignoreCase = true) },
             )
         }
-    }
-
-    override suspend fun addSearchQuery(query: String) {
-        val trimmed = query.trim()
-        if (trimmed.length < 2) return
-        context.libraryDataStore.edit { prefs ->
-            val current = decodeList(prefs[Keys.SEARCH_HISTORY])
-            val updated = (listOf(trimmed) + current.filterNot { it.equals(trimmed, ignoreCase = true) })
-                .take(MAX_SEARCH_HISTORY)
-            prefs[Keys.SEARCH_HISTORY] = encodeList(updated)
-        }
-    }
-
-    override suspend fun clearSearchHistory() {
-        context.libraryDataStore.edit { it[Keys.SEARCH_HISTORY] = "" }
     }
 
     override suspend fun linkModule(installedPackage: String, repoPackage: String) {
@@ -461,7 +433,7 @@ class LibraryRepositoryImpl(private val context: Context) : LibraryRepository {
      */
     private fun writeBackup(prefs: MutablePreferences, backup: LibraryBackup) {
         prefs[Keys.FAVOURITES] = encodeList(backup.favourites)
-        prefs[Keys.RECENTLY_VIEWED] = encodeList(backup.recentlyViewed.take(MAX_RECENT))
+        prefs[Keys.RECENTLY_VIEWED] = encodeList(backup.recentlyViewed.take(LibraryBackup.RECENT_LIMIT))
         prefs[Keys.SKIPPED] = backup.skippedUpdates.entries.joinToString("\n") {
             "${it.key}:${it.value}"
         }
@@ -469,7 +441,7 @@ class LibraryRepositoryImpl(private val context: Context) : LibraryRepository {
         prefs[Keys.IGNORED_MODULES] = encodeList(backup.ignoredModules)
         prefs[Keys.IGNORED_KEYWORDS] = encodeList(backup.ignoredKeywords)
         prefs[Keys.PRE_RELEASE_MODULES] = encodeList(backup.preReleaseModules)
-        prefs[Keys.SEARCH_HISTORY] = encodeList(backup.searchHistory.take(MAX_SEARCH_HISTORY))
+        prefs[Keys.SEARCH_HISTORY] = encodeList(backup.searchHistory.take(LibraryBackup.SEARCH_HISTORY_LIMIT))
         prefs[Keys.LINKS] = encodeLinks(backup.links)
         prefs[Keys.VARIANT_STATE] = encodeVariantStates(backup.variantStates)
     }
@@ -513,9 +485,4 @@ class LibraryRepositoryImpl(private val context: Context) : LibraryRepository {
 
     private fun encodeLinks(links: Map<String, String>): String =
         links.entries.joinToString("\n") { "${it.key}=${it.value}" }
-
-    private companion object {
-        const val MAX_RECENT = 30
-        const val MAX_SEARCH_HISTORY = 15
-    }
 }

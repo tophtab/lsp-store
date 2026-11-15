@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalMaterial3Api::class)
-
 package io.github.tophtab.lspstore.ui.screens.home
 
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -12,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
@@ -21,7 +20,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -43,16 +41,17 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.tophtab.lspstore.R
 import io.github.tophtab.lspstore.domain.model.Module
 import io.github.tophtab.lspstore.ui.LocalAppContainer
-import io.github.tophtab.lspstore.ui.components.EmptyBox
-import io.github.tophtab.lspstore.ui.components.ErrorBox
-import io.github.tophtab.lspstore.ui.components.LoadingBox
 import io.github.tophtab.lspstore.ui.components.MODULE_ITEM_FADE_MILLIS
 import io.github.tophtab.lspstore.ui.components.MODULE_ITEM_PLACEMENT_MILLIS
 import io.github.tophtab.lspstore.ui.components.ModuleCard
 import io.github.tophtab.lspstore.ui.components.ModuleListExit
+import io.github.tophtab.lspstore.ui.components.ModuleListExitState
 import io.github.tophtab.lspstore.ui.components.PullToRefreshBox
 import io.github.tophtab.lspstore.ui.components.rememberModuleListExitState
 import io.github.tophtab.lspstore.ui.design.KomiConstrainedContent
+import io.github.tophtab.lspstore.ui.design.KomiEmpty
+import io.github.tophtab.lspstore.ui.design.KomiError
+import io.github.tophtab.lspstore.ui.design.KomiLoading
 import io.github.tophtab.lspstore.ui.design.KomiSegment
 import io.github.tophtab.lspstore.ui.design.KomiSegmented
 import io.github.tophtab.lspstore.ui.design.KomiText
@@ -114,14 +113,12 @@ fun HomeScreen(
     val tabs = buildList {
         add(
             HomeTab(
-                kind = HomeTabKind.UPDATED,
                 label = stringResource(R.string.home_section_recently_updated),
                 modules = state.recentlyUpdated,
             ),
         )
         add(
             HomeTab(
-                kind = HomeTabKind.STARRED,
                 label = stringResource(R.string.home_section_most_starred),
                 modules = state.mostStarred,
             ),
@@ -162,10 +159,10 @@ fun HomeScreen(
         contentWindowInsets = rootContentWindowInsets(),
     ) { innerPadding ->
         when {
-            state.isLoading -> LoadingBox(Modifier.padding(innerPadding))
+            state.isLoading -> KomiLoading(Modifier.padding(innerPadding))
             state.error != null ->
-                ErrorBox(state.error!!, viewModel::refresh, Modifier.padding(innerPadding))
-            state.recentlyUpdated.isEmpty() && !activeListHasContent -> EmptyBox(
+                KomiError(state.error!!, viewModel::refresh, Modifier.padding(innerPadding))
+            state.recentlyUpdated.isEmpty() && !activeListHasContent -> KomiEmpty(
                 message = stringResource(R.string.home_no_modules),
                 modifier = Modifier.padding(innerPadding),
                 actionLabel = stringResource(R.string.action_refresh),
@@ -191,7 +188,6 @@ fun HomeScreen(
                             .padding(start = 12.dp, top = 8.dp, end = 12.dp, bottom = 4.dp),
                         placeholder = stringResource(R.string.import_search_hint),
                         leadingIcon = Icons.Filled.Search,
-                        singleLine = true,
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                         keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
                         trailing = {
@@ -220,7 +216,7 @@ fun HomeScreen(
                     // pull on the list refreshes. Pulling on the header does not.
                     if (searching) {
                         if (!searchExit.hasContent) {
-                            EmptyBox(
+                            KomiEmpty(
                                 message = stringResource(R.string.search_empty),
                                 modifier = Modifier.weight(1f),
                             )
@@ -232,80 +228,32 @@ fun HomeScreen(
                                 modifier = Modifier.padding(horizontal = 14.dp, vertical = 4.dp),
                                 maxLines = 1,
                             )
-                            PullToRefreshBox(
+                            HomeModuleGrid(
+                                exit = searchExit,
+                                gridState = searchListState,
+                                installedPackages = state.installedPackages,
                                 isRefreshing = state.isRefreshing,
                                 onRefresh = viewModel::refresh,
+                                onOpenModule = onOpenModule,
+                                onIgnoreModule = viewModel::ignoreModule,
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .weight(1f),
-                            ) {
-                                ModuleListExit(searchExit, Modifier.fillMaxSize()) { displayed ->
-                                    LazyVerticalStaggeredGrid(
-                                        state = searchListState,
-                                        columns = StaggeredGridCells.Adaptive(minSize = 320.dp),
-                                        modifier = Modifier.fillMaxSize(),
-                                        contentPadding = PaddingValues(
-                                            start = 12.dp,
-                                            end = 12.dp,
-                                            bottom = 32.dp,
-                                        ),
-                                        verticalItemSpacing = 10.dp,
-                                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                                    ) {
-                                        items(displayed, key = { it.packageName }) { module ->
-                                            ModuleCard(
-                                                module = module,
-                                                installed = module.packageName in state.installedPackages,
-                                                onOpen = { onOpenModule(module.packageName) },
-                                                onIgnore = { viewModel.ignoreModule(module.packageName) },
-                                                modifier = Modifier.animateItem(
-                                                    fadeInSpec = null,
-                                                    placementSpec = tween(MODULE_ITEM_PLACEMENT_MILLIS, easing = FastOutSlowInEasing),
-                                                    fadeOutSpec = tween(MODULE_ITEM_FADE_MILLIS, easing = FastOutSlowInEasing),
-                                                ),
-                                            )
-                                        }
-                                    }
-                                }
-                            }
+                            )
                         }
                     } else {
-                        PullToRefreshBox(
+                        HomeModuleGrid(
+                            exit = feedExit,
+                            gridState = listState,
+                            installedPackages = state.installedPackages,
                             isRefreshing = state.isRefreshing,
                             onRefresh = viewModel::refresh,
+                            onOpenModule = onOpenModule,
+                            onIgnoreModule = viewModel::ignoreModule,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .weight(1f),
-                        ) {
-                            ModuleListExit(feedExit, Modifier.fillMaxSize()) { displayed ->
-                                LazyVerticalStaggeredGrid(
-                                    state = listState,
-                                    columns = StaggeredGridCells.Adaptive(minSize = 320.dp),
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentPadding = PaddingValues(
-                                        start = 12.dp,
-                                        end = 12.dp,
-                                        bottom = 32.dp,
-                                    ),
-                                    verticalItemSpacing = 10.dp,
-                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                                ) {
-                                    items(displayed, key = { it.packageName }) { module ->
-                                        ModuleCard(
-                                            module = module,
-                                            installed = module.packageName in state.installedPackages,
-                                            onOpen = { onOpenModule(module.packageName) },
-                                            onIgnore = { viewModel.ignoreModule(module.packageName) },
-                                            modifier = Modifier.animateItem(
-                                                fadeInSpec = null,
-                                                placementSpec = tween(MODULE_ITEM_PLACEMENT_MILLIS, easing = FastOutSlowInEasing),
-                                                fadeOutSpec = tween(MODULE_ITEM_FADE_MILLIS, easing = FastOutSlowInEasing),
-                                            ),
-                                        )
-                                    }
-                                }
-                            }
-                        }
+                        )
                     }
                 }
             }
@@ -313,10 +261,55 @@ fun HomeScreen(
     }
 }
 
-private enum class HomeTabKind { UPDATED, STARRED }
+/** The refreshable module grid behind both the feed tabs and the search results. */
+@Composable
+private fun HomeModuleGrid(
+    exit: ModuleListExitState<Module>,
+    gridState: LazyStaggeredGridState,
+    installedPackages: Set<String>,
+    isRefreshing: Boolean,
+    onRefresh: () -> Unit,
+    onOpenModule: (String) -> Unit,
+    onIgnoreModule: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = onRefresh,
+        modifier = modifier,
+    ) {
+        ModuleListExit(exit, Modifier.fillMaxSize()) { displayed ->
+            LazyVerticalStaggeredGrid(
+                state = gridState,
+                columns = StaggeredGridCells.Adaptive(minSize = 320.dp),
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(
+                    start = 12.dp,
+                    end = 12.dp,
+                    bottom = 32.dp,
+                ),
+                verticalItemSpacing = 10.dp,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                items(displayed, key = { it.packageName }) { module ->
+                    ModuleCard(
+                        module = module,
+                        installed = module.packageName in installedPackages,
+                        onOpen = { onOpenModule(module.packageName) },
+                        onIgnore = { onIgnoreModule(module.packageName) },
+                        modifier = Modifier.animateItem(
+                            fadeInSpec = null,
+                            placementSpec = tween(MODULE_ITEM_PLACEMENT_MILLIS, easing = FastOutSlowInEasing),
+                            fadeOutSpec = tween(MODULE_ITEM_FADE_MILLIS, easing = FastOutSlowInEasing),
+                        ),
+                    )
+                }
+            }
+        }
+    }
+}
 
 private data class HomeTab(
-    val kind: HomeTabKind,
     val label: String,
     val modules: List<Module>,
 )

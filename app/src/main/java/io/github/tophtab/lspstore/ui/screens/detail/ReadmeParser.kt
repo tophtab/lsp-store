@@ -34,9 +34,6 @@ internal data class ReadmeTableRow(val cells: List<ReadmeTableCell>, val isHeade
 
 internal class ReadmeLinks(val styles: TextLinkStyles, val listener: LinkInteractionListener?, val inlineCodeBackground: Color)
 
-internal fun parseReadme(html: String, baseUrl: String?, links: ReadmeLinks?, dark: Boolean): List<ReadmeBlock> =
-    parseReadme(scanReadmeStructure(html), baseUrl, links, dark)
-
 /** Android styling is an adapter; structure and ordering are testable with JVM text renderers. */
 internal fun parseReadme(
     structure: ReadmeStructure,

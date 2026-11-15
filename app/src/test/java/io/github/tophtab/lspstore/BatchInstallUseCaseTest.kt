@@ -76,7 +76,6 @@ class BatchInstallUseCaseTest {
         info = info,
         file = File.createTempFile("apk", ".apk").apply { deleteOnExit() },
         asset = asset,
-        state = ModuleVariantState(),
     )
 
     private class Recorder {

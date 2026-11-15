@@ -50,7 +50,6 @@ fun KomiSettingsSectionHead(
             role = KomiTextRole.Title,
             fontSize = 18.sp,
             maxLines = 1,
-            uppercase = false,
         )
         Box(
             modifier = Modifier
@@ -108,7 +107,6 @@ fun KomiSettingsRow(
                     fontSize = 12.5.sp,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
-                    uppercase = false,
                 )
                 subtitle?.let {
                     KomiText(
@@ -184,7 +182,6 @@ fun KomiSettingsExpandableRow(
     onToggle: () -> Unit,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
-    last: Boolean = false,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     KomiSettingsRow(
@@ -192,7 +189,6 @@ fun KomiSettingsExpandableRow(
         subtitle = subtitle,
         modifier = modifier,
         onClick = onToggle,
-        last = last && !expanded,
         trailing = {
             Icon(
                 Icons.AutoMirrored.Filled.KeyboardArrowRight,

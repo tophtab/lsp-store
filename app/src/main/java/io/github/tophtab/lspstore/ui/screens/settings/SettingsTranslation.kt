@@ -73,7 +73,6 @@ internal fun TranslationSettingsGroup(
                             onUpdate { it.copy(deeplKey = value) }
                         },
                         label = stringResource(R.string.settings_translation_deepl_key),
-                        singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
                     )
 
@@ -84,7 +83,6 @@ internal fun TranslationSettingsGroup(
                                 onUpdate { it.copy(libreUrl = value) }
                             },
                             label = stringResource(R.string.settings_translation_libre_url),
-                            singleLine = true,
                             modifier = Modifier.fillMaxWidth(),
                         )
                         KomiText(
@@ -99,7 +97,6 @@ internal fun TranslationSettingsGroup(
                                 onUpdate { it.copy(libreKey = value) }
                             },
                             label = stringResource(R.string.settings_translation_libre_key),
-                            singleLine = true,
                             modifier = Modifier.fillMaxWidth(),
                         )
                     }
@@ -111,7 +108,6 @@ internal fun TranslationSettingsGroup(
                                 onUpdate { it.copy(microsoftKey = value) }
                             },
                             label = stringResource(R.string.settings_translation_ms_key),
-                            singleLine = true,
                             modifier = Modifier.fillMaxWidth(),
                         )
                         KomiTextField(
@@ -120,7 +116,6 @@ internal fun TranslationSettingsGroup(
                                 onUpdate { it.copy(microsoftRegion = value) }
                             },
                             label = stringResource(R.string.settings_translation_ms_region),
-                            singleLine = true,
                             modifier = Modifier.fillMaxWidth(),
                         )
                     }

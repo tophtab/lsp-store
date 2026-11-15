@@ -28,37 +28,9 @@ import coil.size.Precision
 import io.github.tophtab.lspstore.data.device.PackageIcon
 import io.github.tophtab.lspstore.domain.model.InstalledModule
 import io.github.tophtab.lspstore.domain.model.Module
-import io.github.tophtab.lspstore.ui.design.KomiEmpty
-import io.github.tophtab.lspstore.ui.design.KomiError
-import io.github.tophtab.lspstore.ui.design.KomiLoading
 import io.github.tophtab.lspstore.ui.design.KomiText
 import io.github.tophtab.lspstore.ui.theme.KomiTextRole
 import java.time.Instant
-
-@Composable
-fun LoadingBox(modifier: Modifier = Modifier) {
-    KomiLoading(modifier)
-}
-
-@Composable
-fun ErrorBox(message: String, onRetry: () -> Unit, modifier: Modifier = Modifier) {
-    KomiError(message = message, onRetry = onRetry, modifier = modifier)
-}
-
-@Composable
-fun EmptyBox(
-    message: String,
-    modifier: Modifier = Modifier,
-    actionLabel: String? = null,
-    onAction: (() -> Unit)? = null,
-) {
-    KomiEmpty(
-        message = message,
-        modifier = modifier,
-        actionLabel = actionLabel,
-        onAction = onAction,
-    )
-}
 
 @Composable
 fun ModuleAvatar(module: Module, size: Int = 48, installed: InstalledModule? = null) {

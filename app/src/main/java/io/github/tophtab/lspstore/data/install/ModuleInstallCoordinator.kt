@@ -25,7 +25,6 @@ enum class InstallStage { QUEUED, PREPARING, DOWNLOADING, WAITING_TO_INSTALL, IN
  * install button can fill up instead of a separate progress bar being shown.
  */
 data class ModuleInstallRun(
-    val repoPackageName: String,
     val asset: ReleaseAsset?,
     val taskId: String = "",
     val stage: InstallStage = InstallStage.QUEUED,
@@ -81,9 +80,6 @@ class ModuleInstallCoordinator(
     val messages = _messages.asSharedFlow()
 
     private val jobs = ConcurrentHashMap<String, Job>()
-
-    /** Whether a chain already owns this package, synchronously for callers. */
-    fun isRunning(repoPackageName: String): Boolean = registry.isRunning(repoPackageName)
 
     /** Packages currently owned by a chain, for "update all" selection. */
     fun runningPackages(): Set<String> = registry.runningPackages()

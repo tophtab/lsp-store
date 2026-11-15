@@ -1,19 +1,9 @@
 package io.github.tophtab.lspstore.ui.design
 
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.tophtab.lspstore.ui.theme.KomiTextRole
 
@@ -22,26 +12,11 @@ import io.github.tophtab.lspstore.ui.theme.KomiTextRole
 fun KomiInfoChip(
     label: String,
     modifier: Modifier = Modifier,
-    leadingIcon: ImageVector? = null,
-    onClick: (() -> Unit)? = null,
-    selected: Boolean = false,
 ) {
     AssistChip(
-        onClick = onClick ?: {},
-        label = {
-            KomiText(
-                text = label,
-                role = KomiTextRole.Label,
-                fontSize = 12.sp,
-                maxLines = 1,
-            )
-        },
+        onClick = {},
+        label = { ChipLabel(label) },
         modifier = modifier,
-        leadingIcon = leadingIcon?.let {
-            {
-                Icon(it, contentDescription = null, modifier = Modifier.size(16.dp))
-            }
-        },
     )
 }
 
@@ -51,38 +26,21 @@ fun KomiFilterChip(
     selected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    leadingIcon: ImageVector? = null,
-    count: Int? = null,
 ) {
     FilterChip(
         selected = selected,
         onClick = onClick,
         modifier = modifier,
-        label = {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                KomiText(
-                    text = label,
-                    role = KomiTextRole.Label,
-                    fontSize = 12.sp,
-                    maxLines = 1,
-                )
-                count?.let {
-                    Spacer(Modifier.width(6.dp))
-                    KomiText(
-                        text = it.toString(),
-                        role = KomiTextRole.Mono,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 11.sp,
-                        modifier = Modifier.padding(horizontal = 2.dp),
-                        maxLines = 1,
-                    )
-                }
-            }
-        },
-        leadingIcon = leadingIcon?.let {
-            {
-                Icon(it, contentDescription = null, modifier = Modifier.size(16.dp))
-            }
-        },
+        label = { ChipLabel(label) },
+    )
+}
+
+@Composable
+private fun ChipLabel(text: String) {
+    KomiText(
+        text = text,
+        role = KomiTextRole.Label,
+        fontSize = 12.sp,
+        maxLines = 1,
     )
 }

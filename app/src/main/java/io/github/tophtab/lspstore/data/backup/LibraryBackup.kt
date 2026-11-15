@@ -65,10 +65,10 @@ data class LibraryBackup(
         const val SCHEMA_VERSION = 1
         const val MIN_SCHEMA_VERSION = 1
 
-        /** Same cap as the library repository applies when recording a view. */
+        /** Recently viewed entries kept, whether recorded on the device or merged from a file. */
         const val RECENT_LIMIT = 30
 
-        /** Same cap as the library repository applies when recording a query. */
+        /** Search queries carried through backup files; the app does not record new ones. */
         const val SEARCH_HISTORY_LIMIT = 15
 
         private val json = Json {

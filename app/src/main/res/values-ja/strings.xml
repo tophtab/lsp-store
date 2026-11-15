@@ -15,9 +15,6 @@
     <string name="theme_system">システム</string>
     <string name="theme_light">ライト</string>
     <string name="theme_dark">ダーク</string>
-    <string name="sort_updated">最近更新された</string>
-    <string name="sort_stars">最もスターが多い</string>
-    <string name="sort_name">名前</string>
     <string name="nav_repository">リポジトリ</string>
     <string name="nav_installed">インストール済み</string>
     <string name="nav_settings">設定</string>

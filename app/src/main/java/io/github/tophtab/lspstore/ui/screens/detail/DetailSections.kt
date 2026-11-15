@@ -46,7 +46,6 @@ internal fun SectionHeading(title: String, modifier: Modifier = Modifier) {
         role = KomiTextRole.Title,
         fontSize = 22.sp,
         fontWeight = FontWeight.SemiBold,
-        uppercase = false,
         color = MaterialTheme.colorScheme.onBackground,
         modifier = modifier.fillMaxWidth(),
     )
@@ -116,7 +115,6 @@ internal fun StatItem(label: String, stat: Long, modifier: Modifier = Modifier) 
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            uppercase = false,
         )
         KomiText(
             text = compactCount(stat.coerceIn(0, Int.MAX_VALUE.toLong()).toInt()),
@@ -125,7 +123,6 @@ internal fun StatItem(label: String, stat: Long, modifier: Modifier = Modifier) 
             fontWeight = FontWeight.Black,
             color = MaterialTheme.colorScheme.onSurface,
             maxLines = 1,
-            uppercase = false,
         )
     }
 }
@@ -159,7 +156,6 @@ internal fun WhatsNewCard(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f),
-                uppercase = false,
             )
             KomiText(
                 text = formatRelativeTime(release.publishedAt),
@@ -167,7 +163,6 @@ internal fun WhatsNewCard(
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
-                uppercase = false,
             )
         }
         Spacer(Modifier.height(12.dp))
@@ -222,7 +217,6 @@ internal fun WhatsNewCard(
                     role = KomiTextRole.Title,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.surface,
-                    uppercase = false,
                 )
                 if (!expanded) {
                     Icon(

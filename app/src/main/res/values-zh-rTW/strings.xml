@@ -19,9 +19,6 @@
     <string name="theme_system">跟隨系統</string>
     <string name="theme_light">淺色</string>
     <string name="theme_dark">深色</string>
-    <string name="sort_updated">最近更新</string>
-    <string name="sort_stars">星標最多</string>
-    <string name="sort_name">名稱</string>
 
     <!-- Navigation -->
     <string name="nav_repository">倉庫</string>

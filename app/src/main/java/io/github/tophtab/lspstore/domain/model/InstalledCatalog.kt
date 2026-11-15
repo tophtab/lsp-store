@@ -60,7 +60,6 @@ class InstalledCopies private constructor(
 class InstalledCatalog private constructor(
     val repository: RepositoryIndex,
     val copies: InstalledCopies,
-    val variantStates: Map<String, ModuleVariantState>,
     val modules: List<InstalledModule>,
     val repoByInstalled: Map<String, Module>,
     private val statesByRepo: Map<String, ModuleVariantState>,
@@ -98,7 +97,7 @@ class InstalledCatalog private constructor(
                 }
                 modules += installed
             }
-            return InstalledCatalog(repository, copies, variantStates, modules, repoByInstalled, statesByRepo)
+            return InstalledCatalog(repository, copies, modules, repoByInstalled, statesByRepo)
         }
     }
 }

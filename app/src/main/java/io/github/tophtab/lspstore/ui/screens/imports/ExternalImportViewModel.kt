@@ -26,8 +26,6 @@ data class ExternalImportUiState(
     val isLoading: Boolean = true,
     val error: String? = null,
     val unknown: List<UnknownModuleItem> = emptyList(),
-    val totalModules: Int = 0,
-    val linkedCount: Int = 0,
     val pickerOpen: Boolean = false,
     val pickerTarget: String? = null,
     val pickerQuery: String = "",
@@ -142,15 +140,7 @@ class ExternalImportViewModel(private val container: AppContainer) : ViewModel()
             .map { UnknownModuleItem(installed = it, linkedModule = repoModuleFor(it.packageName, byPackage, links)) }
             .sortedBy { it.installed.label.lowercase() }
 
-        _state.update {
-            it.copy(
-                unknown = unknown,
-                totalModules = index.size,
-                linkedCount = links.count { (installedPackage, repo) ->
-                    installedPackage !in byPackage && repo in byPackage
-                },
-            )
-        }
+        _state.update { it.copy(unknown = unknown) }
     }
 
     companion object {

@@ -14,6 +14,7 @@ import io.github.tophtab.lspstore.di.AppContainer
 import io.github.tophtab.lspstore.ui.toUserMessage
 import io.github.tophtab.lspstore.domain.model.Module
 import io.github.tophtab.lspstore.domain.model.SkippedVersion
+import io.github.tophtab.lspstore.domain.model.repoModuleFor
 import io.github.tophtab.lspstore.domain.model.tracksPreReleases
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -125,12 +126,11 @@ class SkippedUpdatesViewModel(private val container: AppContainer) : ViewModel()
     private fun rebuild() {
         if (index.isEmpty() && skipped.isEmpty() && ignored.isEmpty()) return
         val byPackage = index.associateBy { it.packageName }
-        fun moduleFor(name: String): Module? = byPackage[name] ?: links[name]?.let(byPackage::get)
 
         val builders = LinkedHashMap<String, ItemBuilder>()
 
         fun builderFor(name: String): ItemBuilder {
-            val module = moduleFor(name)
+            val module = repoModuleFor(name, byPackage, links)
             val key = module?.packageName ?: name
             return builders.getOrPut(key) {
                 val includePreReleases = module

@@ -20,16 +20,12 @@ class ScannedPackageTest {
         hasModernMarker: Boolean = false,
         reflectedPrimaryCpuAbi: String? = null,
         nativeLibraryDir: String? = null,
-        apiLevel: Int = 30,
-        longVersionCode: Long? = 42L,
-        legacyVersionCode: Int = 42,
+        versionCode: Long = 42L,
         debuggable: Boolean = false,
     ) = ScannedPackage(
         packageName = "com.example.module",
         label = "Module",
-        apiLevel = apiLevel,
-        longVersionCode = longVersionCode,
-        legacyVersionCode = legacyVersionCode,
+        versionCode = versionCode,
         versionName = "1.0",
         hasLegacyXposedMeta = hasLegacyXposedMeta,
         hasLibXposedProvider = hasLibXposedProvider,
@@ -89,18 +85,8 @@ class ScannedPackageTest {
     }
 
     @Test
-    fun longVersionCodeIsUsedFromApi28On() {
-        assertEquals(4_294_967_296L, pkg(apiLevel = 30, longVersionCode = 4_294_967_296L).versionCode)
-        // Below API 28 the field does not exist; the deprecated int is all we have.
-        assertEquals(
-            42L,
-            pkg(apiLevel = 27, longVersionCode = null, legacyVersionCode = 42).versionCode,
-        )
-    }
-
-    @Test
-    fun missingLongVersionCodeFallsBackToTheLegacyInt() {
-        assertEquals(7L, pkg(apiLevel = 30, longVersionCode = null, legacyVersionCode = 7).versionCode)
+    fun versionCodeAboveTheIntRangeSurvivesTheMapping() {
+        assertEquals(4_294_967_296L, pkg(versionCode = 4_294_967_296L).toInstalledModule().versionCode)
     }
 
     @Test
