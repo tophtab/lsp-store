@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.recalculateWindowInsets
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Apps
@@ -353,7 +354,15 @@ private fun MainContent(openInstalled: StateFlow<Int>) {
                             )
                         }
                     },
-                ) { content() }
+                ) {
+                    // The suite places the page above the bar but reports only
+                    // the system bar inset as consumed, not the bar's own
+                    // height. The keyboard covers the bar too, so a page that
+                    // pads for the keyboard would stop one bar height short of
+                    // it. Recalculating from the page's real bounds accounts
+                    // for everything that is already below the page.
+                    Box(Modifier.fillMaxSize().recalculateWindowInsets()) { content() }
+                }
             },
         )
     }
