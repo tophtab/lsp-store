@@ -151,6 +151,8 @@
     <string name="import_load_failed">मॉड्यूल लोड करने में विफल</string>
     <string name="settings_downloads">डाउनलोड</string>
     <string name="settings_max_downloads">एक साथ डाउनलोड</string>
+    <string name="settings_download_retention">डाउनलोड रखने की अवधि</string>
+    <string name="settings_retention_weeks">%1$dहफ़्ते</string>
     <string name="settings_storage">भंडारण</string>
     <string name="settings_downloaded">डाउनलोड किए गए एपीके: %1$s</string>
     <string name="settings_clear_index">मॉड्यूल इंडेक्स कैश साफ़ करें</string>

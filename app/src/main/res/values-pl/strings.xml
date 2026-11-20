@@ -157,6 +157,8 @@
     <string name="import_load_failed">Nie udało się załadować modułów</string>
     <string name="settings_downloads">Pobierania</string>
     <string name="settings_max_downloads">Równoczesne pobierania</string>
+    <string name="settings_download_retention">Przechowywanie pobrań</string>
+    <string name="settings_retention_weeks">%1$dtyg</string>
     <string name="settings_storage">Składowanie</string>
     <string name="settings_downloaded">Pobrane pliki APK: %1$s</string>
     <string name="settings_clear_index">Wyczyść pamięć podręczną indeksu modułów</string>

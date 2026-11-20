@@ -2,6 +2,12 @@ package io.github.tophtab.lspstore.data.install
 
 import io.github.tophtab.lspstore.domain.model.ReleaseAsset
 
+/** Matches the identity suffix appended to downloads exported by this store. */
+internal val OWN_EXPORTED_APK_NAME = Regex("-[0-9a-f]{16}\\.[A-Za-z0-9]+$")
+
+internal fun shouldDeleteExportedApk(name: String, storedAtMillis: Long, weeks: Int, nowMillis: Long): Boolean =
+    OWN_EXPORTED_APK_NAME.containsMatchIn(name) && DownloadRetention.isExpired(storedAtMillis, weeks, nowMillis)
+
 /** Asset names that many repositories use verbatim, so they say nothing about the module. */
 private val GENERIC_NAMES = setOf(
     "app",

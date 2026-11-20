@@ -267,7 +267,9 @@ class DownloadManager(
     private fun exportCompleted(key: String, asset: ReleaseAsset, file: File?) {
         if (file == null || !file.exists()) return
         exports.computeIfAbsent(key) {
-            scope.launch {
+            // Register before starting: zero retention can finish immediately,
+            // and must not leave a completed job blocking a later re-export.
+            scope.launch(start = CoroutineStart.LAZY) {
                 val self = coroutineContext[Job]
                 try {
                     exporter.export(file, exportedApkName(key, asset))
@@ -275,7 +277,7 @@ class DownloadManager(
                     if (self != null) exports.remove(key, self) else exports.remove(key)
                 }
             }
-        }
+        }.start()
     }
 
     /**

@@ -17,6 +17,7 @@ import io.github.tophtab.lspstore.data.device.LauncherIcon
 import io.github.tophtab.lspstore.data.device.PackageIconFetcher
 import io.github.tophtab.lspstore.data.device.PackageIconKeyer
 import io.github.tophtab.lspstore.data.install.PackageEventReceiver
+import io.github.tophtab.lspstore.data.install.DownloadCleanupScheduler
 import io.github.tophtab.lspstore.data.update.UpdateScheduler
 import io.github.tophtab.lspstore.di.AppContainer
 import io.github.tophtab.lspstore.domain.variant.ModuleVariantState
@@ -47,6 +48,7 @@ class LspStoreApp : Application(), ImageLoaderFactory {
         applyMirror()
         applyLauncherIcon()
         syncUpdateSchedule()
+        syncDownloadCleanup()
         reconcilePendingInstalls()
         seedVariantStates()
         dropNotApplicableVerdicts()
@@ -176,6 +178,15 @@ class LspStoreApp : Application(), ImageLoaderFactory {
                 wifiOnly = container.settingsRepository.wifiOnly.first(),
                 reset = false,
             )
+        }
+    }
+
+    /** Reconcile existing exports at startup and restore the daily cleanup. */
+    private fun syncDownloadCleanup() {
+        appScope.launch {
+            val weeks = container.settingsRepository.downloadRetentionWeeks.first()
+            DownloadCleanupScheduler.sync(this@LspStoreApp, weeks)
+            container.apkExportStore.deleteExpired()
         }
     }
 

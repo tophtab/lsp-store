@@ -157,6 +157,8 @@
     <string name="import_load_failed">加载模块失败</string>
     <string name="settings_downloads">下载</string>
     <string name="settings_max_downloads">同时下载数</string>
+    <string name="settings_download_retention">下载保留时间</string>
+    <string name="settings_retention_weeks">%1$d周</string>
     <string name="settings_storage">存储</string>
     <string name="settings_downloaded">已下载的 APK：%1$s</string>
     <string name="settings_clear_index">清除模块索引缓存</string>

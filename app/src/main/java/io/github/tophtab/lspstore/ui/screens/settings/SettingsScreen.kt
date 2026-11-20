@@ -176,6 +176,7 @@ fun SettingsScreen(
                     },
                     onResetLocation = viewModel::resetDownloadLocation,
                     onMaxDownloadsChange = viewModel::setMaxConcurrentDownloads,
+                    onRetentionChange = viewModel::setDownloadRetentionWeeks,
                 )
                 RootSettingsGroup(state, viewModel::setRootInstall)
                 UpdateSettingsGroup(

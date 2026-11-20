@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import io.github.tophtab.lspstore.R
 import io.github.tophtab.lspstore.data.install.DownloadSlots
+import io.github.tophtab.lspstore.data.install.DownloadRetention
 import io.github.tophtab.lspstore.data.update.UpdateScheduler
 import io.github.tophtab.lspstore.ui.design.KomiButton
 import io.github.tophtab.lspstore.ui.design.KomiButtonSize
@@ -21,6 +22,7 @@ internal fun DownloadSettingsGroup(
     onPickLocation: () -> Unit,
     onResetLocation: () -> Unit,
     onMaxDownloadsChange: (Int) -> Unit,
+    onRetentionChange: (Int) -> Unit,
 ) {
     KomiSettingsSectionHead(stringResource(R.string.settings_downloads))
     KomiSettingsGroup {
@@ -58,6 +60,24 @@ internal fun DownloadSettingsGroup(
                     selectedIndex = (state.maxConcurrentDownloads - 1)
                         .coerceIn(0, DownloadSlots.MAX_LIMIT - 1),
                     onSelect = { onMaxDownloadsChange(it + 1) },
+                )
+            },
+        )
+        KomiSettingsRow(
+            title = stringResource(R.string.settings_download_retention),
+            trailing = {
+                KomiCompactSegmented(
+                    segments = DownloadRetention.WEEK_OPTIONS.map { weeks ->
+                        KomiSegment(
+                            when (weeks) {
+                                DownloadRetention.FOREVER -> "∞"
+                                0 -> "0"
+                                else -> stringResource(R.string.settings_retention_weeks, weeks)
+                            },
+                        )
+                    },
+                    selectedIndex = DownloadRetention.WEEK_OPTIONS.indexOf(state.downloadRetentionWeeks),
+                    onSelect = { onRetentionChange(DownloadRetention.WEEK_OPTIONS[it]) },
                 )
             },
             last = true,

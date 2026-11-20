@@ -158,6 +158,8 @@
     <string name="import_load_failed">載入模組失敗</string>
     <string name="settings_downloads">下載</string>
     <string name="settings_max_downloads">同時下載數</string>
+    <string name="settings_download_retention">下載保留時間</string>
+    <string name="settings_retention_weeks">%1$d週</string>
     <string name="settings_storage">儲存</string>
     <string name="settings_downloaded">已下載的 APK：%1$s</string>
     <string name="settings_clear_index">清除模組索引快取</string>

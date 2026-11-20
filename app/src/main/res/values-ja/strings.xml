@@ -148,6 +148,8 @@
     <string name="import_load_failed">モジュールのロードに失敗しました</string>
     <string name="settings_downloads">ダウンロード</string>
     <string name="settings_max_downloads">同時ダウンロード数</string>
+    <string name="settings_download_retention">ダウンロード保持期間</string>
+    <string name="settings_retention_weeks">%1$d週</string>
     <string name="settings_storage">ストレージ</string>
     <string name="settings_downloaded">ダウンロードしたAPK: %1$s</string>
     <string name="settings_clear_index">モジュールインデックスのキャッシュを削除</string>
