@@ -111,11 +111,9 @@
 
     <!-- Library -->
     <string name="library_favourites">收藏</string>
-    <string name="library_recently_viewed">最近瀏覽</string>
     <string name="library_skipped">已忽略更新模組</string>
     <string name="library_ignored_modules">已忽略倉庫模組</string>
     <string name="library_empty_favourites">還沒有收藏</string>
-    <string name="library_empty_recent">還沒有瀏覽記錄</string>
     <string name="library_empty_skipped">沒有已忽略更新模組</string>
     <string name="library_empty_ignored_modules">沒有已忽略倉庫模組</string>
     <string name="library_remove_favourite">取消收藏</string>
@@ -143,7 +141,6 @@
     <string name="settings_root_detected">檢測到 su，APK 將靜默安裝</string>
     <string name="settings_root_unavailable">此裝置沒有 su</string>
     <string name="settings_root_desc">透過root權限靜默安裝和更新APK</string>
-    <string name="settings_library">資料庫</string>
     <string name="import_title">匯入已安裝模組</string>
     <string name="import_desc">已安裝但不在倉庫中的 LSPosed 模組。將模組連結到倉庫模組即可檢查更新。下載的 APK 必須與已安裝的套件相符才能原地更新。</string>
     <string name="import_empty">所有已安裝模組均已在倉庫中</string>

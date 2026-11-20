@@ -6,7 +6,6 @@ object Routes {
     const val SETTINGS = "settings"
 
     const val FAVOURITES = "library/favourites"
-    const val RECENTLY_VIEWED = "library/recent"
     const val SKIPPED = "library/skipped"
     const val IGNORED_MODULES = "library/ignored-modules"
     const val IMPORTS = "library/imports"

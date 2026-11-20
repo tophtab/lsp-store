@@ -12,35 +12,6 @@ import io.github.tophtab.lspstore.ui.design.KomiSettingsRow
 import io.github.tophtab.lspstore.ui.design.KomiSettingsSectionHead
 
 @Composable
-internal fun LibrarySettingsGroup(
-    onOpenFavourites: () -> Unit,
-    onOpenRecentlyViewed: () -> Unit,
-    onOpenIgnoredModules: () -> Unit,
-    onOpenSkipped: () -> Unit,
-) {
-    KomiSettingsSectionHead(stringResource(R.string.settings_library))
-    KomiSettingsGroup {
-        KomiSettingsRow(
-            title = stringResource(R.string.library_favourites),
-            onClick = onOpenFavourites,
-        )
-        KomiSettingsRow(
-            title = stringResource(R.string.library_recently_viewed),
-            onClick = onOpenRecentlyViewed,
-        )
-        KomiSettingsRow(
-            title = stringResource(R.string.library_ignored_modules),
-            onClick = onOpenIgnoredModules,
-        )
-        KomiSettingsRow(
-            title = stringResource(R.string.library_skipped),
-            onClick = onOpenSkipped,
-            last = true,
-        )
-    }
-}
-
-@Composable
 internal fun StorageSettingsGroup(
     state: SettingsUiState,
     onClearDownloads: () -> Unit,

@@ -109,11 +109,9 @@
     <string name="detail_download_failed">Download non riuscito</string>
     <string name="detail_load_failed">Impossibile caricare il modulo</string>
     <string name="library_favourites">Preferiti</string>
-    <string name="library_recently_viewed">Visto di recente</string>
     <string name="library_skipped">Moduli con aggiornamenti ignorati</string>
     <string name="library_ignored_modules">Moduli del repository ignorati</string>
     <string name="library_empty_favourites">Nessun preferito ancora</string>
-    <string name="library_empty_recent">Niente ancora visto</string>
     <string name="library_empty_skipped">Nessun modulo di aggiornamento ignorato</string>
     <string name="library_empty_ignored_modules">Nessun modulo del repository ignorato</string>
     <string name="library_remove_favourite">Rimuovi dai preferiti</string>
@@ -139,7 +137,6 @@
     <string name="settings_root_detected">su rilevato, gli APK vengono installati in modalità silenziosa</string>
     <string name="settings_root_unavailable">su non disponibile su questo dispositivo</string>
     <string name="settings_root_desc">Installa e aggiorna gli APK in modalità silenziosa tramite su</string>
-    <string name="settings_library">Biblioteca</string>
     <string name="import_title">Importa i moduli installati</string>
     <string name="import_desc">Moduli LSPosed installati che non sono nel repository. Collegane uno a un modulo del repository per verificare la presenza di aggiornamenti. L\'APK scaricato deve corrispondere al pacchetto installato da aggiornare sul posto.</string>
     <string name="import_empty">Ogni modulo installato è già nel repository</string>

@@ -106,11 +106,9 @@
     <string name="detail_download_failed">ডাউনলোড ব্যর্থ হয়েছে৷</string>
     <string name="detail_load_failed">মডিউল লোড করতে ব্যর্থ হয়েছে৷</string>
     <string name="library_favourites">প্রিয়</string>
-    <string name="library_recently_viewed">সম্প্রতি দেখা হয়েছে</string>
     <string name="library_skipped">উপেক্ষা করা আপডেট মডিউল</string>
     <string name="library_ignored_modules">উপেক্ষা করা রিপোজিটরি মডিউল</string>
     <string name="library_empty_favourites">এখনও কোন প্রিয়</string>
-    <string name="library_empty_recent">এখনও কিছু দেখা হয়নি</string>
     <string name="library_empty_skipped">কোনো উপেক্ষা করা আপডেট মডিউল নেই</string>
     <string name="library_empty_ignored_modules">কোনো উপেক্ষা করা রিপোজিটরি মডিউল নেই</string>
     <string name="library_remove_favourite">পছন্দের তালিকা থেকে সরান</string>
@@ -136,7 +134,6 @@
     <string name="settings_root_detected">su সনাক্ত করা হয়েছে, APK গুলি নিঃশব্দে ইনস্টল হয়৷</string>
     <string name="settings_root_unavailable">su এই ডিভাইসে উপলব্ধ নয়</string>
     <string name="settings_root_desc">su এর মাধ্যমে চুপচাপ APK ইনস্টল এবং আপডেট করুন</string>
-    <string name="settings_library">লাইব্রেরি</string>
     <string name="import_title">ইনস্টল করা মডিউল আমদানি করুন</string>
     <string name="import_desc">LSPosed মডিউলগুলি ইনস্টল করা হয়েছে যা সংগ্রহস্থলে নেই। আপডেটের জন্য চেক করতে একটি সংগ্রহস্থল মডিউলের সাথে লিঙ্ক করুন। ডাউনলোড করা APK আপডেট করার জন্য ইনস্টল করা প্যাকেজের সাথে মেলে।</string>
     <string name="import_empty">প্রতিটি ইনস্টল করা মডিউল ইতিমধ্যেই সংগ্রহস্থলে রয়েছে৷</string>

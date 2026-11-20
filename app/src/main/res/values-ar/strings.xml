@@ -118,11 +118,9 @@
     <string name="detail_download_failed">فشل التنزيل</string>
     <string name="detail_load_failed">فشل تحميل الوحدة النمطية</string>
     <string name="library_favourites">المفضلة</string>
-    <string name="library_recently_viewed">تم عرضها مؤخرًا</string>
     <string name="library_skipped">وحدات التحديثات المتجاهلة</string>
     <string name="library_ignored_modules">وحدات المستودع المتجاهلة</string>
     <string name="library_empty_favourites">لا يوجد مفضلة بعد</string>
-    <string name="library_empty_recent">لم يتم مشاهدة أي شيء حتى الآن</string>
     <string name="library_empty_skipped">لا توجد وحدات التحديث التي تم تجاهلها</string>
     <string name="library_empty_ignored_modules">لا توجد وحدات مستودع متجاهلة</string>
     <string name="library_remove_favourite">إزالة من المفضلة</string>
@@ -148,7 +146,6 @@
     <string name="settings_root_detected">تم اكتشاف su، ويتم تثبيت ملفات APK بصمت</string>
     <string name="settings_root_unavailable">su غير متوفر على هذا الجهاز</string>
     <string name="settings_root_desc">قم بتثبيت ملفات APK وتحديثها بصمت عبر su</string>
-    <string name="settings_library">مكتبة</string>
     <string name="import_title">استيراد الوحدات المثبتة</string>
     <string name="import_desc">وحدات LSPosed المثبتة غير الموجودة في المستودع. قم بربط أحدها بوحدة المستودع للتحقق من وجود تحديثات. يجب أن يتطابق ملف APK الذي تم تنزيله مع الحزمة المثبتة حتى يتم تحديثه في مكانه.</string>
     <string name="import_empty">كل وحدة مثبتة موجودة بالفعل في المستودع</string>

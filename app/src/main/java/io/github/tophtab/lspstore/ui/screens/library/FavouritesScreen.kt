@@ -31,9 +31,6 @@ import io.github.tophtab.lspstore.domain.model.Module
 import io.github.tophtab.lspstore.ui.LocalAppContainer
 import io.github.tophtab.lspstore.ui.components.LibraryModuleHeading
 import io.github.tophtab.lspstore.ui.components.ModuleAvatar
-import io.github.tophtab.lspstore.ui.design.KomiButton
-import io.github.tophtab.lspstore.ui.design.KomiButtonSize
-import io.github.tophtab.lspstore.ui.design.KomiButtonVariant
 import io.github.tophtab.lspstore.ui.design.KomiConstrainedContent
 import io.github.tophtab.lspstore.ui.design.KomiEmpty
 import io.github.tophtab.lspstore.ui.design.KomiError
@@ -43,35 +40,21 @@ import io.github.tophtab.lspstore.ui.design.KomiSurface
 import io.github.tophtab.lspstore.ui.design.KomiTopBar
 
 @Composable
-fun LibraryListScreen(
-    kind: LibraryKind,
+fun FavouritesScreen(
     onBack: () -> Unit,
     onOpenModule: (String) -> Unit,
 ) {
     val container = LocalAppContainer.current
-    val viewModel: LibraryListViewModel = viewModel(
-        key = "library-${kind.name}",
-        factory = LibraryListViewModel.factory(container, kind),
-    )
+    val viewModel: FavouritesViewModel = viewModel(factory = FavouritesViewModel.factory(container))
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             KomiTopBar(
-                title = stringResource(kind.titleRes),
+                title = stringResource(R.string.library_favourites),
                 onBack = onBack,
                 backContentDescription = stringResource(R.string.action_back),
-                actions = {
-                    if (kind == LibraryKind.RECENTLY_VIEWED && state.modules.isNotEmpty()) {
-                        KomiButton(
-                            onClick = viewModel::clearAll,
-                            label = stringResource(R.string.action_clear),
-                            variant = KomiButtonVariant.Text,
-                            size = KomiButtonSize.Small,
-                        )
-                    }
-                },
             )
         },
     ) { innerPadding ->
@@ -80,7 +63,7 @@ fun LibraryListScreen(
             state.error != null ->
                 KomiError(state.error!!, viewModel::refresh, Modifier.padding(innerPadding))
             state.modules.isEmpty() ->
-                KomiEmpty(stringResource(kind.emptyRes), Modifier.padding(innerPadding))
+                KomiEmpty(stringResource(R.string.library_empty_favourites), Modifier.padding(innerPadding))
             else -> KomiConstrainedContent(
                 modifier = Modifier.fillMaxSize().padding(innerPadding),
                 maxWidth = 1120.dp,
@@ -93,10 +76,9 @@ fun LibraryListScreen(
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
                     items(state.modules, key = { it.packageName }) { module ->
-                        LibraryRow(
+                        FavouriteRow(
                             module = module,
                             installed = state.installedCopies[module.packageName],
-                            kind = kind,
                             onClick = { onOpenModule(module.packageName) },
                             onRemove = { viewModel.remove(module.packageName) },
                         )
@@ -108,10 +90,9 @@ fun LibraryListScreen(
 }
 
 @Composable
-private fun LibraryRow(
+private fun FavouriteRow(
     module: Module,
     installed: InstalledModule?,
-    kind: LibraryKind,
     onClick: () -> Unit,
     onRemove: () -> Unit,
 ) {
@@ -144,16 +125,12 @@ private fun LibraryRow(
                     module.latestRelease?.let { KomiInfoChip(it.versionName) }
                 }
             }
-            when (kind) {
-                LibraryKind.FAVOURITES -> IconButton(onClick = onRemove) {
-                    Icon(
-                        Icons.Filled.Favorite,
-                        contentDescription = stringResource(R.string.library_remove_favourite),
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                    )
-                }
-
-                LibraryKind.RECENTLY_VIEWED -> Unit
+            IconButton(onClick = onRemove) {
+                Icon(
+                    Icons.Filled.Favorite,
+                    contentDescription = stringResource(R.string.library_remove_favourite),
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                )
             }
         }
     }

@@ -88,9 +88,8 @@ import io.github.tophtab.lspstore.ui.screens.detail.ModuleDetailScreen
 import io.github.tophtab.lspstore.ui.screens.home.HomeScreen
 import io.github.tophtab.lspstore.ui.screens.imports.ExternalImportScreen
 import io.github.tophtab.lspstore.ui.screens.installed.InstalledScreen
+import io.github.tophtab.lspstore.ui.screens.library.FavouritesScreen
 import io.github.tophtab.lspstore.ui.screens.library.IgnoredModulesScreen
-import io.github.tophtab.lspstore.ui.screens.library.LibraryKind
-import io.github.tophtab.lspstore.ui.screens.library.LibraryListScreen
 import io.github.tophtab.lspstore.ui.screens.library.SkippedUpdatesScreen
 import io.github.tophtab.lspstore.ui.screens.licenses.LicensesScreen
 import io.github.tophtab.lspstore.ui.screens.mirrors.MirrorPickerScreen
@@ -394,6 +393,8 @@ private fun AppNavHost(
             rootPage(Routes.HOME) {
                 HomeScreen(
                     onOpenModule = { navController.navigate(Routes.detail(it)) },
+                    onOpenFavourites = { navController.navigate(Routes.FAVOURITES) },
+                    onOpenIgnoredModules = { navController.navigate(Routes.IGNORED_MODULES) },
                     reselectTick = if (reselectRoute == Routes.HOME) reselectTick else 0,
                 )
             }
@@ -403,6 +404,7 @@ private fun AppNavHost(
                 InstalledScreen(
                     onOpenModule = { navController.navigate(Routes.detail(it)) },
                     onOpenImports = { navController.navigate(Routes.IMPORTS) },
+                    onOpenSkipped = { navController.navigate(Routes.SKIPPED) },
                     reselectTick = if (reselectRoute == Routes.INSTALLED) reselectTick else 0,
                 )
             }
@@ -410,10 +412,6 @@ private fun AppNavHost(
         composable(Routes.SETTINGS) {
             rootPage(Routes.SETTINGS) {
                 SettingsScreen(
-                    onOpenFavourites = { navController.navigate(Routes.FAVOURITES) },
-                    onOpenRecentlyViewed = { navController.navigate(Routes.RECENTLY_VIEWED) },
-                    onOpenSkipped = { navController.navigate(Routes.SKIPPED) },
-                    onOpenIgnoredModules = { navController.navigate(Routes.IGNORED_MODULES) },
                     onOpenAbout = { navController.navigate(Routes.ABOUT) },
                     onOpenMirrors = { navController.navigate(Routes.MIRRORS) },
                     reselectTick = if (reselectRoute == Routes.SETTINGS) reselectTick else 0,
@@ -433,15 +431,7 @@ private fun AppNavHost(
             )
         }
         composable(Routes.FAVOURITES) {
-            LibraryListScreen(
-                kind = LibraryKind.FAVOURITES,
-                onBack = { navController.popBackStack() },
-                onOpenModule = { navController.navigate(Routes.detail(it)) },
-            )
-        }
-        composable(Routes.RECENTLY_VIEWED) {
-            LibraryListScreen(
-                kind = LibraryKind.RECENTLY_VIEWED,
+            FavouritesScreen(
                 onBack = { navController.popBackStack() },
                 onOpenModule = { navController.navigate(Routes.detail(it)) },
             )

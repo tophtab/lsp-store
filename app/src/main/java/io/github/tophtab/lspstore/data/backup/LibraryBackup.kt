@@ -65,7 +65,7 @@ data class LibraryBackup(
         const val SCHEMA_VERSION = 1
         const val MIN_SCHEMA_VERSION = 1
 
-        /** Recently viewed entries kept, whether recorded on the device or merged from a file. */
+        /** Recently viewed entries carried through backup files; the app does not record new ones. */
         const val RECENT_LIMIT = 30
 
         /** Search queries carried through backup files; the app does not record new ones. */

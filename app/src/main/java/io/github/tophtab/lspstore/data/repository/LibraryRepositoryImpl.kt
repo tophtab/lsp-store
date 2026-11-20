@@ -28,13 +28,11 @@ import io.github.tophtab.lspstore.domain.variant.withoutNotApplicableVerdicts
 private val Context.libraryDataStore by preferencesDataStore(name = "library")
 
 /**
- * User-curated lists: favourites, recently viewed, ignored modules and ignored
- * updates. Ordered lists are stored newline separated; skipped updates as
+ * User-curated lists: favourites, ignored modules and ignored updates. Ordered lists are stored newline separated; skipped updates as
  * "package:tag" lines (older builds wrote "package:versionCode").
  */
 interface LibraryRepository {
     val favourites: Flow<List<String>>
-    val recentlyViewed: Flow<List<String>>
     val skippedUpdates: Flow<Map<String, SkippedVersion>>
     val ignoredUpdates: Flow<Set<String>>
 
@@ -56,8 +54,6 @@ interface LibraryRepository {
     val variantStates: Flow<Map<String, ModuleVariantState>>
 
     suspend fun toggleFavourite(packageName: String)
-    suspend fun addRecentlyViewed(packageName: String)
-    suspend fun clearRecentlyViewed()
     suspend fun skipUpdate(packageName: String, version: ModuleVersion)
     suspend fun unskipUpdate(packageName: String)
     suspend fun clearSkippedUpdates()
@@ -134,9 +130,6 @@ class LibraryRepositoryImpl(private val context: Context) : LibraryRepository {
     override val favourites: Flow<List<String>> = context.libraryDataStore.data
         .decodedField(Keys.FAVOURITES, ::decodeList)
 
-    override val recentlyViewed: Flow<List<String>> = context.libraryDataStore.data
-        .decodedField(Keys.RECENTLY_VIEWED, ::decodeList)
-
     override val skippedUpdates: Flow<Map<String, SkippedVersion>> = context.libraryDataStore.data
         .decodedField(Keys.SKIPPED, ::decodeSkipped)
 
@@ -177,19 +170,6 @@ class LibraryRepositoryImpl(private val context: Context) : LibraryRepository {
                 if (packageName in current) current - packageName else listOf(packageName) + current,
             )
         }
-    }
-
-    override suspend fun addRecentlyViewed(packageName: String) {
-        context.libraryDataStore.edit { prefs ->
-            val current = decodeList(prefs[Keys.RECENTLY_VIEWED])
-            val updated = (listOf(packageName) + current.filterNot { it == packageName })
-                .take(LibraryBackup.RECENT_LIMIT)
-            prefs[Keys.RECENTLY_VIEWED] = encodeList(updated)
-        }
-    }
-
-    override suspend fun clearRecentlyViewed() {
-        context.libraryDataStore.edit { it[Keys.RECENTLY_VIEWED] = "" }
     }
 
     override suspend fun skipUpdate(packageName: String, version: ModuleVersion) {
