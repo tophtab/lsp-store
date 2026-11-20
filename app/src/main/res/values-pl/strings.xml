@@ -112,11 +112,9 @@
     <string name="detail_download_failed">Pobieranie nie powiodło się</string>
     <string name="detail_load_failed">Nie udało się załadować modułu</string>
     <string name="library_favourites">Ulubione</string>
-    <string name="library_recently_viewed">Ostatnio przeglądane</string>
     <string name="library_skipped">Moduły z ignorowanymi aktualizacjami</string>
     <string name="library_ignored_modules">Zignorowane moduły repozytorium</string>
     <string name="library_empty_favourites">Nie ma jeszcze ulubionych</string>
-    <string name="library_empty_recent">Jeszcze nic nie było oglądane</string>
     <string name="library_empty_skipped">Brak ignorowanych modułów aktualizacji</string>
     <string name="library_empty_ignored_modules">Brak zignorowanych modułów repozytorium</string>
     <string name="library_remove_favourite">Usuń z ulubionych</string>
@@ -142,7 +140,6 @@
     <string name="settings_root_detected">su, pliki APK instalują się w trybie cichym</string>
     <string name="settings_root_unavailable">su nie jest dostępne na tym urządzeniu</string>
     <string name="settings_root_desc">Instaluj i aktualizuj pliki APK w trybie cichym za pośrednictwem su</string>
-    <string name="settings_library">Biblioteka</string>
     <string name="import_title">Importuj zainstalowane moduły</string>
     <string name="import_desc">Zainstalowano moduły LSPosed, których nie ma w repozytorium. Połącz jeden z modułem repozytorium, aby sprawdzić dostępność aktualizacji. Pobrany plik APK musi pasować do zainstalowanego pakietu, aby można go było zaktualizować.</string>
     <string name="import_empty">Każdy zainstalowany moduł znajduje się już w repozytorium</string>

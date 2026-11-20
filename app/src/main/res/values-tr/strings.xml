@@ -106,11 +106,9 @@
     <string name="detail_download_failed">İndirme başarısız oldu</string>
     <string name="detail_load_failed">Modül yüklenemedi</string>
     <string name="library_favourites">Favoriler</string>
-    <string name="library_recently_viewed">Son görüntülenenler</string>
     <string name="library_skipped">Güncellemeleri yoksayılan modüller</string>
     <string name="library_ignored_modules">Yoksayılan depo modülleri</string>
     <string name="library_empty_favourites">Henüz favori yok</string>
-    <string name="library_empty_recent">Henüz hiçbir şey görüntülenmedi</string>
     <string name="library_empty_skipped">Göz ardı edilen güncelleme modülü yok</string>
     <string name="library_empty_ignored_modules">Yoksayılan depo modülü yok</string>
     <string name="library_remove_favourite">Favorilerden kaldır</string>
@@ -136,7 +134,6 @@
     <string name="settings_root_detected">su algılandı, APK\'lar sessizce yükleniyor</string>
     <string name="settings_root_unavailable">su bu cihazda mevcut değil</string>
     <string name="settings_root_desc">APK\'ları su aracılığıyla sessizce yükleyin ve güncelleyin</string>
-    <string name="settings_library">Kütüphane</string>
     <string name="import_title">Kurulu modülleri içe aktar</string>
     <string name="import_desc">Depoda bulunmayan yüklü LSPosed modülleri. Güncellemeleri kontrol etmek için birini bir depo modülüne bağlayın. İndirilen APK\'nın güncellenmesi için yüklü paketle eşleşmesi gerekir.</string>
     <string name="import_empty">Kurulu her modül zaten depodadır</string>

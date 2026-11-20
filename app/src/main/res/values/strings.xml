@@ -130,11 +130,9 @@
 
     <!-- Library -->
     <string name="library_favourites">Favourites</string>
-    <string name="library_recently_viewed">Recently viewed</string>
     <string name="library_skipped">Ignored update modules</string>
     <string name="library_ignored_modules">Ignored repository modules</string>
     <string name="library_empty_favourites">No favourites yet</string>
-    <string name="library_empty_recent">Nothing viewed yet</string>
     <string name="library_empty_skipped">No ignored update modules</string>
     <string name="library_empty_ignored_modules">No ignored repository modules</string>
     <string name="library_remove_favourite">Remove from favourites</string>
@@ -162,7 +160,6 @@
     <string name="settings_root_detected">su detected, APKs install silently</string>
     <string name="settings_root_unavailable">su not available on this device</string>
     <string name="settings_root_desc">Install and update APKs silently via su</string>
-    <string name="settings_library">Library</string>
     <string name="import_title">Import installed modules</string>
     <string name="import_desc">Installed LSPosed modules that are not in the repository. Link one to a repository module to check for updates. The downloaded APK must match the installed package to update in place.</string>
     <string name="import_empty">Every installed module is already in the repository</string>

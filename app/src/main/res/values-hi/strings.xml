@@ -106,11 +106,9 @@
     <string name="detail_download_failed">डाउनलोड विफल रहा</string>
     <string name="detail_load_failed">मॉड्यूल लोड करने में विफल</string>
     <string name="library_favourites">पसंदीदा</string>
-    <string name="library_recently_viewed">हाल में देखा गया</string>
     <string name="library_skipped">अनदेखा किए गए अपडेट मॉड्यूल</string>
     <string name="library_ignored_modules">अनदेखा किए गए रिपॉज़िटरी मॉड्यूल</string>
     <string name="library_empty_favourites">अभी तक कोई पसंदीदा नहीं</string>
-    <string name="library_empty_recent">अभी तक कुछ भी नहीं देखा गया</string>
     <string name="library_empty_skipped">कोई उपेक्षित अद्यतन मॉड्यूल नहीं</string>
     <string name="library_empty_ignored_modules">कोई अनदेखा किया गया रिपॉज़िटरी मॉड्यूल नहीं</string>
     <string name="library_remove_favourite">पसंदीदा से हटाएँ</string>
@@ -136,7 +134,6 @@
     <string name="settings_root_detected">सु का पता चला, APK चुपचाप इंस्टॉल हो जाते हैं</string>
     <string name="settings_root_unavailable">su इस डिवाइस पर उपलब्ध नहीं है</string>
     <string name="settings_root_desc">सु के माध्यम से चुपचाप एपीके इंस्टॉल और अपडेट करें</string>
-    <string name="settings_library">पुस्तकालय</string>
     <string name="import_title">स्थापित मॉड्यूल आयात करें</string>
     <string name="import_desc">स्थापित एलएसपोज़्ड मॉड्यूल जो रिपॉजिटरी में नहीं हैं। अपडेट की जांच के लिए किसी एक को रिपॉजिटरी मॉड्यूल से लिंक करें। अद्यतन करने के लिए डाउनलोड किया गया एपीके स्थापित पैकेज से मेल खाना चाहिए।</string>
     <string name="import_empty">प्रत्येक स्थापित मॉड्यूल पहले से ही रिपॉजिटरी में है</string>

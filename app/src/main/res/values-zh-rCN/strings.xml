@@ -110,11 +110,9 @@
 
     <!-- Library -->
     <string name="library_favourites">收藏</string>
-    <string name="library_recently_viewed">最近浏览</string>
     <string name="library_skipped">已忽略更新模块</string>
     <string name="library_ignored_modules">已忽略仓库模块</string>
     <string name="library_empty_favourites">还没有收藏</string>
-    <string name="library_empty_recent">还没有浏览记录</string>
     <string name="library_empty_skipped">没有已忽略更新模块</string>
     <string name="library_empty_ignored_modules">没有已忽略仓库模块</string>
     <string name="library_remove_favourite">取消收藏</string>
@@ -142,7 +140,6 @@
     <string name="settings_root_detected">检测到 su，APK 将静默安装</string>
     <string name="settings_root_unavailable">此设备没有 su</string>
     <string name="settings_root_desc">通过root权限静默安装和更新APK</string>
-    <string name="settings_library">资料库</string>
     <string name="import_title">导入已安装模块</string>
     <string name="import_desc">已安装但不在仓库中的 LSPosed 模块。将一个模块链接到仓库模块即可检查更新。下载的 APK 必须与已安装的包匹配才能原地更新。</string>
     <string name="import_empty">所有已安装模块均已在仓库中</string>

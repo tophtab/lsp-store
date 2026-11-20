@@ -245,7 +245,6 @@ class ModuleDetailViewModel(
                     )
                 }
                 updatePendingState()
-                libraryRepository.addRecentlyViewed(packageName)
                 translationController.onDetailLoaded()
             }.onFailure { error ->
                 // A cancelled load was replaced by the one that cancelled it;

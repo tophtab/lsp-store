@@ -2,6 +2,7 @@ package io.github.tophtab.lspstore.ui.screens.installed
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,6 +16,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.SystemUpdate
+import androidx.compose.material.icons.filled.UpdateDisabled
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
@@ -28,6 +32,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
@@ -55,6 +60,7 @@ import io.github.tophtab.lspstore.ui.design.rootContentWindowInsets
 fun InstalledScreen(
     onOpenModule: (String) -> Unit,
     onOpenImports: () -> Unit,
+    onOpenSkipped: () -> Unit,
     reselectTick: Int = 0,
 ) {
     val container = LocalAppContainer.current
@@ -227,17 +233,32 @@ fun InstalledScreen(
                     .consumeWindowInsets(innerPadding)
                     .imePadding(),
             ) {
-                KomiTextField(
-                    value = query,
-                    onValueChange = { query = it },
+                // The shortcut sits beside the search field rather than in a top
+                // bar: root tabs have none. The icon button's own 12dp inset
+                // stands in for the row's end padding.
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(start = 12.dp, top = 8.dp, end = 12.dp, bottom = 4.dp),
-                    placeholder = stringResource(R.string.installed_search_hint),
-                    leadingIcon = Icons.Filled.Search,
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                    keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
-                )
+                        .padding(start = 12.dp, top = 8.dp, bottom = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    KomiTextField(
+                        value = query,
+                        onValueChange = { query = it },
+                        modifier = Modifier.weight(1f),
+                        placeholder = stringResource(R.string.installed_search_hint),
+                        leadingIcon = Icons.Filled.Search,
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                        keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
+                    )
+                    IconButton(onClick = onOpenSkipped) {
+                        Icon(
+                            Icons.Filled.UpdateDisabled,
+                            contentDescription = stringResource(R.string.library_skipped),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
                 when {
                     state.isLoading -> KomiLoading(Modifier.weight(1f))
                     state.error != null ->

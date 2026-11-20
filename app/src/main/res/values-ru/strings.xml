@@ -112,11 +112,9 @@
     <string name="detail_download_failed">Загрузка не удалась</string>
     <string name="detail_load_failed">Не удалось загрузить модуль</string>
     <string name="library_favourites">Избранное</string>
-    <string name="library_recently_viewed">Недавно просмотренные</string>
     <string name="library_skipped">Модули с игнорируемыми обновлениями</string>
     <string name="library_ignored_modules">Игнорируемые модули репозитория</string>
     <string name="library_empty_favourites">Пока нет избранных</string>
-    <string name="library_empty_recent">Еще ничего не просмотрено</string>
     <string name="library_empty_skipped">Нет игнорируемых модулей обновления</string>
     <string name="library_empty_ignored_modules">Нет игнорируемых модулей репозитория</string>
     <string name="library_remove_favourite">Удалить из избранного</string>
@@ -142,7 +140,6 @@
     <string name="settings_root_detected">su обнаружен, APK устанавливаются автоматически</string>
     <string name="settings_root_unavailable">su недоступен на этом устройстве</string>
     <string name="settings_root_desc">Устанавливайте и обновляйте APK автоматически через su</string>
-    <string name="settings_library">Библиотека</string>
     <string name="import_title">Импортировать установленные модули</string>
     <string name="import_desc">Установлены модули LSPosed, которых нет в репозитории. Свяжите его с модулем репозитория, чтобы проверить наличие обновлений. Для возможности обновления загруженный APK должен соответствовать установленному пакету.</string>
     <string name="import_empty">Каждый установленный модуль уже находится в репозитории.</string>

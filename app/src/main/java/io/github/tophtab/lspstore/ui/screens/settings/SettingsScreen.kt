@@ -45,10 +45,6 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun SettingsScreen(
-    onOpenFavourites: () -> Unit,
-    onOpenRecentlyViewed: () -> Unit,
-    onOpenSkipped: () -> Unit,
-    onOpenIgnoredModules: () -> Unit,
     onOpenAbout: () -> Unit,
     onOpenMirrors: () -> Unit,
     reselectTick: Int = 0,
@@ -190,7 +186,6 @@ fun SettingsScreen(
                     onWifiOnlyChange = viewModel::setWifiOnly,
                     onAutoUpdateChange = viewModel::setAutoUpdateRoot,
                 )
-                LibrarySettingsGroup(onOpenFavourites, onOpenRecentlyViewed, onOpenIgnoredModules, onOpenSkipped)
                 StorageSettingsGroup(state, viewModel::clearDownloadedApks, viewModel::clearIndexCache)
                 BackupSettingsGroup(
                     onExport = { backupExport.launch(viewModel.backupFileName()) },

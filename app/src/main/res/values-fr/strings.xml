@@ -109,11 +109,9 @@
     <string name="detail_download_failed">Le téléchargement a échoué</string>
     <string name="detail_load_failed">Échec du chargement du module</string>
     <string name="library_favourites">Favoris</string>
-    <string name="library_recently_viewed">Récemment consulté</string>
     <string name="library_skipped">Modules aux mises à jour ignorées</string>
     <string name="library_ignored_modules">Modules du dépôt ignorés</string>
     <string name="library_empty_favourites">Pas encore de favoris</string>
-    <string name="library_empty_recent">Rien de vu pour l\'instant</string>
     <string name="library_empty_skipped">Aucun module de mise à jour ignoré</string>
     <string name="library_empty_ignored_modules">Aucun module du dépôt ignoré</string>
     <string name="library_remove_favourite">Retirer des favoris</string>
@@ -139,7 +137,6 @@
     <string name="settings_root_detected">su détecté, les APK s\'installent silencieusement</string>
     <string name="settings_root_unavailable">su n\'est pas disponible sur cet appareil</string>
     <string name="settings_root_desc">Installez et mettez à jour les APK en silence via su</string>
-    <string name="settings_library">Bibliothèque</string>
     <string name="import_title">Importer les modules installés</string>
     <string name="import_desc">Modules LSPosed installés qui ne sont pas dans le référentiel. Associez-en un à un module de référentiel pour vérifier les mises à jour. L\'APK téléchargé doit correspondre au package installé pour être mis à jour.</string>
     <string name="import_empty">Chaque module installé est déjà dans le référentiel</string>

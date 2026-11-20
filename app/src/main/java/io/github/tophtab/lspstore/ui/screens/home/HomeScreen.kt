@@ -5,6 +5,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,8 +19,10 @@ import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridS
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -30,6 +33,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
@@ -62,6 +66,8 @@ import io.github.tophtab.lspstore.ui.theme.KomiTextRole
 @Composable
 fun HomeScreen(
     onOpenModule: (String) -> Unit,
+    onOpenFavourites: () -> Unit,
+    onOpenIgnoredModules: () -> Unit,
     reselectTick: Int = 0,
 ) {
     val container = LocalAppContainer.current
@@ -180,27 +186,49 @@ fun HomeScreen(
                         .consumeWindowInsets(innerPadding)
                         .imePadding(),
                 ) {
-                    KomiTextField(
-                        value = state.searchQuery,
-                        onValueChange = viewModel::onSearchQueryChange,
+                    // The library shortcuts sit beside the search field rather than
+                    // in a top bar: root tabs have none. An icon button's own 12dp
+                    // inset stands in for the row's end padding.
+                    Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(start = 12.dp, top = 8.dp, end = 12.dp, bottom = 4.dp),
-                        placeholder = stringResource(R.string.import_search_hint),
-                        leadingIcon = Icons.Filled.Search,
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                        keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
-                        trailing = {
-                            if (state.searchQuery.isNotEmpty()) {
-                                IconButton(onClick = viewModel::clearSearch) {
-                                    Icon(
-                                        Icons.Filled.Clear,
-                                        contentDescription = stringResource(R.string.action_clear),
-                                    )
+                            .padding(start = 12.dp, top = 8.dp, bottom = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        KomiTextField(
+                            value = state.searchQuery,
+                            onValueChange = viewModel::onSearchQueryChange,
+                            modifier = Modifier.weight(1f),
+                            placeholder = stringResource(R.string.import_search_hint),
+                            leadingIcon = Icons.Filled.Search,
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                            keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
+                            trailing = {
+                                if (state.searchQuery.isNotEmpty()) {
+                                    IconButton(onClick = viewModel::clearSearch) {
+                                        Icon(
+                                            Icons.Filled.Clear,
+                                            contentDescription = stringResource(R.string.action_clear),
+                                        )
+                                    }
                                 }
-                            }
-                        },
-                    )
+                            },
+                        )
+                        IconButton(onClick = onOpenFavourites) {
+                            Icon(
+                                Icons.Outlined.FavoriteBorder,
+                                contentDescription = stringResource(R.string.library_favourites),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        IconButton(onClick = onOpenIgnoredModules) {
+                            Icon(
+                                Icons.Filled.Block,
+                                contentDescription = stringResource(R.string.library_ignored_modules),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
 
                     KomiSegmented(
                         segments = tabs.map { KomiSegment(it.label) },

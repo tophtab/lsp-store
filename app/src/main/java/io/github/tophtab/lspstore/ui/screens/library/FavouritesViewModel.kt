@@ -1,6 +1,5 @@
 package io.github.tophtab.lspstore.ui.screens.library
 
-import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
@@ -20,31 +19,20 @@ import io.github.tophtab.lspstore.domain.model.installedCopyForRepo
 import io.github.tophtab.lspstore.domain.model.repoModuleFor
 import kotlin.coroutines.cancellation.CancellationException
 
-enum class LibraryKind(
-    @param:StringRes val titleRes: Int,
-    @param:StringRes val emptyRes: Int,
-) {
-    FAVOURITES(R.string.library_favourites, R.string.library_empty_favourites),
-    RECENTLY_VIEWED(R.string.library_recently_viewed, R.string.library_empty_recent),
-}
-
-data class LibraryUiState(
+data class FavouritesUiState(
     val isLoading: Boolean = true,
     val error: String? = null,
     val modules: List<Module> = emptyList(),
     val installedCopies: Map<String, InstalledModule> = emptyMap(),
 )
 
-class LibraryListViewModel(
-    private val container: AppContainer,
-    private val kind: LibraryKind,
-) : ViewModel() {
+class FavouritesViewModel(private val container: AppContainer) : ViewModel() {
 
     private val moduleRepository = container.moduleRepository
     private val installedRepository = container.installedRepository
     private val libraryRepository = container.libraryRepository
 
-    private val _state = MutableStateFlow(LibraryUiState())
+    private val _state = MutableStateFlow(FavouritesUiState())
     val state = _state.asStateFlow()
 
     private var index: List<Module> = emptyList()
@@ -56,13 +44,8 @@ class LibraryListViewModel(
     private var loadJob: Job? = null
 
     init {
-        when (kind) {
-            LibraryKind.FAVOURITES -> viewModelScope.launch {
-                libraryRepository.favourites.collect { names = it; rebuild() }
-            }
-            LibraryKind.RECENTLY_VIEWED -> viewModelScope.launch {
-                libraryRepository.recentlyViewed.collect { names = it; rebuild() }
-            }
+        viewModelScope.launch {
+            libraryRepository.favourites.collect { names = it; rebuild() }
         }
         viewModelScope.launch {
             libraryRepository.links.collect { value ->
@@ -83,18 +66,7 @@ class LibraryListViewModel(
     }
 
     fun remove(packageName: String) {
-        viewModelScope.launch {
-            when (kind) {
-                LibraryKind.FAVOURITES -> libraryRepository.toggleFavourite(packageName)
-                LibraryKind.RECENTLY_VIEWED -> Unit
-            }
-        }
-    }
-
-    fun clearAll() {
-        if (kind == LibraryKind.RECENTLY_VIEWED) {
-            viewModelScope.launch { libraryRepository.clearRecentlyViewed() }
-        }
+        viewModelScope.launch { libraryRepository.toggleFavourite(packageName) }
     }
 
     fun refresh() = load()
@@ -146,8 +118,8 @@ class LibraryListViewModel(
     }
 
     companion object {
-        fun factory(container: AppContainer, kind: LibraryKind) = viewModelFactory {
-            initializer { LibraryListViewModel(container, kind) }
+        fun factory(container: AppContainer) = viewModelFactory {
+            initializer { FavouritesViewModel(container) }
         }
     }
 }

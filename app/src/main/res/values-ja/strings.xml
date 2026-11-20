@@ -103,11 +103,9 @@
     <string name="detail_download_failed">ダウンロードに失敗しました</string>
     <string name="detail_load_failed">モジュールのロードに失敗しました</string>
     <string name="library_favourites">お気に入り</string>
-    <string name="library_recently_viewed">最近見た</string>
     <string name="library_skipped">更新を無視したモジュール</string>
     <string name="library_ignored_modules">無視したリポジトリのモジュール</string>
     <string name="library_empty_favourites">まだお気に入りはありません</string>
-    <string name="library_empty_recent">まだ何も閲覧されていません</string>
     <string name="library_empty_skipped">無視された更新モジュールはありません</string>
     <string name="library_empty_ignored_modules">無視したリポジトリのモジュールはありません</string>
     <string name="library_remove_favourite">お気に入りから削除</string>
@@ -133,7 +131,6 @@
     <string name="settings_root_detected">su が検出され、APK がサイレントにインストールされます</string>
     <string name="settings_root_unavailable">このデバイスでは su を利用できません</string>
     <string name="settings_root_desc">su 経由で APK をサイレントにインストールおよび更新する</string>
-    <string name="settings_library">図書館</string>
     <string name="import_title">インストールされているモジュールをインポートする</string>
     <string name="import_desc">リポジトリにないインストール済みの LSPosed モジュール。 1 つをリポジトリ モジュールにリンクして、更新を確認します。適切に更新するには、ダウンロードした APK がインストールされているパッケージと一致する必要があります。</string>
     <string name="import_empty">インストールされているすべてのモジュールはすでにリポジトリにあります</string>
