@@ -9,6 +9,8 @@ import android.provider.MediaStore
 import android.util.Log
 import androidx.core.net.toUri
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.io.File
 
@@ -30,23 +32,31 @@ import java.io.File
 class ApkExportStore(
     private val context: Context,
     /** Document tree URI of the chosen folder; blank keeps the default. */
-    private val location: () -> String,
+    private val location: suspend () -> String,
+    private val retentionWeeks: suspend () -> Int,
 ) {
 
     private val resolver get() = context.contentResolver
+    /** A cleanup must wait for exports to finish publishing their documents. */
+    private val mutationMutex = Mutex()
 
     /** Copies [source] into the download folder unless that name already exists. */
     suspend fun export(source: File, displayName: String): Boolean = withContext(Dispatchers.IO) {
-        val tree = treeUri()
-        runCatching {
-            if (tree != null) {
-                exportToTree(tree, source, displayName)
-            } else {
-                exportToMediaStore(source, displayName)
-            }
-        }.onFailure {
-            Log.w(TAG, "Could not export ${source.name}: ${it.message}")
-        }.getOrDefault(false)
+        mutationMutex.withLock {
+            // The installer reads the private working copy, so zero retention
+            // can skip exporting entirely without interrupting an installation.
+            if (DownloadRetention.normalize(retentionWeeks()) == 0) return@withLock true
+            val tree = treeUri()
+            runCatching {
+                if (tree != null) {
+                    exportToTree(tree, source, displayName)
+                } else {
+                    exportToMediaStore(source, displayName)
+                }
+            }.onFailure {
+                Log.w(TAG, "Could not export ${source.name}: ${it.message}")
+            }.getOrDefault(false)
+        }
     }
 
     /** Bytes occupied by the APKs this app exported and that still exist. */
@@ -55,11 +65,11 @@ class ApkExportStore(
         runCatching {
             if (tree != null) {
                 treeEntries(tree)
-                    .filter { OWN_NAME.containsMatchIn(it.name) }
+                    .filter { OWN_EXPORTED_APK_NAME.containsMatchIn(it.name) }
                     .sumOf { it.size }
             } else {
                 mediaStoreEntries()
-                    .filter { OWN_NAME.containsMatchIn(it.name) }
+                    .filter { OWN_EXPORTED_APK_NAME.containsMatchIn(it.name) }
                     .sumOf { it.size }
             }
         }.getOrDefault(0L)
@@ -67,43 +77,59 @@ class ApkExportStore(
 
     /** Deletes every APK this app exported; other files in the folder stay. */
     suspend fun deleteAll() {
-        deleteMatching { OWN_NAME.containsMatchIn(it) }
+        deleteMatching { OWN_EXPORTED_APK_NAME.containsMatchIn(it.name) }
     }
 
     suspend fun delete(key: String) {
         if (!isAssetCacheKey(key)) return
-        deleteMatching { OWN_NAME.containsMatchIn(it) && it.substringBeforeLast('.').endsWith("-$key") }
+        deleteMatching {
+            OWN_EXPORTED_APK_NAME.containsMatchIn(it.name) && it.name.substringBeforeLast('.').endsWith("-$key")
+        }
     }
 
-    private suspend fun deleteMatching(matches: (String) -> Boolean) {
-        withContext(Dispatchers.IO) {
-            val tree = treeUri()
-            runCatching {
-                if (tree != null) {
-                    treeEntries(tree)
-                        .filter { matches(it.name) }
-                        .forEach { entry ->
-                            runCatching {
-                                DocumentsContract.deleteDocument(
-                                    resolver,
-                                    DocumentsContract.buildDocumentUriUsingTree(tree, entry.id),
-                                )
-                            }
-                        }
-                } else {
-                    mediaStoreEntries()
-                        .filter { matches(it.name) }
-                        .forEach { entry ->
-                            resolver.delete(
-                                ContentUris.withAppendedId(
-                                    MediaStore.Downloads.EXTERNAL_CONTENT_URI,
-                                    entry.id.toLong(),
-                                ),
-                                null,
-                                null,
+    /** Applies the current policy to existing exports, including older app versions. */
+    suspend fun deleteExpired() = withContext(Dispatchers.IO) {
+        mutationMutex.withLock {
+            // Read after waiting for any writer, so a queued cleanup uses the
+            // latest setting rather than the policy from before the wait.
+            val weeks = DownloadRetention.normalize(retentionWeeks())
+            if (weeks == DownloadRetention.FOREVER) return@withLock
+            val now = System.currentTimeMillis()
+            deleteMatchingLocked { shouldDeleteExportedApk(it.name, it.storedAtMillis, weeks, now) }
+        }
+    }
+
+    private suspend fun deleteMatching(matches: (StoredEntry) -> Boolean) = withContext(Dispatchers.IO) {
+        mutationMutex.withLock { deleteMatchingLocked(matches) }
+    }
+
+    private suspend fun deleteMatchingLocked(matches: (StoredEntry) -> Boolean) {
+        val tree = treeUri()
+        runCatching {
+            if (tree != null) {
+                treeEntries(tree)
+                    .filter(matches)
+                    .forEach { entry ->
+                        runCatching {
+                            DocumentsContract.deleteDocument(
+                                resolver,
+                                DocumentsContract.buildDocumentUriUsingTree(tree, entry.id),
                             )
                         }
-                }
+                    }
+            } else {
+                mediaStoreEntries()
+                    .filter(matches)
+                    .forEach { entry ->
+                        resolver.delete(
+                            ContentUris.withAppendedId(
+                                MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                                entry.id.toLong(),
+                            ),
+                            null,
+                            null,
+                        )
+                    }
             }
         }
     }
@@ -123,7 +149,7 @@ class ApkExportStore(
         treeDisplayName(tree) ?: id?.substringAfter(':')?.takeIf { it.isNotBlank() }
     }
 
-    private fun treeUri(): Uri? = location().takeIf { it.isNotBlank() }?.toUri()
+    private suspend fun treeUri(): Uri? = location().takeIf { it.isNotBlank() }?.toUri()
 
     private fun exportToMediaStore(source: File, displayName: String): Boolean {
         if (existsInMediaStore(displayName)) return true
@@ -185,14 +211,14 @@ class ApkExportStore(
         resolver.query(
             MediaStore.Downloads.EXTERNAL_CONTENT_URI,
             arrayOf(MediaStore.MediaColumns._ID),
-            "${MediaStore.MediaColumns.RELATIVE_PATH} LIKE ? AND " +
+            "${MediaStore.MediaColumns.RELATIVE_PATH}=? AND " +
                 "${MediaStore.MediaColumns.DISPLAY_NAME}=?",
-            arrayOf("$RELATIVE_DIR%", displayName),
+            arrayOf("$RELATIVE_DIR/", displayName),
             null,
         )?.use { it.moveToFirst() } ?: false
     }.getOrDefault(false)
 
-    /** Entries under `Download/LSP_Store`; [OWN_NAME] tells ours from the user's. */
+    /** Published entries in `Download/LSP_Store`, excluding incomplete writes. */
     private fun mediaStoreEntries(): List<StoredEntry> = runCatching {
         resolver.query(
             MediaStore.Downloads.EXTERNAL_CONTENT_URI,
@@ -200,14 +226,16 @@ class ApkExportStore(
                 MediaStore.MediaColumns._ID,
                 MediaStore.MediaColumns.DISPLAY_NAME,
                 MediaStore.MediaColumns.SIZE,
+                MediaStore.MediaColumns.DATE_ADDED,
             ),
-            "${MediaStore.MediaColumns.RELATIVE_PATH} LIKE ?",
-            arrayOf("$RELATIVE_DIR%"),
+            "${MediaStore.MediaColumns.RELATIVE_PATH}=? AND ${MediaStore.MediaColumns.IS_PENDING}=0",
+            arrayOf("$RELATIVE_DIR/"),
             null,
         )?.use { cursor ->
             val idColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns._ID)
             val nameColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DISPLAY_NAME)
             val sizeColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.SIZE)
+            val dateColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DATE_ADDED)
             buildList {
                 while (cursor.moveToNext()) {
                     add(
@@ -215,6 +243,7 @@ class ApkExportStore(
                             id = cursor.getLong(idColumn).toString(),
                             name = cursor.getString(nameColumn) ?: continue,
                             size = cursor.getLong(sizeColumn),
+                            storedAtMillis = cursor.getLong(dateColumn) * 1_000L,
                         ),
                     )
                 }
@@ -233,6 +262,7 @@ class ApkExportStore(
                 DocumentsContract.Document.COLUMN_DOCUMENT_ID,
                 DocumentsContract.Document.COLUMN_DISPLAY_NAME,
                 DocumentsContract.Document.COLUMN_SIZE,
+                DocumentsContract.Document.COLUMN_LAST_MODIFIED,
             ),
             null,
             null,
@@ -241,6 +271,7 @@ class ApkExportStore(
             val idColumn = cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_DOCUMENT_ID)
             val nameColumn = cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_DISPLAY_NAME)
             val sizeColumn = cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_SIZE)
+            val dateColumn = cursor.getColumnIndex(DocumentsContract.Document.COLUMN_LAST_MODIFIED)
             buildList {
                 while (cursor.moveToNext()) {
                     val id = cursor.getString(idColumn) ?: continue
@@ -252,6 +283,11 @@ class ApkExportStore(
                                 0L
                             } else {
                                 cursor.getLong(sizeColumn).coerceAtLeast(0L)
+                            },
+                            storedAtMillis = if (dateColumn < 0 || cursor.isNull(dateColumn)) {
+                                0L
+                            } else {
+                                cursor.getLong(dateColumn)
                             },
                         ),
                     )
@@ -276,13 +312,10 @@ class ApkExportStore(
     }.getOrNull()
 
     /** [id] is a MediaStore row id or a document id, depending on the location. */
-    private data class StoredEntry(val id: String, val name: String, val size: Long)
+    private data class StoredEntry(val id: String, val name: String, val size: Long, val storedAtMillis: Long)
 
     private companion object {
         const val TAG = "ApkExportStore"
         const val RELATIVE_DIR = "Download/LSP_Store"
-
-        /** Matches the `-<identity hash>` suffix [exportedApkName] appends. */
-        val OWN_NAME = Regex("-[0-9a-f]{16}\\.[A-Za-z0-9]+$")
     }
 }

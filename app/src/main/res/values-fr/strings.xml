@@ -154,6 +154,8 @@
     <string name="import_load_failed">Échec du chargement des modules</string>
     <string name="settings_downloads">Téléchargements</string>
     <string name="settings_max_downloads">Téléchargements simultanés</string>
+    <string name="settings_download_retention">Conservation des téléchargements</string>
+    <string name="settings_retention_weeks">%1$dsem</string>
     <string name="settings_storage">Stockage</string>
     <string name="settings_downloaded">APK téléchargés : %1$s</string>
     <string name="settings_clear_index">Effacer le cache de l\'index des modules</string>

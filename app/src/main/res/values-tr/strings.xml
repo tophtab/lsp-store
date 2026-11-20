@@ -151,6 +151,8 @@
     <string name="import_load_failed">Modüller yüklenemedi</string>
     <string name="settings_downloads">İndirmeler</string>
     <string name="settings_max_downloads">Eşzamanlı indirmeler</string>
+    <string name="settings_download_retention">İndirilenleri saklama süresi</string>
+    <string name="settings_retention_weeks">%1$dha</string>
     <string name="settings_storage">Depolamak</string>
     <string name="settings_downloaded">İndirilen APK\'lar: %1$s</string>
     <string name="settings_clear_index">Modül dizini önbelleğini temizle</string>

@@ -9,6 +9,7 @@ import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import io.github.tophtab.lspstore.data.install.DownloadSlots
+import io.github.tophtab.lspstore.data.install.DownloadRetention
 import io.github.tophtab.lspstore.data.update.UpdateScheduler
 import io.github.tophtab.lspstore.domain.model.ThemeMode
 import io.github.tophtab.lspstore.domain.model.TranslationProvider
@@ -27,6 +28,9 @@ interface SettingsRepository {
 
     /** APK transfers allowed to run at once, shared by batches and module pages. */
     val maxConcurrentDownloads: Flow<Int>
+
+    /** Weeks to keep exported APKs: 0, 1, 2, 4, or DownloadRetention.FOREVER. */
+    val downloadRetentionWeeks: Flow<Int>
 
     /** Periodic background check; off until the user turns it on. */
     val backgroundCheck: Flow<Boolean>
@@ -63,6 +67,7 @@ interface SettingsRepository {
     suspend fun setTranslationSettings(settings: TranslationSettings)
     suspend fun setPreferredMirror(host: String)
     suspend fun setMaxConcurrentDownloads(count: Int)
+    suspend fun setDownloadRetentionWeeks(weeks: Int)
     suspend fun setBackgroundCheck(enabled: Boolean)
     suspend fun setCheckIntervalHours(hours: Int)
     suspend fun setWifiOnly(enabled: Boolean)
@@ -89,6 +94,7 @@ class SettingsRepositoryImpl(private val context: Context) : SettingsRepository 
         val MICROSOFT_REGION = stringPreferencesKey("microsoft_region")
         val PREFERRED_MIRROR = stringPreferencesKey("preferred_mirror")
         val MAX_CONCURRENT_DOWNLOADS = intPreferencesKey("max_concurrent_downloads")
+        val DOWNLOAD_RETENTION_WEEKS = intPreferencesKey("download_retention_weeks")
         val BACKGROUND_CHECK = booleanPreferencesKey("background_check_enabled")
         val CHECK_INTERVAL_HOURS = intPreferencesKey("check_interval_hours")
         val WIFI_ONLY = booleanPreferencesKey("wifi_only")
@@ -124,6 +130,9 @@ class SettingsRepositoryImpl(private val context: Context) : SettingsRepository 
 
     override val backgroundCheck: Flow<Boolean> = context.settingsDataStore.data
         .map { it[Keys.BACKGROUND_CHECK] ?: false }
+
+    override val downloadRetentionWeeks: Flow<Int> = context.settingsDataStore.data
+        .map { DownloadRetention.normalize(it[Keys.DOWNLOAD_RETENTION_WEEKS] ?: DownloadRetention.DEFAULT_WEEKS) }
 
     override val checkIntervalHours: Flow<Int> = context.settingsDataStore.data
         .map {
@@ -204,6 +213,12 @@ class SettingsRepositoryImpl(private val context: Context) : SettingsRepository 
 
     override suspend fun setBackgroundCheck(enabled: Boolean) {
         context.settingsDataStore.edit { it[Keys.BACKGROUND_CHECK] = enabled }
+    }
+
+    override suspend fun setDownloadRetentionWeeks(weeks: Int) {
+        context.settingsDataStore.edit {
+            it[Keys.DOWNLOAD_RETENTION_WEEKS] = DownloadRetention.normalize(weeks)
+        }
     }
 
     override suspend fun setCheckIntervalHours(hours: Int) {

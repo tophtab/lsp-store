@@ -18,6 +18,8 @@ import io.github.tophtab.lspstore.data.backup.LibraryBackupException
 import io.github.tophtab.lspstore.data.backup.LibraryRestoreMode
 import io.github.tophtab.lspstore.data.device.LauncherIcon
 import io.github.tophtab.lspstore.data.install.DownloadSlots
+import io.github.tophtab.lspstore.data.install.DownloadCleanupScheduler
+import io.github.tophtab.lspstore.data.install.DownloadRetention
 import io.github.tophtab.lspstore.data.update.UpdateScheduler
 import io.github.tophtab.lspstore.di.AppContainer
 import io.github.tophtab.lspstore.domain.model.ThemeMode
@@ -32,6 +34,7 @@ data class SettingsUiState(
     val dynamicColor: Boolean = false,
     val translation: TranslationSettings = TranslationSettings(),
     val maxConcurrentDownloads: Int = DownloadSlots.DEFAULT_LIMIT,
+    val downloadRetentionWeeks: Int = DownloadRetention.DEFAULT_WEEKS,
     val backgroundCheck: Boolean = false,
     val checkIntervalHours: Int = UpdateScheduler.DEFAULT_INTERVAL_HOURS,
     val wifiOnly: Boolean = false,
@@ -101,6 +104,11 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
             }
         }
         viewModelScope.launch {
+            settingsRepository.downloadRetentionWeeks.collect { weeks ->
+                _state.update { it.copy(downloadRetentionWeeks = weeks) }
+            }
+        }
+        viewModelScope.launch {
             settingsRepository.checkIntervalHours.collect { hours ->
                 _state.update { it.copy(checkIntervalHours = hours) }
             }
@@ -128,6 +136,7 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
                 // The tree label needs a provider query, so it stays off the
                 // main thread and only runs when the setting actually changed.
                 val label = if (uri.isBlank()) null else container.apkExportStore.locationLabel()
+                container.apkExportStore.deleteExpired()
                 val size = installer.downloadsSizeBytes()
                 _state.update {
                     it.copy(downloadLocationLabel = label, downloadsSize = size)
@@ -166,6 +175,17 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
 
     fun setMaxConcurrentDownloads(count: Int) {
         settingsWriter.save(settingsRepository.maxConcurrentDownloads, count.coerceIn(1, DownloadSlots.MAX_LIMIT), settingsRepository::setMaxConcurrentDownloads)
+    }
+
+    fun setDownloadRetentionWeeks(weeks: Int) {
+        val retention = DownloadRetention.normalize(weeks)
+        settingsWriter.save(settingsRepository.downloadRetentionWeeks, retention) {
+            settingsRepository.setDownloadRetentionWeeks(retention)
+            DownloadCleanupScheduler.sync(appContext, retention)
+            container.apkExportStore.deleteExpired()
+            val size = installer.downloadsSizeBytes()
+            _state.update { it.copy(downloadsSize = size) }
+        }
     }
 
     fun setRootInstall(enabled: Boolean) {

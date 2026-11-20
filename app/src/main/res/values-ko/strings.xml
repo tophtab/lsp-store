@@ -148,6 +148,8 @@
     <string name="import_load_failed">모듈을 로드하지 못했습니다.</string>
     <string name="settings_downloads">다운로드</string>
     <string name="settings_max_downloads">동시 다운로드</string>
+    <string name="settings_download_retention">다운로드 보관 기간</string>
+    <string name="settings_retention_weeks">%1$d주</string>
     <string name="settings_storage">저장</string>
     <string name="settings_downloaded">다운로드한 APK: %1$s</string>
     <string name="settings_clear_index">모듈 인덱스 캐시 지우기</string>

@@ -151,6 +151,8 @@
     <string name="import_load_failed">মডিউল লোড করতে ব্যর্থ হয়েছে৷</string>
     <string name="settings_downloads">ডাউনলোড</string>
     <string name="settings_max_downloads">একসাথে ডাউনলোড</string>
+    <string name="settings_download_retention">ডাউনলোড রাখার সময়</string>
+    <string name="settings_retention_weeks">%1$dসপ্তাহ</string>
     <string name="settings_storage">স্টোরেজ</string>
     <string name="settings_downloaded">ডাউনলোড করা APK: %1$s</string>
     <string name="settings_clear_index">মডিউল ইনডেক্স ক্যাশে সাফ করুন</string>

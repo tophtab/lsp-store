@@ -154,6 +154,8 @@
     <string name="import_load_failed">Impossibile caricare i moduli</string>
     <string name="settings_downloads">Download</string>
     <string name="settings_max_downloads">Download simultanei</string>
+    <string name="settings_download_retention">Conservazione download</string>
+    <string name="settings_retention_weeks">%1$dsett</string>
     <string name="settings_storage">Magazzinaggio</string>
     <string name="settings_downloaded">APK scaricati: %1$s</string>
     <string name="settings_clear_index">Cancella la cache dell\'indice dei moduli</string>

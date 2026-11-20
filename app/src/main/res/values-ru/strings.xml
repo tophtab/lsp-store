@@ -157,6 +157,8 @@
     <string name="import_load_failed">Не удалось загрузить модули</string>
     <string name="settings_downloads">Загрузки</string>
     <string name="settings_max_downloads">Одновременные загрузки</string>
+    <string name="settings_download_retention">Хранение загрузок</string>
+    <string name="settings_retention_weeks">%1$dнед</string>
     <string name="settings_storage">Хранилище</string>
     <string name="settings_downloaded">Скачано APK: %1$s</string>
     <string name="settings_clear_index">Очистить кэш индекса модулей</string>
