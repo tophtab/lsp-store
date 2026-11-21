@@ -37,8 +37,8 @@ android {
         // 1.1.0 is 10100 and 12.0.0 is 120000. Android compares the integer, so a
         // wider major just means more digits; there is nothing to zero-pad.
         // minor and patch must stay below 100 for this to remain monotonic.
-        versionCode = 10900
-        versionName = "1.9.0"
+        versionCode = 10901
+        versionName = "1.9.1"
         buildConfigField("String", "BUILD_SHA", "\"$buildSha\"")
         vectorDrawables { useSupportLibrary = true }
     }
