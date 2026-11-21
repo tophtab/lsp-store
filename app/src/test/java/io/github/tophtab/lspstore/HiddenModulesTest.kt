@@ -42,6 +42,16 @@ class HiddenModulesTest {
     }
 
     @Test
+    fun `keyword words all have to match`() {
+        val summaryMatch = module("Helper", summary = "抖音 视频工具")
+        val titleOnly = module("抖音")
+
+        assertTrue(HiddenModules(keywords = listOf("抖音 视频")).hides(summaryMatch))
+        assertFalse(HiddenModules(keywords = listOf("抖音 微信")).hides(summaryMatch))
+        assertFalse(HiddenModules(keywords = listOf("抖音 微信")).hides(titleOnly))
+    }
+
+    @Test
     fun `blank keyword matches nothing`() {
         val any = module("Anything")
         assertFalse(HiddenModules(keywords = listOf("", "   ")).hides(any))
