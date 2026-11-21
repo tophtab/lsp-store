@@ -2,6 +2,7 @@ package io.github.tophtab.lspstore.ui.screens.home
 
 import io.github.tophtab.lspstore.domain.model.Module
 import io.github.tophtab.lspstore.domain.model.HiddenModules
+import io.github.tophtab.lspstore.domain.model.searchTerms
 import java.time.Instant
 
 /** Sorted once per catalogue/visibility change; typing only filters this order. */
@@ -10,9 +11,9 @@ internal data class HomeShelves(
     val mostStarred: List<Module> = emptyList(),
 ) {
     fun search(query: String): List<Module> {
-        val trimmed = query.trim()
-        if (trimmed.isEmpty()) return emptyList()
-        return recentlyUpdated.filter { module -> module.matchesText(trimmed) }
+        val terms = searchTerms(query)
+        if (terms.isEmpty()) return emptyList()
+        return recentlyUpdated.filter { module -> module.matchesTerms(terms) }
     }
 
     companion object {

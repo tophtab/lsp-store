@@ -35,6 +35,7 @@ class InstalledListSnapshotTest {
         assertEquals(listOf("unknown"), result.unknown.map { it.packageName })
         assertEquals(3, result.installedCount)
         assertEquals(mapOf("module" to "module", "renamed" to "repo"), result.repoPackageByInstalled)
+        assertEquals(setOf("module", "renamed"), result.repoModulesByInstalled.keys)
     }
 
     @Test

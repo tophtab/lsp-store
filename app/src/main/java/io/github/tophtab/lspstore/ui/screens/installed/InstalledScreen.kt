@@ -41,7 +41,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.tophtab.lspstore.R
-import io.github.tophtab.lspstore.domain.model.InstalledModule
 import io.github.tophtab.lspstore.domain.usecase.BatchInstallPhase
 import io.github.tophtab.lspstore.ui.LocalAppContainer
 import io.github.tophtab.lspstore.ui.components.SnackbarMessageEffect
@@ -113,13 +112,11 @@ fun InstalledScreen(
         state.rowStates.filterValues { it.phase == BatchInstallPhase.COMPLETED && !it.noticeVisible }.keys
     }
     val updates = remember(state.updates, query, completed) {
-        state.updates.filter { info ->
-            info.module.packageName !in completed && (query.isBlank() ||
-                info.module.title.contains(query, ignoreCase = true) ||
-                info.module.packageName.contains(query, ignoreCase = true))
-        }
+        state.updates.matching(query, completed)
     }
-    val upToDate = remember(state.upToDate, query) { state.upToDate.matching(query) }
+    val upToDate = remember(state.upToDate, state.repoModulesByInstalled, query) {
+        state.upToDate.matching(query, state.repoModulesByInstalled)
+    }
     val unknown = remember(state.unknown, query) { state.unknown.matching(query) }
 
     val repositoryCount = updates.size + upToDate.size
@@ -350,7 +347,3 @@ fun InstalledScreen(
 
 }
 
-private fun List<InstalledModule>.matching(query: String): List<InstalledModule> =
-    if (query.isBlank()) this else filter {
-        it.label.contains(query, ignoreCase = true) || it.packageName.contains(query, ignoreCase = true)
-    }

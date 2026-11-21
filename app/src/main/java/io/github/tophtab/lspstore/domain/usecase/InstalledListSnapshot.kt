@@ -3,6 +3,7 @@ package io.github.tophtab.lspstore.domain.usecase
 import io.github.tophtab.lspstore.domain.model.InstalledCatalog
 import io.github.tophtab.lspstore.domain.model.InstalledCopies
 import io.github.tophtab.lspstore.domain.model.InstalledModule
+import io.github.tophtab.lspstore.domain.model.Module
 import io.github.tophtab.lspstore.domain.model.PendingInstall
 import io.github.tophtab.lspstore.domain.model.RepositoryIndex
 import io.github.tophtab.lspstore.domain.model.SkippedVersion
@@ -31,6 +32,8 @@ data class InstalledListSnapshot(
     val upToDate: List<InstalledModule>,
     val unknown: List<InstalledModule>,
     val repoPackageByInstalled: Map<String, String>,
+    /** Repository entry behind each installed copy, for search over both sides. */
+    val repoModulesByInstalled: Map<String, Module>,
     val installedByRepo: Map<String, InstalledModule>,
     val installedCount: Int,
     val preReleases: Set<String>,
@@ -58,6 +61,7 @@ data class InstalledListSnapshot(
                 upToDate = upToDate.sortedByLabel(),
                 unknown = unknown.sortedByLabel(),
                 repoPackageByInstalled = catalog.repoByInstalled.mapValues { it.value.packageName },
+                repoModulesByInstalled = catalog.repoByInstalled,
                 installedByRepo = catalog.repoByInstalled.map { (installed, module) ->
                     module.packageName to catalog.copies.byPackage.getValue(installed)
                 }.toMap(),

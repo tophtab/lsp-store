@@ -70,6 +70,33 @@ data class SkippedVersion(val raw: String) {
         raw == version.raw || raw.toLongOrNull() == version.versionCode
 }
 
+private val SEARCH_TERM_SEPARATOR = Regex("[\\s\\u00A0\\u3000]+")
+
+/**
+ * Splits a query into whitespace-separated terms; blank input has no terms.
+ * Shared by module search and ignore keywords so both read a space the same way.
+ */
+internal fun searchTerms(query: String): List<String> {
+    val trimmed = query.trim()
+    return if (trimmed.isEmpty()) emptyList() else trimmed.split(SEARCH_TERM_SEPARATOR)
+}
+
+/**
+ * Whether every term occurs in at least one of the three searched fields.
+ * Three explicit fields keep per-row search loops allocation-free.
+ */
+internal fun allTermsMatch(
+    terms: List<String>,
+    first: String?,
+    second: String?,
+    third: String?,
+): Boolean =
+    terms.isNotEmpty() && terms.all { term ->
+        first?.contains(term, ignoreCase = true) == true ||
+            second?.contains(term, ignoreCase = true) == true ||
+            third?.contains(term, ignoreCase = true) == true
+    }
+
 data class Module(
     val packageName: String,
     val title: String,
@@ -97,16 +124,21 @@ data class Module(
      * package name and summary. Home search and keyword ignore share this so a
      * module the search can find is a module a keyword can hide.
      *
+     * The query splits on whitespace and every term must occur in at least one
+     * of those fields, so `抖音 微信` needs both words somewhere on the module
+     * rather than the literal string including the space.
+     *
      * A blank query matches nothing; callers that validate input still need
      * this to be safe for stored values.
      */
-    fun matchesText(query: String): Boolean {
-        val trimmed = query.trim()
-        if (trimmed.isEmpty()) return false
-        return title.contains(trimmed, ignoreCase = true) ||
-            packageName.contains(trimmed, ignoreCase = true) ||
-            summary?.contains(trimmed, ignoreCase = true) == true
-    }
+    fun matchesText(query: String): Boolean = matchesTerms(searchTerms(query))
+
+    /**
+     * Whether every already-split [term] occurs in a searched field. Search
+     * splits the query once per keystroke and reuses it for every module.
+     */
+    internal fun matchesTerms(terms: List<String>): Boolean =
+        allTermsMatch(terms, title, packageName, summary)
 
     /**
      * When the newest published build came out, or null when the module never

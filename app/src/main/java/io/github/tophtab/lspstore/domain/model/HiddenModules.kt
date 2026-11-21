@@ -5,9 +5,11 @@ package io.github.tophtab.lspstore.domain.model
  * ignored package names plus case-insensitive keyword matches.
  *
  * Keywords are rules, not snapshots of what they matched when added, so a
- * module the index gains later is hidden without touching the list. Installed
- * modules and update checks deliberately stay outside this filter, matching the
- * existing package-level ignore.
+ * module the index gains later is hidden without touching the list. A keyword
+ * follows the same matching as search: it splits on whitespace and every term
+ * must occur in the title, package or summary. Installed modules and update
+ * checks deliberately stay outside this filter, matching the existing
+ * package-level ignore.
  */
 data class HiddenModules(
     val packages: Set<String> = emptySet(),

@@ -42,6 +42,20 @@ class HomeShelvesTest {
     }
 
     @Test
+    fun `search requires every whitespace separated term across the searched fields`() {
+        val douyin = module("Douyin Helper", 10, "2026-01-01T00:00:00Z", "抖音 视频工具")
+        val wechat = module("WeChat", 5, "2026-01-02T00:00:00Z", "微信")
+        val shelves = HomeShelves.build(listOf(douyin, wechat), HiddenModules())
+
+        assertEquals(listOf(douyin), shelves.search("douyin 抖音"))
+        assertEquals(listOf(douyin), shelves.search("抖音 视频"))
+        assertEquals(listOf(douyin), shelves.search(" \u3000抖音\tdev.douyin "))
+        assertEquals(listOf(wechat), shelves.search("微信"))
+        assertTrue(shelves.search("抖音 微信").isEmpty())
+        assertTrue(shelves.search("douyin wechat").isEmpty())
+    }
+
+    @Test
     fun `catalogue clearing clears both shelves`() {
         assertEquals(HomeShelves(), HomeShelves.build(emptyList(), HiddenModules()))
     }
