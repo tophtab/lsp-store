@@ -18,55 +18,40 @@ class VariantCorpusTest {
     private val resolver = VariantResolver(device)
 
     @Test
-    fun autoDecisionNeverPrefersDebugWhenANonDebugVariantExists() {
+    fun everyReleaseHasAnInstallableDefaultThatRespectsDebugAndDownloadRanking() {
+        var checkedTies = 0
         everyRelease().forEach { (pkg, release) ->
             val decision = resolver.resolve(release)
-            if (decision !is VariantDecision.Pick) return@forEach
-            if (!parseTraits(decision.asset.name).debugName) return@forEach
-            val nonDebugEligible = resolver.candidates(release)
-                .filter {
-                    it.blocked == null && !it.traits.debugName &&
-                        it.warning?.kind != Reason.Kind.BUNDLED_APP
-                }
-            assertTrue(
-                "$pkg/${release.tagName} auto-picked debug ${decision.asset.name} " +
-                    "although ${nonDebugEligible.map { it.asset.name }} is available",
-                nonDebugEligible.isEmpty(),
-            )
-        }
-    }
-
-    @Test
-    fun everyReleaseResolvesToAnInstallableDefaultOrNothing() {
-        everyRelease().forEach { (pkg, release) ->
-            val decision = resolver.resolve(release)
+            val eligible = resolver.candidates(release).filter { it.blocked == null }
             when (decision) {
-                is VariantDecision.Pick -> assertTrue(
-                    "$pkg/${release.tagName} picked a blocked asset",
-                    resolver.candidates(release).none {
-                        it.asset.name == decision.asset.name && it.blocked != null
-                    },
-                )
+                is VariantDecision.Pick -> {
+                    assertTrue(
+                        "$pkg/${release.tagName} picked an ineligible asset",
+                        eligible.any { it.asset.name == decision.asset.name },
+                    )
+                    if (parseTraits(decision.asset.name).debugName) {
+                        val nonDebugEligible = eligible.filter {
+                            !it.traits.debugName && it.warning?.kind != Reason.Kind.BUNDLED_APP
+                        }
+                        assertTrue(
+                            "$pkg/${release.tagName} auto-picked debug ${decision.asset.name} " +
+                                "although ${nonDebugEligible.map { it.asset.name }} is available",
+                            nonDebugEligible.isEmpty(),
+                        )
+                    }
+                }
 
                 // The only allowed "no default" is a release without an APK or a
                 // release whose every APK is a companion app. Nothing else may
                 // stop an install or an update-all run.
                 is VariantDecision.NotApplicable -> {
-                    val eligible = resolver.candidates(release).filter { it.blocked == null }
                     assertTrue(
                         "$pkg/${release.tagName} gave up although ${eligible.map { it.asset.name }} fits",
                         eligible.isEmpty(),
                     )
+                    return@forEach
                 }
             }
-        }
-    }
-
-    @Test
-    fun tiedCandidatesDefaultToTheMostInstalledBuildInsteadOfTheAlphabeticalFirst() {
-        var checked = 0
-        everyRelease().forEach { (pkg, release) ->
-            val eligible = resolver.candidates(release).filter { it.blocked == null }
             if (eligible.size < 2) return@forEach
             // A unique non-debug candidate, a device ABI fit or a real device
             // signal is a legitimate reason to rank, so only the remaining pile
@@ -89,23 +74,17 @@ class VariantCorpusTest {
             }
             if (eligible.map { it.traits.libxposedApi ?: 0 }.distinct().size > 1) return@forEach
             if (eligible.count { !it.traits.debugName } == 1) return@forEach
-            val decision = resolver.resolve(release) as VariantDecision.Pick
             val plain = eligible.filter { it.traits.edition.isEmpty() && it.traits.flavors.isEmpty() }
                 .ifEmpty { eligible }
             val expected = plain.maxByOrNull { it.asset.downloadCount }!!.asset.name
-            if (expected != eligible.first().asset.name) checked++
+            if (expected != eligible.first().asset.name) checkedTies++
             assertEquals(
                 "$pkg/${release.tagName} did not fall back to the most installed build",
                 expected,
                 decision.asset.name,
             )
-            if (expected == eligible.first().asset.name) return@forEach
-            assertTrue(
-                "$pkg/${release.tagName} kept the alphabetical first asset",
-                decision.asset.name != eligible.first().asset.name,
-            )
         }
-        assertTrue("expected tied multi-APK releases in the corpus", checked > 0)
+        assertTrue("expected tied multi-APK releases in the corpus", checkedTies > 0)
     }
 
     @Test

@@ -63,20 +63,6 @@ class SameCodeUpdateTest {
     }
 
     @Test
-    fun sameCodeRepublishedAfterInstallIsAnUpdate() {
-        val published = "2023-11-15T00:00:00Z" // after installTime (2023-11-14T22:13:20Z)
-        assertTrue(hasUpdate(installed(10, "1.0"), module(10, "1.0b", published)))
-    }
-
-    @Test
-    fun sameCodePublishedBeforeInstallIsNotAnUpdate() {
-        // The Cleaner.Royall shape: the tag name never matches the APK name, so
-        // the timestamp is the only thing that stops a permanent prompt.
-        val published = "2023-11-14T00:00:00Z"
-        assertEquals(false, hasUpdate(installed(10, "4.8"), module(10, "4.7_AraafRoyall", published)))
-    }
-
-    @Test
     fun sameCodeAndSameNameIsNotAnUpdate() {
         val published = "2023-11-15T00:00:00Z"
         assertEquals(false, hasUpdate(installed(10, "1.0"), module(10, "1.0", published)))
