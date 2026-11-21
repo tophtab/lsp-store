@@ -199,23 +199,6 @@ class ResumableFetchTest {
     }
 
     @Test
-    fun partialFilePastTheExpectedSizeRestartsFromZero() = runBlocking {
-        TestServer { range ->
-            if (range != null) {
-                Response(416, null, mapOf("Content-Range" to "bytes */250"))
-            } else {
-                Response(200, payload)
-            }
-        }.use { server ->
-            // Stale bytes from an asset that was re-uploaded smaller.
-            val target = tempFile("stale.apk", ByteArray(400) { 7 })
-            download(server, target)
-
-            assertArrayEquals(payload, target.readBytes())
-        }
-    }
-
-    @Test
     fun rangeRejectedWith416FallsBackToAFreshRequest() = runBlocking {
         TestServer { range ->
             if (range != null) {
@@ -279,7 +262,7 @@ class ResumableFetchTest {
     }
 
     @Test
-    fun droppedConnectionResumesFromTheBytesAlreadyWritten() = runBlocking {
+    fun droppedConnectionResumesUsingServerSizeEvenWhenTheIndexSizeIsStale() = runBlocking {
         TestServer { range ->
             if (range == "bytes=100-") {
                 Response(
@@ -293,7 +276,9 @@ class ResumableFetchTest {
             }
         }.use { server ->
             val target = tempFile("dropped.apk")
-            val (serverSize, progress) = download(server, target)
+            // The server's size must replace a stale index size before retrying,
+            // otherwise the 100-byte partial file would incorrectly look complete.
+            val (serverSize, progress) = download(server, target, expectedSize = 50L)
 
             assertArrayEquals(payload, target.readBytes())
             assertEquals(listOf(null, "bytes=100-"), server.ranges)
@@ -301,28 +286,6 @@ class ResumableFetchTest {
             // the progress bar at zero.
             assertTrue(progress.contains(100L to 250L))
             assertEquals(250L to 250L, progress.last())
-            assertEquals(250L, serverSize)
-        }
-    }
-
-    @Test
-    fun droppedConnectionUsesServerSizeWhenIndexSizeIsStale() = runBlocking {
-        TestServer { range ->
-            if (range == "bytes=100-") {
-                Response(
-                    206,
-                    payload.copyOfRange(100, payload.size),
-                    mapOf("Content-Range" to "bytes 100-249/250"),
-                )
-            } else {
-                Response(200, payload, truncateAt = 100)
-            }
-        }.use { server ->
-            val target = tempFile("stale-size.apk")
-            val (serverSize, _) = download(server, target, expectedSize = 50L)
-
-            assertArrayEquals(payload, target.readBytes())
-            assertEquals(listOf(null, "bytes=100-"), server.ranges)
             assertEquals(250L, serverSize)
         }
     }

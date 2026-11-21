@@ -11,7 +11,6 @@ import org.junit.Assert.assertNotNull
 
 /** Immutable regression corpus loaded once per test process. */
 internal object VariantFixtures {
-    val loadCount = java.util.concurrent.atomic.AtomicInteger()
     private val modules: List<CorpusModule> by lazy(LazyThreadSafetyMode.SYNCHRONIZED) { loadCorpus() }
     private val releases: List<Pair<String, Release>> by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
         java.util.Collections.unmodifiableList(modules.flatMap { module -> module.releases.map { module.pkg to it } })
@@ -33,7 +32,6 @@ internal object VariantFixtures {
     }
 
     private fun loadCorpus(): List<CorpusModule> {
-        loadCount.incrementAndGet()
         val text = checkNotNull(VariantFixtures::class.java.classLoader?.getResource("variant-corpus.json")) {
             "variant-corpus.json missing from test resources"
         }.readText()
